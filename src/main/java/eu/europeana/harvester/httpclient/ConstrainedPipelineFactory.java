@@ -1,0 +1,113 @@
+package eu.europeana.harvester.httpclient;
+
+import eu.europeana.harvester.httpclient.response.HttpRetriveResponse;
+import eu.europeana.harvester.httpclient.utils.SecureChatSslContextFactory;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
+import org.jboss.netty.handler.codec.http.HttpClientCodec;
+import org.jboss.netty.handler.codec.http.HttpContentDecompressor;
+import org.jboss.netty.handler.ssl.SslHandler;
+import org.jboss.netty.handler.traffic.ChannelTrafficShapingHandler;
+import org.jboss.netty.util.HashedWheelTimer;
+import org.joda.time.Duration;
+
+import javax.net.ssl.SSLEngine;
+
+/**
+ * A custom netty pipeline factory that creates constrained pipelines.
+ */
+public class ConstrainedPipelineFactory implements ChannelPipelineFactory {
+
+    /**
+     * The interval at which the "time wheel" checks whether the limits have been reached. Must be > 0.
+     */
+    private final Duration limitsCheckInterval;
+
+    /**
+     * The bandwidth limit usage for write (ie. sending). Measured in bytes. 0 means no limit.
+     */
+    private final Long bandwidthLimitWriteInBytesPerSec;
+
+    /**
+     * The bandwidth limit usage for read (ie. receiving). Measured in bytes. 0 means no limit.
+     */
+    private final Long bandwidthLimitReadInBytesPerSec;
+
+    /**
+     * The time threshold after which the retrieval is terminated. 0 means no limit.
+     */
+    private final Duration terminationThresholdTimeLimit;
+
+    /**
+     * The content size threshold after which the retrieval is terminated. 0 means no limit.
+     */
+    private final Long terminationThresholdSizeLimitInBytes;
+
+    /**
+     * Whether to handle chunks or not. Always true.
+     */
+    private final Boolean handleChunks;
+
+    /**
+     * The object that stores the HTTP response.
+     */
+    private final HttpRetriveResponse httpRetriveResponse;
+
+    /**
+     * The netty wheel timer shared by all clients.
+     */
+    private final HashedWheelTimer hashedWheelTimer;
+
+    /**
+     * Whether the pipeline supports SSL.
+     */
+    private final boolean supportsSSL;
+
+    public ConstrainedPipelineFactory(Long bandwidthLimitReadInBytesPerSec, Long bandwidthLimitWriteInBytesPerSec, Duration limitsCheckInterval, boolean supportsSSL,
+                                      Long terminationThresholdSizeLimitInBytes, Duration terminationThresholdTimeLimit,
+                                      boolean handleChunks, HttpRetriveResponse httpRetriveResponse, HashedWheelTimer hashedWheelTimer) {
+        this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
+        this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
+        this.limitsCheckInterval = limitsCheckInterval;
+        this.supportsSSL = supportsSSL;
+        this.terminationThresholdSizeLimitInBytes = terminationThresholdSizeLimitInBytes;
+        this.terminationThresholdTimeLimit = terminationThresholdTimeLimit;
+        this.handleChunks = handleChunks;
+        this.httpRetriveResponse = httpRetriveResponse;
+        this.hashedWheelTimer = hashedWheelTimer;
+    }
+
+    @Override
+    public ChannelPipeline getPipeline() throws Exception {
+        final ChannelPipeline channelPipeline = Channels.pipeline();
+
+        final ChannelTrafficShapingHandler channelTrafficShapingHandler =
+                new ChannelTrafficShapingHandler(hashedWheelTimer, bandwidthLimitWriteInBytesPerSec, bandwidthLimitReadInBytesPerSec, limitsCheckInterval.getMillis());
+        channelPipeline.addLast("CHANNEL_TRAFFIC_SHAPING", channelTrafficShapingHandler);
+
+        // Enable HTTPS if necessary.
+        if (supportsSSL) {
+            final SSLEngine engine =
+                    SecureChatSslContextFactory.getClientContext().createSSLEngine();
+            engine.setUseClientMode(true);
+
+            channelPipeline.addLast("supportsSSL", new SslHandler(engine));
+        }
+
+        channelPipeline.addLast("codec", new HttpClientCodec());
+
+        // Remove the following line if you don't want automatic content decompression.
+        channelPipeline.addLast("inflater", new HttpContentDecompressor());
+
+        // Uncomment the following line if you don't want to handle HttpChunks.
+        if(!handleChunks)
+            channelPipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
+
+        channelPipeline.addLast("handler",
+                new HttpClientHandler(terminationThresholdSizeLimitInBytes, terminationThresholdTimeLimit, hashedWheelTimer, httpRetriveResponse));
+
+        return channelPipeline;
+    }
+}
