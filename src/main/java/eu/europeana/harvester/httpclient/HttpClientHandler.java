@@ -1,12 +1,9 @@
 package eu.europeana.harvester.httpclient;
 
-import eu.europeana.harvester.httpclient.response.HttpRetriveResponse;
+import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
+import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.util.CharsetUtil;
@@ -57,10 +54,20 @@ public class HttpClientHandler extends SimpleChannelHandler {
      * Holds the http response where all the retrieved content ends up. Also usefull for progress inspection during
      * the process.
      */
-    private final HttpRetriveResponse httpRetriveResponse;
+    private final HttpRetrieveResponse httpRetriveResponse;
+
+    /**
+     * The wheel timer usually shared across all clients.
+     */
+    private final HashedWheelTimer hashedWheelTimer;
+
+    /**
+     * A flag which shows that the arriving package is the first or not
+     */
+    private Boolean firstPackage;
 
     public HttpClientHandler(final Long sizeLimitsInBytesForContent, final Duration timeLimitForContentRetrieval,
-                             final HashedWheelTimer hashedWheelTimer, final HttpRetriveResponse httpRetriveResponse) {
+                             final HashedWheelTimer hashedWheelTimer, final HttpRetrieveResponse httpRetriveResponse) {
         this.httpRetriveResponse = httpRetriveResponse;
 
         this.hasSizeLimitsForContent = (sizeLimitsInBytesForContent != 0);
@@ -68,26 +75,39 @@ public class HttpClientHandler extends SimpleChannelHandler {
         this.sizeLimitsInBytesForContent = sizeLimitsInBytesForContent;
         this.timeLimitForContentRetrieval = timeLimitForContentRetrieval;
 
-        if (hasTimeLimitsForContent) {
+        this.hashedWheelTimer = hashedWheelTimer;
+
+        this.firstPackage = true;
+    }
+
+    private void startTimer(final Channel channel) {
         /* Limit the time of download. */
-            final TimerTask timerTask = new TimerTask() {
-                public void run(final Timeout timeout) throws Exception {
-                    if (totalContentBytesRead != 0) {
-                        httpRetriveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
-                    }
+        final TimerTask timerTask = new TimerTask() {
+            public void run(final Timeout timeout) throws Exception {
+                if (totalContentBytesRead != 0) {
+                    httpRetriveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
+
+                    channel.close();
                 }
-            };
-            hashedWheelTimer.newTimeout(timerTask, timeLimitForContentRetrieval.getStandardSeconds(), TimeUnit.SECONDS);
-        }
+            }
+        };
+        hashedWheelTimer.newTimeout(timerTask, timeLimitForContentRetrieval.getStandardSeconds(), TimeUnit.SECONDS);
     }
 
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
         httpRetriveResponse.setState(ResponseState.PROCESSING);
+
         if (!readingChunks) {
+            if (hasTimeLimitsForContent && firstPackage) {
+                firstPackage = false;
+                startTimer(ctx.getChannel());
+            }
+
             final HttpResponse response = (HttpResponse) e.getMessage();
 
-            totalContentBytesRead += response.getStatus().toString().length() + response.getProtocolVersion().toString().length();
+            totalContentBytesRead += response.getStatus().toString().length() +
+                    response.getProtocolVersion().toString().length();
 
             if (!response.headers().names().isEmpty()) {
                 for (final String name : response.headers().names()) {
@@ -104,6 +124,7 @@ public class HttpClientHandler extends SimpleChannelHandler {
                 final ChannelBuffer content = response.getContent();
                 if (content.readable()) {
                     httpRetriveResponse.addContent(response.getContent().array());
+                    httpRetriveResponse.setState(ResponseState.COMPLETED);
                 }
             }
         } else {
@@ -113,11 +134,14 @@ public class HttpClientHandler extends SimpleChannelHandler {
 
             if (chunk.isLast()) {
                 readingChunks = false;
+                httpRetriveResponse.setState(ResponseState.COMPLETED);
             }
         }
 
         if (hasSizeLimitsForContent && totalContentBytesRead > sizeLimitsInBytesForContent) {
             httpRetriveResponse.setState(ResponseState.FINISHED_SIZE_LIMIT);
+
+            ctx.getChannel().close();
         }
     }
 

@@ -2,7 +2,7 @@ package eu.europeana.harvester.httpclient.response;
 
 
 /**
- * Factory that creates {@link eu.europeana.harvester.httpclient.response.HttpRetriveResponse} instances based on type.
+ * Factory that creates {@link eu.europeana.harvester.httpclient.response.HttpRetrieveResponse} instances based on type.
  */
 public class HttpRetrieveResponseFactory {
 
@@ -12,7 +12,7 @@ public class HttpRetrieveResponseFactory {
      * @return
      * @throws Exception
      */
-    public HttpRetriveResponse create(ResponseType type, String basePath) throws Exception {
+    public HttpRetrieveResponse create(ResponseType type, String basePath) throws Exception {
         switch (type) {
             case MEMORY_STORAGE:
                 return new HttpRetrieveResponseMemoryStorage();

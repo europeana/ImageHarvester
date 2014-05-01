@@ -37,7 +37,9 @@ public class HttpRetrieveConfig {
      */
     private final Boolean handleChunks;
 
-    public HttpRetrieveConfig(Duration limitsCheckInterval, Long bandwidthLimitWriteInBytesPerSec, Long bandwidthLimitReadInBytesPerSec, Duration terminationThresholdTimeLimit, Long terminationThresholdSizeLimitInBytes, Boolean handleChunks) {
+    public HttpRetrieveConfig(Duration limitsCheckInterval, Long bandwidthLimitWriteInBytesPerSec,
+                              Long bandwidthLimitReadInBytesPerSec, Duration terminationThresholdTimeLimit,
+                              Long terminationThresholdSizeLimitInBytes, Boolean handleChunks) {
         this.limitsCheckInterval = limitsCheckInterval;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
@@ -46,7 +48,8 @@ public class HttpRetrieveConfig {
         this.handleChunks = handleChunks;
     }
 
-    public HttpRetrieveConfig(Duration limitsCheckInterval, Long bandwidthLimitWriteInBytesPerSec, Long bandwidthLimitReadInBytesPerSec) {
+    public HttpRetrieveConfig(Duration limitsCheckInterval, Long bandwidthLimitWriteInBytesPerSec,
+                              Long bandwidthLimitReadInBytesPerSec) {
         this.limitsCheckInterval = limitsCheckInterval;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;

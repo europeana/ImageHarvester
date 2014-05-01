@@ -1,6 +1,6 @@
 package eu.europeana.harvester.httpclient;
 
-import eu.europeana.harvester.httpclient.response.HttpRetriveResponse;
+import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -12,7 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.Callable;
 
-public class HttpClient implements Callable<HttpRetriveResponse> {
+public class HttpClient implements Callable<HttpRetrieveResponse> {
 
     /**
      * The channel factory used by netty to build the channel.
@@ -37,7 +37,7 @@ public class HttpClient implements Callable<HttpRetriveResponse> {
     /**
      * The request response.
      */
-    private final HttpRetriveResponse httpRetriveResponse;
+    private final HttpRetrieveResponse httpRetriveResponse;
 
     /**
      * The url from where data is retrieved.
@@ -49,24 +49,30 @@ public class HttpClient implements Callable<HttpRetriveResponse> {
      */
     private final HttpRequest httpRequest;
 
-    public HttpClient(ChannelFactory channelFactory, HashedWheelTimer hashedWheelTimer, HttpRetrieveConfig httpRetrieveConfig, HttpRetriveResponse httpRetriveResponse, HttpRequest httpRequest) throws MalformedURLException {
+    private ChannelFuture closeFuture;
+
+    public HttpClient(ChannelFactory channelFactory, HashedWheelTimer hashedWheelTimer,
+                      HttpRetrieveConfig httpRetrieveConfig, HttpRetrieveResponse httpRetriveResponse,
+                      HttpRequest httpRequest) throws MalformedURLException {
         this.channelFactory = channelFactory;
         this.hashedWheelTimer = hashedWheelTimer;
         this.httpRetrieveConfig = httpRetrieveConfig;
         this.httpRetriveResponse = httpRetriveResponse;
         this.httpRequest = httpRequest;
         this.url = new URL(httpRequest.getUri());
+
+        startDownload();
     }
 
-    @Override
-    public HttpRetriveResponse call() throws Exception {
+    private void startDownload() {
         httpRetriveResponse.setUrl(url);
         final ChannelPipelineFactory pipelineFactory =
                 new ConstrainedPipelineFactory(httpRetrieveConfig.getBandwidthLimitReadInBytesPerSec(),
                         httpRetrieveConfig.getBandwidthLimitWriteInBytesPerSec(),
                         httpRetrieveConfig.getLimitsCheckInterval(), url.getProtocol().startsWith("https"),
                         httpRetrieveConfig.getTerminationThresholdSizeLimitInBytes(),
-                        httpRetrieveConfig.getTerminationThresholdTimeLimit(), httpRetrieveConfig.getHandleChunks(), httpRetriveResponse, hashedWheelTimer);
+                        httpRetrieveConfig.getTerminationThresholdTimeLimit(), httpRetrieveConfig.getHandleChunks(),
+                        httpRetriveResponse, hashedWheelTimer);
 
         final ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
         bootstrap.setPipelineFactory(pipelineFactory);
@@ -75,33 +81,32 @@ public class HttpClient implements Callable<HttpRetriveResponse> {
 
         final ChannelFuture channelFuture = bootstrap.connect(new InetSocketAddress(url.getHost(), port));
 
-        channelFuture.addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    channel = future.getChannel();
-                    channel.write(httpRequest);
+        try {
+            channelFuture.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        channel = channelFuture.getChannel();
+        channel.write(httpRequest);
+        closeFuture = channel.getCloseFuture();
+    }
 
-                    channel.getCloseFuture().addListener(new ChannelFutureListener() {
-                        @Override
-                        public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                            httpRetriveResponse.setState(ResponseState.COMPLETED);
-                            try {
-//                                bootstrap.releaseExternalResources();
-//                                bootstrap.shutdown();
-                            } catch (Exception e) {
-                                httpRetriveResponse.setState(ResponseState.ERROR);
-                                httpRetriveResponse.setException(e);
-                                throw e;
-                            }
+    @Override
+    public HttpRetrieveResponse call() {
+        try {
+            closeFuture.await();
+        } catch (InterruptedException e) {
+            httpRetriveResponse.setState(ResponseState.ERROR);
+            httpRetriveResponse.setException(e);
+            e.printStackTrace();
+        }
 
-                        }
-                    });
-                }
-            }
-        });
+        closeFuture.cancel();
+        channel.close();
 
         return httpRetriveResponse;
     }
+
 }
 
 

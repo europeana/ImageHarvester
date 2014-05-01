@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Stores the retrieved content on disk thus minimizing the memory usage to hold only meta info (ie. headers, url, etc.)
  */
-public class HttpRetrieveReponseDiskStorage extends HttpRetrieveResponseBase implements HttpRetriveResponse {
+public class HttpRetrieveReponseDiskStorage extends HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
     /**
      * Used to compute MD5 on url's that are later used to generate unique file names for disk storage.

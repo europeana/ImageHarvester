@@ -1,8 +1,13 @@
 package eu.europeana.harvester.httpclient;
 
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.Props;
+import eu.europeana.harvester.cluster.master.MasterActor;
+import eu.europeana.harvester.cluster.slave.SlaveActor;
 import eu.europeana.harvester.httpclient.request.HttpGET;
+import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseMemoryStorage;
-import eu.europeana.harvester.httpclient.response.HttpRetriveResponse;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
@@ -12,14 +17,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Main {
 
-
     public static void main(String[] args) throws Exception {
         HashedWheelTimer hashedWheelTimer = new HashedWheelTimer();
-        ExecutorService httpPool = Executors.newCachedThreadPool();
+
+        ExecutorService httpPool = Executors.newFixedThreadPool(1);
         ExecutorService bossPool = Executors.newCachedThreadPool();
         ExecutorService workerPool = Executors.newCachedThreadPool();
 
@@ -28,10 +35,10 @@ public class Main {
         List<String> downloadLinks = Arrays.asList(
                 "http://edition.cnn.com",
                 "http://download.thinkbroadband.com/5MB.zip",
-                "http://download.thinkbroadband.com/10MB.zip",
-                "http://download.thinkbroadband.com/20MB.zip",
-                "http://download.thinkbroadband.com/50MB.zip",
-                "http://download.thinkbroadband.com/100MB.zip",
+//                "http://download.thinkbroadband.com/10MB.zip",
+//                "http://download.thinkbroadband.com/20MB.zip",
+//                "http://download.thinkbroadband.com/50MB.zip",
+//                "http://download.thinkbroadband.com/100MB.zip",
                 "http://jwst.nasa.gov/images3/flightmirrorarrive1.jpg",
                 "http://jwst.nasa.gov/images3/flightmirrorarrive2.jpg",
                 "http://jwst.nasa.gov/images3/flightmirrorarrive3.jpg",
@@ -39,30 +46,57 @@ public class Main {
                 "http://jwst.nasa.gov/images3/flightmirrorarrive5.jpg"
         );
 
+//        long startTime = System.currentTimeMillis();
 
-        long startTime = System.currentTimeMillis();
+//        final ActorSystem system = ActorSystem.create("imageHarvester");
+//
+//        final ActorRef slave = system.actorOf(Props.create(SlaveActor.class, channelFactory, hashedWheelTimer),
+//                "slave");
+//
+//        final ActorRef master = system.actorOf(Props.create(MasterActor.class, downloadLinks, slave),
+//                "master");
+//
+//        master.tell("start", ActorRef.noSender());
 
-        HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100), 1000*1024l /* write */, 10*1024l /* read */, Duration.ZERO, 100*1024l, true);
 
-        List<Future<HttpRetriveResponse>> responses = new ArrayList<Future<HttpRetriveResponse>>();
+        HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100),
+                1000*1024l /* write */, 100*1024l /* read */, Duration.ZERO, 0l, true);
+
+        List<Future<HttpRetrieveResponse>> responses = new ArrayList<Future<HttpRetrieveResponse>>();
         for (final String downloadLink : downloadLinks) {
-            HttpRetriveResponse httpRetriveResponse = new HttpRetrieveResponseMemoryStorage();
-            HttpClient httpClient = new HttpClient(channelFactory,hashedWheelTimer,httpRetrieveConfig,httpRetriveResponse, HttpGET.build(new URL(downloadLink)));
-            Future<HttpRetriveResponse> res = httpPool.submit(httpClient);
+            HttpRetrieveResponse httpRetriveResponse = new HttpRetrieveResponseMemoryStorage();
+            HttpClient httpClient = new HttpClient(channelFactory, hashedWheelTimer, httpRetrieveConfig,
+                    httpRetriveResponse, HttpGET.build(new URL(downloadLink)));
+            Future<HttpRetrieveResponse> res = httpPool.submit(httpClient);
             responses.add(res);
         }
 
+        System.out.println("Start...");
 
-        while(true) {
-            for (Future<HttpRetriveResponse> res : responses) {
-                if (res.get().getContent() != null) {
-                    System.out.println(res.get().getUrl()+res.get().getState().toString()+" -"+res.get().getContent().length);
-                } else {
-                    System.out.println(res.get().getUrl()+"Null content");
+        int nrTasks = downloadLinks.size(), doneTasks = 0;
+        List<String> doneLinks = new ArrayList<String>();
+
+        while(doneTasks != nrTasks) {
+            for (Future<HttpRetrieveResponse> res : responses) {
+                if(res.isDone()) {
+                    HttpRetrieveResponse response = res.get();
+                    System.out.println(response.getUrl() + " " + response.getState().toString() + " + " +
+                            response.getContent().length);
+                    if(!doneLinks.contains(String.valueOf(response.getUrl()))) {
+                        doneLinks.add(String.valueOf(response.getUrl()));
+                        doneTasks++;
+                    }
+                    System.out.println("done tasks "+doneTasks+" still running "+(nrTasks-doneTasks));
                 }
             }
+
+            System.out.println(Thread.activeCount());
             Thread.sleep(1000);
         }
+
+
+        System.out.println("Done");
+        System.exit(0);
 
 //        long endTime = System.currentTimeMillis();
 //        long totalTime = endTime - startTime;
@@ -71,4 +105,3 @@ public class Main {
     }
 
 }
-

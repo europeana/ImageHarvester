@@ -1,6 +1,6 @@
 package eu.europeana.harvester.httpclient;
 
-import eu.europeana.harvester.httpclient.response.HttpRetriveResponse;
+import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.utils.SecureChatSslContextFactory;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -53,7 +53,7 @@ public class ConstrainedPipelineFactory implements ChannelPipelineFactory {
     /**
      * The object that stores the HTTP response.
      */
-    private final HttpRetriveResponse httpRetriveResponse;
+    private final HttpRetrieveResponse httpRetriveResponse;
 
     /**
      * The netty wheel timer shared by all clients.
@@ -65,9 +65,11 @@ public class ConstrainedPipelineFactory implements ChannelPipelineFactory {
      */
     private final boolean supportsSSL;
 
-    public ConstrainedPipelineFactory(Long bandwidthLimitReadInBytesPerSec, Long bandwidthLimitWriteInBytesPerSec, Duration limitsCheckInterval, boolean supportsSSL,
-                                      Long terminationThresholdSizeLimitInBytes, Duration terminationThresholdTimeLimit,
-                                      boolean handleChunks, HttpRetriveResponse httpRetriveResponse, HashedWheelTimer hashedWheelTimer) {
+    public ConstrainedPipelineFactory(Long bandwidthLimitReadInBytesPerSec, Long bandwidthLimitWriteInBytesPerSec,
+                                      Duration limitsCheckInterval, boolean supportsSSL,
+                                      Long terminationThresholdSizeLimitInBytes,
+                                      Duration terminationThresholdTimeLimit, boolean handleChunks,
+                                      HttpRetrieveResponse httpRetriveResponse, HashedWheelTimer hashedWheelTimer) {
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.limitsCheckInterval = limitsCheckInterval;
@@ -84,7 +86,8 @@ public class ConstrainedPipelineFactory implements ChannelPipelineFactory {
         final ChannelPipeline channelPipeline = Channels.pipeline();
 
         final ChannelTrafficShapingHandler channelTrafficShapingHandler =
-                new ChannelTrafficShapingHandler(hashedWheelTimer, bandwidthLimitWriteInBytesPerSec, bandwidthLimitReadInBytesPerSec, limitsCheckInterval.getMillis());
+                new ChannelTrafficShapingHandler(hashedWheelTimer, bandwidthLimitWriteInBytesPerSec,
+                        bandwidthLimitReadInBytesPerSec, limitsCheckInterval.getMillis());
         channelPipeline.addLast("CHANNEL_TRAFFIC_SHAPING", channelTrafficShapingHandler);
 
         // Enable HTTPS if necessary.
@@ -106,7 +109,8 @@ public class ConstrainedPipelineFactory implements ChannelPipelineFactory {
             channelPipeline.addLast("aggregator", new HttpChunkAggregator(1048576));
 
         channelPipeline.addLast("handler",
-                new HttpClientHandler(terminationThresholdSizeLimitInBytes, terminationThresholdTimeLimit, hashedWheelTimer, httpRetriveResponse));
+                new HttpClientHandler(terminationThresholdSizeLimitInBytes, terminationThresholdTimeLimit,
+                        hashedWheelTimer, httpRetriveResponse));
 
         return channelPipeline;
     }

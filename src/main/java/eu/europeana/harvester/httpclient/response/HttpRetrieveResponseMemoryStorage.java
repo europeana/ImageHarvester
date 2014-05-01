@@ -1,8 +1,6 @@
 package eu.europeana.harvester.httpclient.response;
 
-import java.io.IOException;
-
-public class HttpRetrieveResponseMemoryStorage extends HttpRetrieveResponseBase implements HttpRetriveResponse {
+public class HttpRetrieveResponseMemoryStorage extends HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
     private byte[] content;
 

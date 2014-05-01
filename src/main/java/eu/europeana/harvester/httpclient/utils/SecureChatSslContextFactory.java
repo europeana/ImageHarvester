@@ -21,10 +21,12 @@ import java.security.Security;
  *     {@link org.jboss.netty.handler.ssl.SslHandler}.</li>
  * <li>When initializing an {@link javax.net.ssl.SSLContext} on the client side,
  *     specify the {@link javax.net.ssl.KeyManager} that contains the client certificate as
- *     the first argument of {@link javax.net.ssl.SSLContext#init(javax.net.ssl.KeyManager[], javax.net.ssl.TrustManager[], java.security.SecureRandom)}.</li>
+ *     the first argument of {@link javax.net.ssl.SSLContext#init(javax.net.ssl.KeyManager[],
+ *     javax.net.ssl.TrustManager[], java.security.SecureRandom)}.</li>
  * <li>When initializing an {@link javax.net.ssl.SSLContext} on the server side,
  *     specify the proper {@link javax.net.ssl.TrustManager} as the second argument of
- *     {@link javax.net.ssl.SSLContext#init(javax.net.ssl.KeyManager[], javax.net.ssl.TrustManager[], java.security.SecureRandom)}
+ *     {@link javax.net.ssl.SSLContext#init(javax.net.ssl.KeyManager[], javax.net.ssl.TrustManager[],
+ *     java.security.SecureRandom)}
  *     to validate the client certificate.</li>
  * </ul>
  */

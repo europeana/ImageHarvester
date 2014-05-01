@@ -2,13 +2,12 @@ package eu.europeana.harvester.httpclient.response;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * The HTTP request response.
  */
-public interface HttpRetriveResponse {
+public interface HttpRetrieveResponse {
 
     public URL getUrl();
 

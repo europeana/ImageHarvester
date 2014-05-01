@@ -5,7 +5,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-abstract class HttpRetrieveResponseBase implements HttpRetriveResponse {
+abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
     /**
      * The exception that caused the {@enum ResponseState.ERROR} state.
