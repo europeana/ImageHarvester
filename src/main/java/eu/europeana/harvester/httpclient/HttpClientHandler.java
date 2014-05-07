@@ -71,7 +71,7 @@ public class HttpClientHandler extends SimpleChannelHandler {
         this.httpRetriveResponse = httpRetriveResponse;
 
         this.hasSizeLimitsForContent = (sizeLimitsInBytesForContent != 0);
-        this.hasTimeLimitsForContent = (timeLimitForContentRetrieval != Duration.ZERO);
+        this.hasTimeLimitsForContent = (timeLimitForContentRetrieval.getStandardSeconds() != 0);
         this.sizeLimitsInBytesForContent = sizeLimitsInBytesForContent;
         this.timeLimitForContentRetrieval = timeLimitForContentRetrieval;
 

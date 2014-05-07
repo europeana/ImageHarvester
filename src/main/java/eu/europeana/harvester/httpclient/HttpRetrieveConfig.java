@@ -2,11 +2,13 @@ package eu.europeana.harvester.httpclient;
 
 import org.joda.time.Duration;
 
+import java.io.Serializable;
+
 /**
  * The HTTP retrieve operation settings that control the bandwidth allocation & time/size limits for a request.
  * Can & should be reused across multiple requests.
  */
-public class HttpRetrieveConfig {
+public class HttpRetrieveConfig implements Serializable {
     /**
      * The interval at which the "time wheel" checks whether the limits have been reached. Must be > 0.
      */
@@ -89,5 +91,14 @@ public class HttpRetrieveConfig {
 
     public Boolean getHandleChunks() {
         return handleChunks;
+    }
+
+    @Override
+    public String toString() {
+        return "ReadLimit: " + getBandwidthLimitReadInBytesPerSec()/1024 + " kb/s" +
+               "\nWriteLimit: " + getBandwidthLimitWriteInBytesPerSec()/1024 + " kb/s" +
+               "\nCheckInterval: " + getLimitsCheckInterval() +
+               "\nStop after: " + getTerminationThresholdSizeLimitInBytes() + " bytes" +
+               " or after: " + getTerminationThresholdTimeLimit();
     }
 }

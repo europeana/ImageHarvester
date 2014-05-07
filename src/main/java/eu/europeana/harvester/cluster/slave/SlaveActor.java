@@ -27,6 +27,7 @@ public class SlaveActor extends UntypedActorWithStash {
     public SlaveActor(ChannelFactory channelFactory, HashedWheelTimer hashedWheelTimer) {
         this.channelFactory = channelFactory;
         this.hashedWheelTimer = hashedWheelTimer;
+        System.out.println("Create");
     }
 
     @Override
@@ -36,7 +37,6 @@ public class SlaveActor extends UntypedActorWithStash {
             final RetrieveUrl task = (RetrieveUrl) message;
 
             final StartedUrl startedUrl = new StartedUrl(task.getUrl());
-
             sender.tell(startedUrl, getSelf());
 
             HttpRetrieveResponse httpRetrieveResponse = new HttpRetrieveResponseMemoryStorage();

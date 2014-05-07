@@ -3,34 +3,18 @@ package eu.europeana.harvester.cluster;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.cluster.routing.AdaptiveLoadBalancingPool;
-import akka.cluster.routing.ClusterRouterPool;
-import akka.cluster.routing.ClusterRouterPoolSettings;
-import akka.cluster.routing.SystemLoadAverageMetricsSelector;
+import akka.cluster.Cluster;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import eu.europeana.harvester.cluster.master.MasterActor;
-import eu.europeana.harvester.cluster.slave.SlaveActor;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.util.HashedWheelTimer;
+import eu.europeana.harvester.cluster.master.ClusterMasterActor;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class MasterMain {
 
     public static void main(String[] args) {
-        HashedWheelTimer hashedWheelTimer = new HashedWheelTimer();
-
-        ExecutorService bossPool = Executors.newCachedThreadPool();
-        ExecutorService workerPool = Executors.newCachedThreadPool();
-
-        ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossPool, workerPool);
-
-        List<String> downloadLinks = Arrays.asList(
+        final List<String> downloadLinks = Arrays.asList(
                 "http://edition.cnn.com",
                 "http://download.thinkbroadband.com/5MB.zip",
                 "http://download.thinkbroadband.com/10MB.zip",
@@ -44,25 +28,31 @@ public class MasterMain {
                 "http://jwst.nasa.gov/images3/flightmirrorarrive5.jpg"
         );
 
-        final Config config = ConfigFactory.parseString("akka.remote.netty.tcp.port=0").
-                withFallback(ConfigFactory.parseString("akka.cluster.roles = [master]")).
-                withFallback(ConfigFactory.load("master"));
+        final Config config = ConfigFactory.parseString(
+                "akka.cluster.roles = [clusterMaster]").withFallback(
+                ConfigFactory.load("cluster"));
 
-        final ActorSystem system = ActorSystem.create("master", config);
+        final ActorSystem system = ActorSystem.create("ClusterSystem", config);
+        system.log().info("Will start when 1 backend members in the cluster.");
 
-        int totalInstances = 100;
-        int maxInstancesPerNode = 10;
-        boolean allowLocalRoutees = false;
-        String useRole = "slave";
+        //#registerOnUp
+        Cluster.get(system).registerOnMemberUp(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("Joined");
+                ActorRef clusterMaster =
+                        system.actorOf(Props.create(ClusterMasterActor.class, downloadLinks),
+                        "clusterMaster");
 
-        ActorRef slaveRouter = system.actorOf(
-                new ClusterRouterPool(new AdaptiveLoadBalancingPool(
-                        SystemLoadAverageMetricsSelector.getInstance(), 0),
-                        new ClusterRouterPoolSettings(totalInstances, maxInstancesPerNode, allowLocalRoutees, useRole)).
-                        props(Props.create(SlaveActor.class, channelFactory, hashedWheelTimer)), "slaveRouter");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
-        final ActorRef master = system.actorOf(Props.create(MasterActor.class, downloadLinks, slaveRouter), "master");
+                clusterMaster.tell("start", ActorRef.noSender());
+            }
+        });
 
-        master.tell("start", ActorRef.noSender());
     }
 }

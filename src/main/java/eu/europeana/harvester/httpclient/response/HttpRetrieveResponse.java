@@ -1,13 +1,14 @@
 package eu.europeana.harvester.httpclient.response;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.Map;
 
 /**
  * The HTTP request response.
  */
-public interface HttpRetrieveResponse {
+public interface HttpRetrieveResponse extends Serializable {
 
     public URL getUrl();
 

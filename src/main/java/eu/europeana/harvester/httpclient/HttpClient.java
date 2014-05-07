@@ -108,5 +108,3 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
     }
 
 }
-
-
