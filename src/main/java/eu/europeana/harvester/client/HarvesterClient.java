@@ -1,14 +1,13 @@
 package eu.europeana.harvester.client;
 
-import eu.europeana.harvester.domain.CollectionStats;
-import eu.europeana.harvester.domain.ProcessingJob;
-import eu.europeana.harvester.domain.ProcessingLimits;
-import eu.europeana.harvester.domain.SourceDocumentReference;
+import eu.europeana.harvester.domain.*;
 
 /**
  * The public interface to the harvester client. Used by any external system to control the harvester cluster.
  */
-public interface HarvesterClient {
+interface HarvesterClient {
+
+    public void createOrModifyLinkCheckLimits(final LinkCheckLimits linkCheckLimits);
 
     public void createOrModifyProcessingLimits(final ProcessingLimits processingLimits);
 
