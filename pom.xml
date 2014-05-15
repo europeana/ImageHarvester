@@ -8,31 +8,96 @@
     <artifactId>harvester</artifactId>
     <version>0.1-SNAPSHOT</version>
 
+    <properties>
+        <jdk.version>1.7</jdk.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.6.3.201306030806</version>
+                <executions>
+                    <!--
+                        Prepares the property pointing to the JaCoCo runtime agent which
+                        is passed as VM argument when Maven the Surefire plugin is executed.
+                    -->
+                    <execution>
+                        <id>pre-unit-test</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Sets the path to the file which contains the execution data. -->
+                            <destFile>${jacoco.ut.execution.data.file}</destFile>
+                            <!--
+                                Sets the name of the property containing the settings
+                                for JaCoCo runtime agent.
+                            -->
+                            <propertyName>surefireArgLine</propertyName>
+                        </configuration>
+                    </execution>
+                    <!--
+                        Ensures that the code coverage report for unit tests is created after
+                        unit tests have been run.
+                    -->
+                    <execution>
+                        <id>post-unit-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Sets the path to the file which contains the execution data. -->
+                            <dataFile>${jacoco.ut.execution.data.file}</dataFile>
+                            <!-- Sets the output directory for the code coverage report. -->
+                            <outputDirectory>${project.reporting.outputDirectory}/reports</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.15</version>
+                <configuration>
+                    <argLine>${surefireArgLine}</argLine>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-eclipse-plugin</artifactId>
+                <configuration>
+                    <downloadSources>true</downloadSources>
+                    <downloadJavadocs>true</downloadJavadocs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
-            <version>3.9.0.Final</version>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-configuration</groupId>
-            <artifactId>commons-configuration</artifactId>
-            <version>1.7</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>14.0.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.3</version>
-        </dependency>
-
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-actor_2.10</artifactId>
@@ -55,18 +120,56 @@
             <groupId>org.fusesource</groupId>
             <artifactId>sigar</artifactId>
             <version>1.6.4</version>
-        </dependency>        
-         <dependency>
-            <groupId>com.google.code.morphia</groupId>
-            <artifactId>morphia</artifactId>
-            <version>0.99</version>
-            <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty</artifactId>
+            <version>3.9.0.Final</version>
+        </dependency>
+
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
-            <version>2.7.2</version>
-            <scope>compile</scope>
+            <version>2.10.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.mongodb.morphia</groupId>
+            <artifactId>morphia</artifactId>
+            <version>0.107</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>14.0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.0</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+        </dependency>
+    </dependencies>
 
 </project>
