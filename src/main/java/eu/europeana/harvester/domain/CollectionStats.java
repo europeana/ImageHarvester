@@ -18,7 +18,8 @@ public class CollectionStats {
      */
     private final Map<ProcessingState,List<Long>> sourceDocumentReferenceIdsByState;
 
-    public CollectionStats(Map<ProcessingState, List<Long>> recordIdsByState, Map<ProcessingState, List<Long>> sourceDocumentReferenceIdsByState) {
+    public CollectionStats(Map<ProcessingState, List<Long>> recordIdsByState, Map<ProcessingState,
+            List<Long>> sourceDocumentReferenceIdsByState) {
         this.recordIdsByState = recordIdsByState;
         this.sourceDocumentReferenceIdsByState = sourceDocumentReferenceIdsByState;
     }

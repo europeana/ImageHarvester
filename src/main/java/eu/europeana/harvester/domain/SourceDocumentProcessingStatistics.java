@@ -1,13 +1,20 @@
 package eu.europeana.harvester.domain;
 
+import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Property;
+
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * Stores the stats for a specific processing job for a source.
  */
 public class SourceDocumentProcessingStatistics {
-	private final Long id;
+
+    @Id
+    @Property("id")
+	private final String id;
 
     /**
      * When was the statistic created.
@@ -42,12 +49,12 @@ public class SourceDocumentProcessingStatistics {
     /**
      * The reference to the source document.
      */
-	private final Long sourceDocumentReferenceId;
+	private final String sourceDocumentReferenceId;
 
     /**
      * The processing job that executed.
      */
-	private final Long processingJobId;
+	private final String processingJobId;
 
     /**
      * The HTTP response code.
@@ -85,12 +92,56 @@ public class SourceDocumentProcessingStatistics {
      */
 	private final ArrayList<Byte> httpResponseHeaders;
 
-    /**
-	 * Logs. Useful for debugging purposes
-	 */
-	private final ArrayList<Byte> logs;
+    public SourceDocumentProcessingStatistics() {
+        this.id = null;
+        this.createdAt = null;
+        this.updatedAt = null;
+        this.state = null;
+        this.providerId = null;
+        this.collectionId = null;
+        this.recordId = null;
+        this.sourceDocumentReferenceId = null;
+        this.processingJobId = null;
+        this.httpResponseCode = null;
+        this.httpResponseContentType = null;
+        this.httpResponseContentSizeInBytes = null;
+        this.retrievalDurationInSecs = null;
+        this.checkingDurationInSecs = null;
+        this.sourceIp = null;
+        this.httpResponseHeaders = null;
+    }
 
-    public SourceDocumentProcessingStatistics(Long id, Date createdAt,Date updatedAt, ProcessingState state, Long providerId, Long collectionId, Long recordId, Long sourceDocumentReferenceId, Long processingJobId, Integer httpResponseCode, String httpResponseContentType, Long httpResponseContentSizeInBytes, Long retrievalDurationInSecs, Long checkingDurationInSecs, String sourceIp, ArrayList<Byte> httpResponseHeaders, ArrayList<Byte> logs) {
+    public SourceDocumentProcessingStatistics(Date createdAt,Date updatedAt, ProcessingState state, Long providerId,
+                                              Long collectionId, Long recordId, String sourceDocumentReferenceId,
+                                              String processingJobId, Integer httpResponseCode,
+                                              String httpResponseContentType, Long httpResponseContentSizeInBytes,
+                                              Long retrievalDurationInSecs, Long checkingDurationInSecs,
+                                              String sourceIp, ArrayList<Byte> httpResponseHeaders) {
+        this.id = UUID.randomUUID().toString();
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.state = state;
+        this.providerId = providerId;
+        this.collectionId = collectionId;
+        this.recordId = recordId;
+        this.sourceDocumentReferenceId = sourceDocumentReferenceId;
+        this.processingJobId = processingJobId;
+        this.httpResponseCode = httpResponseCode;
+        this.httpResponseContentType = httpResponseContentType;
+        this.httpResponseContentSizeInBytes = httpResponseContentSizeInBytes;
+        this.retrievalDurationInSecs = retrievalDurationInSecs;
+        this.checkingDurationInSecs = checkingDurationInSecs;
+        this.sourceIp = sourceIp;
+        this.httpResponseHeaders = httpResponseHeaders;
+    }
+
+    public SourceDocumentProcessingStatistics(String id, Date createdAt,Date updatedAt, ProcessingState state,
+                                              Long providerId, Long collectionId, Long recordId,
+                                              String sourceDocumentReferenceId, String processingJobId,
+                                              Integer httpResponseCode, String httpResponseContentType,
+                                              Long httpResponseContentSizeInBytes, Long retrievalDurationInSecs,
+                                              Long checkingDurationInSecs, String sourceIp,
+                                              ArrayList<Byte> httpResponseHeaders) {
         this.id = id;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -107,10 +158,10 @@ public class SourceDocumentProcessingStatistics {
         this.checkingDurationInSecs = checkingDurationInSecs;
         this.sourceIp = sourceIp;
         this.httpResponseHeaders = httpResponseHeaders;
-        this.logs = logs;
     }
 
-    public Long getId() {
+
+    public String getId() {
         return id;
     }
 
@@ -138,11 +189,11 @@ public class SourceDocumentProcessingStatistics {
         return recordId;
     }
 
-    public Long getSourceDocumentReferenceId() {
+    public String getSourceDocumentReferenceId() {
         return sourceDocumentReferenceId;
     }
 
-    public Long getProcessingJobId() {
+    public String getProcessingJobId() {
         return processingJobId;
     }
 
@@ -174,7 +225,4 @@ public class SourceDocumentProcessingStatistics {
         return httpResponseHeaders;
     }
 
-    public ArrayList<Byte> getLogs() {
-        return logs;
-    }
 }

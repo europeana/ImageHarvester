@@ -13,10 +13,10 @@ import akka.cluster.StandardMetrics.HeapMemory;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 
-public class MetricsListener extends UntypedActor {
-  LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+class MetricsListener extends UntypedActor {
+  private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-  Cluster cluster = Cluster.get(getContext().system());
+  private final Cluster cluster = Cluster.get(getContext().system());
 
   //subscribe to ClusterMetricsChanged
   @Override
@@ -44,7 +44,6 @@ public class MetricsListener extends UntypedActor {
 
     } else if (message instanceof CurrentClusterState) {
       // ignore
-
     } else {
       unhandled(message);
     }

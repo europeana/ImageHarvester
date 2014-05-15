@@ -4,5 +4,5 @@ public enum ProcessingState {
 	ERROR,
 	DOWNLOADING,
 	SUCCESS,
-	INTERNAL_ERROR;
+	INTERNAL_ERROR
 }

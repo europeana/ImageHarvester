@@ -1,4 +1,4 @@
-package eu.europeana.harvester.cluster.messages;
+package eu.europeana.harvester.cluster.domain.messages;
 
 import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 
@@ -10,9 +10,12 @@ public class RetrieveUrl implements Serializable {
 
     private final HttpRetrieveConfig httpRetrieveConfig;
 
-    public RetrieveUrl(String url, HttpRetrieveConfig httpRetrieveConfig) {
+    private final String jobId;
+
+    public RetrieveUrl(String url, HttpRetrieveConfig httpRetrieveConfig, String jobId) {
         this.url = url;
         this.httpRetrieveConfig = httpRetrieveConfig;
+        this.jobId = jobId;
     }
 
     public String getUrl() {
@@ -23,4 +26,7 @@ public class RetrieveUrl implements Serializable {
         return httpRetrieveConfig;
     }
 
+    public String getJobId() {
+        return jobId;
+    }
 }
