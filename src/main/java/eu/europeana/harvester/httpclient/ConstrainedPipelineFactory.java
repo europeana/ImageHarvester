@@ -18,7 +18,7 @@ import javax.net.ssl.SSLEngine;
 /**
  * A custom netty pipeline factory that creates constrained pipelines.
  */
-public class ConstrainedPipelineFactory implements ChannelPipelineFactory {
+class ConstrainedPipelineFactory implements ChannelPipelineFactory {
 
     /**
      * The interval at which the "time wheel" checks whether the limits have been reached. Must be > 0.

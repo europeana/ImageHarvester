@@ -3,6 +3,7 @@ package eu.europeana.harvester.httpclient.response;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -33,4 +34,29 @@ public interface HttpRetrieveResponse extends Serializable {
     public void setException(Throwable exception);
 
     public void close() throws IOException;
+
+    public Integer getHttpResponseCode();
+
+    public void setHttpResponseCode(Integer httpResponseCode);
+
+    public String getHttpResponseContentType();
+
+    public void setHttpResponseContentType(String httpResponseContentType);
+
+    public Long getRetrievalDurationInSecs();
+
+    public void setRetrievalDurationInSecs(Long retrievalDurationInSecs);
+
+    public Long getCheckingDurationInSecs();
+
+    public void setCheckingDurationInSecs(Long checkingDurationInSecs);
+
+    public String getSourceIp();
+
+    public void setSourceIp(String sourceIp);
+
+    public ArrayList<Byte> getHttpResponseHeaders();
+
+    public void addHttpResponseHeaders(String name, String value);
+
 }

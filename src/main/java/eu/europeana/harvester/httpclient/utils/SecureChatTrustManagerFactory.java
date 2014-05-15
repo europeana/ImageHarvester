@@ -13,7 +13,7 @@ import java.security.cert.X509Certificate;
  * Bogus {@link javax.net.ssl.TrustManagerFactorySpi} which accepts any certificate
  * even if it is invalid.
  */
-public class SecureChatTrustManagerFactory extends TrustManagerFactorySpi {
+class SecureChatTrustManagerFactory extends TrustManagerFactorySpi {
 
     private static final TrustManager DUMMY_TRUST_MANAGER = new X509TrustManager() {
         public X509Certificate[] getAcceptedIssuers() {

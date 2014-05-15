@@ -7,9 +7,8 @@ import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.util.HashedWheelTimer;
 
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.IOException;
+import java.net.*;
 import java.util.concurrent.Callable;
 
 public class HttpClient implements Callable<HttpRetrieveResponse> {
@@ -66,6 +65,17 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
 
     private void startDownload() {
         httpRetriveResponse.setUrl(url);
+        try {
+            final InetAddress address = InetAddress.getByName(url.getHost());
+            httpRetriveResponse.setSourceIp(address.getHostAddress());
+
+            final HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+            httpRetriveResponse.setHttpResponseCode(httpURLConnection.getResponseCode());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         final ChannelPipelineFactory pipelineFactory =
                 new ConstrainedPipelineFactory(httpRetrieveConfig.getBandwidthLimitReadInBytesPerSec(),
                         httpRetrieveConfig.getBandwidthLimitWriteInBytesPerSec(),

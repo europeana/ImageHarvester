@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Manages the HTTP client request process enforcing the limits set on download amount and time.
  */
-public class HttpClientHandler extends SimpleChannelHandler {
+class HttpClientHandler extends SimpleChannelHandler {
 
     /**
      * Holds the total count of bytes downloaded in the current request. Used to enforce premature termination of
@@ -54,7 +54,7 @@ public class HttpClientHandler extends SimpleChannelHandler {
      * Holds the http response where all the retrieved content ends up. Also usefull for progress inspection during
      * the process.
      */
-    private final HttpRetrieveResponse httpRetriveResponse;
+    private final HttpRetrieveResponse httpRetrieveResponse;
 
     /**
      * The wheel timer usually shared across all clients.
@@ -66,9 +66,11 @@ public class HttpClientHandler extends SimpleChannelHandler {
      */
     private Boolean firstPackage;
 
+    private final long startTime;
+
     public HttpClientHandler(final Long sizeLimitsInBytesForContent, final Duration timeLimitForContentRetrieval,
-                             final HashedWheelTimer hashedWheelTimer, final HttpRetrieveResponse httpRetriveResponse) {
-        this.httpRetriveResponse = httpRetriveResponse;
+                             final HashedWheelTimer hashedWheelTimer, final HttpRetrieveResponse httpRetrieveResponse) {
+        this.httpRetrieveResponse = httpRetrieveResponse;
 
         this.hasSizeLimitsForContent = (sizeLimitsInBytesForContent != 0);
         this.hasTimeLimitsForContent = (timeLimitForContentRetrieval.getStandardSeconds() != 0);
@@ -78,6 +80,8 @@ public class HttpClientHandler extends SimpleChannelHandler {
         this.hashedWheelTimer = hashedWheelTimer;
 
         this.firstPackage = true;
+
+        this.startTime = System.currentTimeMillis();
     }
 
     private void startTimer(final Channel channel) {
@@ -85,7 +89,9 @@ public class HttpClientHandler extends SimpleChannelHandler {
         final TimerTask timerTask = new TimerTask() {
             public void run(final Timeout timeout) throws Exception {
                 if (totalContentBytesRead != 0) {
-                    httpRetriveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
+                    httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
+                    httpRetrieveResponse.setCheckingDurationInSecs((System.currentTimeMillis() - startTime) / 1000);
+                    httpRetrieveResponse.setRetrievalDurationInSecs(0l);
 
                     channel.close();
                 }
@@ -96,7 +102,7 @@ public class HttpClientHandler extends SimpleChannelHandler {
 
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
-        httpRetriveResponse.setState(ResponseState.PROCESSING);
+        httpRetrieveResponse.setState(ResponseState.PROCESSING);
 
         if (!readingChunks) {
             if (hasTimeLimitsForContent && firstPackage) {
@@ -106,14 +112,15 @@ public class HttpClientHandler extends SimpleChannelHandler {
 
             final HttpResponse response = (HttpResponse) e.getMessage();
 
-            totalContentBytesRead += response.getStatus().toString().length() +
-                    response.getProtocolVersion().toString().length();
-
             if (!response.headers().names().isEmpty()) {
                 for (final String name : response.headers().names()) {
                     for (final String value : response.headers().getAll(name)) {
-                        httpRetriveResponse.addHeader(name, value);
-                        totalContentBytesRead += name.length() + value.length();
+                        httpRetrieveResponse.addHeader(name, value);
+                        httpRetrieveResponse.addHttpResponseHeaders(name, value);
+
+                        if(name.equals("Content-Type")) {
+                            httpRetrieveResponse.setHttpResponseContentType(value);
+                        }
                     }
                 }
             }
@@ -123,23 +130,27 @@ public class HttpClientHandler extends SimpleChannelHandler {
             } else {
                 final ChannelBuffer content = response.getContent();
                 if (content.readable()) {
-                    httpRetriveResponse.addContent(response.getContent().array());
-                    httpRetriveResponse.setState(ResponseState.COMPLETED);
+                    httpRetrieveResponse.addContent(response.getContent().array());
+                    httpRetrieveResponse.setState(ResponseState.COMPLETED);
                 }
             }
         } else {
             final HttpChunk chunk = (HttpChunk) e.getMessage();
-            httpRetriveResponse.addContent(chunk.getContent().array());
+            httpRetrieveResponse.addContent(chunk.getContent().array());
             totalContentBytesRead += chunk.getContent().toString(CharsetUtil.UTF_8).length();
 
             if (chunk.isLast()) {
                 readingChunks = false;
-                httpRetriveResponse.setState(ResponseState.COMPLETED);
+                httpRetrieveResponse.setState(ResponseState.COMPLETED);
+                httpRetrieveResponse.setRetrievalDurationInSecs((System.currentTimeMillis() - startTime) / 1000);
+                httpRetrieveResponse.setCheckingDurationInSecs(0l);
             }
         }
 
         if (hasSizeLimitsForContent && totalContentBytesRead > sizeLimitsInBytesForContent) {
-            httpRetriveResponse.setState(ResponseState.FINISHED_SIZE_LIMIT);
+            httpRetrieveResponse.setState(ResponseState.FINISHED_SIZE_LIMIT);
+            httpRetrieveResponse.setCheckingDurationInSecs((System.currentTimeMillis() - startTime) / 1000);
+            httpRetrieveResponse.setRetrievalDurationInSecs(0l);
 
             ctx.getChannel().close();
         }
@@ -147,8 +158,9 @@ public class HttpClientHandler extends SimpleChannelHandler {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
-        httpRetriveResponse.setState(ResponseState.ERROR);
-        httpRetriveResponse.setException(e.getCause());
+        httpRetrieveResponse.setState(ResponseState.ERROR);
+        httpRetrieveResponse.setException(e.getCause());
+
         ctx.sendUpstream(e);
     }
 }

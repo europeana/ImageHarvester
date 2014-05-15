@@ -2,6 +2,7 @@ package eu.europeana.harvester.httpclient.response;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +33,37 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
      * on the storage strategy, loading the content might be very expensive.
      */
     protected Long contentSizeInBytes = 0l;
+
+    /**
+     * The HTTP response code.
+     */
+    private Integer httpResponseCode;
+
+    /**
+     * The HTTP response content type.
+     */
+    private String httpResponseContentType;
+
+    /**
+     * The retrieval duration in seconds. Zero if the source is not retrieved.
+     */
+    private Long retrievalDurationInSecs;
+
+    /**
+     * The checking duration in seconds. The same as the retrieval if the source is retrieved.
+     */
+    private Long checkingDurationInSecs;
+
+    /**
+     * The IP of the source. Useful for debugging when working with DNS load balanced sources that have a pool of real
+     * IP's for the same domain name.
+     */
+    private String sourceIp;
+
+    /**
+     * The HTTP response headers.
+     */
+    private ArrayList<Byte> httpResponseHeaders;
 
     @Override
     synchronized public ResponseState getState() {
@@ -83,4 +115,73 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
         // NO IMPLEMENTATION as by default most responses don't need to be closed.
     }
 
+    @Override
+    public Integer getHttpResponseCode() {
+        return httpResponseCode;
+    }
+
+    @Override
+    public void setHttpResponseCode(Integer httpResponseCode) {
+        this.httpResponseCode = httpResponseCode;
+    }
+
+    @Override
+    public String getHttpResponseContentType() {
+        return httpResponseContentType;
+    }
+
+    @Override
+    public void setHttpResponseContentType(String httpResponseContentType) {
+        this.httpResponseContentType = httpResponseContentType;
+    }
+
+    @Override
+    public Long getRetrievalDurationInSecs() {
+        return retrievalDurationInSecs;
+    }
+
+    @Override
+    public void setRetrievalDurationInSecs(Long retrievalDurationInSecs) {
+        this.retrievalDurationInSecs = retrievalDurationInSecs;
+    }
+
+    @Override
+    public Long getCheckingDurationInSecs() {
+        return checkingDurationInSecs;
+    }
+
+    @Override
+    public void setCheckingDurationInSecs(Long checkingDurationInSecs) {
+        this.checkingDurationInSecs = checkingDurationInSecs;
+    }
+
+    @Override
+    public String getSourceIp() {
+        return sourceIp;
+    }
+
+    @Override
+    public void setSourceIp(String sourceIp) {
+        this.sourceIp = sourceIp;
+    }
+
+    @Override
+    public ArrayList<Byte> getHttpResponseHeaders() {
+        return httpResponseHeaders;
+    }
+
+    @Override
+    public void addHttpResponseHeaders(String name, String value) {
+        if(httpResponseHeaders == null) {
+            httpResponseHeaders = new ArrayList<Byte>();
+        }
+
+        String header = name + "=" + value + "\n";
+
+        byte[] bHeader = header.getBytes();
+
+        for(Byte b : bHeader) {
+            httpResponseHeaders.add(b);
+        }
+    }
 }

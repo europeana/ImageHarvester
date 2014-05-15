@@ -1,6 +1,8 @@
 package eu.europeana.harvester.httpclient.response;
 
 
+import java.net.URL;
+
 /**
  * Factory that creates {@link eu.europeana.harvester.httpclient.response.HttpRetrieveResponse} instances based on type.
  */
@@ -12,12 +14,12 @@ public class HttpRetrieveResponseFactory {
      * @return
      * @throws Exception
      */
-    public HttpRetrieveResponse create(ResponseType type, String basePath) throws Exception {
+    public HttpRetrieveResponse create(ResponseType type, String basePath, URL url) throws Exception {
         switch (type) {
             case MEMORY_STORAGE:
                 return new HttpRetrieveResponseMemoryStorage();
             case DISK_STORAGE:
-                return new HttpRetrieveReponseDiskStorage(basePath);
+                return new HttpRetrieveReponseDiskStorage(url, basePath);
             default:
                 throw new Exception("Type error");
         }

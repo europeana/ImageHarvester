@@ -15,7 +15,7 @@ import java.io.InputStream;
  *          -keystore cert.jks
  * </pre>
  */
-public final class SecureChatKeyStore {
+final class SecureChatKeyStore {
     private static final short[] DATA = {
         0xfe, 0xed, 0xfe, 0xed, 0x00, 0x00, 0x00, 0x02,
         0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01,

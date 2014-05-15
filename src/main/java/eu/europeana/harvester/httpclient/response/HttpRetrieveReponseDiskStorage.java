@@ -8,6 +8,7 @@ import com.google.common.hash.Hashing;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 
 /**
  * Stores the retrieved content on disk thus minimizing the memory usage to hold only meta info (ie. headers, url, etc.)
@@ -31,12 +32,12 @@ public class HttpRetrieveReponseDiskStorage extends HttpRetrieveResponseBase imp
 
     private final String absolutePath;
 
-    public HttpRetrieveReponseDiskStorage(String basePath) throws IOException {
+    public HttpRetrieveReponseDiskStorage(URL url, String basePath) throws IOException {
         this.basePath = basePath;
 
         try {
             final HashCode hc = hf.newHasher()
-                    .putString(getUrl().getPath(), Charsets.UTF_8)
+                    .putString(url.getPath(), Charsets.UTF_8)
                     .hash();
             absolutePath = (basePath + "/" + hc.toString());
             final File file = new File(absolutePath);
