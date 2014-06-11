@@ -4,6 +4,8 @@ import akka.actor.ActorSystem;
 import akka.actor.Props;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigSyntax;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.master.NodeMasterActor;
 import eu.europeana.harvester.httpclient.response.ResponseType;
@@ -11,6 +13,7 @@ import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
 
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -20,10 +23,20 @@ class SlaveMain {
         String configFilePath;
 
         if(args.length == 0) {
-            configFilePath = "slave";
+            configFilePath = "./src/main/resources/slave.conf";
         } else {
             configFilePath = args[0];
         }
+
+        File configFile = new File(configFilePath);
+        if(!configFile.exists()) {
+            System.out.println("Config file not found!");
+            System.exit(-1);
+        }
+
+        final Config config =
+                ConfigFactory.parseFileAnySyntax(configFile,
+                        ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
 
         HashedWheelTimer hashedWheelTimer = new HashedWheelTimer();
 
@@ -31,8 +44,6 @@ class SlaveMain {
         ExecutorService workerPool = Executors.newCachedThreadPool();
 
         ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossPool, workerPool);
-
-        final Config config = ConfigFactory.load(configFilePath);
 
         ResponseType responseType;
         if(config.getString("slave.responseType").equals("diskStorage")) {
@@ -49,6 +60,6 @@ class SlaveMain {
         system.actorOf(Props.create(NodeMasterActor.class, channelFactory, hashedWheelTimer, nodeMasterConfig),
                 "nodeMaster");
 
-        system.actorOf(Props.create(MetricsListener.class), "metricsListener");
+        //system.actorOf(Props.create(MetricsListener.class), "metricsListener");
     }
 }

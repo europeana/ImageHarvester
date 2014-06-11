@@ -1,8 +1,13 @@
 package eu.europeana.harvester.domain;
 
-import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Property;
+import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.Property;
+import com.google.common.base.Charsets;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -18,19 +23,9 @@ public class SourceDocumentReference {
 	private final String id;
 
     /**
-     * The provider that owns the link. When null it's not owned by any provider.
+     * An object which contains: provider id, collection id, record id
      */
-    private final Long providerId;
-
-    /**
-     * The collection that owns the link. When null it's not owned by any collection.
-     */
-    private final Long collectionId;
-
-    /**
-     * The record that owns the link. When null it's not owned by any record.
-     */
-    private final Long recordId;
+    private final ReferenceOwner referenceOwner;
 
     /**
      * The url.
@@ -38,84 +33,106 @@ public class SourceDocumentReference {
 	private final String url;
 
     /**
-     * Whether to check if the link exists.
+     * The IP address.
      */
-    private final Boolean checked;
+    private final String ipAddress;
 
     /**
-     * Whether to download the link.
+     * The unique id of the last saved object with statistics.(SourceDocumentProcessingStatistics)
      */
-    private final Boolean retrieved;
+    private final String lastStatsId;
 
     /**
-     * Whether to debug the link.
+     * The number of redirect links.
      */
-    private final Boolean debugged;
+    private final Long redirectPathDepth;
+
+    /**
+     * List of redirect links.
+     */
+    private final List<String> redirectionPath;
+
+    /**
+     * Used to compute MD5 on url's that are later used to generate unique id's.
+     */
+    private static final HashFunction hf = Hashing.md5();
 
     public SourceDocumentReference() {
+        this.lastStatsId = null;
         this.id = null;
-        this.providerId = null;
-        this.collectionId = null;
-        this.recordId = null;
+        this.referenceOwner = null;
         this.url = null;
-        this.checked = null;
-        this.retrieved = null;
-        this.debugged = null;
+        this.ipAddress = null;
+        this.redirectPathDepth = null;
+        this.redirectionPath = null;
     }
 
-    public SourceDocumentReference(Long providerId, Long collectionId, Long recordId, String url, Boolean checked,
-                                   Boolean retrieved, Boolean debugged) {
-        this.id = UUID.randomUUID().toString();
-        this.providerId = providerId;
-        this.collectionId = collectionId;
-        this.recordId = recordId;
+    public SourceDocumentReference(ReferenceOwner referenceOwner, String url, String ipAddress, String lastStatsId,
+                                   Long redirectPathDepth, List<String> redirectionPath) {
+        final HashCode hc = hf.newHasher()
+                .putString(url, Charsets.UTF_8)
+                .hash();
+        this.id = hc.toString();
+        this.referenceOwner = referenceOwner;
         this.url = url;
-        this.checked = checked;
-        this.retrieved = retrieved;
-        this.debugged = debugged;
+        this.ipAddress = ipAddress;
+        this.lastStatsId = lastStatsId;
+        this.redirectPathDepth = redirectPathDepth;
+        this.redirectionPath = redirectionPath;
     }
 
-    public SourceDocumentReference(String id, Long providerId, Long collectionId, Long recordId, String url,
-                                   Boolean checked, Boolean retrieved, Boolean debugged) {
+    public SourceDocumentReference(String id, ReferenceOwner referenceOwner, String url, String ipAddress,
+                                   String lastStatsId, Long redirectPathDepth, List<String> redirectionPath) {
         this.id = id;
-        this.providerId = providerId;
-        this.collectionId = collectionId;
-        this.recordId = recordId;
+        this.referenceOwner = referenceOwner;
         this.url = url;
-        this.checked = checked;
-        this.retrieved = retrieved;
-        this.debugged = debugged;
+        this.ipAddress = ipAddress;
+        this.lastStatsId = lastStatsId;
+        this.redirectPathDepth = redirectPathDepth;
+        this.redirectionPath = redirectionPath;
     }
 
     public String getId() {
         return id;
     }
 
-    public Long getProviderId() {
-        return providerId;
-    }
-
-    public Long getCollectionId() {
-        return collectionId;
-    }
-
-    public Long getRecordId() {
-        return recordId;
+    public ReferenceOwner getReferenceOwner() {
+        return referenceOwner;
     }
 
     public String getUrl() {
         return url;
     }
 
-    public Boolean getChecked() {
-        return checked;
+    public String getIpAddress() {
+        return ipAddress;
     }
 
-    public Boolean getRetrieved() {
-        return retrieved;
+    public String getLastStatsId() {
+        return lastStatsId;
     }
 
-    public Boolean getDebugged() {
-        return debugged;
+    public Long getRedirectPathDepth() {
+        return redirectPathDepth;
     }
+
+    public List<String> getRedirectionPath() {
+        return redirectionPath;
+    }
+
+    public SourceDocumentReference withLastStatsId(String id) {
+        return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
+                this.ipAddress, id, this.redirectPathDepth, this.redirectionPath);
+    }
+
+    public SourceDocumentReference withRedirectionPath(List<String> redirectionPath) {
+        return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
+                this.ipAddress, this.lastStatsId, (long)redirectionPath.size(), redirectionPath);
+    }
+
+    public SourceDocumentReference withIPAddress(String ipAddress) {
+        return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
+                ipAddress, this.lastStatsId, this.redirectPathDepth, this.redirectionPath);
+    }
+
 }

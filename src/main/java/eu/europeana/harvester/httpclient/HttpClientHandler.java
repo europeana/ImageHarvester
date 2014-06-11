@@ -1,6 +1,8 @@
 package eu.europeana.harvester.httpclient;
 
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
+import eu.europeana.harvester.httpclient.response.ResponseHeader;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.*;
@@ -12,6 +14,9 @@ import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.TimerTask;
 import org.joda.time.Duration;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -62,18 +67,33 @@ class HttpClientHandler extends SimpleChannelHandler {
     private final HashedWheelTimer hashedWheelTimer;
 
     /**
+     * The task type: link check, conditional or unconditional download
+     */
+    private final DocumentReferenceTaskType documentReferenceTaskType;
+
+    /**
      * A flag which shows that the arriving package is the first or not
      */
     private Boolean firstPackage;
 
-    private final long startTime;
+    private final long connectionStartTime;
+
+    private long downloadStartTime;
+
+    /**
+     * The response headers.
+     */
+    private final List<ResponseHeader> headers;
 
     public HttpClientHandler(final Long sizeLimitsInBytesForContent, final Duration timeLimitForContentRetrieval,
-                             final HashedWheelTimer hashedWheelTimer, final HttpRetrieveResponse httpRetrieveResponse) {
+                             final HashedWheelTimer hashedWheelTimer, final HttpRetrieveResponse httpRetrieveResponse,
+                             DocumentReferenceTaskType documentReferenceTaskType, List<ResponseHeader> headers) {
         this.httpRetrieveResponse = httpRetrieveResponse;
+        this.documentReferenceTaskType = documentReferenceTaskType;
+        this.headers = headers;
 
         this.hasSizeLimitsForContent = (sizeLimitsInBytesForContent != 0);
-        this.hasTimeLimitsForContent = (timeLimitForContentRetrieval.getStandardSeconds() != 0);
+        this.hasTimeLimitsForContent = (timeLimitForContentRetrieval.getMillis() != 0);
         this.sizeLimitsInBytesForContent = sizeLimitsInBytesForContent;
         this.timeLimitForContentRetrieval = timeLimitForContentRetrieval;
 
@@ -81,7 +101,7 @@ class HttpClientHandler extends SimpleChannelHandler {
 
         this.firstPackage = true;
 
-        this.startTime = System.currentTimeMillis();
+        this.connectionStartTime = System.currentTimeMillis();
     }
 
     private void startTimer(final Channel channel) {
@@ -90,14 +110,15 @@ class HttpClientHandler extends SimpleChannelHandler {
             public void run(final Timeout timeout) throws Exception {
                 if (totalContentBytesRead != 0) {
                     httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setCheckingDurationInSecs((System.currentTimeMillis() - startTime) / 1000);
-                    httpRetrieveResponse.setRetrievalDurationInSecs(0l);
+                    httpRetrieveResponse.setCheckingDurationInMilliSecs(System.currentTimeMillis() - downloadStartTime);
+                    httpRetrieveResponse.setRetrievalDurationInMilliSecs(0l);
 
                     channel.close();
                 }
             }
         };
-        hashedWheelTimer.newTimeout(timerTask, timeLimitForContentRetrieval.getStandardSeconds(), TimeUnit.SECONDS);
+
+        hashedWheelTimer.newTimeout(timerTask, timeLimitForContentRetrieval.getMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -113,17 +134,10 @@ class HttpClientHandler extends SimpleChannelHandler {
             final HttpResponse response = (HttpResponse) e.getMessage();
 
             if (!response.headers().names().isEmpty()) {
-                for (final String name : response.headers().names()) {
-                    for (final String value : response.headers().getAll(name)) {
-                        httpRetrieveResponse.addHeader(name, value);
-                        httpRetrieveResponse.addHttpResponseHeaders(name, value);
-
-                        if(name.equals("Content-Type")) {
-                            httpRetrieveResponse.setHttpResponseContentType(value);
-                        }
-                    }
-                }
+                handleHeaders(response, ctx);
             }
+
+            handleDifferentTaskTypes(ctx);
 
             if (response.isChunked()) {
                 readingChunks = true;
@@ -142,18 +156,113 @@ class HttpClientHandler extends SimpleChannelHandler {
             if (chunk.isLast()) {
                 readingChunks = false;
                 httpRetrieveResponse.setState(ResponseState.COMPLETED);
-                httpRetrieveResponse.setRetrievalDurationInSecs((System.currentTimeMillis() - startTime) / 1000);
-                httpRetrieveResponse.setCheckingDurationInSecs(0l);
+                httpRetrieveResponse.setRetrievalDurationInMilliSecs(System.currentTimeMillis() - downloadStartTime);
+                httpRetrieveResponse.setCheckingDurationInMilliSecs(0l);
             }
         }
 
         if (hasSizeLimitsForContent && totalContentBytesRead > sizeLimitsInBytesForContent) {
             httpRetrieveResponse.setState(ResponseState.FINISHED_SIZE_LIMIT);
-            httpRetrieveResponse.setCheckingDurationInSecs((System.currentTimeMillis() - startTime) / 1000);
-            httpRetrieveResponse.setRetrievalDurationInSecs(0l);
+            httpRetrieveResponse.setCheckingDurationInMilliSecs(System.currentTimeMillis() - downloadStartTime);
+            httpRetrieveResponse.setRetrievalDurationInMilliSecs(0l);
 
             ctx.getChannel().close();
         }
+    }
+
+    private void handleHeaders(HttpResponse response, final ChannelHandlerContext ctx) {
+        httpRetrieveResponse.setSocketConnectToDownloadStartDurationInMilliSecs(
+                (System.currentTimeMillis() - connectionStartTime));
+
+        // Reads the headers
+        for (final String name : response.headers().names()) {
+            for (final String value : response.headers().getAll(name)) {
+                httpRetrieveResponse.addHeader(name, value);
+                httpRetrieveResponse.addHttpResponseHeaders(name, value);
+
+                if(name.equals("Content-Type")) {
+                    httpRetrieveResponse.setHttpResponseContentType(value);
+                }
+
+                // Redirect url
+                if(name.equals("Location")) {
+                    httpRetrieveResponse.addRedirectionPath(value);
+
+                    ctx.getChannel().close();
+                }
+            }
+        }
+    }
+
+    private void handleDifferentTaskTypes(final ChannelHandlerContext ctx) {
+        switch(documentReferenceTaskType) {
+            case CHECK_LINK:
+                httpRetrieveResponse.setState(ResponseState.COMPLETED);
+                httpRetrieveResponse.setRetrievalDurationInMilliSecs(0l);
+                httpRetrieveResponse.setCheckingDurationInMilliSecs(
+                        httpRetrieveResponse.getSocketConnectToDownloadStartDurationInMilliSecs());
+
+                ctx.getChannel().close();
+                break;
+            case CONDITIONAL_DOWNLOAD:
+                if(headers != null) {
+                    boolean changedModifiedDate = false;
+                    boolean changedContentLength = false;
+
+                    ArrayList<Byte> lastModified = null;
+                    ArrayList<Byte> contentLength = null;
+
+                    for(ResponseHeader responseHeader : httpRetrieveResponse.getHttpResponseHeaders()) {
+                        if(responseHeader.getKey().equals("Last-Modified")) {
+                            lastModified = responseHeader.getValue();
+                        } else
+                        if(responseHeader.getKey().equals("Content-Length")) {
+                            contentLength = responseHeader.getValue();
+                        }
+                    }
+
+                    for(ResponseHeader responseHeader : headers) {
+                        if(responseHeader.getKey().equals("Last-Modified")) {
+                            changedModifiedDate = isHeaderChanged(lastModified, responseHeader.getValue());
+                        } else
+                        if(responseHeader.getKey().equals("Content-Length")) {
+                            changedContentLength = isHeaderChanged(contentLength, responseHeader.getValue());
+                        }
+                    }
+
+                    if(!changedModifiedDate && !changedContentLength) {
+                        httpRetrieveResponse.setState(ResponseState.COMPLETED);
+                        httpRetrieveResponse.setRetrievalDurationInMilliSecs(0l);
+                        httpRetrieveResponse.setCheckingDurationInMilliSecs(0l);
+
+                        ctx.getChannel().close();
+                    }
+                }
+                break;
+            case UNCONDITIONAL_DOWNLOAD:
+                break;
+        }
+
+        downloadStartTime = System.currentTimeMillis();
+    }
+
+    /**
+     * If the task type is conditional download we download the content only if there something has changed
+     * @param oldHeader old header content
+     * @param newHeader new header content
+     * @return true if changed false otherwise
+     */
+    private boolean isHeaderChanged(ArrayList<Byte> oldHeader, ArrayList<Byte> newHeader) {
+        if(oldHeader == null) return false;
+        if(newHeader == null) return true;
+        if(oldHeader.size() != newHeader.size()) return true;
+
+        for(int i=0; i<oldHeader.size(); i++) {
+            if(!oldHeader.get(i).equals(newHeader.get(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -163,4 +272,5 @@ class HttpClientHandler extends SimpleChannelHandler {
 
         ctx.sendUpstream(e);
     }
+
 }

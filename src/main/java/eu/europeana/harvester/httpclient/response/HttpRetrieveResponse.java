@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,20 +44,30 @@ public interface HttpRetrieveResponse extends Serializable {
 
     public void setHttpResponseContentType(String httpResponseContentType);
 
-    public Long getRetrievalDurationInSecs();
+    public Long getSocketConnectToDownloadStartDurationInMilliSecs();
 
-    public void setRetrievalDurationInSecs(Long retrievalDurationInSecs);
+    public void setSocketConnectToDownloadStartDurationInMilliSecs(Long socketConnectToDownloadStartDurationInSecs);
 
-    public Long getCheckingDurationInSecs();
+    public Long getRetrievalDurationInMilliSecs();
 
-    public void setCheckingDurationInSecs(Long checkingDurationInSecs);
+    public void setRetrievalDurationInMilliSecs(Long retrievalDurationInSecs);
+
+    public Long getCheckingDurationInMilliSecs();
+
+    public void setCheckingDurationInMilliSecs(Long checkingDurationInSecs);
 
     public String getSourceIp();
 
     public void setSourceIp(String sourceIp);
 
-    public ArrayList<Byte> getHttpResponseHeaders();
+    public List<ResponseHeader> getHttpResponseHeaders();
 
     public void addHttpResponseHeaders(String name, String value);
+
+    public List<String> getRedirectionPath();
+
+    public void setRedirectionPath(List<String> redirectionPath);
+
+    public void addRedirectionPath(String redirectionPath);
 
 }

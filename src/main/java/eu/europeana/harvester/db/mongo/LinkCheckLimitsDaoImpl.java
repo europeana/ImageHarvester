@@ -1,9 +1,9 @@
 package eu.europeana.harvester.db.mongo;
 
+import com.google.code.morphia.Datastore;
+import com.google.code.morphia.query.Query;
 import eu.europeana.harvester.db.LinkCheckLimitsDao;
 import eu.europeana.harvester.domain.LinkCheckLimits;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.query.Query;
 
 import java.util.List;
 
@@ -61,6 +61,13 @@ public class LinkCheckLimitsDaoImpl implements LinkCheckLimitsDao {
         }
 
         return false;
+    }
+
+    @Override
+    public void createOrModify(LinkCheckLimits linkCheckLimit) {
+        if(!update(linkCheckLimit)) {
+            create(linkCheckLimit);
+        }
     }
 
 }

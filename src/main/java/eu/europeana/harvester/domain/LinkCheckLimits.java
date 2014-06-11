@@ -1,6 +1,8 @@
 package eu.europeana.harvester.domain;
 
-import org.joda.time.Duration;
+
+import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.Property;
 
 import java.util.UUID;
 
@@ -9,6 +11,8 @@ import java.util.UUID;
  */
 public class LinkCheckLimits {
 
+    @Id
+    @Property("id")
     private final String id;
 
     /**
@@ -24,7 +28,7 @@ public class LinkCheckLimits {
     /**
      * The time threshold after which the retrieval is terminated. 0 means no limit.
      */
-    private final Duration terminationThresholdTimeLimit;
+    private final Long terminationThresholdTimeLimit;
 
     /**
      * The content size threshold after which the retrieval is terminated. 0 means no limit.
@@ -40,7 +44,7 @@ public class LinkCheckLimits {
     }
 
     public LinkCheckLimits(Long bandwidthLimitWriteInBytesPerSec, Long bandwidthLimitReadInBytesPerSec,
-                           Duration terminationThresholdTimeLimit, Long terminationThresholdSizeLimitInBytes) {
+                           Long terminationThresholdTimeLimit, Long terminationThresholdSizeLimitInBytes) {
         this.id = UUID.randomUUID().toString();
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
@@ -49,7 +53,7 @@ public class LinkCheckLimits {
     }
 
     public LinkCheckLimits(String id, Long bandwidthLimitWriteInBytesPerSec, Long bandwidthLimitReadInBytesPerSec,
-                           Duration terminationThresholdTimeLimit, Long terminationThresholdSizeLimitInBytes) {
+                           Long terminationThresholdTimeLimit, Long terminationThresholdSizeLimitInBytes) {
         this.id = id;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
@@ -69,7 +73,7 @@ public class LinkCheckLimits {
         return bandwidthLimitReadInBytesPerSec;
     }
 
-    public Duration getTerminationThresholdTimeLimit() {
+    public Long getTerminationThresholdTimeLimit() {
         return terminationThresholdTimeLimit;
     }
 

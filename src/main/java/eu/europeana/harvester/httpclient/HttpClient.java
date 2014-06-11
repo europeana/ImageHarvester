@@ -1,6 +1,7 @@
 package eu.europeana.harvester.httpclient;
 
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
+import eu.europeana.harvester.httpclient.response.ResponseHeader;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
@@ -9,6 +10,9 @@ import org.jboss.netty.util.HashedWheelTimer;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 public class HttpClient implements Callable<HttpRetrieveResponse> {
@@ -50,12 +54,18 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
 
     private ChannelFuture closeFuture;
 
+    /**
+     * List of headers from the last download, it's needed only if the task type is conditional download
+     */
+    private final List<ResponseHeader> headers;
+
     public HttpClient(ChannelFactory channelFactory, HashedWheelTimer hashedWheelTimer,
-                      HttpRetrieveConfig httpRetrieveConfig, HttpRetrieveResponse httpRetriveResponse,
+                      HttpRetrieveConfig httpRetrieveConfig, List<ResponseHeader> headers, HttpRetrieveResponse httpRetriveResponse,
                       HttpRequest httpRequest) throws MalformedURLException {
         this.channelFactory = channelFactory;
         this.hashedWheelTimer = hashedWheelTimer;
         this.httpRetrieveConfig = httpRetrieveConfig;
+        this.headers = headers;
         this.httpRetriveResponse = httpRetriveResponse;
         this.httpRequest = httpRequest;
         this.url = new URL(httpRequest.getUri());
@@ -70,9 +80,25 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
             httpRetriveResponse.setSourceIp(address.getHostAddress());
 
             final HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpRetriveResponse.setHttpResponseCode(httpURLConnection.getResponseCode());
+            httpURLConnection.setRequestMethod("GET");
+            httpURLConnection.setInstanceFollowRedirects(false);
+            try {
+                httpURLConnection.connect();
+            } catch (Exception e) {
+                httpRetriveResponse.setHttpResponseCode(-1);
+                return;
+            }
+            try {
+                int responseCode = httpURLConnection.getResponseCode();
+                httpRetriveResponse.setHttpResponseCode(responseCode);
+            } catch (Exception e) {
+                httpRetriveResponse.setHttpResponseCode(-1);
+                return;
+            }
         } catch (UnknownHostException e) {
+            httpRetriveResponse.setHttpResponseCode(-1);
             e.printStackTrace();
+            return;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -82,7 +108,7 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
                         httpRetrieveConfig.getLimitsCheckInterval(), url.getProtocol().startsWith("https"),
                         httpRetrieveConfig.getTerminationThresholdSizeLimitInBytes(),
                         httpRetrieveConfig.getTerminationThresholdTimeLimit(), httpRetrieveConfig.getHandleChunks(),
-                        httpRetriveResponse, hashedWheelTimer);
+                        httpRetrieveConfig.getTaskType(), headers, httpRetriveResponse, hashedWheelTimer);
 
         final ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
         bootstrap.setPipelineFactory(pipelineFactory);

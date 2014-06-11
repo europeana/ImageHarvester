@@ -6,12 +6,8 @@ import akka.event.LoggingAdapter;
 import akka.routing.DefaultResizer;
 import akka.routing.SmallestMailboxPool;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
-import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
-import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
-import eu.europeana.harvester.cluster.domain.messages.SendResponse;
-import eu.europeana.harvester.cluster.domain.messages.StartedUrl;
+import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.slave.SlaveActor;
-import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
@@ -23,6 +19,9 @@ public class NodeMasterActor extends UntypedActor{
 
     private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
+    /**
+     * The routers reference. We send all the messages to the router and then it decides which slave will get it.
+     */
     private ActorRef router;
     /**
      * The channel factory used by netty to build the channel.
@@ -34,9 +33,22 @@ public class NodeMasterActor extends UntypedActor{
      */
     private final HashedWheelTimer hashedWheelTimer;
 
+    /**
+     * An object which contains all the config information needed by this actor to start.
+     */
     private final NodeMasterConfig nodeMasterConfig;
 
+    /**
+     * Reference to the cluster master actor.
+     * We need this to send him back statistics about the download, error messages or any other type of message.
+     */
     private ActorRef clusterMaster;
+
+    /**
+     * Reference to the ping master actor.
+     * We need this to send him back statistics about the ping, error messages or any other type of message.
+     */
+    private ActorRef pingMaster;
 
     public NodeMasterActor(ChannelFactory channelFactory, HashedWheelTimer hashedWheelTimer,
                            NodeMasterConfig nodeMasterConfig) {
@@ -77,19 +89,22 @@ public class NodeMasterActor extends UntypedActor{
             log.info("ClusterMaster: " + clusterMaster);
             clusterMaster.tell(message, getSelf());
         } else
-        if(message instanceof SendResponse) {
+        if(message instanceof DoneDownload) {
             log.info("From " + getSender() + " to master: " +
-                    ((SendResponse)message).getHttpRetrieveResponse().getUrl() + " " +
-                    ((SendResponse)message).getHttpRetrieveResponse().getContentSizeInBytes() + " done.");
+                    ((DoneDownload) message).getUrl() + " " +
+                    ((DoneDownload) message).getHttpResponseContentSizeInBytes()/1024/1024 + " done.");
             log.info("ClusterMaster: " + clusterMaster);
 
-            final HttpRetrieveResponse httpRetrieveResponse = ((SendResponse)message).getHttpRetrieveResponse();
-
-            clusterMaster.tell(new DoneDownload(((SendResponse)message).getHttpRetrieveResponse().getUrl(),
-                    ((SendResponse)message).getJobId(), httpRetrieveResponse.getHttpResponseCode(),
-                    httpRetrieveResponse.getHttpResponseContentType(), httpRetrieveResponse.getContentSizeInBytes(),
-                    httpRetrieveResponse.getRetrievalDurationInSecs(), httpRetrieveResponse.getCheckingDurationInSecs(),
-                    httpRetrieveResponse.getSourceIp(), httpRetrieveResponse.getHttpResponseHeaders()), getSelf());
+            clusterMaster.tell(message, getSelf());
+        } else
+        if(message instanceof StartPing) {
+            pingMaster = getSender();
+            router.tell(message, getSelf());
+        } else
+        if(message instanceof DonePing) {
+            log.info("From " + getSender() + " to master: " + ((DonePing)message).getIpAddress());
+            pingMaster.tell(message, getSelf());
         }
     }
+
 }

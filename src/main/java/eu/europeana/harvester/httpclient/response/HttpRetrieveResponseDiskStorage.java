@@ -1,24 +1,13 @@
 package eu.europeana.harvester.httpclient.response;
 
-import com.google.common.base.Charsets;
-import com.google.common.hash.HashCode;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 
 /**
  * Stores the retrieved content on disk thus minimizing the memory usage to hold only meta info (ie. headers, url, etc.)
  */
-public class HttpRetrieveReponseDiskStorage extends HttpRetrieveResponseBase implements HttpRetrieveResponse {
-
-    /**
-     * Used to compute MD5 on url's that are later used to generate unique file names for disk storage.
-     */
-    private static final HashFunction hf = Hashing.md5();
+public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
     /**
      * The file where to store the content.
@@ -26,20 +15,13 @@ public class HttpRetrieveReponseDiskStorage extends HttpRetrieveResponseBase imp
     private final FileOutputStream fo;
 
     /**
-     * The base base path where the files are stored.
+     * The absolute path on disk where the content of the download will be saved.
      */
-    private final String basePath;
-
     private final String absolutePath;
 
-    public HttpRetrieveReponseDiskStorage(URL url, String basePath) throws IOException {
-        this.basePath = basePath;
-
+    public HttpRetrieveResponseDiskStorage(String path) throws IOException {
+        this.absolutePath = path;
         try {
-            final HashCode hc = hf.newHasher()
-                    .putString(url.getPath(), Charsets.UTF_8)
-                    .hash();
-            absolutePath = (basePath + "/" + hc.toString());
             final File file = new File(absolutePath);
             file.createNewFile();
             fo = new FileOutputStream(file.getAbsoluteFile());
@@ -52,10 +34,6 @@ public class HttpRetrieveReponseDiskStorage extends HttpRetrieveResponseBase imp
 
     synchronized public String getAbsolutePath() {
         return absolutePath;
-    }
-
-    synchronized public String getBasePath() {
-        return basePath;
     }
 
     @Override

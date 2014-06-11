@@ -1,5 +1,6 @@
 package eu.europeana.harvester.httpclient;
 
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import org.joda.time.Duration;
 
 import java.io.Serializable;
@@ -9,6 +10,7 @@ import java.io.Serializable;
  * Can & should be reused across multiple requests.
  */
 public class HttpRetrieveConfig implements Serializable {
+
     /**
      * The interval at which the "time wheel" checks whether the limits have been reached. Must be > 0.
      */
@@ -39,22 +41,29 @@ public class HttpRetrieveConfig implements Serializable {
      */
     private final Boolean handleChunks;
 
+    /**
+     * The specific task type: check limit, conditional or unconditional download.
+     */
+    private final DocumentReferenceTaskType taskType;
+
     public HttpRetrieveConfig(Duration limitsCheckInterval, Long bandwidthLimitWriteInBytesPerSec,
                               Long bandwidthLimitReadInBytesPerSec, Duration terminationThresholdTimeLimit,
-                              Long terminationThresholdSizeLimitInBytes, Boolean handleChunks) {
+                              Long terminationThresholdSizeLimitInBytes, Boolean handleChunks, DocumentReferenceTaskType taskType) {
         this.limitsCheckInterval = limitsCheckInterval;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
         this.terminationThresholdTimeLimit = terminationThresholdTimeLimit;
         this.terminationThresholdSizeLimitInBytes = terminationThresholdSizeLimitInBytes;
         this.handleChunks = handleChunks;
+        this.taskType = taskType;
     }
 
     public HttpRetrieveConfig(Duration limitsCheckInterval, Long bandwidthLimitWriteInBytesPerSec,
-                              Long bandwidthLimitReadInBytesPerSec) {
+                              Long bandwidthLimitReadInBytesPerSec, DocumentReferenceTaskType taskType) {
         this.limitsCheckInterval = limitsCheckInterval;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
+        this.taskType = taskType;
         this.terminationThresholdTimeLimit = Duration.ZERO; /* no time limit */
         this.terminationThresholdSizeLimitInBytes = 0l; /* no content size limit */
         this.handleChunks = true;
@@ -67,6 +76,7 @@ public class HttpRetrieveConfig implements Serializable {
         this.terminationThresholdTimeLimit = Duration.ZERO; /* no time limit */
         this.terminationThresholdSizeLimitInBytes = 0l; /* no content size limit */
         this.handleChunks = true;
+        this.taskType = null;
     }
 
     public Duration getLimitsCheckInterval() {
@@ -101,4 +111,9 @@ public class HttpRetrieveConfig implements Serializable {
                "\nStop after: " + getTerminationThresholdSizeLimitInBytes() + " bytes" +
                " or after: " + getTerminationThresholdTimeLimit();
     }
+
+    public DocumentReferenceTaskType getTaskType() {
+        return taskType;
+    }
+
 }

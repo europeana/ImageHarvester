@@ -7,16 +7,34 @@ import eu.europeana.harvester.httpclient.response.ResponseType;
  */
 public class NodeMasterConfig {
 
+    /**
+     * Number of slaves per node at startup.
+     */
     private final int nrOfSlaves;
 
+    /**
+     * The minimum number of slaves if there are no tasks to do.
+     */
     private final int minNrOfSlaves;
 
+    /**
+     * Tha maximum number of slaves when the node gets a bigger load of tasks.
+     */
     private final int maxNrOfSlaves;
 
+    /**
+     * The number of retries to reach a slave before restarting it.
+     */
     private final int nrOfRetries;
 
+    /**
+     * The absolute path on disk where the content of the download will be saved.
+     */
     private final String pathToSave;
 
+    /**
+     * The type of the response: diskStorage or memoryStorage
+     */
     private final ResponseType responseType;
 
     public NodeMasterConfig(int nrOfSlaves, int minNrOfSlaves, int maxNrOfSlaves, int nrOfRetries, String pathToSave,

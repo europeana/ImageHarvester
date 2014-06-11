@@ -1,6 +1,8 @@
 package eu.europeana.harvester.httpclient;
 
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
+import eu.europeana.harvester.httpclient.response.ResponseHeader;
 import eu.europeana.harvester.httpclient.utils.SecureChatSslContextFactory;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -14,6 +16,9 @@ import org.jboss.netty.util.HashedWheelTimer;
 import org.joda.time.Duration;
 
 import javax.net.ssl.SSLEngine;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A custom netty pipeline factory that creates constrained pipelines.
@@ -61,15 +66,27 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
     private final HashedWheelTimer hashedWheelTimer;
 
     /**
+     * The task type: link check, conditional or unconditional download
+     */
+    private final DocumentReferenceTaskType documentReferenceTaskType;
+
+    /**
      * Whether the pipeline supports SSL.
      */
     private final boolean supportsSSL;
+
+    /**
+     * List of headers from the last download, it's needed only if the task type is conditional download
+     */
+    private final List<ResponseHeader> headers;
 
     public ConstrainedPipelineFactory(Long bandwidthLimitReadInBytesPerSec, Long bandwidthLimitWriteInBytesPerSec,
                                       Duration limitsCheckInterval, boolean supportsSSL,
                                       Long terminationThresholdSizeLimitInBytes,
                                       Duration terminationThresholdTimeLimit, boolean handleChunks,
-                                      HttpRetrieveResponse httpRetriveResponse, HashedWheelTimer hashedWheelTimer) {
+                                      DocumentReferenceTaskType documentReferenceTaskType,
+                                      List<ResponseHeader> headers, HttpRetrieveResponse httpRetriveResponse,
+                                      HashedWheelTimer hashedWheelTimer) {
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.limitsCheckInterval = limitsCheckInterval;
@@ -77,6 +94,8 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
         this.terminationThresholdSizeLimitInBytes = terminationThresholdSizeLimitInBytes;
         this.terminationThresholdTimeLimit = terminationThresholdTimeLimit;
         this.handleChunks = handleChunks;
+        this.documentReferenceTaskType = documentReferenceTaskType;
+        this.headers = headers;
         this.httpRetriveResponse = httpRetriveResponse;
         this.hashedWheelTimer = hashedWheelTimer;
     }
@@ -110,7 +129,7 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
 
         channelPipeline.addLast("handler",
                 new HttpClientHandler(terminationThresholdSizeLimitInBytes, terminationThresholdTimeLimit,
-                        hashedWheelTimer, httpRetriveResponse));
+                        hashedWheelTimer, httpRetriveResponse, documentReferenceTaskType, headers));
 
         return channelPipeline;
     }

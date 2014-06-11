@@ -5,18 +5,23 @@ import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.cluster.Cluster;
 import akka.routing.FromConfig;
+import com.google.code.morphia.Datastore;
+import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
+import com.typesafe.config.ConfigSyntax;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
+import eu.europeana.harvester.cluster.domain.PingMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.ActorStart;
 import eu.europeana.harvester.cluster.master.ClusterMasterActor;
+import eu.europeana.harvester.cluster.master.PingMasterActor;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
 import org.joda.time.Duration;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.Morphia;
 
+import java.io.File;
 import java.net.UnknownHostException;
 
 class MasterMain {
@@ -25,19 +30,36 @@ class MasterMain {
         String configFilePath;
 
         if(args.length == 0) {
-            configFilePath = "master";
+            configFilePath = "./src/main/resources/master.conf";
+            //configFilePath = "./master.conf";
         } else {
             configFilePath = args[0];
         }
 
-        final Config config = ConfigFactory.load(configFilePath);
+        File configFile = new File(configFilePath);
+        if(!configFile.exists()) {
+            System.out.println("Config file not found!");
+            System.exit(-1);
+        }
+
+        final Config config =
+                ConfigFactory.parseFileAnySyntax(configFile,
+                        ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
 
         final ClusterMasterConfig clusterMasterConfig =
                 new ClusterMasterConfig(Duration.millis(config.getInt("akka.cluster.jobsPollingInterval")),
                         Duration.millis(config.getInt("akka.cluster.receiveTimeoutInterval")));
 
+        final PingMasterConfig pingMasterConfig =
+                new PingMasterConfig(Duration.millis(config.getInt("ping.timePeriod")), config.getInt("ping.nrOfPings"),
+                        Duration.millis(config.getInt("akka.cluster.receiveTimeoutInterval")),
+                        config.getInt("ping.timeoutInterval"));
+
         final ActorSystem system = ActorSystem.create("ClusterSystem", config);
         system.log().info("Will start when 1 backend members in the cluster.");
+
+        final Long defaultBandwidthLimitReadInBytesPerSec = config.getLong("default-limits.bandwidthLimitReadInBytesPerSec");
+        final Long defaultMaxConcurrentConnectionsLimit = config.getLong("default-limits.maxConcurrentConnectionsLimit");
 
         Datastore datastore = null;
         try {
@@ -51,11 +73,15 @@ class MasterMain {
         }
 
         final ProcessingJobDao processingJobDao = new ProcessingJobDaoImpl(datastore);
-        final ProcessingLimitsDao processingLimitsDao = new ProcessingLimitsDaoImpl(datastore);
+        final MachineResourceReferenceDao machineResourceReferenceDao = new MachineResourceReferenceDaoImpl(datastore);
+        final MachineResourceReferenceStatDao machineResourceReferenceStatDao =
+                new MachineResourceReferenceStatDaoImpl(datastore);
         final SourceDocumentReferenceDao sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
         final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao =
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore);
         final LinkCheckLimitsDao linkCheckLimitsDao = new LinkCheckLimitsDaoImpl(datastore);
+        final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao =
+                new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
 
         final ActorRef router = system.actorOf(FromConfig.getInstance().props(), "nodeMasterRouter");
 
@@ -65,8 +91,13 @@ class MasterMain {
                 system.log().info("Joined");
 
                 ActorRef clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class, clusterMasterConfig,
-                        processingJobDao, processingLimitsDao, sourceDocumentProcessingStatisticsDao,
-                        sourceDocumentReferenceDao, linkCheckLimitsDao, router), "clusterMaster");
+                        processingJobDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao,
+                        sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao, linkCheckLimitsDao, router,
+                        defaultBandwidthLimitReadInBytesPerSec, defaultMaxConcurrentConnectionsLimit),
+                        "clusterMaster");
+
+                ActorRef pingMaster = system.actorOf(Props.create(PingMasterActor.class, pingMasterConfig, router,
+                        machineResourceReferenceDao, machineResourceReferenceStatDao), "pingMaster");
 
                 try {
                     Thread.sleep(1000);
@@ -75,6 +106,7 @@ class MasterMain {
                 }
 
                 clusterMaster.tell(new ActorStart(), ActorRef.noSender());
+                pingMaster.tell(new ActorStart(), ActorRef.noSender());
             }
         });
 

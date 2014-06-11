@@ -1,9 +1,9 @@
 package eu.europeana.harvester.db.mongo;
 
+import com.google.code.morphia.Datastore;
+import com.google.code.morphia.query.Query;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.query.Query;
 
 import java.util.List;
 
@@ -65,4 +65,18 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
 
         return false;
     }
+
+    @Override
+    public SourceDocumentProcessingStatistics findBySourceDocumentReferenceAndJobId(String docId, String jobId) {
+        Query<SourceDocumentProcessingStatistics> query = datastore.find(SourceDocumentProcessingStatistics.class);
+        query.criteria("sourceDocumentReferenceId").equal(docId);
+        query.criteria("processingJobId").equal(jobId);
+
+        List<SourceDocumentProcessingStatistics> result = query.asList();
+        if(!result.isEmpty()) {
+            return result.get(0);
+        }
+        return null;
+    }
+
 }

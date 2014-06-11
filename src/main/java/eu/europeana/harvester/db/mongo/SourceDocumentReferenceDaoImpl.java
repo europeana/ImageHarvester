@@ -1,9 +1,9 @@
 package eu.europeana.harvester.db.mongo;
 
+import com.google.code.morphia.Datastore;
+import com.google.code.morphia.query.Query;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.SourceDocumentReference;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.query.Query;
 
 import java.util.List;
 
@@ -68,8 +68,9 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
 
     @Override
     public void createOrModify(SourceDocumentReference sourceDocumentReference) {
-        delete(sourceDocumentReference);
-        create(sourceDocumentReference);
+        if(!update(sourceDocumentReference)) {
+            create(sourceDocumentReference);
+        }
     }
 
     @Override

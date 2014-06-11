@@ -3,11 +3,13 @@ package eu.europeana.harvester.client;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.domain.*;
 
+import java.util.List;
+
 public class HarvesterClientImpl implements HarvesterClient {
 
     private final ProcessingJobDao processingJobDao;
 
-    private final ProcessingLimitsDao processingLimitsDao;
+    private final MachineResourceReferenceDao machineResourceReferenceDao;
 
     private final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao;
 
@@ -15,13 +17,13 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     private final LinkCheckLimitsDao linkCheckLimitsDao;
 
-    public HarvesterClientImpl(ProcessingJobDao processingJobDao, ProcessingLimitsDao processingLimitsDao,
+    public HarvesterClientImpl(ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                LinkCheckLimitsDao linkCheckLimitsDao) {
 
         this.processingJobDao = processingJobDao;
-        this.processingLimitsDao = processingLimitsDao;
+        this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.linkCheckLimitsDao = linkCheckLimitsDao;
@@ -31,41 +33,61 @@ public class HarvesterClientImpl implements HarvesterClient {
     public void createOrModifyLinkCheckLimits(LinkCheckLimits linkCheckLimits) {
         System.out.println("Create or modify link check limits");
 
-        linkCheckLimitsDao.create(linkCheckLimits);
+        linkCheckLimitsDao.createOrModify(linkCheckLimits);
     }
 
     @Override
-    public void createOrModifyProcessingLimits(ProcessingLimits processingLimits) {
+    public void createOrModifyProcessingLimits(MachineResourceReference machineResourceReference) {
         System.out.println("Create or modify processing limits");
 
-        processingLimitsDao.createOrModify(processingLimits);
+        machineResourceReferenceDao.createOrModify(machineResourceReference);
     }
 
     @Override
-    public void createProcessingJob(ProcessingJob processingJob) {
+    public void createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) {
+        System.out.println("Create or modify SourceDocumentReferences");
+
+        for(SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
+            sourceDocumentReferenceDao.createOrModify(sourceDocumentReference);
+        }
+    }
+
+    @Override
+    public ProcessingJob createProcessingJob(ProcessingJob processingJob) {
         System.out.println("Create processing job");
 
         processingJobDao.create(processingJob);
-    }
-
-    @Override
-    public void createOrModifySourceDocumentReference(SourceDocumentReference sourceDocumentReference) {
-        System.out.println("Create or modify source document reference");
-
-
-        sourceDocumentReferenceDao.createOrModify(sourceDocumentReference);
-    }
-
-    @Override
-    public CollectionStats statsOfCollection(Long collectionId) {
         return null;
     }
 
     @Override
-    public void stopCollection(Long collectionId) {
+    public ProcessingJob createProcessingJobForCollection(String collectionId, DocumentReferenceTaskType type) {
+        return null;
     }
 
     @Override
-    public void startCollection(Long collectionId) {
+    public ProcessingJob createProcessingJobForRecord(String recordId, DocumentReferenceTaskType type) {
+        return null;
     }
+
+    @Override
+    public ProcessingJob stopJob(String jobId) {
+        return null;
+    }
+
+    @Override
+    public ProcessingJob startJob(String jobId) {
+        return null;
+    }
+
+    @Override
+    public List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) {
+        return null;
+    }
+
+    @Override
+    public ProcessingJobStats statsOfJob(String jobId) {
+        return null;
+    }
+
 }

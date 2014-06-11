@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
@@ -45,14 +46,22 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     private String httpResponseContentType;
 
     /**
-     * The retrieval duration in seconds. Zero if the source is not retrieved.
+     * The duration in milliseconds between the socket connection and the first content bytes coming in.
+     * This is relevant as it indicates the amount of time the server spends to simply make the resource
+     * available. For example a resource coming from a CDN will have this very low and one coming from a
+     * slow database will be rather large. Zero if the source is not retrieved.
      */
-    private Long retrievalDurationInSecs;
+    private Long socketConnectToDownloadStartDurationInMilliSecs;
 
     /**
-     * The checking duration in seconds. The same as the retrieval if the source is retrieved.
+     * The retrieval duration in milliseconds. Zero if the source is not retrieved.
      */
-    private Long checkingDurationInSecs;
+    private Long retrievalDurationInMilliSecs;
+
+    /**
+     * The checking duration in milliseconds. The same as the retrieval if the source is retrieved.
+     */
+    private Long checkingDurationInMilliSecs;
 
     /**
      * The IP of the source. Useful for debugging when working with DNS load balanced sources that have a pool of real
@@ -61,9 +70,14 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     private String sourceIp;
 
     /**
+     * List of redirect links.
+     */
+    private List<String> redirectionPath = new ArrayList<String>();
+
+    /**
      * The HTTP response headers.
      */
-    private ArrayList<Byte> httpResponseHeaders;
+    private List<ResponseHeader> httpResponseHeaders;
 
     @Override
     synchronized public ResponseState getState() {
@@ -136,23 +150,33 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     }
 
     @Override
-    public Long getRetrievalDurationInSecs() {
-        return retrievalDurationInSecs;
+    public Long getSocketConnectToDownloadStartDurationInMilliSecs() {
+        return socketConnectToDownloadStartDurationInMilliSecs;
     }
 
     @Override
-    public void setRetrievalDurationInSecs(Long retrievalDurationInSecs) {
-        this.retrievalDurationInSecs = retrievalDurationInSecs;
+    public void setSocketConnectToDownloadStartDurationInMilliSecs(Long socketConnectToDownloadStartDurationInMilliSecs) {
+        this.socketConnectToDownloadStartDurationInMilliSecs = socketConnectToDownloadStartDurationInMilliSecs;
     }
 
     @Override
-    public Long getCheckingDurationInSecs() {
-        return checkingDurationInSecs;
+    public Long getRetrievalDurationInMilliSecs() {
+        return retrievalDurationInMilliSecs;
     }
 
     @Override
-    public void setCheckingDurationInSecs(Long checkingDurationInSecs) {
-        this.checkingDurationInSecs = checkingDurationInSecs;
+    public void setRetrievalDurationInMilliSecs(Long retrievalDurationInMilliSecs) {
+        this.retrievalDurationInMilliSecs = retrievalDurationInMilliSecs;
+    }
+
+    @Override
+    public Long getCheckingDurationInMilliSecs() {
+        return checkingDurationInMilliSecs;
+    }
+
+    @Override
+    public void setCheckingDurationInMilliSecs(Long checkingDurationInMilliSecs) {
+        this.checkingDurationInMilliSecs = checkingDurationInMilliSecs;
     }
 
     @Override
@@ -166,22 +190,38 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     }
 
     @Override
-    public ArrayList<Byte> getHttpResponseHeaders() {
+    public List<ResponseHeader> getHttpResponseHeaders() {
         return httpResponseHeaders;
     }
 
     @Override
     public void addHttpResponseHeaders(String name, String value) {
         if(httpResponseHeaders == null) {
-            httpResponseHeaders = new ArrayList<Byte>();
+            httpResponseHeaders = new ArrayList<ResponseHeader>();
         }
 
-        String header = name + "=" + value + "\n";
-
-        byte[] bHeader = header.getBytes();
-
+        final byte[] bHeader = value.getBytes();
+        ArrayList<Byte> byteList = new ArrayList<Byte>();
         for(Byte b : bHeader) {
-            httpResponseHeaders.add(b);
+            byteList.add(b);
         }
+
+        httpResponseHeaders.add(new ResponseHeader(name, byteList));
     }
+
+    @Override
+    public List<String> getRedirectionPath() {
+        return redirectionPath;
+    }
+
+    @Override
+    public void setRedirectionPath(List<String> redirectionPath) {
+        this.redirectionPath = redirectionPath;
+    }
+
+    @Override
+    public void addRedirectionPath(String redirectionPath) {
+        this.redirectionPath.add(redirectionPath);
+    }
+
 }

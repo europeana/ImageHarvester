@@ -1,7 +1,8 @@
 package eu.europeana.harvester.domain;
 
-import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Property;
+import com.google.code.morphia.annotations.Embedded;
+import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.Property;
 
 import java.util.Date;
 import java.util.List;
@@ -15,30 +16,22 @@ public class ProcessingJob {
     @Id
     @Property("id")
     private final String id;
+
     /**
      * The expected start date.
      */
     private final Date expectedStartDate;
 
     /**
-     * The provider this job refers to. Useful for querying and stats.
+     * An object which contains: provider id, collection id, record id
      */
-    private final Long providerId;
+    private final ReferenceOwner referenceOwner;
 
     /**
-     * The collection this job refers to. Useful for querying and stats.
+     * The tasks that have to be executed in the processing job.
      */
-    private final Long collectionId;
-
-    /**
-     * The record this job refers to. Useful for querying and stats.
-     */
-    private final Long recordId;
-
-    /**
-     * The individual source references that have to be processed as part of the job.
-     */
-    private final List<String> sourceDocumentReferences;
+    @Embedded
+    private final List<ProcessingJobTaskDocumentReference> tasks;
 
     /**
      * The state of the processing job. Indicates an aggregate state of all the links in the job.
@@ -46,34 +39,28 @@ public class ProcessingJob {
     private final JobState state;
 
     public ProcessingJob() {
-        this.state = null;
         this.id = null;
         this.expectedStartDate = null;
-        this.providerId = null;
-        this.collectionId = null;
-        this.recordId = null;
-        this.sourceDocumentReferences = null;
+        this.referenceOwner = null;
+        this.tasks = null;
+        this.state = null;
     }
 
-    public ProcessingJob(Date expectedStartDate, Long providerId, Long collectionId, Long recordId,
-                         List<String> sourceDocumentReferences, JobState state) {
+    public ProcessingJob(Date expectedStartDate, ReferenceOwner referenceOwner,
+                         List<ProcessingJobTaskDocumentReference> tasks, JobState state) {
         this.id = UUID.randomUUID().toString();
         this.expectedStartDate = expectedStartDate;
-        this.providerId = providerId;
-        this.collectionId = collectionId;
-        this.recordId = recordId;
-        this.sourceDocumentReferences = sourceDocumentReferences;
+        this.referenceOwner = referenceOwner;
+        this.tasks = tasks;
         this.state = state;
     }
 
-    public ProcessingJob(String id, Date expectedStartDate, Long providerId, Long collectionId, Long recordId,
-                         List<String> sourceDocumentReferences, JobState state) {
+    public ProcessingJob(String id, Date expectedStartDate, ReferenceOwner referenceOwner,
+                         List<ProcessingJobTaskDocumentReference> tasks, JobState state) {
         this.id = id;
         this.expectedStartDate = expectedStartDate;
-        this.providerId = providerId;
-        this.collectionId = collectionId;
-        this.recordId = recordId;
-        this.sourceDocumentReferences = sourceDocumentReferences;
+        this.referenceOwner = referenceOwner;
+        this.tasks = tasks;
         this.state = state;
     }
 
@@ -85,20 +72,12 @@ public class ProcessingJob {
         return expectedStartDate;
     }
 
-    public Long getProviderId() {
-        return providerId;
+    public ReferenceOwner getReferenceOwner() {
+        return referenceOwner;
     }
 
-    public Long getCollectionId() {
-        return collectionId;
-    }
-
-    public Long getRecordId() {
-        return recordId;
-    }
-
-    public List<String> getSourceDocumentReferences() {
-        return sourceDocumentReferences;
+    public List<ProcessingJobTaskDocumentReference> getTasks() {
+        return tasks;
     }
 
     public JobState getState() {
@@ -106,7 +85,7 @@ public class ProcessingJob {
     }
 
     public ProcessingJob withState(JobState state) {
-        return new ProcessingJob(id, expectedStartDate, providerId, collectionId, recordId,
-                sourceDocumentReferences, state);
+        return new ProcessingJob(id, expectedStartDate, referenceOwner, tasks, state);
     }
+
 }

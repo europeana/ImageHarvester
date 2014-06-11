@@ -1,9 +1,9 @@
 package eu.europeana.harvester.db.mongo;
 
+import com.google.code.morphia.Datastore;
+import com.google.code.morphia.query.Query;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.domain.ProcessingJob;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.query.Query;
 
 import java.util.List;
 

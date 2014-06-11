@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * A convenient collection statistics container.
  */
-public class CollectionStats {
+public class ProcessingJobStats {
 
     /**
      * Collection stats per record id.
@@ -18,7 +18,7 @@ public class CollectionStats {
      */
     private final Map<ProcessingState,List<Long>> sourceDocumentReferenceIdsByState;
 
-    public CollectionStats(Map<ProcessingState, List<Long>> recordIdsByState, Map<ProcessingState,
+    public ProcessingJobStats(Map<ProcessingState, List<Long>> recordIdsByState, Map<ProcessingState,
             List<Long>> sourceDocumentReferenceIdsByState) {
         this.recordIdsByState = recordIdsByState;
         this.sourceDocumentReferenceIdsByState = sourceDocumentReferenceIdsByState;
