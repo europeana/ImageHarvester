@@ -1,24 +1,30 @@
 package eu.europeana.harvester.db.mongo;
 
+import com.google.code.morphia.Datastore;
+import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
-import eu.europeana.harvester.domain.JobState;
-import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.harvester.db.ProcessingJobDao;
+import eu.europeana.harvester.domain.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.morphia.Datastore;
-import org.mongodb.morphia.Morphia;
 
 import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
 public class ProcessingJobDaoImplTest {
 
-    private Datastore datastore;
+    private ProcessingJobDao processingJobDao;
 
     @Before
     public void setUp() throws Exception {
+        Datastore datastore = null;
+
         try {
             MongoClient mongo = new MongoClient("localhost", 27017);
             Morphia morphia = new Morphia();
@@ -28,12 +34,21 @@ public class ProcessingJobDaoImplTest {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
+
+        processingJobDao = new ProcessingJobDaoImpl(datastore);
     }
 
     @Test
     public void testCreate() throws Exception {
-        ProcessingJob processingJob = new ProcessingJob(new Date(), 1l, 1l, 1l, null, JobState.READY);
-        ProcessingJobDaoImpl processingJobDao = new ProcessingJobDaoImpl(datastore);
+        final SourceDocumentReference sourceDocumentReference =
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "a.com", null, null, 0l, null);
+        final ProcessingJobTaskDocumentReference processingJobTaskDocumentReference =
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                        sourceDocumentReference.getId());
+        final List<ProcessingJobTaskDocumentReference> tasks = new ArrayList<ProcessingJobTaskDocumentReference>();
+        tasks.add(processingJobTaskDocumentReference);
+        final ProcessingJob processingJob =
+                new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), tasks, JobState.READY);
 
         processingJobDao.create(processingJob);
         assertEquals(processingJob.getId(), processingJobDao.read(processingJob.getId()).getId());
@@ -43,46 +58,78 @@ public class ProcessingJobDaoImplTest {
 
     @Test
     public void testRead() throws Exception {
-        ProcessingJobDaoImpl processingJobDao = new ProcessingJobDaoImpl(datastore);
-        ProcessingJob processingJob = processingJobDao.read("");
+        ProcessingJob processingJobFromRead = processingJobDao.read("");
+        assertNull(processingJobFromRead);
 
-        assertNull(processingJob);
+        final String startDateString = "2013-03-26";
+        final DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+
+        final Date date = df.parse(startDateString);
+
+        final SourceDocumentReference sourceDocumentReference =
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "a.com", null, null, 0l, null);
+        final ProcessingJobTaskDocumentReference processingJobTaskDocumentReference =
+            new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                    sourceDocumentReference.getId());
+        final List<ProcessingJobTaskDocumentReference> tasks = new ArrayList<ProcessingJobTaskDocumentReference>();
+        tasks.add(processingJobTaskDocumentReference);
+
+        final ProcessingJob processingJob =
+                new ProcessingJob(date, new ReferenceOwner("1", "1", "1"), tasks, JobState.READY);
+        processingJobDao.create(processingJob);
+
+        assertEquals(processingJob.getExpectedStartDate(),
+                processingJobDao.read(processingJob.getId()).getExpectedStartDate());
+
+        processingJobDao.delete(processingJob);
     }
 
     @Test
     public void testUpdate() throws Exception {
-        ProcessingJob processingJob = new ProcessingJob(new Date(), 1l, 1l, 1l, null, JobState.READY);
-        ProcessingJobDaoImpl processingJobDao = new ProcessingJobDaoImpl(datastore);
-
+        final ProcessingJob processingJob =
+                new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
         processingJobDao.create(processingJob);
 
-        assertNotNull(processingJobDao.read(processingJob.getId()));
+        final ProcessingJob updatedProcessingJob = processingJob.withState(JobState.FINISHED);
 
-        ProcessingJob newProcessingJob =
-                new ProcessingJob(processingJob.getId(), processingJob.getExpectedStartDate(), processingJob.getProviderId(),
-                        processingJob.getCollectionId(), processingJob.getRecordId(),
-                        processingJob.getSourceDocumentReferences(), processingJob.getState());
+        assertNotEquals(updatedProcessingJob.getState(), processingJobDao.read(processingJob.getId()).getState());
+        assertTrue(processingJobDao.update(updatedProcessingJob));
+        assertEquals(updatedProcessingJob.getState(), processingJobDao.read(processingJob.getId()).getState());
 
-        processingJobDao.update(newProcessingJob);
+        processingJobDao.delete(updatedProcessingJob);
 
-        assertNotNull(processingJobDao.read(processingJob.getId()));
-
-        processingJobDao.delete(newProcessingJob);
+        final ProcessingJob newProcessingJob =
+                new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
+        assertFalse(processingJobDao.update(newProcessingJob));
     }
 
     @Test
     public void testDelete() throws Exception {
-        ProcessingJob processingJob = new ProcessingJob(new Date(), 1l, 1l, 1l, null, JobState.READY);
-        ProcessingJobDaoImpl processingJobDao = new ProcessingJobDaoImpl(datastore);
-
+        final ProcessingJob processingJob =
+                new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
         processingJobDao.create(processingJob);
 
         ProcessingJob processingJobFromRead = processingJobDao.read(processingJob.getId());
         assertNotNull(processingJobFromRead);
 
-        processingJobDao.delete(processingJob);
+        assertTrue(processingJobDao.delete(processingJob));
 
         processingJobFromRead = processingJobDao.read(processingJob.getId());
         assertNull(processingJobFromRead);
+
+        assertFalse(processingJobDao.delete(processingJob));
     }
+
+    @Test
+    public void testGetAllJobs() throws Exception {
+        final ProcessingJob processingJob =
+                new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
+        processingJobDao.create(processingJob);
+
+        List<ProcessingJob> allJobs = processingJobDao.getAllJobs();
+        assertNotNull(allJobs);
+
+        processingJobDao.delete(processingJob);
+    }
+
 }
