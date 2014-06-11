@@ -8,75 +8,100 @@
     <artifactId>harvester</artifactId>
     <version>0.1-SNAPSHOT</version>
 
+    <!-- Jar/Pom TODO -->
+    <packaging>jar</packaging>
+
+    <name>ImageHarvester</name>
+    <description>Distributed version of UIM Linkchecker/Thumbler</description>
+    <url>http://www.busymachines.com/</url>
+
+    <scm>
+        <connection>scm:git:file://${basedir}</connection>
+        <developerConnection>scm:git:file://${basedir}</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
     <properties>
         <jdk.version>1.7</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <repositories>
+        <repository>
+            <releases>
+                <enabled>false</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+            <id>europeanaSnapshots</id>
+            <name>Europeana Snapshots</name>
+            <url>http://artifactory.eanadev.org/artifactory/ext-release-local</url>
+            <layout>default</layout>
+        </repository>
+        <repository><!-- Other repos have checksum failures -->
+            <id>morphia.googlecode.com</id>
+            <url>http://morphia.googlecode.com/svn/mavenrepo</url>
+        </repository>
+    </repositories>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.12.4</version>
                 <configuration>
-                    <source>${jdk.version}</source>
-                    <target>${jdk.version}</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <skipTests>true</skipTests>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.6.3.201306030806</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>1.5</version>
                 <executions>
-                    <!--
-                        Prepares the property pointing to the JaCoCo runtime agent which
-                        is passed as VM argument when Maven the Surefire plugin is executed.
-                    -->
                     <execution>
-                        <id>pre-unit-test</id>
+                        <phase>package</phase>
                         <goals>
-                            <goal>prepare-agent</goal>
+                            <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <!-- Sets the path to the file which contains the execution data. -->
-                            <destFile>${jacoco.ut.execution.data.file}</destFile>
-                            <!--
-                                Sets the name of the property containing the settings
-                                for JaCoCo runtime agent.
-                            -->
-                            <propertyName>surefireArgLine</propertyName>
-                        </configuration>
-                    </execution>
-                    <!--
-                        Ensures that the code coverage report for unit tests is created after
-                        unit tests have been run.
-                    -->
-                    <execution>
-                        <id>post-unit-test</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Sets the path to the file which contains the execution data. -->
-                            <dataFile>${jacoco.ut.execution.data.file}</dataFile>
-                            <!-- Sets the output directory for the code coverage report. -->
-                            <outputDirectory>${project.reporting.outputDirectory}/reports</outputDirectory>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>allinone</shadedClassifierName>
+                            <artifactSet>
+                                <includes>
+                                    <include>*:*</include>
+                                </includes>
+                            </artifactSet>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>reference.conf</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Main-Class>akka.Main</Main-Class>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.15</version>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
                 <configuration>
-                    <argLine>${surefireArgLine}</argLine>
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -89,12 +114,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-eclipse-plugin</artifactId>
+                <version>2.3</version>
                 <configuration>
                     <downloadSources>true</downloadSources>
-                    <downloadJavadocs>true</downloadJavadocs>
                 </configuration>
             </plugin>
         </plugins>
+
     </build>
 
     <dependencies>
@@ -135,9 +161,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.mongodb.morphia</groupId>
+            <groupId>com.google.code.morphia</groupId>
             <artifactId>morphia</artifactId>
-            <version>0.107</version>
+            <version>0.99</version>
         </dependency>
 
         <dependency>
@@ -170,6 +196,13 @@
             <artifactId>junit</artifactId>
             <version>4.11</version>
         </dependency>
+
+        <dependency>
+            <groupId>gr.ntua.image</groupId>
+            <artifactId>MediaChecker</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 
 </project>
