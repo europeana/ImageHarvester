@@ -4,6 +4,8 @@ import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.DefaultResizer;
+import akka.routing.RoundRobinPool;
+import akka.routing.RoundRobinRouter;
 import akka.routing.SmallestMailboxPool;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
@@ -13,6 +15,8 @@ import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class NodeMasterActor extends UntypedActor{
@@ -68,7 +72,8 @@ public class NodeMasterActor extends UntypedActor{
 
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
         router = getContext().actorOf(
-                new SmallestMailboxPool(nodeMasterConfig.getNrOfSlaves())
+                //SmallestMailboxRouter - your choice
+                new RoundRobinPool(nodeMasterConfig.getNrOfSlaves())
                         .withResizer(resizer)
                         .withSupervisorStrategy(strategy)
                         .props(Props.create(SlaveActor.class, channelFactory, hashedWheelTimer,
@@ -76,18 +81,23 @@ public class NodeMasterActor extends UntypedActor{
                                 nodeMasterConfig.getPathToSave())),
                 "router");
     }
-
+Set<String> set = new HashSet<String>();
+    int messages = 0;
     @Override
     public void onReceive(Object message) throws Exception {
         if(message instanceof RetrieveUrl) {
             router.tell(message, getSelf());
             clusterMaster = getSender();
+            System.out.println(messages++);
+
         } else
         if(message instanceof StartedUrl) {
             log.info("From " + getSender() + " to master: " +
                     ((StartedUrl)message).getUrl() + " started.");
             log.info("ClusterMaster: " + clusterMaster);
             clusterMaster.tell(message, getSelf());
+            set.add(getSender().toString());
+            System.out.println("Number of actors: " + set.size());
         } else
         if(message instanceof DoneDownload) {
             log.info("From " + getSender() + " to master: " +

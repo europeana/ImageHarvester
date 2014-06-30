@@ -51,7 +51,7 @@ public class HttpClientTest {
 
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100),
                 readWriteLimitKB*1024l, readWriteLimitKB*1024l, Duration.ZERO, 0l, true,
-                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
+                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 60000);
 
         long startTime;
         for(String downloadLink : downloadLinks) {
@@ -83,7 +83,7 @@ public class HttpClientTest {
 
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100),
                 readWriteLimitKB*1024l, readWriteLimitKB*1024l, Duration.millis(timeLimitInMilliSec), 0l, true,
-                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
+                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 60000);
 
         long startTime;
         for(String downloadLink : downloadLinks) {
@@ -112,7 +112,7 @@ public class HttpClientTest {
 
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100),
                 readWriteLimitKB*1024l, readWriteLimitKB*1024l, Duration.ZERO, sizeLimitKB, true,
-                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
+                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 60000);
 
         for(String downloadLink : downloadLinks) {
             HttpRetrieveResponse httpRetrieveResponse = new HttpRetrieveResponseMemoryStorage();

@@ -2,6 +2,7 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.domain.ProcessingJob;
 
@@ -19,8 +20,13 @@ public class ProcessingJobDaoImpl  implements ProcessingJobDao {
     }
 
     @Override
-    public void create(ProcessingJob processingJob) {
-        datastore.save(processingJob);
+    public boolean create(ProcessingJob processingJob, WriteConcern writeConcern) {
+        if(read(processingJob.getId()) == null) {
+            datastore.save(processingJob, writeConcern);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -36,14 +42,13 @@ public class ProcessingJobDaoImpl  implements ProcessingJobDao {
     }
 
     @Override
-    public boolean update(ProcessingJob processingJob) {
+    public boolean update(ProcessingJob processingJob, WriteConcern writeConcern) {
         Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
         query.criteria("id").equal(processingJob.getId());
 
         List<ProcessingJob> result = query.asList();
         if(!result.isEmpty()) {
-            datastore.delete(query);
-            datastore.save(processingJob);
+            datastore.save(processingJob, writeConcern);
 
             return true;
         }
@@ -52,13 +57,13 @@ public class ProcessingJobDaoImpl  implements ProcessingJobDao {
     }
 
     @Override
-    public boolean delete(ProcessingJob processingJob) {
+    public boolean delete(ProcessingJob processingJob, WriteConcern writeConcern) {
         Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
         query.criteria("id").equal(processingJob.getId());
 
         List<ProcessingJob> result = query.asList();
         if(!result.isEmpty()) {
-            datastore.delete(processingJob);
+            datastore.delete(processingJob, writeConcern);
 
             return true;
         }

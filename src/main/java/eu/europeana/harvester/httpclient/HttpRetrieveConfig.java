@@ -46,9 +46,15 @@ public class HttpRetrieveConfig implements Serializable {
      */
     private final DocumentReferenceTaskType taskType;
 
+    /**
+     * An int that specifies the connect timeout value in milliseconds.
+     */
+    private final Integer connectionTimeoutInMillis;
+
     public HttpRetrieveConfig(Duration limitsCheckInterval, Long bandwidthLimitWriteInBytesPerSec,
                               Long bandwidthLimitReadInBytesPerSec, Duration terminationThresholdTimeLimit,
-                              Long terminationThresholdSizeLimitInBytes, Boolean handleChunks, DocumentReferenceTaskType taskType) {
+                              Long terminationThresholdSizeLimitInBytes, Boolean handleChunks,
+                              DocumentReferenceTaskType taskType, Integer connectionTimeoutInMillis) {
         this.limitsCheckInterval = limitsCheckInterval;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
@@ -56,10 +62,12 @@ public class HttpRetrieveConfig implements Serializable {
         this.terminationThresholdSizeLimitInBytes = terminationThresholdSizeLimitInBytes;
         this.handleChunks = handleChunks;
         this.taskType = taskType;
+        this.connectionTimeoutInMillis = connectionTimeoutInMillis;
     }
 
     public HttpRetrieveConfig(Duration limitsCheckInterval, Long bandwidthLimitWriteInBytesPerSec,
-                              Long bandwidthLimitReadInBytesPerSec, DocumentReferenceTaskType taskType) {
+                              Long bandwidthLimitReadInBytesPerSec, DocumentReferenceTaskType taskType,
+                              Integer connectionTimeoutInMillis) {
         this.limitsCheckInterval = limitsCheckInterval;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
@@ -67,6 +75,7 @@ public class HttpRetrieveConfig implements Serializable {
         this.terminationThresholdTimeLimit = Duration.ZERO; /* no time limit */
         this.terminationThresholdSizeLimitInBytes = 0l; /* no content size limit */
         this.handleChunks = true;
+        this.connectionTimeoutInMillis = connectionTimeoutInMillis;
     }
 
     public HttpRetrieveConfig() {
@@ -77,6 +86,7 @@ public class HttpRetrieveConfig implements Serializable {
         this.terminationThresholdSizeLimitInBytes = 0l; /* no content size limit */
         this.handleChunks = true;
         this.taskType = null;
+        this.connectionTimeoutInMillis = 60000; /* one minute connection timeout limit*/
     }
 
     public Duration getLimitsCheckInterval() {
@@ -116,4 +126,7 @@ public class HttpRetrieveConfig implements Serializable {
         return taskType;
     }
 
+    public Integer getConnectionTimeoutInMillis() {
+        return connectionTimeoutInMillis;
+    }
 }

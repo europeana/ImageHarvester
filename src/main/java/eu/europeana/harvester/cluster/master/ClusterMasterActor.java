@@ -4,11 +4,15 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
+import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.eventbus.EventService;
+import eu.europeana.harvester.eventbus.events.JobDoneEvent;
 import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import eu.europeana.harvester.httpclient.response.ResponseHeader;
 import org.joda.time.Duration;
@@ -90,15 +94,9 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private final LinkCheckLimitsDao linkCheckLimitsDao;
 
-    /**
-     * The default limit on download speed if it has not been provided.
-     */
-    private final Long defaultBandwidthLimitReadInBytesPerSec;
+    private final DefaultLimits defaultLimits;
 
-    /**
-     * The default limit on concurrent number of downloads if it has not been provided.
-     */
-    private final Long defaultMaxConcurrentConnectionsLimit;
+    private final EventService eventService;
 
     public ClusterMasterActor(ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao,
                               MachineResourceReferenceDao machineResourceReferenceDao,
@@ -106,7 +104,7 @@ public class ClusterMasterActor extends UntypedActor {
                               SourceDocumentReferenceDao sourceDocumentReferenceDao,
                               SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
                               LinkCheckLimitsDao linkCheckLimitsDao, ActorRef routerActor,
-                              Long defaultBandwidthLimitReadInBytesPerSec, Long defaultMaxConcurrentConnectionsLimit) {
+                              DefaultLimits defaultLimits, EventService eventService) {
         this.clusterMasterConfig = clusterMasterConfig;
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
@@ -115,8 +113,8 @@ public class ClusterMasterActor extends UntypedActor {
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
         this.linkCheckLimitsDao = linkCheckLimitsDao;
         this.routerActor = routerActor;
-        this.defaultBandwidthLimitReadInBytesPerSec = defaultBandwidthLimitReadInBytesPerSec;
-        this.defaultMaxConcurrentConnectionsLimit = defaultMaxConcurrentConnectionsLimit;
+        this.defaultLimits = defaultLimits;
+        this.eventService = eventService;
     }
 
     @Override
@@ -185,7 +183,8 @@ public class ClusterMasterActor extends UntypedActor {
                             ipAddress = address.getHostAddress();
                             final SourceDocumentReference updatedSourceDocumentReference =
                                     sourceDocumentReference.withIPAddress(ipAddress);
-                            sourceDocumentReferenceDao.update(updatedSourceDocumentReference);
+                            sourceDocumentReferenceDao.update(updatedSourceDocumentReference,
+                                    clusterMasterConfig.getWriteConcern());
                         } catch (UnknownHostException e) {
                             e.printStackTrace();
                             continue;
@@ -221,7 +220,8 @@ public class ClusterMasterActor extends UntypedActor {
             MachineResourceReference limit = machineResourceReferenceDao.read((String) entry.getKey());
             if(limit == null) {
                 limit = new MachineResourceReference((String) entry.getKey(), null,
-                        null, defaultBandwidthLimitReadInBytesPerSec, defaultMaxConcurrentConnectionsLimit);
+                        null, defaultLimits.getDefaultBandwidthLimitReadInBytesPerSec(),
+                        defaultLimits.getDefaultMaxConcurrentConnectionsLimit());
             }
             List<ReferenceOwner> referenceOwners = limit.getReferenceOwnerList();
             if(referenceOwners == null) {
@@ -243,15 +243,15 @@ public class ClusterMasterActor extends UntypedActor {
                 if(jobsLinkState.equals(JobState.FINISHED) || jobsLinkState.equals(JobState.ERROR)) {
                     finished++;
                 }
-                log.info(job.getValue() + ":" + jobsLinkState);
+                //log.info(job.getValue() + ":" + jobsLinkState);
             }
 
             // Maximum speed per link
             final Long speedLimitPerLink =
                     limit.getBandwidthLimitReadInBytesPerSec()/limit.getMaxConcurrentConnectionsLimit();
 
-            log.info(limit.getMaxConcurrentConnectionsLimit() + ":" + runningDownloads);
-            log.info(limit.getBandwidthLimitReadInBytesPerSec() + ":" + consumedBandwidth);
+            //log.info(limit.getMaxConcurrentConnectionsLimit() + ":" + runningDownloads);
+            //log.info(limit.getBandwidthLimitReadInBytesPerSec() + ":" + consumedBandwidth);
 
             // Starts tasks until we have resources. (mainly bandwidth)
             while(runningDownloads < limit.getBandwidthLimitReadInBytesPerSec() &&
@@ -271,10 +271,10 @@ public class ClusterMasterActor extends UntypedActor {
             }
 
             limit = limit.withReferenceOwnerList(referenceOwners);
-            machineResourceReferenceDao.update(limit);
+            machineResourceReferenceDao.update(limit, clusterMasterConfig.getWriteConcern());
 
-            log.info(limit.getMaxConcurrentConnectionsLimit() + ":" + runningDownloads);
-            log.info(limit.getBandwidthLimitReadInBytesPerSec() + ":" + consumedBandwidth);
+            //log.info(limit.getMaxConcurrentConnectionsLimit() + ":" + runningDownloads);
+            //log.info(limit.getBandwidthLimitReadInBytesPerSec() + ":" + consumedBandwidth);
         }
         System.out.println("Finished: " + finished);
     }
@@ -296,7 +296,7 @@ public class ClusterMasterActor extends UntypedActor {
                 final ProcessingJob processingJob = processingJobDao.read(jobId);
                 final ProcessingJob newProcessingJob = processingJob.withState(JobState.RUNNING);
 
-                processingJobDao.update(newProcessingJob);
+                processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
 
                 final SourceDocumentReference newDoc = sourceDocumentReferenceDao.read(sourceDocId);
 
@@ -322,7 +322,7 @@ public class ClusterMasterActor extends UntypedActor {
 
                 final HttpRetrieveConfig httpRetrieveConfig =
                         new HttpRetrieveConfig(Duration.millis(100), speed, speed, Duration.ZERO, 0l, true,
-                                documentReferenceTaskType);
+                                documentReferenceTaskType, defaultLimits.getConnectionTimeoutInMillis());
                 getSelf().tell(new RetrieveUrl(newDoc.getUrl(), httpRetrieveConfig, jobId, newDoc.getId(), headers,
                         documentReferenceTaskType), getSelf());
 
@@ -387,7 +387,8 @@ public class ClusterMasterActor extends UntypedActor {
                             msg.getRetrievalDurationInMilliSecs(), msg.getCheckingDurationInMilliSecs(),
                             msg.getSourceIp(), msg.getHttpResponseHeaders());
 
-            sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics);
+            sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics,
+                    clusterMasterConfig.getWriteConcern());
 
             System.out.println("Save: " + SAVE++);
         } else {
@@ -398,7 +399,8 @@ public class ClusterMasterActor extends UntypedActor {
                             msg.getRetrievalDurationInMilliSecs(), msg.getCheckingDurationInMilliSecs(),
                             msg.getHttpResponseHeaders());
 
-            sourceDocumentProcessingStatisticsDao.update(updatedSourceDocumentProcessingStatistics);
+            sourceDocumentProcessingStatisticsDao.update(updatedSourceDocumentProcessingStatistics,
+                    clusterMasterConfig.getWriteConcern());
 
             System.out.println("Update: " + UPDATE++);
         }
@@ -413,12 +415,14 @@ public class ClusterMasterActor extends UntypedActor {
                         new SourceDocumentReferenceMetaInfo(sourceDocumentReferenceMetaInfoFromDB.getId(),
                                 docId, msg.getImageMetaInfo(),
                                 msg.getAudioMetaInfo(), msg.getVideoMetaInfo());
-                sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo);
+                sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo,
+                        clusterMasterConfig.getWriteConcern());
             } else {
                 final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
                         new SourceDocumentReferenceMetaInfo(docId, msg.getImageMetaInfo(),
                                 msg.getAudioMetaInfo(), msg.getVideoMetaInfo());
-                sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo);
+                sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo,
+                        clusterMasterConfig.getWriteConcern());
             }
         }
 
@@ -428,8 +432,12 @@ public class ClusterMasterActor extends UntypedActor {
                 finishedDocument.withLastStatsId(sourceDocumentProcessingStatistics.getId());
         updatedDocument = updatedDocument.withRedirectionPath(msg.getRedirectionPath());
 
-        sourceDocumentReferenceDao.update(updatedDocument);
+        sourceDocumentReferenceDao.update(updatedDocument, clusterMasterConfig.getWriteConcern());
 
+        checkJobStatus(processingJob, links);
+    }
+
+    private void checkJobStatus(ProcessingJob processingJob, HashMap<String, JobState> links) {
         boolean allDone = true;
         for (final Map.Entry link : links.entrySet()) {
             if(link.getValue() != JobState.FINISHED && link.getValue() != JobState.ERROR) {
@@ -440,7 +448,9 @@ public class ClusterMasterActor extends UntypedActor {
         if(allDone) {
             final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
 
-            processingJobDao.update(newProcessingJob);
+            processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
+
+            eventService.publish(new JobDoneEvent(newProcessingJob.getId()));
         }
     }
 

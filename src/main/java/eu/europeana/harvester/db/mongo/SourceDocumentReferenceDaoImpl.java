@@ -2,6 +2,7 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 
@@ -19,8 +20,18 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
     }
 
     @Override
-    public void create(SourceDocumentReference sourceDocumentReference) {
-        datastore.save(sourceDocumentReference);
+    public boolean create(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern) {
+        if(read(sourceDocumentReference.getId()) == null) {
+            datastore.save(sourceDocumentReference, writeConcern);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public void createOrModify(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern) {
+        datastore.save(sourceDocumentReference, writeConcern);
     }
 
     @Override
@@ -36,14 +47,13 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
     }
 
     @Override
-    public boolean update(SourceDocumentReference sourceDocumentReference) {
+    public boolean update(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern) {
         Query<SourceDocumentReference> query = datastore.find(SourceDocumentReference.class);
         query.criteria("id").equal(sourceDocumentReference.getId());
 
         List<SourceDocumentReference> result = query.asList();
         if(!result.isEmpty()) {
-            datastore.delete(query);
-            datastore.save(sourceDocumentReference);
+            datastore.save(sourceDocumentReference, writeConcern);
 
             return true;
         }
@@ -52,25 +62,18 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
     }
 
     @Override
-    public boolean delete(SourceDocumentReference sourceDocumentReference) {
+    public boolean delete(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern) {
         Query<SourceDocumentReference> query = datastore.find(SourceDocumentReference.class);
         query.criteria("id").equal(sourceDocumentReference.getId());
 
         List<SourceDocumentReference> result = query.asList();
         if(!result.isEmpty()) {
-            datastore.delete(sourceDocumentReference);
+            datastore.delete(sourceDocumentReference, writeConcern);
 
             return true;
         }
 
         return false;
-    }
-
-    @Override
-    public void createOrModify(SourceDocumentReference sourceDocumentReference) {
-        if(!update(sourceDocumentReference)) {
-            create(sourceDocumentReference);
-        }
     }
 
     @Override

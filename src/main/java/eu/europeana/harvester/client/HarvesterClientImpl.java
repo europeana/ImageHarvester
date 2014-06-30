@@ -17,30 +17,33 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     private final LinkCheckLimitsDao linkCheckLimitsDao;
 
+    private final HarvesterClientConfig harvesterClientConfig;
+
     public HarvesterClientImpl(ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                SourceDocumentReferenceDao sourceDocumentReferenceDao,
-                               LinkCheckLimitsDao linkCheckLimitsDao) {
+                               LinkCheckLimitsDao linkCheckLimitsDao, HarvesterClientConfig harvesterClientConfig) {
 
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.linkCheckLimitsDao = linkCheckLimitsDao;
+        this.harvesterClientConfig = harvesterClientConfig;
     }
 
     @Override
     public void createOrModifyLinkCheckLimits(LinkCheckLimits linkCheckLimits) {
         System.out.println("Create or modify link check limits");
 
-        linkCheckLimitsDao.createOrModify(linkCheckLimits);
+        linkCheckLimitsDao.createOrModify(linkCheckLimits, harvesterClientConfig.getWriteConcern());
     }
 
     @Override
     public void createOrModifyProcessingLimits(MachineResourceReference machineResourceReference) {
         System.out.println("Create or modify processing limits");
 
-        machineResourceReferenceDao.createOrModify(machineResourceReference);
+        machineResourceReferenceDao.createOrModify(machineResourceReference, harvesterClientConfig.getWriteConcern());
     }
 
     @Override
@@ -48,7 +51,7 @@ public class HarvesterClientImpl implements HarvesterClient {
         System.out.println("Create or modify SourceDocumentReferences");
 
         for(SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
-            sourceDocumentReferenceDao.createOrModify(sourceDocumentReference);
+            sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, harvesterClientConfig.getWriteConcern());
         }
     }
 
@@ -56,7 +59,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     public ProcessingJob createProcessingJob(ProcessingJob processingJob) {
         System.out.println("Create processing job");
 
-        processingJobDao.create(processingJob);
+        processingJobDao.create(processingJob, harvesterClientConfig.getWriteConcern());
         return null;
     }
 

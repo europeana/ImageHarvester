@@ -138,8 +138,7 @@ public class SlaveActor extends UntypedActorWithStash {
             sender.tell(doneDownload, getSelf());
         } else
         if(message instanceof StartPing) {
-            StartPing startPing =
-                    (StartPing)message;
+            StartPing startPing = (StartPing)message;
             final DonePing donePing =
                     startPinging(startPing.getIp(), startPing.getNrOfPings(), startPing.getPingTimeout());
 
@@ -165,12 +164,11 @@ public class SlaveActor extends UntypedActorWithStash {
                 depth++; redirect = false;
 
                 try {
-                httpRetrieveResponse.setUrl(new URL(url));
+                    httpRetrieveResponse.setUrl(new URL(url));
                 } catch (java.net.MalformedURLException e) {
                     httpRetrieveResponse.setHttpResponseCode(-1);
                     return httpRetrieveResponse;
                 }
-
                 final HttpClient httpClient = new HttpClient(channelFactory, hashedWheelTimer,
                         task.getHttpRetrieveConfig(), task.getHeaders(), httpRetrieveResponse,
                         HttpGET.build(httpRetrieveResponse.getUrl()));

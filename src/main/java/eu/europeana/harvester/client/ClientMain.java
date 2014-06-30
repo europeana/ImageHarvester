@@ -2,8 +2,8 @@ package eu.europeana.harvester.client;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
-import com.mongodb.DB;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
@@ -66,8 +66,10 @@ class ClientMain {
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore);
         final LinkCheckLimitsDao linkCheckLimitsDao = new LinkCheckLimitsDaoImpl(datastore);
 
+        final HarvesterClientConfig harvesterClientConfig = new HarvesterClientConfig(WriteConcern.NONE);
+
         HarvesterClientImpl harvesterClient = new HarvesterClientImpl(processingJobDao, machineResourceReferenceDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, linkCheckLimitsDao);
+                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, linkCheckLimitsDao, harvesterClientConfig);
 
         //========================================================================================================
 
@@ -138,7 +140,6 @@ class ClientMain {
                         "http://www.wswd.net/testdownloadfiles/20MB.zip", null, null, 0l, null);
         ProcessingJobTaskDocumentReference file3Job =
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK, file3.getId());
-
 
         SourceDocumentReference redirect = new SourceDocumentReference(new ReferenceOwner("1", "3", "1"),
                 "http://www.filipel.ro", null, null, 0l, null);

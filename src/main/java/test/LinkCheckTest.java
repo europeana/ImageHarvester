@@ -3,10 +3,12 @@ package test;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
+import eu.europeana.harvester.client.HarvesterClientConfig;
 import eu.europeana.harvester.client.HarvesterClientImpl;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
@@ -64,17 +66,21 @@ public class LinkCheckTest {
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore);
         final LinkCheckLimitsDao linkCheckLimitsDao = new LinkCheckLimitsDaoImpl(datastore);
 
+        final HarvesterClientConfig harvesterClientConfig = new HarvesterClientConfig(WriteConcern.NONE);
+
         HarvesterClientImpl harvesterClient = new HarvesterClientImpl(processingJobDao, machineResourceReferenceDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, linkCheckLimitsDao);
+                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, linkCheckLimitsDao, harvesterClientConfig);
 
         // ======================================================
 
-        final int nrOfLinks = 100;
-        final int linksPerJobs = 200;
+        final int nrOfLinks = 110;
+        final int linksPerJobs = 50;
         final String outputFileName = "outLinkCheck";
 
         LinkParser linkParser = new LinkParser(nrOfLinks, outputFileName);
         linkParser.start();
+
+        long start = System.currentTimeMillis();
 
         File links = new File("./src/main/resources/TestLinks/" + outputFileName);
         List<ProcessingJob> processingJobs = new ArrayList<ProcessingJob>();
@@ -118,6 +124,8 @@ public class LinkCheckTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        System.out.println((System.currentTimeMillis() - start) / 1000);
 
         for(ProcessingJob processingJob : processingJobs) {
             harvesterClient.createProcessingJob(processingJob);

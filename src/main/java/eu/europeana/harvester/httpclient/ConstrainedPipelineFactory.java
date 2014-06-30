@@ -1,5 +1,6 @@
 package eu.europeana.harvester.httpclient;
 
+import com.sun.corba.se.spi.transport.ReadTimeouts;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.ResponseHeader;
@@ -11,6 +12,7 @@ import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
 import org.jboss.netty.handler.codec.http.HttpClientCodec;
 import org.jboss.netty.handler.codec.http.HttpContentDecompressor;
 import org.jboss.netty.handler.ssl.SslHandler;
+import org.jboss.netty.handler.timeout.ReadTimeoutHandler;
 import org.jboss.netty.handler.traffic.ChannelTrafficShapingHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.joda.time.Duration;
@@ -103,6 +105,9 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
     @Override
     public ChannelPipeline getPipeline() throws Exception {
         final ChannelPipeline channelPipeline = Channels.pipeline();
+
+        final ReadTimeoutHandler readTimeoutHandler = new ReadTimeoutHandler(hashedWheelTimer, 10);
+        channelPipeline.addLast("read timeout", readTimeoutHandler);
 
         final ChannelTrafficShapingHandler channelTrafficShapingHandler =
                 new ChannelTrafficShapingHandler(hashedWheelTimer, bandwidthLimitWriteInBytesPerSec,

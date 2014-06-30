@@ -3,6 +3,7 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.domain.ImageMetaInfo;
 import eu.europeana.harvester.domain.JobState;
@@ -42,12 +43,12 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
 
         assertNotNull(sourceDocumentReferenceMetaInfo.getId());
 
-        sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo);
+        sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo, WriteConcern.NONE);
         assertEquals(sourceDocumentReferenceMetaInfo.getImageMetaInfo().getHeight(),
                 sourceDocumentReferenceMetaInfoDao.read(
                         sourceDocumentReferenceMetaInfo.getId()).getImageMetaInfo().getHeight());
 
-        sourceDocumentReferenceMetaInfoDao.delete(sourceDocumentReferenceMetaInfo);
+        sourceDocumentReferenceMetaInfoDao.delete(sourceDocumentReferenceMetaInfo, WriteConcern.NONE);
     }
 
     @Test
@@ -58,21 +59,21 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
 
         final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
                 new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", ""), null, null);
-        sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo);
+        sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo, WriteConcern.NONE);
         sourceDocumentReferenceMetaInfoFromRead =
                 sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceMetaInfo.getId());
 
         assertEquals(sourceDocumentReferenceMetaInfo.getImageMetaInfo().getHeight(),
                 sourceDocumentReferenceMetaInfoFromRead.getImageMetaInfo().getHeight());
 
-        sourceDocumentReferenceMetaInfoDao.delete(sourceDocumentReferenceMetaInfo);
+        sourceDocumentReferenceMetaInfoDao.delete(sourceDocumentReferenceMetaInfo, WriteConcern.NONE);
     }
 
     @Test
     public void testUpdate() throws Exception {
         final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
                 new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", ""), null, null);
-        sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo);
+        sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo, WriteConcern.NONE);
 
         final SourceDocumentReferenceMetaInfo updatedSourceDocumentReferenceMetaInfo =
                 new SourceDocumentReferenceMetaInfo(sourceDocumentReferenceMetaInfo.getId(), "a",
@@ -81,35 +82,36 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
         assertNotEquals(updatedSourceDocumentReferenceMetaInfo.getImageMetaInfo().getHeight(),
                 sourceDocumentReferenceMetaInfoDao.read(
                         sourceDocumentReferenceMetaInfo.getId()).getImageMetaInfo().getHeight());
-        assertTrue(sourceDocumentReferenceMetaInfoDao.update(updatedSourceDocumentReferenceMetaInfo));
+        assertTrue(sourceDocumentReferenceMetaInfoDao.update(updatedSourceDocumentReferenceMetaInfo, WriteConcern.NONE));
         assertEquals(updatedSourceDocumentReferenceMetaInfo.getImageMetaInfo().getHeight(),
                 sourceDocumentReferenceMetaInfoDao.read(
                         sourceDocumentReferenceMetaInfo.getId()).getImageMetaInfo().getHeight());
 
-        sourceDocumentReferenceMetaInfoDao.delete(updatedSourceDocumentReferenceMetaInfo);
+        sourceDocumentReferenceMetaInfoDao.delete(updatedSourceDocumentReferenceMetaInfo, WriteConcern.NONE);
 
         final SourceDocumentReferenceMetaInfo checkUpdateSourceDocumentReferenceMetaInfo =
                 new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(20, 20, "", "", ""), null, null);
-        assertFalse(sourceDocumentReferenceMetaInfoDao.update(checkUpdateSourceDocumentReferenceMetaInfo));
+        assertFalse(sourceDocumentReferenceMetaInfoDao.update(checkUpdateSourceDocumentReferenceMetaInfo,
+                WriteConcern.NONE));
     }
 
     @Test
     public void testDelete() throws Exception {
         final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
                 new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", ""), null, null);
-        sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo);
+        sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo, WriteConcern.NONE);
 
         SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfoFromRead =
                 sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceMetaInfo.getId());
         assertNotNull(sourceDocumentReferenceMetaInfoFromRead);
 
-        assertTrue(sourceDocumentReferenceMetaInfoDao.delete(sourceDocumentReferenceMetaInfo));
+        assertTrue(sourceDocumentReferenceMetaInfoDao.delete(sourceDocumentReferenceMetaInfo, WriteConcern.NONE));
 
         sourceDocumentReferenceMetaInfoFromRead =
                 sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceMetaInfo.getId());
         assertNull(sourceDocumentReferenceMetaInfoFromRead);
 
-        assertFalse(sourceDocumentReferenceMetaInfoDao.delete(sourceDocumentReferenceMetaInfo));
+        assertFalse(sourceDocumentReferenceMetaInfoDao.delete(sourceDocumentReferenceMetaInfo, WriteConcern.NONE));
     }
 
 }

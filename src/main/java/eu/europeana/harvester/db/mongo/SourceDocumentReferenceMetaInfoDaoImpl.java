@@ -2,6 +2,7 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 
@@ -16,8 +17,13 @@ public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentRef
     }
 
     @Override
-    public void create(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo) {
-        datastore.save(sourceDocumentReferenceMetaInfo);
+    public boolean create(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo, WriteConcern writeConcern) {
+        if(read(sourceDocumentReferenceMetaInfo.getId()) == null) {
+            datastore.save(sourceDocumentReferenceMetaInfo, writeConcern);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -33,14 +39,13 @@ public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentRef
     }
 
     @Override
-    public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo) {
+    public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo, WriteConcern writeConcern) {
         Query<SourceDocumentReferenceMetaInfo> query = datastore.find(SourceDocumentReferenceMetaInfo.class);
         query.criteria("id").equal(sourceDocumentReferenceMetaInfo.getId());
 
         List<SourceDocumentReferenceMetaInfo> result = query.asList();
         if(!result.isEmpty()) {
-            datastore.delete(query);
-            datastore.save(sourceDocumentReferenceMetaInfo);
+            datastore.save(sourceDocumentReferenceMetaInfo, writeConcern);
 
             return true;
         }
@@ -49,13 +54,13 @@ public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentRef
     }
 
     @Override
-    public boolean delete(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo) {
+    public boolean delete(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo, WriteConcern writeConcern) {
         Query<SourceDocumentReferenceMetaInfo> query = datastore.find(SourceDocumentReferenceMetaInfo.class);
         query.criteria("id").equal(sourceDocumentReferenceMetaInfo.getId());
 
         List<SourceDocumentReferenceMetaInfo> result = query.asList();
         if(!result.isEmpty()) {
-            datastore.delete(sourceDocumentReferenceMetaInfo);
+            datastore.delete(sourceDocumentReferenceMetaInfo, writeConcern);
 
             return true;
         }

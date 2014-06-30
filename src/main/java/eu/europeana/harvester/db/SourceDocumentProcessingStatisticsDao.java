@@ -1,5 +1,6 @@
 package eu.europeana.harvester.db;
 
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 
 /**
@@ -10,8 +11,11 @@ public interface SourceDocumentProcessingStatisticsDao {
     /**
      * Persists a SourceDocumentProcessingStatistics object
      * @param sourceDocumentProcessingStatistics - a new object
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
+     * @return returns if the operation was successful
      */
-    public void create(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics);
+    public boolean create(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
      * Reads and returns a SourceDocumentProcessingStatistics object
@@ -23,16 +27,20 @@ public interface SourceDocumentProcessingStatisticsDao {
     /**
      * Updates a SourceDocumentProcessingStatistics record
      * @param sourceDocumentProcessingStatistics the modified SourceDocumentProcessingStatistics object
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
      * @return - success or failure
      */
-    public boolean update(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics);
+    public boolean update(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
      * Deletes a record from DB
      * @param sourceDocumentProcessingStatistics the unnecessary object
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
      * @return - success or failure
      */
-    public boolean delete(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics);
+    public boolean delete(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
      * Search for a SourceDocumentProcessingStatistics object by an SourceDocumentReference and a ProcessingJob id

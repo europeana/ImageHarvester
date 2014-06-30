@@ -1,5 +1,6 @@
 package eu.europeana.harvester.cluster.domain;
 
+import com.mongodb.WriteConcern;
 import org.joda.time.Duration;
 
 /**
@@ -17,9 +18,15 @@ public class ClusterMasterConfig {
      */
     private final Duration receiveTimeoutInterval;
 
-    public ClusterMasterConfig(Duration jobsPollingInterval, Duration receiveTimeoutInterval) {
+    /**
+     * Describes the guarantee that MongoDB provides when reporting on the success of a write operation
+     */
+    private final WriteConcern writeConcern;
+
+    public ClusterMasterConfig(Duration jobsPollingInterval, Duration receiveTimeoutInterval, WriteConcern writeConcern) {
         this.jobsPollingInterval = jobsPollingInterval;
         this.receiveTimeoutInterval = receiveTimeoutInterval;
+        this.writeConcern = writeConcern;
     }
 
     public Duration getJobsPollingInterval() {
@@ -28,5 +35,9 @@ public class ClusterMasterConfig {
 
     public Duration getReceiveTimeoutInterval() {
         return receiveTimeoutInterval;
+    }
+
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
     }
 }

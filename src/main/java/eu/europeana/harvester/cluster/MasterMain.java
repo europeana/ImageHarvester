@@ -8,17 +8,21 @@ import akka.routing.FromConfig;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
+import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.PingMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.ActorStart;
 import eu.europeana.harvester.cluster.master.ClusterMasterActor;
 import eu.europeana.harvester.cluster.master.PingMasterActor;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
+import eu.europeana.harvester.eventbus.EventService;
+import eu.europeana.harvester.eventbus.subscribers.JobDoneSubscriber;
 import org.joda.time.Duration;
 
 import java.io.File;
@@ -48,18 +52,26 @@ class MasterMain {
 
         final ClusterMasterConfig clusterMasterConfig =
                 new ClusterMasterConfig(Duration.millis(config.getInt("akka.cluster.jobsPollingInterval")),
-                        Duration.millis(config.getInt("akka.cluster.receiveTimeoutInterval")));
+                        Duration.millis(config.getInt("akka.cluster.receiveTimeoutInterval")), WriteConcern.NONE);
 
         final PingMasterConfig pingMasterConfig =
                 new PingMasterConfig(Duration.millis(config.getInt("ping.timePeriod")), config.getInt("ping.nrOfPings"),
                         Duration.millis(config.getInt("akka.cluster.receiveTimeoutInterval")),
-                        config.getInt("ping.timeoutInterval"));
+                        config.getInt("ping.timeoutInterval"), WriteConcern.NONE);
 
         final ActorSystem system = ActorSystem.create("ClusterSystem", config);
         system.log().info("Will start when 1 backend members in the cluster.");
 
-        final Long defaultBandwidthLimitReadInBytesPerSec = config.getLong("default-limits.bandwidthLimitReadInBytesPerSec");
-        final Long defaultMaxConcurrentConnectionsLimit = config.getLong("default-limits.maxConcurrentConnectionsLimit");
+        final Long defaultBandwidthLimitReadInBytesPerSec =
+                config.getLong("default-limits.bandwidthLimitReadInBytesPerSec");
+        final Long defaultMaxConcurrentConnectionsLimit =
+                config.getLong("default-limits.maxConcurrentConnectionsLimit");
+        final Integer connectionTimeoutInMillis =
+                config.getInt("default-limits.connectionTimeoutInMillis");
+
+        final DefaultLimits defaultLimits =
+                new DefaultLimits(defaultBandwidthLimitReadInBytesPerSec, defaultMaxConcurrentConnectionsLimit,
+                        connectionTimeoutInMillis);
 
         Datastore datastore = null;
         try {
@@ -85,6 +97,8 @@ class MasterMain {
 
         final ActorRef router = system.actorOf(FromConfig.getInstance().props(), "nodeMasterRouter");
 
+        final EventService eventService = new EventService();
+
         Cluster.get(system).registerOnMemberUp(new Runnable() {
             @Override
             public void run() {
@@ -93,7 +107,7 @@ class MasterMain {
                 ActorRef clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class, clusterMasterConfig,
                         processingJobDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao,
                         sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao, linkCheckLimitsDao, router,
-                        defaultBandwidthLimitReadInBytesPerSec, defaultMaxConcurrentConnectionsLimit),
+                        defaultLimits, eventService),
                         "clusterMaster");
 
                 ActorRef pingMaster = system.actorOf(Props.create(PingMasterActor.class, pingMasterConfig, router,
@@ -109,6 +123,9 @@ class MasterMain {
                 pingMaster.tell(new ActorStart(), ActorRef.noSender());
             }
         });
+
+        JobDoneSubscriber jobDoneSubscriber = new JobDoneSubscriber(eventService);
+
 
     }
 }

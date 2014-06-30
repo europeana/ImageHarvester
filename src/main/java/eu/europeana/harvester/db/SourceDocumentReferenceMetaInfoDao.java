@@ -1,5 +1,6 @@
 package eu.europeana.harvester.db;
 
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 
 public interface SourceDocumentReferenceMetaInfoDao {
@@ -7,8 +8,11 @@ public interface SourceDocumentReferenceMetaInfoDao {
     /**
      * Persists a SourceDocumentReferenceMetaInfo object
      * @param sourceDocumentReferenceMetaInfo - a new object
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
+     * @return returns if the operation was successful
      */
-    public void create(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo);
+    public boolean create(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo, WriteConcern writeConcern);
 
     /**
      * Reads and returns a SourceDocumentReferenceMetaInfo object
@@ -20,16 +24,20 @@ public interface SourceDocumentReferenceMetaInfoDao {
     /**
      * Updates a SourceDocumentReferenceMetaInfo record
      * @param sourceDocumentReferenceMetaInfo the modified SourceDocumentReferenceMetaInfo
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
      * @return - success or failure
      */
-    public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo);
+    public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo, WriteConcern writeConcern);
 
     /**
      * Deletes a record from DB
      * @param sourceDocumentReferenceMetaInfo the unnecessary object
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
      * @return - success or failure
      */
-    public boolean delete(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo);
+    public boolean delete(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo, WriteConcern writeConcern);
 
     /**
      * Search for a SourceDocumentReferenceMetaInfo object by a collection id and returns it

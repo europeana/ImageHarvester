@@ -38,8 +38,8 @@ public class LinkParser {
                     try {
                         while ((line = br.readLine()) != null && j < nr) {
                             j++;
-                            if(line.length() != 0) {
-                                if(line.charAt(line.length()-1) != '\n' && line.toLowerCase().contains("http")) {
+                            if(line.length() != 0 && line.toLowerCase().contains("http")) {
+                                if(line.charAt(line.length()-1) != '\n') {
                                     bw.write(line.substring(line.toLowerCase().indexOf("http")).trim().toLowerCase() + "\n");
                                 } else {
                                     bw.write(line);

@@ -10,9 +10,10 @@ import org.jboss.netty.util.HashedWheelTimer;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 public class HttpClient implements Callable<HttpRetrieveResponse> {
@@ -40,7 +41,7 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
     /**
      * The request response.
      */
-    private final HttpRetrieveResponse httpRetriveResponse;
+    private final HttpRetrieveResponse httpRetrieveResponse;
 
     /**
      * The url from where data is retrieved.
@@ -58,45 +59,53 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
      * List of headers from the last download, it's needed only if the task type is conditional download
      */
     private final List<ResponseHeader> headers;
-
+long time;
     public HttpClient(ChannelFactory channelFactory, HashedWheelTimer hashedWheelTimer,
-                      HttpRetrieveConfig httpRetrieveConfig, List<ResponseHeader> headers, HttpRetrieveResponse httpRetriveResponse,
+                      HttpRetrieveConfig httpRetrieveConfig, List<ResponseHeader> headers,
+                      HttpRetrieveResponse httpRetrieveResponse,
                       HttpRequest httpRequest) throws MalformedURLException {
         this.channelFactory = channelFactory;
         this.hashedWheelTimer = hashedWheelTimer;
         this.httpRetrieveConfig = httpRetrieveConfig;
         this.headers = headers;
-        this.httpRetriveResponse = httpRetriveResponse;
+        this.httpRetrieveResponse = httpRetrieveResponse;
         this.httpRequest = httpRequest;
         this.url = new URL(httpRequest.getUri());
+
+        time = System.currentTimeMillis();
 
         startDownload();
     }
 
     private void startDownload() {
-        httpRetriveResponse.setUrl(url);
+        httpRetrieveResponse.setUrl(url);
         try {
             final InetAddress address = InetAddress.getByName(url.getHost());
-            httpRetriveResponse.setSourceIp(address.getHostAddress());
+            httpRetrieveResponse.setSourceIp(address.getHostAddress());
 
             final HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setRequestMethod("GET");
             httpURLConnection.setInstanceFollowRedirects(false);
+            httpURLConnection.setConnectTimeout(httpRetrieveConfig.getConnectionTimeoutInMillis());
+
             try {
+                long start = System.currentTimeMillis();
                 httpURLConnection.connect();
+                httpRetrieveResponse.
+                        setSocketConnectToDownloadStartDurationInMilliSecs(System.currentTimeMillis() - start);
             } catch (Exception e) {
-                httpRetriveResponse.setHttpResponseCode(-1);
+                httpRetrieveResponse.setHttpResponseCode(-1);
                 return;
             }
             try {
                 int responseCode = httpURLConnection.getResponseCode();
-                httpRetriveResponse.setHttpResponseCode(responseCode);
+                httpRetrieveResponse.setHttpResponseCode(responseCode);
             } catch (Exception e) {
-                httpRetriveResponse.setHttpResponseCode(-1);
+                httpRetrieveResponse.setHttpResponseCode(-1);
                 return;
             }
         } catch (UnknownHostException e) {
-            httpRetriveResponse.setHttpResponseCode(-1);
+            httpRetrieveResponse.setHttpResponseCode(-1);
             e.printStackTrace();
             return;
         } catch (IOException e) {
@@ -108,7 +117,7 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
                         httpRetrieveConfig.getLimitsCheckInterval(), url.getProtocol().startsWith("https"),
                         httpRetrieveConfig.getTerminationThresholdSizeLimitInBytes(),
                         httpRetrieveConfig.getTerminationThresholdTimeLimit(), httpRetrieveConfig.getHandleChunks(),
-                        httpRetrieveConfig.getTaskType(), headers, httpRetriveResponse, hashedWheelTimer);
+                        httpRetrieveConfig.getTaskType(), headers, httpRetrieveResponse, hashedWheelTimer);
 
         final ClientBootstrap bootstrap = new ClientBootstrap(channelFactory);
         bootstrap.setPipelineFactory(pipelineFactory);
@@ -130,17 +139,19 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
     @Override
     public HttpRetrieveResponse call() {
         try {
+            System.out.println("Start ");
             closeFuture.await();
+            System.out.println("End in " + (System.currentTimeMillis() - time) / 1000.0);
         } catch (InterruptedException e) {
-            httpRetriveResponse.setState(ResponseState.ERROR);
-            httpRetriveResponse.setException(e);
+            httpRetrieveResponse.setState(ResponseState.ERROR);
+            httpRetrieveResponse.setException(e);
             e.printStackTrace();
         }
 
         closeFuture.cancel();
         channel.close();
 
-        return httpRetriveResponse;
+        return httpRetrieveResponse;
     }
 
 }

@@ -99,7 +99,7 @@ public class PingMasterActor extends UntypedActor {
             ipAndLastCheck.put(machineResourceReference.getId(), System.currentTimeMillis());
 
             machineResourceReference = machineResourceReference.withLastPingCheck(new Date());
-            machineResourceReferenceDao.update(machineResourceReference);
+            machineResourceReferenceDao.update(machineResourceReference, pingMasterConfig.getWriteConcern());
 
             checkIP(machineResourceReference.getId(), pingMasterConfig.getNrOfPings(),
                     pingMasterConfig.getPingTimeout());
@@ -130,11 +130,11 @@ public class PingMasterActor extends UntypedActor {
                     new MachineResourceReferenceStat(donePing.getIpAddress(), new Date(), donePing.getAvgTime(),
                             donePing.getMinTime(), donePing.getMaxTime(), donePing.getMedianDeviation());
 
-            machineResourceReferenceStatDao.create(machineResourceReferenceStat);
+            machineResourceReferenceStatDao.create(machineResourceReferenceStat, pingMasterConfig.getWriteConcern());
         } else {
             final MachineResourceReferenceStat machineResourceReferenceStat =
                     new MachineResourceReferenceStat(null, new Date(), null, null, null, null);
-            machineResourceReferenceStatDao.create(machineResourceReferenceStat);
+            machineResourceReferenceStatDao.create(machineResourceReferenceStat, pingMasterConfig.getWriteConcern());
         }
     }
 }

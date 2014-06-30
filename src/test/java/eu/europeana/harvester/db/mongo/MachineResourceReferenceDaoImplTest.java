@@ -3,6 +3,7 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.MachineResourceReferenceDao;
 import eu.europeana.harvester.domain.MachineResourceReference;
 import org.junit.Before;
@@ -38,11 +39,11 @@ public class MachineResourceReferenceDaoImplTest {
         final MachineResourceReference processingLimits = new MachineResourceReference("1", null, null, 500*1024l, 5l);
         assertNotNull(processingLimits.getId());
 
-        machineResourceReferenceDao.create(processingLimits);
+        machineResourceReferenceDao.create(processingLimits, WriteConcern.NONE);
         assertEquals(processingLimits.getBandwidthLimitReadInBytesPerSec(),
                 machineResourceReferenceDao.read(processingLimits.getId()).getBandwidthLimitReadInBytesPerSec());
 
-        machineResourceReferenceDao.delete(processingLimits);
+        machineResourceReferenceDao.delete(processingLimits, WriteConcern.NONE);
     }
 
     @Test
@@ -52,49 +53,49 @@ public class MachineResourceReferenceDaoImplTest {
 
         final MachineResourceReference machineResourceReference =
                 new MachineResourceReference("1", null, null, 500*1024l, 5l);
-        machineResourceReferenceDao.create(machineResourceReference);
+        machineResourceReferenceDao.create(machineResourceReference, WriteConcern.NONE);
 
         processingLimitsFromRead = machineResourceReferenceDao.read(machineResourceReference.getId());
         assertEquals(machineResourceReference.getBandwidthLimitReadInBytesPerSec(),
                 processingLimitsFromRead.getBandwidthLimitReadInBytesPerSec());
 
-        machineResourceReferenceDao.delete(machineResourceReference);
+        machineResourceReferenceDao.delete(machineResourceReference, WriteConcern.NONE);
     }
 
     @Test
     public void testUpdate() throws Exception {
         final MachineResourceReference machineResourceReference =
                 new MachineResourceReference("1", null, null, 500*1024l, 5l);
-        assertFalse(machineResourceReferenceDao.update(machineResourceReference));
-        machineResourceReferenceDao.create(machineResourceReference);
+        assertFalse(machineResourceReferenceDao.update(machineResourceReference, WriteConcern.NONE));
+        machineResourceReferenceDao.create(machineResourceReference, WriteConcern.NONE);
 
         final MachineResourceReference updatedProcessingLimits =
                 new MachineResourceReference(machineResourceReference.getId(), null, null, 510*1024l, 5l);
-        assertTrue(machineResourceReferenceDao.update(updatedProcessingLimits));
+        assertTrue(machineResourceReferenceDao.update(updatedProcessingLimits, WriteConcern.NONE));
 
         assertEquals((long) machineResourceReferenceDao.read(
                 machineResourceReference.getId()).getBandwidthLimitReadInBytesPerSec(),
                 (long)updatedProcessingLimits.getBandwidthLimitReadInBytesPerSec());
 
-        machineResourceReferenceDao.delete(updatedProcessingLimits);
+        machineResourceReferenceDao.delete(updatedProcessingLimits, WriteConcern.NONE);
     }
 
     @Test
     public void testDelete() throws Exception {
         final MachineResourceReference machineResourceReference =
                 new MachineResourceReference("1", null, null, 500*1024l, 5l);
-        machineResourceReferenceDao.create(machineResourceReference);
+        machineResourceReferenceDao.create(machineResourceReference, WriteConcern.NONE);
 
         MachineResourceReference processingLimitsFromRead =
                 machineResourceReferenceDao.read(machineResourceReference.getId());
         assertNotNull(processingLimitsFromRead);
 
-        assertTrue(machineResourceReferenceDao.delete(machineResourceReference));
+        assertTrue(machineResourceReferenceDao.delete(machineResourceReference, WriteConcern.NONE));
 
         processingLimitsFromRead = machineResourceReferenceDao.read(machineResourceReference.getId());
         assertNull(processingLimitsFromRead);
 
-        assertFalse(machineResourceReferenceDao.delete(machineResourceReference));
+        assertFalse(machineResourceReferenceDao.delete(machineResourceReference, WriteConcern.NONE));
     }
 
     @Test
@@ -103,7 +104,7 @@ public class MachineResourceReferenceDaoImplTest {
                 new MachineResourceReference("1", null, null, 500*1024l, 5l);
         assertNull(machineResourceReferenceDao.read(machineResourceReference.getId()));
 
-        machineResourceReferenceDao.createOrModify(machineResourceReference);
+        machineResourceReferenceDao.createOrModify(machineResourceReference, WriteConcern.NONE);
         assertNotNull(machineResourceReferenceDao.read(machineResourceReference.getId()));
         assertEquals(machineResourceReferenceDao.read(
                 machineResourceReference.getId()).getBandwidthLimitReadInBytesPerSec(),
@@ -111,7 +112,7 @@ public class MachineResourceReferenceDaoImplTest {
 
         final MachineResourceReference updatedProcessingLimits =
                 new MachineResourceReference(machineResourceReference.getId(), null, null, 10240*1024l, 5l);
-        machineResourceReferenceDao.createOrModify(updatedProcessingLimits);
+        machineResourceReferenceDao.createOrModify(updatedProcessingLimits, WriteConcern.NONE);
         assertEquals(machineResourceReferenceDao.read(
                 machineResourceReference.getId()).getBandwidthLimitReadInBytesPerSec(),
                 updatedProcessingLimits.getBandwidthLimitReadInBytesPerSec());
@@ -119,7 +120,7 @@ public class MachineResourceReferenceDaoImplTest {
                 machineResourceReference.getId()).getBandwidthLimitReadInBytesPerSec(),
                 machineResourceReference.getBandwidthLimitReadInBytesPerSec());
 
-        machineResourceReferenceDao.delete(updatedProcessingLimits);
+        machineResourceReferenceDao.delete(updatedProcessingLimits, WriteConcern.NONE);
     }
 
 }

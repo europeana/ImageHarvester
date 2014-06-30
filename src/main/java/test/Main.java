@@ -59,7 +59,7 @@ class Main {
 
         HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100),
                 1000*1024l /* write */, 500*1024l /* read */, Duration.ZERO, 0*1024l, true,
-                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
+                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 10000);
 
         List<Future<HttpRetrieveResponse>> responses = new ArrayList<Future<HttpRetrieveResponse>>();
         for (final String downloadLink : downloadLinks) {

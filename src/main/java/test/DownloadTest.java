@@ -3,10 +3,12 @@ package test;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
+import eu.europeana.harvester.client.HarvesterClientConfig;
 import eu.europeana.harvester.client.HarvesterClientImpl;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
@@ -64,8 +66,10 @@ public class DownloadTest {
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore);
         final LinkCheckLimitsDao linkCheckLimitsDao = new LinkCheckLimitsDaoImpl(datastore);
 
+        final HarvesterClientConfig harvesterClientConfig = new HarvesterClientConfig(WriteConcern.NONE);
+
         HarvesterClientImpl harvesterClient = new HarvesterClientImpl(processingJobDao, machineResourceReferenceDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, linkCheckLimitsDao);
+                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, linkCheckLimitsDao, harvesterClientConfig);
 
         // ======================================================
 

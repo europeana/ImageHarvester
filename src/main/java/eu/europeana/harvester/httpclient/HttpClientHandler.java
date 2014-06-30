@@ -85,6 +85,8 @@ class HttpClientHandler extends SimpleChannelHandler {
      */
     private final List<ResponseHeader> headers;
 
+    private long firstPackageArriveTime;
+
     public HttpClientHandler(final Long sizeLimitsInBytesForContent, final Duration timeLimitForContentRetrieval,
                              final HashedWheelTimer hashedWheelTimer, final HttpRetrieveResponse httpRetrieveResponse,
                              DocumentReferenceTaskType documentReferenceTaskType, List<ResponseHeader> headers) {
@@ -110,7 +112,7 @@ class HttpClientHandler extends SimpleChannelHandler {
             public void run(final Timeout timeout) throws Exception {
                 if (totalContentBytesRead != 0) {
                     httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setCheckingDurationInMilliSecs(System.currentTimeMillis() - downloadStartTime);
+                    httpRetrieveResponse.setCheckingDurationInMilliSecs(firstPackageArriveTime - connectionStartTime);
                     httpRetrieveResponse.setRetrievalDurationInMilliSecs(0l);
 
                     channel.close();
@@ -123,6 +125,7 @@ class HttpClientHandler extends SimpleChannelHandler {
 
     @Override
     public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
+        firstPackageArriveTime = System.currentTimeMillis();
         httpRetrieveResponse.setState(ResponseState.PROCESSING);
 
         if (!readingChunks) {
@@ -163,7 +166,7 @@ class HttpClientHandler extends SimpleChannelHandler {
 
         if (hasSizeLimitsForContent && totalContentBytesRead > sizeLimitsInBytesForContent) {
             httpRetrieveResponse.setState(ResponseState.FINISHED_SIZE_LIMIT);
-            httpRetrieveResponse.setCheckingDurationInMilliSecs(System.currentTimeMillis() - downloadStartTime);
+            httpRetrieveResponse.setCheckingDurationInMilliSecs(firstPackageArriveTime - connectionStartTime);
             httpRetrieveResponse.setRetrievalDurationInMilliSecs(0l);
 
             ctx.getChannel().close();
@@ -171,9 +174,6 @@ class HttpClientHandler extends SimpleChannelHandler {
     }
 
     private void handleHeaders(HttpResponse response, final ChannelHandlerContext ctx) {
-        httpRetrieveResponse.setSocketConnectToDownloadStartDurationInMilliSecs(
-                (System.currentTimeMillis() - connectionStartTime));
-
         // Reads the headers
         for (final String name : response.headers().names()) {
             for (final String value : response.headers().getAll(name)) {
@@ -199,8 +199,7 @@ class HttpClientHandler extends SimpleChannelHandler {
             case CHECK_LINK:
                 httpRetrieveResponse.setState(ResponseState.COMPLETED);
                 httpRetrieveResponse.setRetrievalDurationInMilliSecs(0l);
-                httpRetrieveResponse.setCheckingDurationInMilliSecs(
-                        httpRetrieveResponse.getSocketConnectToDownloadStartDurationInMilliSecs());
+                httpRetrieveResponse.setCheckingDurationInMilliSecs(firstPackageArriveTime - connectionStartTime);
 
                 ctx.getChannel().close();
                 break;

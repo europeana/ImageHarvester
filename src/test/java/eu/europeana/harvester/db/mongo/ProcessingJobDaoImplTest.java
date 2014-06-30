@@ -3,6 +3,7 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.domain.*;
 import org.junit.Before;
@@ -50,10 +51,10 @@ public class ProcessingJobDaoImplTest {
         final ProcessingJob processingJob =
                 new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), tasks, JobState.READY);
 
-        processingJobDao.create(processingJob);
+        processingJobDao.create(processingJob, WriteConcern.NONE);
         assertEquals(processingJob.getId(), processingJobDao.read(processingJob.getId()).getId());
 
-        processingJobDao.delete(processingJob);
+        processingJobDao.delete(processingJob, WriteConcern.NONE);
     }
 
     @Test
@@ -76,60 +77,60 @@ public class ProcessingJobDaoImplTest {
 
         final ProcessingJob processingJob =
                 new ProcessingJob(date, new ReferenceOwner("1", "1", "1"), tasks, JobState.READY);
-        processingJobDao.create(processingJob);
+        processingJobDao.create(processingJob, WriteConcern.NONE);
 
         assertEquals(processingJob.getExpectedStartDate(),
                 processingJobDao.read(processingJob.getId()).getExpectedStartDate());
 
-        processingJobDao.delete(processingJob);
+        processingJobDao.delete(processingJob, WriteConcern.NONE);
     }
 
     @Test
     public void testUpdate() throws Exception {
         final ProcessingJob processingJob =
                 new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
-        processingJobDao.create(processingJob);
+        processingJobDao.create(processingJob, WriteConcern.NONE);
 
         final ProcessingJob updatedProcessingJob = processingJob.withState(JobState.FINISHED);
 
         assertNotEquals(updatedProcessingJob.getState(), processingJobDao.read(processingJob.getId()).getState());
-        assertTrue(processingJobDao.update(updatedProcessingJob));
+        assertTrue(processingJobDao.update(updatedProcessingJob, WriteConcern.NONE));
         assertEquals(updatedProcessingJob.getState(), processingJobDao.read(processingJob.getId()).getState());
 
-        processingJobDao.delete(updatedProcessingJob);
+        processingJobDao.delete(updatedProcessingJob, WriteConcern.NONE);
 
         final ProcessingJob newProcessingJob =
                 new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
-        assertFalse(processingJobDao.update(newProcessingJob));
+        assertFalse(processingJobDao.update(newProcessingJob, WriteConcern.NONE));
     }
 
     @Test
     public void testDelete() throws Exception {
         final ProcessingJob processingJob =
                 new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
-        processingJobDao.create(processingJob);
+        processingJobDao.create(processingJob, WriteConcern.NONE);
 
         ProcessingJob processingJobFromRead = processingJobDao.read(processingJob.getId());
         assertNotNull(processingJobFromRead);
 
-        assertTrue(processingJobDao.delete(processingJob));
+        assertTrue(processingJobDao.delete(processingJob, WriteConcern.NONE));
 
         processingJobFromRead = processingJobDao.read(processingJob.getId());
         assertNull(processingJobFromRead);
 
-        assertFalse(processingJobDao.delete(processingJob));
+        assertFalse(processingJobDao.delete(processingJob, WriteConcern.NONE));
     }
 
     @Test
     public void testGetAllJobs() throws Exception {
         final ProcessingJob processingJob =
                 new ProcessingJob(new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
-        processingJobDao.create(processingJob);
+        processingJobDao.create(processingJob, WriteConcern.NONE);
 
         List<ProcessingJob> allJobs = processingJobDao.getAllJobs();
         assertNotNull(allJobs);
 
-        processingJobDao.delete(processingJob);
+        processingJobDao.delete(processingJob, WriteConcern.NONE);
     }
 
 }

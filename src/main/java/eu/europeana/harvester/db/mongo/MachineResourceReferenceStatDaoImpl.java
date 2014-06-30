@@ -2,6 +2,7 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.MachineResourceReferenceStatDao;
 import eu.europeana.harvester.domain.MachineResourceReferenceStat;
 
@@ -16,8 +17,13 @@ public class MachineResourceReferenceStatDaoImpl implements MachineResourceRefer
     }
 
     @Override
-    public void create(MachineResourceReferenceStat machineResourceReferenceStat) {
-        datastore.save(machineResourceReferenceStat);
+    public boolean create(MachineResourceReferenceStat machineResourceReferenceStat, WriteConcern writeConcern) {
+        if(read(machineResourceReferenceStat.getId()) == null) {
+            datastore.save(machineResourceReferenceStat, writeConcern);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -33,14 +39,13 @@ public class MachineResourceReferenceStatDaoImpl implements MachineResourceRefer
     }
 
     @Override
-    public boolean update(MachineResourceReferenceStat machineResourceReferenceStat) {
+    public boolean update(MachineResourceReferenceStat machineResourceReferenceStat, WriteConcern writeConcern) {
         Query<MachineResourceReferenceStat> query = datastore.find(MachineResourceReferenceStat.class);
         query.criteria("id").equal(machineResourceReferenceStat.getId());
 
         List<MachineResourceReferenceStat> result = query.asList();
         if(!result.isEmpty()) {
-            datastore.delete(query);
-            datastore.save(machineResourceReferenceStat);
+            datastore.save(machineResourceReferenceStat, writeConcern);
 
             return true;
         }
@@ -49,13 +54,13 @@ public class MachineResourceReferenceStatDaoImpl implements MachineResourceRefer
     }
 
     @Override
-    public boolean delete(MachineResourceReferenceStat machineResourceReferenceStat) {
+    public boolean delete(MachineResourceReferenceStat machineResourceReferenceStat, WriteConcern writeConcern) {
         Query<MachineResourceReferenceStat> query = datastore.find(MachineResourceReferenceStat.class);
         query.criteria("id").equal(machineResourceReferenceStat.getId());
 
         List<MachineResourceReferenceStat> result = query.asList();
         if(!result.isEmpty()) {
-            datastore.delete(machineResourceReferenceStat);
+            datastore.delete(machineResourceReferenceStat, writeConcern);
 
             return true;
         }

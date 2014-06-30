@@ -3,6 +3,7 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.ReferenceOwner;
@@ -43,12 +44,12 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
                         "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null);
         assertNotNull(sourceDocumentProcessingStatistics.getId());
 
-        sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics);
+        sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
         assertEquals(sourceDocumentProcessingStatistics.getHttpResponseContentSizeInBytes(),
                 sourceDocumentProcessingStatisticsDao.read(
                         sourceDocumentProcessingStatistics.getId()).getHttpResponseContentSizeInBytes());
 
-        sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics);
+        sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics, WriteConcern.NONE);
     }
 
     @Test
@@ -60,14 +61,14 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(new Date(), new Date(), null, new ReferenceOwner("1", "1", "1"),
                         "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null);
-        sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics);
+        sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
         sourceDocumentProcessingStatisticsFromRead =
                 sourceDocumentProcessingStatisticsDao.read(sourceDocumentProcessingStatistics.getId());
 
         assertEquals(sourceDocumentProcessingStatistics.getHttpResponseContentSizeInBytes(),
                 sourceDocumentProcessingStatisticsFromRead.getHttpResponseContentSizeInBytes());
 
-        sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics);
+        sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics, WriteConcern.NONE);
     }
 
     @Test
@@ -75,8 +76,8 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(new Date(), new Date(), ProcessingState.DOWNLOADING,
                         new ReferenceOwner("1", "1", "1"), "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null);
-        assertFalse(sourceDocumentProcessingStatisticsDao.update(sourceDocumentProcessingStatistics));
-        sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics);
+        assertFalse(sourceDocumentProcessingStatisticsDao.update(sourceDocumentProcessingStatistics, WriteConcern.NONE));
+        sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
 
         final SourceDocumentProcessingStatistics updatedSourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(sourceDocumentProcessingStatistics.getId(),
@@ -94,12 +95,12 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
                         sourceDocumentProcessingStatistics.getCheckingDurationInMilliSecs(),
                         sourceDocumentProcessingStatistics.getSourceIp(),
                         sourceDocumentProcessingStatistics.getHttpResponseHeaders());
-        assertTrue(sourceDocumentProcessingStatisticsDao.update(updatedSourceDocumentProcessingStatistics));
+        assertTrue(sourceDocumentProcessingStatisticsDao.update(updatedSourceDocumentProcessingStatistics, WriteConcern.NONE));
 
         assertEquals(sourceDocumentProcessingStatisticsDao.read(sourceDocumentProcessingStatistics.getId()).getState(),
                 ProcessingState.SUCCESS);
 
-        sourceDocumentProcessingStatisticsDao.delete(updatedSourceDocumentProcessingStatistics);
+        sourceDocumentProcessingStatisticsDao.delete(updatedSourceDocumentProcessingStatistics, WriteConcern.NONE);
     }
 
     @Test
@@ -107,14 +108,14 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(new Date(), new Date(), null, new ReferenceOwner("1", "1", "1"),
                         "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null);
-        assertFalse(sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics));
-        sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics);
+        assertFalse(sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics, WriteConcern.NONE));
+        sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
 
         SourceDocumentProcessingStatistics sourceDocumentProcessingStatisticsFromRead =
                 sourceDocumentProcessingStatisticsDao.read(sourceDocumentProcessingStatistics.getId());
         assertNotNull(sourceDocumentProcessingStatisticsFromRead);
 
-        assertTrue(sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics));
+        assertTrue(sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics, WriteConcern.NONE));
 
         sourceDocumentProcessingStatisticsFromRead =
                 sourceDocumentProcessingStatisticsDao.read(sourceDocumentProcessingStatistics.getId());

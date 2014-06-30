@@ -3,6 +3,7 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.LinkCheckLimitsDao;
 import eu.europeana.harvester.domain.LinkCheckLimits;
 import junit.framework.TestCase;
@@ -38,11 +39,11 @@ public class LinkCheckLimitsDaoImplTest extends TestCase {
 
         assertNotNull(linkCheckLimits.getId());
 
-        linkCheckLimitsDao.create(linkCheckLimits);
+        linkCheckLimitsDao.create(linkCheckLimits, WriteConcern.NONE);
         assertEquals(linkCheckLimits.getBandwidthLimitReadInBytesPerSec(),
                 linkCheckLimitsDao.read(linkCheckLimits.getId()).getBandwidthLimitReadInBytesPerSec());
 
-        linkCheckLimitsDao.delete(linkCheckLimits);
+        linkCheckLimitsDao.delete(linkCheckLimits, WriteConcern.NONE);
     }
 
     @Test
@@ -51,24 +52,24 @@ public class LinkCheckLimitsDaoImplTest extends TestCase {
         assertNull(linkCheckLimitsFromRead);
 
         final LinkCheckLimits linkCheckLimits = new LinkCheckLimits(100l, 200l, 300l, 400l);
-        linkCheckLimitsDao.create(linkCheckLimits);
+        linkCheckLimitsDao.create(linkCheckLimits, WriteConcern.NONE);
         linkCheckLimitsFromRead = linkCheckLimitsDao.read(linkCheckLimits.getId());
 
         assertEquals(linkCheckLimits.getBandwidthLimitReadInBytesPerSec(),
                 linkCheckLimitsFromRead.getBandwidthLimitReadInBytesPerSec());
 
-        linkCheckLimitsDao.delete(linkCheckLimits);
+        linkCheckLimitsDao.delete(linkCheckLimits, WriteConcern.NONE);
     }
 
     @Test
     public void testUpdate() throws Exception {
         final LinkCheckLimits linkCheckLimits = new LinkCheckLimits(100l, 200l, 300l, 400l);
-        assertFalse(linkCheckLimitsDao.update(linkCheckLimits));
-        linkCheckLimitsDao.create(linkCheckLimits);
+        assertFalse(linkCheckLimitsDao.update(linkCheckLimits, WriteConcern.NONE));
+        linkCheckLimitsDao.create(linkCheckLimits, WriteConcern.NONE);
 
         final LinkCheckLimits updatedLinkCheckLimits =
                 new LinkCheckLimits(linkCheckLimits.getId(), 400l, 300l, 200l, 100l);
-        assertTrue(linkCheckLimitsDao.update(updatedLinkCheckLimits));
+        assertTrue(linkCheckLimitsDao.update(updatedLinkCheckLimits, WriteConcern.NONE));
 
         assertEquals(linkCheckLimitsDao.read(linkCheckLimits.getId()).getBandwidthLimitReadInBytesPerSec(),
                 updatedLinkCheckLimits.getBandwidthLimitReadInBytesPerSec());
@@ -79,23 +80,23 @@ public class LinkCheckLimitsDaoImplTest extends TestCase {
         assertEquals(linkCheckLimitsDao.read(linkCheckLimits.getId()).getTerminationThresholdTimeLimit(),
                 updatedLinkCheckLimits.getTerminationThresholdTimeLimit());
 
-        linkCheckLimitsDao.delete(updatedLinkCheckLimits);
+        linkCheckLimitsDao.delete(updatedLinkCheckLimits, WriteConcern.NONE);
     }
 
     @Test
     public void testDelete() throws Exception {
         final LinkCheckLimits linkCheckLimits = new LinkCheckLimits(100l, 200l, 300l, 400l);
-        linkCheckLimitsDao.create(linkCheckLimits);
+        linkCheckLimitsDao.create(linkCheckLimits, WriteConcern.NONE);
 
         LinkCheckLimits linkCheckLimitFromRead = linkCheckLimitsDao.read(linkCheckLimits.getId());
         assertNotNull(linkCheckLimitFromRead);
 
-        assertTrue(linkCheckLimitsDao.delete(linkCheckLimits));
+        assertTrue(linkCheckLimitsDao.delete(linkCheckLimits, WriteConcern.NONE));
 
         linkCheckLimitFromRead = linkCheckLimitsDao.read(linkCheckLimits.getId());
         assertNull(linkCheckLimitFromRead);
 
-        assertFalse(linkCheckLimitsDao.delete(linkCheckLimits));
+        assertFalse(linkCheckLimitsDao.delete(linkCheckLimits, WriteConcern.NONE));
     }
 
     @Test
@@ -103,14 +104,14 @@ public class LinkCheckLimitsDaoImplTest extends TestCase {
         final LinkCheckLimits linkCheckLimits = new LinkCheckLimits(100l, 200l, 300l, 400l);
         assertNull(linkCheckLimitsDao.read(linkCheckLimits.getId()));
 
-        linkCheckLimitsDao.create(linkCheckLimits);
+        linkCheckLimitsDao.create(linkCheckLimits, WriteConcern.NONE);
         assertNotNull(linkCheckLimitsDao.read(linkCheckLimits.getId()));
         assertEquals(linkCheckLimitsDao.read(linkCheckLimits.getId()).getBandwidthLimitReadInBytesPerSec(),
                 linkCheckLimits.getBandwidthLimitReadInBytesPerSec());
 
         final LinkCheckLimits updatedLinkCheckLimits =
                 new LinkCheckLimits(linkCheckLimits.getId(), 400l, 300l, 200l, 100l);
-        linkCheckLimitsDao.createOrModify(updatedLinkCheckLimits);
+        linkCheckLimitsDao.createOrModify(updatedLinkCheckLimits, WriteConcern.NONE);
         assertEquals(linkCheckLimitsDao.read(linkCheckLimits.getId()).getBandwidthLimitReadInBytesPerSec(),
                 updatedLinkCheckLimits.getBandwidthLimitReadInBytesPerSec());
         assertEquals(linkCheckLimitsDao.read(linkCheckLimits.getId()).getBandwidthLimitWriteInBytesPerSec(),
@@ -120,7 +121,7 @@ public class LinkCheckLimitsDaoImplTest extends TestCase {
         assertEquals(linkCheckLimitsDao.read(linkCheckLimits.getId()).getTerminationThresholdTimeLimit(),
                 updatedLinkCheckLimits.getTerminationThresholdTimeLimit());
 
-        linkCheckLimitsDao.delete(updatedLinkCheckLimits);
+        linkCheckLimitsDao.delete(updatedLinkCheckLimits, WriteConcern.NONE);
     }
 
 }

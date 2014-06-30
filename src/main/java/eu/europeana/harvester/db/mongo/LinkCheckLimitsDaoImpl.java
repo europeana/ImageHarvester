@@ -2,6 +2,7 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.LinkCheckLimitsDao;
 import eu.europeana.harvester.domain.LinkCheckLimits;
 
@@ -16,8 +17,18 @@ public class LinkCheckLimitsDaoImpl implements LinkCheckLimitsDao {
     }
 
     @Override
-    public void create(LinkCheckLimits linkCheckLimit) {
-        datastore.save(linkCheckLimit);
+    public boolean create(LinkCheckLimits linkCheckLimits, WriteConcern writeConcern) {
+        if(read(linkCheckLimits.getId()) == null) {
+            datastore.save(linkCheckLimits, writeConcern);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public void createOrModify(LinkCheckLimits linkCheckLimit, WriteConcern writeConcern) {
+        datastore.save(linkCheckLimit, writeConcern);
     }
 
     @Override
@@ -33,13 +44,12 @@ public class LinkCheckLimitsDaoImpl implements LinkCheckLimitsDao {
     }
 
     @Override
-    public boolean update(LinkCheckLimits linkCheckLimit) {
+    public boolean update(LinkCheckLimits linkCheckLimit, WriteConcern writeConcern) {
         Query<LinkCheckLimits> query = datastore.find(LinkCheckLimits.class);
         query.criteria("id").equal(linkCheckLimit.getId());
 
         List<LinkCheckLimits> result = query.asList();
         if(!result.isEmpty()) {
-            datastore.delete(query);
             datastore.save(linkCheckLimit);
 
             return true;
@@ -49,7 +59,7 @@ public class LinkCheckLimitsDaoImpl implements LinkCheckLimitsDao {
     }
 
     @Override
-    public boolean delete(LinkCheckLimits linkCheckLimit) {
+    public boolean delete(LinkCheckLimits linkCheckLimit, WriteConcern writeConcern) {
         Query<LinkCheckLimits> query = datastore.find(LinkCheckLimits.class);
         query.criteria("id").equal(linkCheckLimit.getId());
 
@@ -61,13 +71,6 @@ public class LinkCheckLimitsDaoImpl implements LinkCheckLimitsDao {
         }
 
         return false;
-    }
-
-    @Override
-    public void createOrModify(LinkCheckLimits linkCheckLimit) {
-        if(!update(linkCheckLimit)) {
-            create(linkCheckLimit);
-        }
     }
 
 }
