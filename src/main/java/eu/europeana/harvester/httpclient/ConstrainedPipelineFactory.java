@@ -1,6 +1,5 @@
 package eu.europeana.harvester.httpclient;
 
-import com.sun.corba.se.spi.transport.ReadTimeouts;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.ResponseHeader;
@@ -18,9 +17,7 @@ import org.jboss.netty.util.HashedWheelTimer;
 import org.joda.time.Duration;
 
 import javax.net.ssl.SSLEngine;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A custom netty pipeline factory that creates constrained pipelines.

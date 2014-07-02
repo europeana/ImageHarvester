@@ -4,6 +4,9 @@ name=harvester-0.1-SNAPSHOT-allinone.jar
 
 mvn package
 
+rm -Rf out
+mkdir out
+
 cp ./target/$name ./out/client
 cp ./target/$name ./out/master
 cp ./target/$name ./out/slave

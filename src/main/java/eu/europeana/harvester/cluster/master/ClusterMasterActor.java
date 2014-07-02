@@ -4,17 +4,19 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import com.mongodb.WriteConcern;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.TimeLimiter;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.harvester.eventbus.EventService;
-import eu.europeana.harvester.eventbus.events.JobDoneEvent;
 import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import eu.europeana.harvester.httpclient.response.ResponseHeader;
+import eu.europeana.servicebus.client.ESBClient;
+import eu.europeana.servicebus.model.Message;
+import eu.europeana.servicebus.model.Status;
 import org.joda.time.Duration;
 
 import java.net.InetAddress;
@@ -22,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class ClusterMasterActor extends UntypedActor {
@@ -94,9 +97,15 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private final LinkCheckLimitsDao linkCheckLimitsDao;
 
+    /**
+     * Contains default download limits.
+     */
     private final DefaultLimits defaultLimits;
 
-    private final EventService eventService;
+    /**
+     * Used to send messages after each finished job.
+     */
+    private final ESBClient esbClient;
 
     public ClusterMasterActor(ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao,
                               MachineResourceReferenceDao machineResourceReferenceDao,
@@ -104,7 +113,7 @@ public class ClusterMasterActor extends UntypedActor {
                               SourceDocumentReferenceDao sourceDocumentReferenceDao,
                               SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
                               LinkCheckLimitsDao linkCheckLimitsDao, ActorRef routerActor,
-                              DefaultLimits defaultLimits, EventService eventService) {
+                              DefaultLimits defaultLimits, ESBClient esbClient) {
         this.clusterMasterConfig = clusterMasterConfig;
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
@@ -114,7 +123,7 @@ public class ClusterMasterActor extends UntypedActor {
         this.linkCheckLimitsDao = linkCheckLimitsDao;
         this.routerActor = routerActor;
         this.defaultLimits = defaultLimits;
-        this.eventService = eventService;
+        this.esbClient = esbClient;
     }
 
     @Override
@@ -178,9 +187,23 @@ public class ClusterMasterActor extends UntypedActor {
                     String ipAddress = sourceDocumentReference.getIpAddress();
                     if(ipAddress == null) {
                         try {
-                            final InetAddress address =
-                                    InetAddress.getByName(new URL(sourceDocumentReference.getUrl()).getHost());
-                            ipAddress = address.getHostAddress();
+                            TimeLimiter limiter = new SimpleTimeLimiter();
+                            ipAddress = limiter.callWithTimeout(new Callable<String>() {
+                                public String call() {
+                                    try {
+                                        final InetAddress address = InetAddress.getByName(new URL(sourceDocumentReference.getUrl()).getHost());
+
+                                        return address.getHostAddress();
+                                    } catch (UnknownHostException e) {
+                                        e.printStackTrace();
+                                    } catch (MalformedURLException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    return null;
+                                }
+                            }, defaultLimits.getConnectionTimeoutInMillis(), TimeUnit.MILLISECONDS, false);
+
                             final SourceDocumentReference updatedSourceDocumentReference =
                                     sourceDocumentReference.withIPAddress(ipAddress);
                             sourceDocumentReferenceDao.update(updatedSourceDocumentReference,
@@ -190,6 +213,10 @@ public class ClusterMasterActor extends UntypedActor {
                             continue;
                         } catch (MalformedURLException e) {
                             e.printStackTrace();
+                            continue;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            continue;
                         }
                     }
 
@@ -437,6 +464,11 @@ public class ClusterMasterActor extends UntypedActor {
         checkJobStatus(processingJob, links);
     }
 
+    /**
+     * Checks if a job is done, and if it's done than generates an event.
+     * @param processingJob one job
+     * @param links all links from the job
+     */
     private void checkJobStatus(ProcessingJob processingJob, HashMap<String, JobState> links) {
         boolean allDone = true;
         for (final Map.Entry link : links.entrySet()) {
@@ -450,7 +482,13 @@ public class ClusterMasterActor extends UntypedActor {
 
             processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
 
-            eventService.publish(new JobDoneEvent(newProcessingJob.getId()));
+            final Message message = new Message();
+            message.setStatus(Status.SUCCESS);
+            message.setJobId(newProcessingJob.getId());
+
+            if(esbClient != null) {
+                esbClient.send(message);
+            }
         }
     }
 

@@ -9,6 +9,11 @@ public class HttpRetrieveResponseMemoryStorage extends HttpRetrieveResponseBase 
         return content;
     }
 
+    /**
+     * Saves the content in memory to an byte array
+     * @param content arrived packages content
+     * @throws Exception
+     */
     synchronized public void addContent(byte[] content) throws Exception {
         try {
             if (this.content == null) {

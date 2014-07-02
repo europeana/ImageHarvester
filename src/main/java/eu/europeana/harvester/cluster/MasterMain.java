@@ -9,6 +9,8 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
+import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.QueueingConsumer;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
@@ -21,11 +23,12 @@ import eu.europeana.harvester.cluster.master.ClusterMasterActor;
 import eu.europeana.harvester.cluster.master.PingMasterActor;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
-import eu.europeana.harvester.eventbus.EventService;
-import eu.europeana.harvester.eventbus.subscribers.JobDoneSubscriber;
+import eu.europeana.servicebus.client.ESBClient;
+import eu.europeana.servicebus.client.rabbitmq.RabbitMQClientAsync;
 import org.joda.time.Duration;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.UnknownHostException;
 
 class MasterMain {
@@ -97,7 +100,20 @@ class MasterMain {
 
         final ActorRef router = system.actorOf(FromConfig.getInstance().props(), "nodeMasterRouter");
 
-        final EventService eventService = new EventService();
+        final String ebHost = config.getString("eventbus.host");
+        final String ebUsername = config.getString("eventbus.username");
+        final String ebPassword = config.getString("eventbus.password");
+        final String ebIncomingQueue = config.getString("eventbus.incomingQueue");
+        final String ebOutgoingQueue = config.getString("eventbus.outgoingQueue");
+
+        ESBClient esbClientTemp = null;
+        try {
+            final Consumer consumer = new QueueingConsumer(null);
+            esbClientTemp = new RabbitMQClientAsync(ebHost, ebIncomingQueue, ebOutgoingQueue, ebUsername, ebPassword, consumer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        final ESBClient esbClient = esbClientTemp;
 
         Cluster.get(system).registerOnMemberUp(new Runnable() {
             @Override
@@ -107,7 +123,7 @@ class MasterMain {
                 ActorRef clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class, clusterMasterConfig,
                         processingJobDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao,
                         sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao, linkCheckLimitsDao, router,
-                        defaultLimits, eventService),
+                        defaultLimits, esbClient),
                         "clusterMaster");
 
                 ActorRef pingMaster = system.actorOf(Props.create(PingMasterActor.class, pingMasterConfig, router,
@@ -123,9 +139,5 @@ class MasterMain {
                 pingMaster.tell(new ActorStart(), ActorRef.noSender());
             }
         });
-
-        JobDoneSubscriber jobDoneSubscriber = new JobDoneSubscriber(eventService);
-
-
     }
 }

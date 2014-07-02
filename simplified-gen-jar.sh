@@ -2,6 +2,9 @@
 
 name=harvester-0.1-SNAPSHOT-allinone.jar
 
+rm -Rf out
+mkdir out
+
 mvn package
 
 mv ./target/$name ./out/jars

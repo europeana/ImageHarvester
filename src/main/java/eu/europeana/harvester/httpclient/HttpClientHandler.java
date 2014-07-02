@@ -106,6 +106,10 @@ class HttpClientHandler extends SimpleChannelHandler {
         this.connectionStartTime = System.currentTimeMillis();
     }
 
+    /**
+     * Starts a timer if we have a time limit on download.
+     * @param channel in this channel come all the packages
+     */
     private void startTimer(final Channel channel) {
         /* Limit the time of download. */
         final TimerTask timerTask = new TimerTask() {
@@ -173,6 +177,11 @@ class HttpClientHandler extends SimpleChannelHandler {
         }
     }
 
+    /**
+     * This method saves the headers and checks if there is a redirect. If the url is redirected then stops the downloa.
+     * @param response
+     * @param ctx
+     */
     private void handleHeaders(HttpResponse response, final ChannelHandlerContext ctx) {
         // Reads the headers
         for (final String name : response.headers().names()) {
@@ -194,6 +203,10 @@ class HttpClientHandler extends SimpleChannelHandler {
         }
     }
 
+    /**
+     * There are 3 different type of download. This method treats them.
+     * @param ctx
+     */
     private void handleDifferentTaskTypes(final ChannelHandlerContext ctx) {
         switch(documentReferenceTaskType) {
             case CHECK_LINK:

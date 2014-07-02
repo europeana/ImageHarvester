@@ -18,6 +18,8 @@ import gr.ntua.image.mediachecker.*;
 import org.im4java.core.InfoException;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timeout;
+import org.jboss.netty.util.TimerTask;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -26,6 +28,10 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class SlaveActor extends UntypedActorWithStash {
 
@@ -66,6 +72,7 @@ public class SlaveActor extends UntypedActorWithStash {
 
     @Override
     public void onReceive(Object message) throws Exception {
+        System.out.println("ON receive");
         final ActorRef sender = getSender();
 
         if(message instanceof RetrieveUrl) {
@@ -146,7 +153,13 @@ public class SlaveActor extends UntypedActorWithStash {
         }
     }
 
+    /**
+     * Starts one download
+     * @param task contains all the information for this task
+     * @return - finished job response with all the collected information
+     */
     private HttpRetrieveResponse downloadTask(RetrieveUrl task) {
+        System.out.println("Download :D");
         HttpRetrieveResponse httpRetrieveResponse = null;
         final String path = pathToSave + "/" + task.getReferenceId();
 
@@ -176,8 +189,13 @@ public class SlaveActor extends UntypedActorWithStash {
                     return httpRetrieveResponse;
                 }
 
+                ExecutorService httpPool = Executors.newFixedThreadPool(1);
+                final Future<HttpRetrieveResponse> res = httpPool.submit(httpClient);
+
+                httpRetrieveResponse = res.get();
                 // blocks until we get the response
-                httpRetrieveResponse = httpClient.call();
+                //httpRetrieveResponse = httpClient.call();
+
 
                 // checks if the link was a redirect link
                 if(httpRetrieveResponse.getRedirectionPath().size() == depth+1) {
@@ -195,6 +213,11 @@ public class SlaveActor extends UntypedActorWithStash {
         return httpRetrieveResponse;
     }
 
+    /**
+     * Classifies the downloaded content in one of the existent categories.
+     * @param task contains all the information for this task
+     * @return - the matching category
+     */
     private ContentType classifyUrl(RetrieveUrl task) {
         final String path = pathToSave + "/" + task.getReferenceId();
         try {
@@ -238,6 +261,11 @@ public class SlaveActor extends UntypedActorWithStash {
         return newHttpRetrieveResponse;
     }
 
+    /**
+     * Extracts image meta data
+     * @param httpRetrieveResponse finished job response with all the collected information
+     * @return - an object with all the meta info
+     */
     private ImageMetaInfo extractImageMetadata(HttpRetrieveResponse httpRetrieveResponse) {
         final String filePath = ((HttpRetrieveResponseDiskStorage)httpRetrieveResponse).getAbsolutePath();
 
@@ -259,6 +287,11 @@ public class SlaveActor extends UntypedActorWithStash {
         return imageMetaInfo;
     }
 
+    /**
+     * Extracts audio meta data
+     * @param httpRetrieveResponse finished job response with all the collected information
+     * @return - an object with all the meta info
+     */
     private AudioMetaInfo extractAudioMetadata(HttpRetrieveResponse httpRetrieveResponse) {
         final String filePath = ((HttpRetrieveResponseDiskStorage)httpRetrieveResponse).getAbsolutePath();
 
@@ -277,6 +310,11 @@ public class SlaveActor extends UntypedActorWithStash {
         return audioMetaInfo;
     }
 
+    /**
+     * Extracts video meta data
+     * @param httpRetrieveResponse finished job response with all the collected information
+     * @return - an object with all the meta info
+     */
     private VideoMetaInfo extractVideoMetaData(HttpRetrieveResponse httpRetrieveResponse) {
         final String filePath = ((HttpRetrieveResponseDiskStorage)httpRetrieveResponse).getAbsolutePath();
 
@@ -295,6 +333,13 @@ public class SlaveActor extends UntypedActorWithStash {
         return videoMetaInfo;
     }
 
+    /**
+     * Starts pinging a machine
+     * @param ip the machines ip address
+     * @param nrOfPings how many times you want to ping it
+     * @param pingTimeout timeout in milliseconds
+     * @return - all the information about this job in one object
+     */
     private DonePing startPinging(String ip, int nrOfPings, int pingTimeout) {
         List<Long> responses = new ArrayList<Long>();
         long temp;
@@ -338,6 +383,11 @@ public class SlaveActor extends UntypedActorWithStash {
         }
     }
 
+    /**
+     * Calculates the sum of a list of numbers
+     * @param list list of numbers
+     * @return - the result
+     */
     public Long sum(List<Long> list) {
         Long sum= 0l;
 
@@ -346,13 +396,18 @@ public class SlaveActor extends UntypedActorWithStash {
         return sum;
     }
 
-    public long median (List<Long> a){
-        int middle = a.size()/2;
+    /**
+     * Calculates the median of a list of numbers
+     * @param list list of numbers
+     * @return - the result
+     */
+    public long median(List<Long> list){
+        int middle = list.size()/2;
 
-        if (a.size() % 2 == 1) {
-            return a.get(middle);
+        if (list.size() % 2 == 1) {
+            return list.get(middle);
         } else {
-            return (a.get(middle-1) + a.get(middle)) / 2;
+            return (list.get(middle-1) + list.get(middle)) / 2;
         }
     }
 

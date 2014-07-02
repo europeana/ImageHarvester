@@ -43,14 +43,6 @@ public class MachineResourceReference {
         this.maxConcurrentConnectionsLimit = null;
     }
 
-    /**
-     *
-     * @param id - is an IP address
-     * @param lastPingCheck
-     * @param referenceOwnerList
-     * @param bandwidthLimitReadInBytesPerSec
-     * @param maxConcurrentConnectionsLimit
-     */
     public MachineResourceReference(String id, Date lastPingCheck, List<ReferenceOwner> referenceOwnerList, Long bandwidthLimitReadInBytesPerSec,
                                     Long maxConcurrentConnectionsLimit) {
         this.id = id;

@@ -73,7 +73,7 @@ public class LinkCheckTest {
 
         // ======================================================
 
-        final int nrOfLinks = 110;
+        final int nrOfLinks = 20;
         final int linksPerJobs = 50;
         final String outputFileName = "outLinkCheck";
 

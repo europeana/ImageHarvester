@@ -3,10 +3,7 @@ package eu.europeana.harvester.cluster.master;
 import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.routing.DefaultResizer;
-import akka.routing.RoundRobinPool;
-import akka.routing.RoundRobinRouter;
-import akka.routing.SmallestMailboxPool;
+import akka.routing.*;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.slave.SlaveActor;
@@ -72,24 +69,26 @@ public class NodeMasterActor extends UntypedActor{
 
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
         router = getContext().actorOf(
-                //SmallestMailboxRouter - your choice
+                //SmallestMailboxRouter - your choice RoundRobinPool
                 new RoundRobinPool(nodeMasterConfig.getNrOfSlaves())
-                        .withResizer(resizer)
-                        .withSupervisorStrategy(strategy)
+                        //.withResizer(resizer)
+                        //.withSupervisorStrategy(strategy)
                         .props(Props.create(SlaveActor.class, channelFactory, hashedWheelTimer,
                                 httpRetrieveResponseFactory, nodeMasterConfig.getResponseType(),
-                                nodeMasterConfig.getPathToSave())),
+                                nodeMasterConfig.getPathToSave()).withDispatcher("my-dispatcher")),
                 "router");
     }
-Set<String> set = new HashSet<String>();
+
+    Set<String> set = new HashSet<String>();
     int messages = 0;
+
     @Override
     public void onReceive(Object message) throws Exception {
         if(message instanceof RetrieveUrl) {
+            System.out.println("NodeMaster On recieve");
             router.tell(message, getSelf());
             clusterMaster = getSender();
             System.out.println(messages++);
-
         } else
         if(message instanceof StartedUrl) {
             log.info("From " + getSender() + " to master: " +

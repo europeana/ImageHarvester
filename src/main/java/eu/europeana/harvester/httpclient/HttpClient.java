@@ -1,5 +1,8 @@
 package eu.europeana.harvester.httpclient;
 
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.TimeLimiter;
+import com.typesafe.config.ConfigException;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.ResponseHeader;
 import eu.europeana.harvester.httpclient.response.ResponseState;
@@ -7,6 +10,8 @@ import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timeout;
+import org.jboss.netty.util.TimerTask;
 
 import java.io.IOException;
 import java.net.*;
@@ -15,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class HttpClient implements Callable<HttpRetrieveResponse> {
 
@@ -59,7 +65,9 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
      * List of headers from the last download, it's needed only if the task type is conditional download
      */
     private final List<ResponseHeader> headers;
-long time;
+
+    long time;
+
     public HttpClient(ChannelFactory channelFactory, HashedWheelTimer hashedWheelTimer,
                       HttpRetrieveConfig httpRetrieveConfig, List<ResponseHeader> headers,
                       HttpRetrieveResponse httpRetrieveResponse,
@@ -77,12 +85,14 @@ long time;
         startDownload();
     }
 
+    /**
+     * Collects some information about the target url and then  starts the download.
+     */
     private void startDownload() {
+        System.out.println("Start ");
+
         httpRetrieveResponse.setUrl(url);
         try {
-            final InetAddress address = InetAddress.getByName(url.getHost());
-            httpRetrieveResponse.setSourceIp(address.getHostAddress());
-
             final HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setRequestMethod("GET");
             httpURLConnection.setInstanceFollowRedirects(false);
@@ -93,17 +103,41 @@ long time;
                 httpURLConnection.connect();
                 httpRetrieveResponse.
                         setSocketConnectToDownloadStartDurationInMilliSecs(System.currentTimeMillis() - start);
+                System.out.println("1");
+                TimeLimiter limiter = new SimpleTimeLimiter();
+                limiter.callWithTimeout(new Callable<HttpRetrieveResponse>() {
+                    public HttpRetrieveResponse call() {
+                        try {
+                            System.out.println("2");
+                            int responseCode = httpURLConnection.getResponseCode();
+                            httpRetrieveResponse.setHttpResponseCode(responseCode);
+
+                            System.out.println("3");
+                            final InetAddress address = InetAddress.getByName(url.getHost());
+                            httpRetrieveResponse.setSourceIp(address.getHostAddress());
+
+                        } catch (IOException e) {
+                            httpRetrieveResponse.setHttpResponseCode(-1);
+                        }
+
+                        return httpRetrieveResponse;
+                    }
+                }, httpRetrieveConfig.getConnectionTimeoutInMillis(), TimeUnit.MILLISECONDS, false);
+
+                if(httpRetrieveResponse.getHttpResponseCode() == null) {
+                    httpRetrieveResponse.setHttpResponseCode(-1);
+                }
+                System.out.println("4");
+                if(httpRetrieveResponse.getHttpResponseCode() == -1) return;
             } catch (Exception e) {
                 httpRetrieveResponse.setHttpResponseCode(-1);
                 return;
             }
-            try {
-                int responseCode = httpURLConnection.getResponseCode();
-                httpRetrieveResponse.setHttpResponseCode(responseCode);
-            } catch (Exception e) {
-                httpRetrieveResponse.setHttpResponseCode(-1);
-                return;
-            }
+
+        } catch (ClassCastException e) {
+            httpRetrieveResponse.setHttpResponseCode(-1);
+            e.printStackTrace();
+            return;
         } catch (UnknownHostException e) {
             httpRetrieveResponse.setHttpResponseCode(-1);
             e.printStackTrace();
@@ -138,18 +172,23 @@ long time;
 
     @Override
     public HttpRetrieveResponse call() {
+        System.out.println("Call");
         try {
-            System.out.println("Start ");
-            closeFuture.await();
-            System.out.println("End in " + (System.currentTimeMillis() - time) / 1000.0);
+            if(closeFuture == null) System.out.println("URL: " + url + " , " + httpRetrieveResponse.getHttpResponseCode());
+            else {
+                closeFuture.await();
+                System.out.println("End in " + (System.currentTimeMillis() - time) / 1000.0);
+            }
         } catch (InterruptedException e) {
             httpRetrieveResponse.setState(ResponseState.ERROR);
             httpRetrieveResponse.setException(e);
             e.printStackTrace();
         }
 
-        closeFuture.cancel();
-        channel.close();
+        if(closeFuture != null) {
+            closeFuture.cancel();
+            channel.close();
+        }
 
         return httpRetrieveResponse;
     }
