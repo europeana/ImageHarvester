@@ -16,21 +16,25 @@ http://localhost:15672/
 ```
 
 2. The RabbitMQ credentials are set to :
+
 * user=guest
 * password=guest
 
 3. The RabbitMQ must have at least the following two queues/topics defined:
+
 * harvesterIn  
 * harvesterOut
 
 4. MongoDB server running on localhost without authentication
 
 5. The master.conf, slave.conf & client.conf contain the above settings 
-- they all use the localhost RabbitMQ & MongoDB
+
+* they all use the localhost RabbitMQ & MongoDB
 
 ### Compile the harvester system
 
 1. Build the entire system in one big jar (dependencies included)
+
 ```
 ./simplified-gen-jar.sh
 ```
@@ -52,4 +56,5 @@ java -Djava.library.path="./lib" -jar ./out/europeana.jar eu.europeana.harvester
 ``` 
 
 ### Send a harvester job to the master from your java code
+
 Just run the test.Main class
