@@ -88,6 +88,9 @@
                                         <Main-Class>akka.Main</Main-Class>
                                     </manifestEntries>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+								    <resource>BCKEY.DSA</resource>
+								</transformer>
                             </transformers>
                         </configuration>
                     </execution>
