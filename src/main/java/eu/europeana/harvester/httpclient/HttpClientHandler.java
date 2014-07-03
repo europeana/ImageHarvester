@@ -196,6 +196,7 @@ class HttpClientHandler extends SimpleChannelHandler {
                 // Redirect url
                 if(name.equals("Location")) {
                     httpRetrieveResponse.addRedirectionPath(value);
+                    System.out.println("Redirect");
 
                     ctx.getChannel().close();
                 }

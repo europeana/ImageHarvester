@@ -52,9 +52,15 @@ class SlaveMain {
             responseType = ResponseType.MEMORY_STORAGE;
         }
 
+        final String pathToSave = config.getString("slave.pathToSave");
+        File dir = new File(pathToSave);
+        if(!dir.exists()) {
+            dir.mkdirs();
+        }
+
         final NodeMasterConfig nodeMasterConfig = new NodeMasterConfig(config.getInt("slave.nrOfSubSlaves"),
                 config.getInt("slave.minNrOfSubSlaves"), config.getInt("slave.maxNrOfSubSlaves"),
-                config.getInt("slave.nrOfRetries"), config.getString("slave.pathToSave"), responseType);
+                config.getInt("slave.nrOfRetries"), pathToSave, responseType);
 
         final ActorSystem system = ActorSystem.create("ClusterSystem", config);
         system.actorOf(Props.create(NodeMasterActor.class, channelFactory, hashedWheelTimer, nodeMasterConfig),

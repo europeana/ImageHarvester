@@ -57,4 +57,6 @@ java -Djava.library.path="./lib" -cp target/harvester-0.1-SNAPSHOT-allinone.jar 
 
 ### Send a harvester job to the master from your java code
 
-Just run the test.Main class
+```
+java -Djava.library.path="./lib" -cp target/harvester-0.1-SNAPSHOT-allinone.jar eu.europeana.harvester.performance.LinkCheckJobSmall src/main/resources/localhost-demo-conf/client.conf  
+```

@@ -174,6 +174,7 @@ public class ClusterMasterActor extends UntypedActor {
         final List<ProcessingJob> all = processingJobDao.getAllJobs();
 
         for(final ProcessingJob job : all) {
+            //TODO: in production uncomment
             if(!allJobs.containsKey(job.getId())) {// && !job.getState().equals(JobState.FINISHED)) {
                 final List<ProcessingJobTaskDocumentReference> tasks = job.getTasks();
                 final HashMap<String, JobState> urlsWithState = new HashMap<String, JobState>();

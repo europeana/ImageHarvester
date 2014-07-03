@@ -75,14 +75,15 @@ public class NettyConcurrencyTest extends TestCase {
             System.out.println("___________");
             for(HttpClient httpClient : httpClients) {
                 HttpRetrieveResponse response = httpClient.call();
-                System.out.println(response.getUrl() + " " + response.getState().toString());
+                //System.out.println("Response");
+                //System.out.println(response.getUrl() + " R: " + response.getHttpResponseCode() + " " + response.getState().toString());
                 if(response.getHttpResponseCode() >= 200 && response.getHttpResponseCode() < 300 && response.getRetrievalDurationInMilliSecs() != null)
                     sum += response.getRetrievalDurationInMilliSecs()/1000.0;
-                System.out.println(Thread.activeCount());
+                //System.out.println(Thread.activeCount());
             }
 
-            System.out.println(sum);
-            System.out.println((System.currentTimeMillis() - start) / 1000.0);
+            //System.out.println(sum);
+            //System.out.println((System.currentTimeMillis() - start) / 1000.0);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {

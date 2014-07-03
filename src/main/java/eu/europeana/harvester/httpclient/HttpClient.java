@@ -103,16 +103,13 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
                 httpURLConnection.connect();
                 httpRetrieveResponse.
                         setSocketConnectToDownloadStartDurationInMilliSecs(System.currentTimeMillis() - start);
-                System.out.println("1");
                 TimeLimiter limiter = new SimpleTimeLimiter();
                 limiter.callWithTimeout(new Callable<HttpRetrieveResponse>() {
                     public HttpRetrieveResponse call() {
                         try {
-                            System.out.println("2");
                             int responseCode = httpURLConnection.getResponseCode();
                             httpRetrieveResponse.setHttpResponseCode(responseCode);
 
-                            System.out.println("3");
                             final InetAddress address = InetAddress.getByName(url.getHost());
                             httpRetrieveResponse.setSourceIp(address.getHostAddress());
 
@@ -127,7 +124,6 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
                 if(httpRetrieveResponse.getHttpResponseCode() == null) {
                     httpRetrieveResponse.setHttpResponseCode(-1);
                 }
-                System.out.println("4");
                 if(httpRetrieveResponse.getHttpResponseCode() == -1) return;
             } catch (Exception e) {
                 httpRetrieveResponse.setHttpResponseCode(-1);
@@ -177,7 +173,7 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
             if(closeFuture == null) System.out.println("URL: " + url + " , " + httpRetrieveResponse.getHttpResponseCode());
             else {
                 closeFuture.await();
-                System.out.println("End in " + (System.currentTimeMillis() - time) / 1000.0);
+                //System.out.println("End in " + (System.currentTimeMillis() - time) / 1000.0);
             }
         } catch (InterruptedException e) {
             httpRetrieveResponse.setState(ResponseState.ERROR);
