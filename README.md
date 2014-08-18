@@ -7,10 +7,10 @@ Distributed version of UIM Linkchecker/Thumbler
 
 The ImageHarvester has 4 components :
 
- # core: the harvester client
- # core: the harvester server (distributed in a cluster)
- # external dependency: a shared MongoDB database
- # external dependency: a shared MQ based event bus
+* core: the harvester client
+* core: the harvester server (distributed in a cluster)
+* external dependency: a shared MongoDB database
+* external dependency: a shared MQ based event bus
 
 
 ### The harvester client
@@ -19,8 +19,8 @@ The harvester client is the component used by external systems to send commands 
 It is just a thin wrapper that facilitates the interaction with the harvester server. 
 The client communicates with the server two ways : 
 
- # writting/reading to/from the shared MongoDB databse  
- # receiving events on the MQ
+* writting/reading to/from the shared MongoDB databse  
+* receiving events on the MQ
 
 ### The harvester server
 
@@ -28,8 +28,8 @@ The harvester server is where the actual work happens : it receives jobs from th
 
 The components of the harvester server :
 
- # the server master : sends tasks to the slaves and collects responses
- # the server slave : receives tasks from the master and after execution sends back responses
+* the server master : sends tasks to the slaves and collects responses
+* the server slave : receives tasks from the master and after execution sends back responses
 
 
 ## How to test the eu.europeana.harvester
