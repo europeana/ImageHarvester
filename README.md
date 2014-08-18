@@ -6,6 +6,7 @@ Distributed version of UIM Linkchecker/Thumbler
 ## Architecture & components overview
 
 The ImageHarvester has 4 components :
+
  # core: the harvester client
  # core: the harvester server (distributed in a cluster)
  # external dependency: a shared MongoDB database
@@ -17,6 +18,7 @@ The ImageHarvester has 4 components :
 The harvester client is the component used by external systems to send commands and retrieve statistics from the harvester server.
 It is just a thin wrapper that facilitates the interaction with the harvester server. 
 The client communicates with the server two ways : 
+
  # writting/reading to/from the shared MongoDB databse  
  # receiving events on the MQ
 
@@ -25,6 +27,7 @@ The client communicates with the server two ways :
 The harvester server is where the actual work happens : it receives jobs from the client and sends back an event when the job is finished. The harvester server runs on a cluster where exactly one node is the master and all the rest are slaves (ie. it's a single master architecture).
 
 The components of the harvester server :
+
  # the server master : sends tasks to the slaves and collects responses
  # the server slave : receives tasks from the master and after execution sends back responses
 
