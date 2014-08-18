@@ -43,211 +43,19 @@ confirmation on the MQ that the job is done.
 
 #### The harvester server slave
 
-Each slave node waits from tasks from the master. When a task is received it's processed by one of the slave workers.
+Each slave node waits for tasks from the master. When a task is received it's processed by one of the slave workers.
 For each task received the slave will send back a response when the task is done (or has finished with an error).
 
 In the current implementation the harvester slave does not read or write from MongoDB. The task received by the slave
 has all the needed information inside, so the slave doesn't need to contact any external source of information to execute it.  
 
-## How to test the eu.europeana.harvester
 
-### Infrastructure prerequisites
+### The configuration files
 
-*RabbitMQ running on localhost*
-
-Also it make sense to use the admin UI to check topics/etc.
-
-```
-http://localhost:15672/
-```
-
-*The RabbitMQ credentials are set to*
-
-* user=guest
-* password=guest
-
-*The RabbitMQ must have at least the following two queues/topics defined:*
-
-* harvesterIn  
-* harvesterOut
-
-*MongoDB server running on localhost without authentication*
-
-*The master.conf, slave.conf & client.conf contain the above settings* 
-
-* they all use the localhost RabbitMQ & MongoDB
-
-*JSVC from Apache Commons for daemonizing*
-
-*You must have locally installed the MediaChecker for meta info extraction and corelib-utils for thumbnailing*
-
-### Building and using the eu.europeana.harvester system
-
-#### Build the master and the slave
-
-*Build the entire system in one big jar (dependencies included)*
-
-```
-mvn -Dmaven.test.skip=true clean install package
-```
-
-```
-cd ./harvester-persistence/
-```
-
-```
-mvn -Dmaven.test.skip=true clean install package
-```
-
-```
-cd ../harvester-server/
-```
-
-```
-mvn -Dmaven.test.skip=true clean install package
-```
-
-```
-cd ..
-```
-
-The build process creates one big jar with all the shaded dependencies in target. (in harvester-server)
-
-#### Build the client
-
-```
-mvn -Dmaven.test.skip=true clean install package
-```
-
-```
-cd ./harvester-persistence/
-```
-
-```
-mvn -Dmaven.test.skip=true clean install package
-```
-
-```
-cd ../harvester-client/
-```
-
-```
-mvn -Dmaven.test.skip=true clean install package
-```
-
-```
-cd ..
-```
-
-
-#### Using the compiled JAR's directly (recommanded for dev)
-
-*Start the master eu.europeana.harvester*
-
-```
-java -Xmx512m -Djava.library.path="./lib" -cp ./harvester-server/target/harvester-server-0.1-SNAPSHOT-allinone.jar eu.europeana.harvester.cluster.Master ./extra-files/config-files/localhost-demo-conf/master.conf
-``` 
-
-*Start the slave eu.europeana.harvester*
-
-```
-java -Xmx512m -Djava.library.path="./lib" -cp ./harvester-server/target/harvester-server-0.1-SNAPSHOT-allinone.jar eu.europeana.harvester.cluster.Slave extra-files/config-files/localhost-demo-conf/slave.conf
-``` 
-
-#### Sending jobs with the client
-
-You can choose from 4 predefined test cases: LinkCheck_50k, LinkCheck_500k, Download_50k, Download_500k; but you can create your own jobs also
-
-```
-java -cp ./harvester-client/target/harvester-client-0.1-SNAPSHOT-allinone.jar eu.europeana.harvester.performance.LinkCheck_50k ./extra-files/config-files/localhost-demo-conf/client.conf
-```
-
-### Installing & using the compiled JAR's as UNIX daemons (recommanded for prod)
-
-#### Installing the slave
-
-1. create the user europeana (or make sure it's there)
-  ```
-  useradd -m europeana
-  ```
-2. copy the europeana-slave ./extra-files/daemon-files to /etc/init.d
-
-3. give the europeana user the permissions to run the slave
-  ```
-  sudo chmod 777 ./europeana-slave
-  ```
-4. create the folders for the slave
-  ```
-  mkdir /home; mkdir /home/europeana; mkdir /home/europeana/code
-  ```
-5. copy the lib folder from . to /home/europeana/code
-
-6. copy the eu.europeana.harvester-0.1-SNAPSHOT-allinone.jar from ./harvester-server/target to /home/europeana/code
-
-7. copy the slave.conf from ./extra-files/config-files to /home/europeana/code
-
-8. adapt the ip and other configs to your preferences in slave.conf
-
-9. adapt the paths to the jar, java_home, config file and the user in the /etc/init.d/europeana-slave
-
-
-#### Using the slave
-
-
-*To start the slave execute:*
-
-```
-sudo /etc/init.d/europeana-slave start
-```
-
-*To stop the slave execute:*
-
-```
-sudo /etc/init.d/europeana-slave stop
-```
-
-#### Installing the master
-
-1. create the user europeana (or make sure it's there)
-  ```
-  useradd -m europeana
-  ```
-2. copy the europeana-master ./extra-files/daemon-files to /etc/init.d
-
-3. give the europeana user the permissions to run the slave
-  ```
-  sudo chmod 777 ./europeana-master
-  ```
-4. create the folders for the slave
-  ```
-  mkdir /home; mkdir /home/europeana; mkdir /home/europeana/code
-  ```
-5. copy the lib folder from . to /home/europeana/code
-
-6. copy the eu.europeana.harvester-0.1-SNAPSHOT-allinone.jar from ./harvester-server/target to /home/europeana/code
-
-7. copy the master.conf from ./extra-files/config-files to /home/europeana/code
-
-8. adapt the ip and other configs to your preferences in master.conf
-
-9. adapt the paths to the jar, java_home, config file and the user in the /etc/init.d/europeana-slave
-
-
-#### Using the master
-
-*To start the master execute:*
-
-```
-sudo /etc/init.d/europeana-master start
-```
-
-*To start the master execute:*
-
-```
-sudo /etc/init.d/europeana-master stop
-```
-
-### Using the config files
+The harvester has 3 configuration files : 
+* the harvester client configuration 
+* the harvester server master configuration
+* the harvester server slave configuration
 
 #### Slave config
 
@@ -516,6 +324,207 @@ mongo {
     #The name of the MongoDB database
     dbName = "europeana_harvester"
 }
+
+
+
+## How to test the eu.europeana.harvester
+
+### Infrastructure prerequisites
+
+*RabbitMQ running on localhost*
+
+Also it make sense to use the admin UI to check topics/etc.
+
+```
+http://localhost:15672/
+```
+
+*The RabbitMQ credentials are set to*
+
+* user=guest
+* password=guest
+
+*The RabbitMQ must have at least the following two queues/topics defined:*
+
+* harvesterIn  
+* harvesterOut
+
+*MongoDB server running on localhost without authentication*
+
+*The master.conf, slave.conf & client.conf contain the above settings* 
+
+* they all use the localhost RabbitMQ & MongoDB
+
+*JSVC from Apache Commons for daemonizing*
+
+*You must have locally installed the MediaChecker for meta info extraction and corelib-utils for thumbnailing*
+
+### Building and using the eu.europeana.harvester system
+
+#### Build the master and the slave
+
+*Build the entire system in one big jar (dependencies included)*
+
+```
+mvn -Dmaven.test.skip=true clean install package
+```
+
+```
+cd ./harvester-persistence/
+```
+
+```
+mvn -Dmaven.test.skip=true clean install package
+```
+
+```
+cd ../harvester-server/
+```
+
+```
+mvn -Dmaven.test.skip=true clean install package
+```
+
+```
+cd ..
+```
+
+The build process creates one big jar with all the shaded dependencies in target. (in harvester-server)
+
+#### Build the client
+
+```
+mvn -Dmaven.test.skip=true clean install package
+```
+
+```
+cd ./harvester-persistence/
+```
+
+```
+mvn -Dmaven.test.skip=true clean install package
+```
+
+```
+cd ../harvester-client/
+```
+
+```
+mvn -Dmaven.test.skip=true clean install package
+```
+
+```
+cd ..
+```
+
+
+#### Using the compiled JAR's directly (recommanded for dev)
+
+*Start the master eu.europeana.harvester*
+
+```
+java -Xmx512m -Djava.library.path="./lib" -cp ./harvester-server/target/harvester-server-0.1-SNAPSHOT-allinone.jar eu.europeana.harvester.cluster.Master ./extra-files/config-files/localhost-demo-conf/master.conf
+``` 
+
+*Start the slave eu.europeana.harvester*
+
+```
+java -Xmx512m -Djava.library.path="./lib" -cp ./harvester-server/target/harvester-server-0.1-SNAPSHOT-allinone.jar eu.europeana.harvester.cluster.Slave extra-files/config-files/localhost-demo-conf/slave.conf
+``` 
+
+#### Sending jobs with the client
+
+You can choose from 4 predefined test cases: LinkCheck_50k, LinkCheck_500k, Download_50k, Download_500k; but you can create your own jobs also
+
+```
+java -cp ./harvester-client/target/harvester-client-0.1-SNAPSHOT-allinone.jar eu.europeana.harvester.performance.LinkCheck_50k ./extra-files/config-files/localhost-demo-conf/client.conf
+```
+
+### Installing & using the compiled JAR's as UNIX daemons (recommanded for prod)
+
+#### Installing the slave
+
+1. create the user europeana (or make sure it's there)
+  ```
+  useradd -m europeana
+  ```
+2. copy the europeana-slave ./extra-files/daemon-files to /etc/init.d
+
+3. give the europeana user the permissions to run the slave
+  ```
+  sudo chmod 777 ./europeana-slave
+  ```
+4. create the folders for the slave
+  ```
+  mkdir /home; mkdir /home/europeana; mkdir /home/europeana/code
+  ```
+5. copy the lib folder from . to /home/europeana/code
+
+6. copy the eu.europeana.harvester-0.1-SNAPSHOT-allinone.jar from ./harvester-server/target to /home/europeana/code
+
+7. copy the slave.conf from ./extra-files/config-files to /home/europeana/code
+
+8. adapt the ip and other configs to your preferences in slave.conf
+
+9. adapt the paths to the jar, java_home, config file and the user in the /etc/init.d/europeana-slave
+
+
+#### Using the slave
+
+
+*To start the slave execute:*
+
+```
+sudo /etc/init.d/europeana-slave start
+```
+
+*To stop the slave execute:*
+
+```
+sudo /etc/init.d/europeana-slave stop
+```
+
+#### Installing the master
+
+1. create the user europeana (or make sure it's there)
+  ```
+  useradd -m europeana
+  ```
+2. copy the europeana-master ./extra-files/daemon-files to /etc/init.d
+
+3. give the europeana user the permissions to run the slave
+  ```
+  sudo chmod 777 ./europeana-master
+  ```
+4. create the folders for the slave
+  ```
+  mkdir /home; mkdir /home/europeana; mkdir /home/europeana/code
+  ```
+5. copy the lib folder from . to /home/europeana/code
+
+6. copy the eu.europeana.harvester-0.1-SNAPSHOT-allinone.jar from ./harvester-server/target to /home/europeana/code
+
+7. copy the master.conf from ./extra-files/config-files to /home/europeana/code
+
+8. adapt the ip and other configs to your preferences in master.conf
+
+9. adapt the paths to the jar, java_home, config file and the user in the /etc/init.d/europeana-slave
+
+
+#### Using the master
+
+*To start the master execute:*
+
+```
+sudo /etc/init.d/europeana-master start
+```
+
+*To start the master execute:*
+
+```
+sudo /etc/init.d/europeana-master stop
+```
+
 
 ## How to upgrade the Media File Checker - how to add new types of metadata
 
