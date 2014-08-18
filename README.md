@@ -31,6 +31,23 @@ The components of the harvester server :
 * the server master : sends tasks to the slaves and collects responses
 * the server slave : receives tasks from the master and after execution sends back responses
 
+#### The harvester server master
+
+Periodically polls the MongoDB database ProcessingJob to load new jobs. Each job is composed of a list of tasks. 
+Tasks can be simple things like "execute one link check on a URL" or a more complex operation like "download URL, extract meta info & thumbnails". A task always refers to a URL.
+
+The server master uses a internal load balancer to evenly distribute the tasks to the slaves and expects a response
+for each task. When the response is received (ie. sucess or failure) it persist it in the database and marks it
+accordingly. When all the tasks inside the job have finished the job is marked as finished and the server master sends the
+confirmation on the MQ that the job is done.
+
+#### The harvester server slave
+
+Each slave node waits from tasks from the master. When a task is received it's processed by one of the slave workers.
+For each task received the slave will send back a response when the task is done (or has finished with an error).
+
+In the current implementation the harvester slave does not read or write from MongoDB. The task received by the slave
+has all the needed information inside, so the slave doesn't need to contact any external source of information to execute it.  
 
 ## How to test the eu.europeana.harvester
 
