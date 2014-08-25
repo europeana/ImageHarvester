@@ -4,3 +4,19 @@
 ImageHarvester.iml
 
 harvester.iml
+
+*.iml
+
+*.iml
+
+harvester-persistence/harvester-persistence.iml
+
+harvester-persistence/harvester-persistence.iml
+
+harvester-server/harvester-server.iml
+
+harvester-server/harvester-server.iml
+
+harvester-client/harvester-client.iml
+
+harvester-server/harvester-server.iml

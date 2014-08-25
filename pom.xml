@@ -37,6 +37,11 @@
             <url>http://artifactory.eanadev.org/artifactory/ext-release-local</url>
             <layout>default</layout>
         </repository>
+        <repository>
+            <id>artifactory.eanadev.org</id>
+            <name>artifactory.eanadev.org-releases</name>
+            <url>http://artifactory.eanadev.org/artifactory/libs-release-local</url>
+        </repository>
     </repositories>
 
     <dependencies>
