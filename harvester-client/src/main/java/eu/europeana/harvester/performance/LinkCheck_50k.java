@@ -2,7 +2,6 @@ package eu.europeana.harvester.performance;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
-
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import com.typesafe.config.Config;
@@ -11,8 +10,7 @@ import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
 import eu.europeana.harvester.client.HarvesterClientConfig;
 import eu.europeana.harvester.client.HarvesterClientImpl;
-import eu.europeana.harvester.db.*;
-import eu.europeana.harvester.db.mongo.*;
+import eu.europeana.harvester.db.MorphiaDataStore;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.utils.LinkParser;
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +29,7 @@ public class LinkCheck_50k {
 
     private static final Logger LOG = LogManager.getLogger(LinkCheck_50k.class.getName());
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnknownHostException {
         LOG.debug("Starting link check test...");
 
         String configFilePath;
@@ -52,34 +50,8 @@ public class LinkCheck_50k {
                 ConfigFactory.parseFileAnySyntax(configFile,
                         ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
 
-        final Datastore datastore;
-        Datastore datastore1;
-
-        try {
-            final MongoClient mongo = new MongoClient(config.getString("mongo.host"), config.getInt("mongo.port"));
-            final Morphia morphia = new Morphia();
-            final String dbName = config.getString("mongo.dbName");
-
-            datastore1 = morphia.createDatastore(mongo, dbName);
-        } catch (UnknownHostException e) {
-            datastore1 = null;
-            LOG.error(e.getMessage());
-        }
-
-        datastore = datastore1;
-
-        final ProcessingJobDao processingJobDao = new ProcessingJobDaoImpl(datastore);
-        final MachineResourceReferenceDao machineResourceReferenceDao = new MachineResourceReferenceDaoImpl(datastore);
-        final SourceDocumentReferenceDao sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
-        final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao =
-                new SourceDocumentProcessingStatisticsDaoImpl(datastore);
-        final LinkCheckLimitsDao linkCheckLimitsDao = new LinkCheckLimitsDaoImpl(datastore);
-
-        final HarvesterClientConfig harvesterClientConfig = new HarvesterClientConfig(WriteConcern.NONE);
-
-        final HarvesterClientImpl harvesterClient = new HarvesterClientImpl(processingJobDao,
-                machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
-                linkCheckLimitsDao, harvesterClientConfig);
+        final MorphiaDataStore datastore = new MorphiaDataStore(config.getString("mongo.host"),config.getInt("mongo.port"),config.getString("mongo.dbName"));
+        final HarvesterClientImpl harvesterClient = new HarvesterClientImpl(datastore,new HarvesterClientConfig(WriteConcern.NONE));
 
         // ============================================================================================================
 

@@ -1,6 +1,8 @@
 package eu.europeana.harvester.client;
 
+import com.google.code.morphia.Datastore;
 import eu.europeana.harvester.db.*;
+import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +45,14 @@ public class HarvesterClientImpl implements HarvesterClient {
      * An object which contains different special configurations for Harvester Client.
      */
     private final HarvesterClientConfig harvesterClientConfig;
+
+    public HarvesterClientImpl(final MorphiaDataStore datastore, final HarvesterClientConfig harvesterClientConfig) {
+        this(new ProcessingJobDaoImpl(datastore.getDatastore()),
+                new MachineResourceReferenceDaoImpl(datastore.getDatastore()),
+                new SourceDocumentProcessingStatisticsDaoImpl(datastore.getDatastore()),
+                new SourceDocumentReferenceDaoImpl(datastore.getDatastore()),
+                new LinkCheckLimitsDaoImpl(datastore.getDatastore()), harvesterClientConfig);
+    }
 
     public HarvesterClientImpl(ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
