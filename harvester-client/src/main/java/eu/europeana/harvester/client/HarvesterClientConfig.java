@@ -13,6 +13,10 @@ public class HarvesterClientConfig {
      */
     private final WriteConcern writeConcern;
 
+    public HarvesterClientConfig() {
+        this.writeConcern = WriteConcern.ACKNOWLEDGED;
+    }
+
     public HarvesterClientConfig(WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
     }
