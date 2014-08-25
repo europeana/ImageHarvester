@@ -73,7 +73,7 @@ public class StatsOfJobTest extends TestCase {
 
         harvesterClient = new HarvesterClientImpl(processingJobDao,
                 machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
-                linkCheckLimitsDao, harvesterClientConfig);
+                sourceDocumentReferenceMetaInfoDao, linkCheckLimitsDao, harvesterClientConfig);
     }
 
     public void testStatsOfJob() throws Exception {

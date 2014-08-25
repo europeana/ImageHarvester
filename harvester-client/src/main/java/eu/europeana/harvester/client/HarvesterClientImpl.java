@@ -1,6 +1,9 @@
 package eu.europeana.harvester.client;
 
-import com.google.code.morphia.Datastore;
+import com.google.common.base.Charsets;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
@@ -37,6 +40,11 @@ public class HarvesterClientImpl implements HarvesterClient {
     private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
 
     /**
+     * SourceDocumentReferenceMetaInfo DAO object which lets us to read and store data to and from the database.
+     */
+    private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
+
+    /**
      * DAO for CRUD with link_check_limit collection
      */
     private final LinkCheckLimitsDao linkCheckLimitsDao;
@@ -51,18 +59,20 @@ public class HarvesterClientImpl implements HarvesterClient {
                 new MachineResourceReferenceDaoImpl(datastore.getDatastore()),
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore.getDatastore()),
                 new SourceDocumentReferenceDaoImpl(datastore.getDatastore()),
+                new SourceDocumentReferenceMetaInfoDaoImpl(datastore.getDatastore()),
                 new LinkCheckLimitsDaoImpl(datastore.getDatastore()), harvesterClientConfig);
     }
 
     public HarvesterClientImpl(ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                SourceDocumentReferenceDao sourceDocumentReferenceDao,
-                               LinkCheckLimitsDao linkCheckLimitsDao, HarvesterClientConfig harvesterClientConfig) {
+                               SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao, LinkCheckLimitsDao linkCheckLimitsDao, HarvesterClientConfig harvesterClientConfig) {
 
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
         this.linkCheckLimitsDao = linkCheckLimitsDao;
         this.harvesterClientConfig = harvesterClientConfig;
     }
@@ -173,6 +183,17 @@ public class HarvesterClientImpl implements HarvesterClient {
         }
 
         return new ProcessingJobStats(recordIdsByState, sourceDocumentReferenceIdsByState);
+    }
+
+    @Override
+    public SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url) {
+        final HashFunction hf = Hashing.md5();
+        final HashCode hc = hf.newHasher()
+                .putString(url, Charsets.UTF_8)
+                .hash();
+        final String id = hc.toString();
+
+        return sourceDocumentReferenceMetaInfoDao.read(id);
     }
 
 }
