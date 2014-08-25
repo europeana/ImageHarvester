@@ -7,6 +7,7 @@ import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Message sent by the cluster master actor to the slaves when it wants to download an url.
@@ -36,7 +37,7 @@ public class RetrieveUrl implements Serializable {
     /**
      * The HTTP response headers.
      */
-    private final List<ResponseHeader> headers;
+    private final Map<String, String> headers;
 
     /**
      * The type of the tasks.
@@ -49,7 +50,7 @@ public class RetrieveUrl implements Serializable {
     private final JobConfigs jobConfigs;
 
     public RetrieveUrl(final String url, final HttpRetrieveConfig httpRetrieveConfig, final String jobId,
-                       final String referenceId, final List<ResponseHeader> headers,
+                       final String referenceId, final Map<String, String> headers,
                        final DocumentReferenceTaskType documentReferenceTaskType,
                        final JobConfigs jobConfigs) {
         this.url = url;
@@ -73,7 +74,7 @@ public class RetrieveUrl implements Serializable {
         return jobId;
     }
 
-    public List<ResponseHeader> getHeaders() {
+    public Map<String, String> getHeaders() {
         return headers;
     }
 

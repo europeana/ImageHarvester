@@ -18,6 +18,7 @@ import org.joda.time.Duration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -92,7 +93,7 @@ class HttpClientHandler extends SimpleChannelHandler {
     /**
      * The response headers.
      */
-    private final List<ResponseHeader> headers;
+    private final Map<String, String> headers;
 
     /**
      * Keeps track if a package is the first or not.
@@ -101,7 +102,7 @@ class HttpClientHandler extends SimpleChannelHandler {
 
     public HttpClientHandler(final Long sizeLimitsInBytesForContent, final Duration timeLimitForContentRetrieval,
                              final HashedWheelTimer hashedWheelTimer, final HttpRetrieveResponse httpRetrieveResponse,
-                             final DocumentReferenceTaskType documentReferenceTaskType, final List<ResponseHeader> headers) {
+                             final DocumentReferenceTaskType documentReferenceTaskType, final Map<String, String> headers) {
         this.httpRetrieveResponse = httpRetrieveResponse;
         this.documentReferenceTaskType = documentReferenceTaskType;
         this.headers = headers;
@@ -235,10 +236,10 @@ class HttpClientHandler extends SimpleChannelHandler {
                     boolean changedModifiedDate = false;
                     boolean changedContentLength = false;
 
-                    ArrayList<Byte> lastModified = null;
-                    ArrayList<Byte> contentLength = null;
+                    String lastModified = null;
+                    String contentLength = null;
 
-                    for(ResponseHeader responseHeader : httpRetrieveResponse.getHttpResponseHeaders()) {
+                    for(Map.Entry<String, String> responseHeader : httpRetrieveResponse.getResponseHeaders().entrySet()) {
                         if(responseHeader.getKey().equals("Last-Modified")) {
                             lastModified = responseHeader.getValue();
                         } else
@@ -247,12 +248,12 @@ class HttpClientHandler extends SimpleChannelHandler {
                         }
                     }
 
-                    for(ResponseHeader responseHeader : headers) {
-                        if(responseHeader.getKey().equals("Last-Modified")) {
-                            changedModifiedDate = isHeaderChanged(lastModified, responseHeader.getValue());
+                    for (Map.Entry<String, String> responseHeader : headers.entrySet()) {
+                        if(responseHeader.getKey().equals("Last-Modified") && lastModified != null) {
+                            changedModifiedDate = lastModified.equals(responseHeader.getValue());
                         } else
-                        if(responseHeader.getKey().equals("Content-Length")) {
-                            changedContentLength = isHeaderChanged(contentLength, responseHeader.getValue());
+                        if(responseHeader.getKey().equals("Content-Length") && contentLength != null) {
+                            changedContentLength = contentLength.equals(responseHeader.getValue());
                         }
                     }
 

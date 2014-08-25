@@ -3,7 +3,6 @@ package eu.europeana.harvester.cluster.slave;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import com.google.common.io.Files;
 import eu.europeana.corelib.utils.ImageUtils;
 import eu.europeana.harvester.cluster.domain.ContentType;
 import eu.europeana.harvester.cluster.domain.ThumbnailConfig;
@@ -110,7 +109,7 @@ public class ProcesserSlaveActor extends UntypedActor {
                 case IMAGE:
                     imageMetaInfo = extractImageMetadata();
                     //TODO: uncomment
-                    createThumbnail();
+                    //createThumbnail();
                     break;
                 case VIDEO:
                     videoMetaInfo = extractVideoMetaData();

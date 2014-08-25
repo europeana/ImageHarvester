@@ -5,6 +5,7 @@ import com.google.code.morphia.annotations.Property;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Stores the stats for a specific processing job for a source.
@@ -24,6 +25,11 @@ public class SourceDocumentProcessingStatistics {
      * When was the statistic last updated.
      */
     private final Date updatedAt;
+
+    /**
+     * The type of job which generates this document.
+     */
+    private final DocumentReferenceTaskType taskType;
 
     /**
      * The processing state.
@@ -87,7 +93,7 @@ public class SourceDocumentProcessingStatistics {
     /**
      * The HTTP response headers.
      */
-	private final List<ResponseHeader> httpResponseHeaders;
+	private final Map<String, String> httpResponseHeaders;
 
     /**
      * The cause of the error if the task failed.
@@ -98,6 +104,7 @@ public class SourceDocumentProcessingStatistics {
         this.id = null;
         this.createdAt = null;
         this.updatedAt = null;
+        this.taskType = null;
         this.state = null;
         this.referenceOwner = null;
         this.sourceDocumentReferenceId = null;
@@ -113,7 +120,7 @@ public class SourceDocumentProcessingStatistics {
         this.log = null;
     }
 
-    public SourceDocumentProcessingStatistics(final Date createdAt, final Date updatedAt, final ProcessingState state,
+    public SourceDocumentProcessingStatistics(final Date createdAt, final Date updatedAt, DocumentReferenceTaskType taskType, final ProcessingState state,
                                               final ReferenceOwner referenceOwner,
                                               final String sourceDocumentReferenceId,
                                               final String processingJobId, final Integer httpResponseCode,
@@ -122,8 +129,9 @@ public class SourceDocumentProcessingStatistics {
                                               final Long socketConnectToDownloadStartDurationInMilliSecs,
                                               final Long retrievalDurationInMilliSecs,
                                               final Long checkingDurationInMilliSecs,
-                                              final String sourceIp, final List<ResponseHeader> httpResponseHeaders,
+                                              final String sourceIp, final Map<String, String> httpResponseHeaders,
                                               final String log) {
+        this.taskType = taskType;
         this.id = sourceDocumentReferenceId + "-" + processingJobId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -143,18 +151,19 @@ public class SourceDocumentProcessingStatistics {
     }
 
     public SourceDocumentProcessingStatistics(final String id, final Date createdAt, final Date updatedAt,
-                                              final ProcessingState state, final ReferenceOwner referenceOwner,
+                                              DocumentReferenceTaskType taskType, final ProcessingState state, final ReferenceOwner referenceOwner,
                                               final String sourceDocumentReferenceId, final String processingJobId,
                                               final Integer httpResponseCode, final String httpResponseContentType,
                                               final Long httpResponseContentSizeInBytes,
                                               final Long socketConnectToDownloadStartDurationInMilliSecs,
                                               final Long retrievalDurationInMilliSecs,
                                               final Long checkingDurationInMilliSecs,
-                                              final String sourceIp, final List<ResponseHeader> httpResponseHeaders,
+                                              final String sourceIp, final Map<String, String> httpResponseHeaders,
                                               final String log) {
         this.id = id;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.taskType = taskType;
         this.state = state;
         this.referenceOwner = referenceOwner;
         this.sourceDocumentReferenceId = sourceDocumentReferenceId;
@@ -181,6 +190,10 @@ public class SourceDocumentProcessingStatistics {
 
     public Date getUpdatedAt() {
         return updatedAt;
+    }
+
+    public DocumentReferenceTaskType getTaskType() {
+        return taskType;
     }
 
     public ProcessingState getState() {
@@ -223,7 +236,7 @@ public class SourceDocumentProcessingStatistics {
         return sourceIp;
     }
 
-    public List<ResponseHeader> getHttpResponseHeaders() {
+    public Map<String, String> getHttpResponseHeaders() {
         return httpResponseHeaders;
     }
 
@@ -241,17 +254,17 @@ public class SourceDocumentProcessingStatistics {
                                                          final Long socketConnectToDownloadStartDurationInMilliSecs,
                                                          final Long retrievalDurationInMilliSecs,
                                                          final Long checkingDurationInMilliSecs,
-                                                         final List<ResponseHeader> httpResponseHeaders,
+                                                         final Map<String, String> httpResponseHeaders,
                                                          final String log) {
-        return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), state, this.referenceOwner,
-                this.sourceDocumentReferenceId, jobId, responseCode, this.httpResponseContentType, size,
-                socketConnectToDownloadStartDurationInMilliSecs, retrievalDurationInMilliSecs,
+        return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), this.taskType, state,
+                this.referenceOwner, this.sourceDocumentReferenceId, jobId, responseCode, this.httpResponseContentType,
+                size, socketConnectToDownloadStartDurationInMilliSecs, retrievalDurationInMilliSecs,
                 checkingDurationInMilliSecs, this.sourceIp, httpResponseHeaders, log);
     }
 
     public SourceDocumentProcessingStatistics withState(final ProcessingState state) {
-        return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), state, this.referenceOwner,
-                this.sourceDocumentReferenceId, this.processingJobId, this.httpResponseCode,
+        return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), this.taskType, state,
+                this.referenceOwner, this.sourceDocumentReferenceId, this.processingJobId, this.httpResponseCode,
                 this.httpResponseContentType, this.httpResponseContentSizeInBytes,
                 this.socketConnectToDownloadStartDurationInMilliSecs, this.retrievalDurationInMilliSecs,
                 this.checkingDurationInMilliSecs, this.sourceIp, this.httpResponseHeaders, this.log);

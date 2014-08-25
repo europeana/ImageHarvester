@@ -214,8 +214,8 @@ public class ReceiverClusterActor extends UntypedActor {
 
         if(sourceDocumentProcessingStatistics == null) {
             sourceDocumentProcessingStatistics =
-                    new SourceDocumentProcessingStatistics(new Date(), new Date(), msg.getProcessingState(),
-                            finishedDocument.getReferenceOwner(), docId, msg.getJobId(),
+                    new SourceDocumentProcessingStatistics(new Date(), new Date(), msg.getTaskType(),
+                            msg.getProcessingState(), finishedDocument.getReferenceOwner(), docId, msg.getJobId(),
                             msg.getHttpResponseCode(), msg.getHttpResponseContentType(),
                             msg.getHttpResponseContentSizeInBytes(),
                             msg.getSocketConnectToDownloadStartDurationInMilliSecs(),

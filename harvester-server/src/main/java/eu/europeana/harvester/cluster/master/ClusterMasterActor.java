@@ -444,7 +444,7 @@ public class ClusterMasterActor extends UntypedActor {
             }
             String ipAddress = sourceDocumentReference.getIpAddress();
             if(ipAddress == null) {
-                ipAddress = getIPAddress(service, sourceDocumentReference, job);
+                ipAddress = getIPAddress(service, sourceDocumentReference, job, task.getTaskType());
             }
 
             if(ipAddress != null) {
@@ -479,7 +479,7 @@ public class ClusterMasterActor extends UntypedActor {
      * @return - ip address
      */
     private String getIPAddress(final ExecutorService service, final SourceDocumentReference sourceDocumentReference,
-                                final ProcessingJob job) {
+                                final ProcessingJob job, final DocumentReferenceTaskType taskType) {
         final String sourceDocId = sourceDocumentReference.getId();
         String ipAddress;
         String exception = "";
@@ -513,11 +513,11 @@ public class ClusterMasterActor extends UntypedActor {
             sourceDocumentReferenceDao.update(updatedSourceDocumentReference,
                     clusterMasterConfig.getWriteConcern());
             sourceDocumentProcessingStatistics = new SourceDocumentProcessingStatistics(new Date(), new Date(),
-                    ProcessingState.READY, sourceDocumentReference.getReferenceOwner(), sourceDocumentReference.getId(),
+                    taskType, ProcessingState.READY, sourceDocumentReference.getReferenceOwner(), sourceDocumentReference.getId(),
                     job.getId(), null, null, null, null, null, null, null, null, null);
         } else {
             sourceDocumentProcessingStatistics = new SourceDocumentProcessingStatistics(new Date(), new Date(),
-                    ProcessingState.ERROR, sourceDocumentReference.getReferenceOwner(), sourceDocumentReference.getId(),
+                    taskType, ProcessingState.ERROR, sourceDocumentReference.getReferenceOwner(), sourceDocumentReference.getId(),
                     job.getId(), -1, "", null, null, null, null, "", null, "In ClusterMasterActor: \n" + exception);
         }
 
@@ -688,7 +688,7 @@ public class ClusterMasterActor extends UntypedActor {
 
                 final DocumentReferenceTaskType documentReferenceTaskType = taskTypeOfDoc.get(sourceDocId).get(jobId);
                 final SourceDocumentReference newDoc = sourceDocumentReferenceDao.read(sourceDocId);
-                final List<ResponseHeader> headers = getHeaders(documentReferenceTaskType, newDoc);
+                final Map<String, String> headers = getHeaders(documentReferenceTaskType, newDoc);
 
                 final HttpRetrieveConfig httpRetrieveConfig =
                         new HttpRetrieveConfig(Duration.millis(100), speed, speed, Duration.ZERO, 0l, true,
@@ -713,9 +713,9 @@ public class ClusterMasterActor extends UntypedActor {
      * @param newDoc source document object
      * @return list of headers
      */
-    private List<ResponseHeader> getHeaders(DocumentReferenceTaskType documentReferenceTaskType,
+    private Map<String, String> getHeaders(DocumentReferenceTaskType documentReferenceTaskType,
                                             SourceDocumentReference newDoc) {
-        List<ResponseHeader> headers = null;
+        Map<String, String> headers = null;
 
         if(documentReferenceTaskType == null) {
             return headers;
@@ -728,7 +728,7 @@ public class ClusterMasterActor extends UntypedActor {
             try {
                 headers = sourceDocumentProcessingStatistics.getHttpResponseHeaders();
             } catch (Exception e) {
-                headers = new ArrayList<ResponseHeader>();
+                headers = new HashMap<String, String>();
             }
         }
 

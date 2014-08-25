@@ -19,6 +19,7 @@ import org.jboss.netty.util.HashedWheelTimer;
 import java.io.IOException;
 import java.net.*;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 public class HttpClient implements Callable<HttpRetrieveResponse> {
@@ -60,7 +61,7 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
     /**
      * List of headers from the last download, it's needed only if the task type is conditional download
      */
-    private final List<ResponseHeader> headers;
+    private final Map<String, String> headers;
 
     /**
      * The maximum number of allowed levels of redirects.
@@ -68,7 +69,7 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
     private final Integer maxRedirects;
 
     public HttpClient(final ChannelFactory channelFactory, final HashedWheelTimer hashedWheelTimer,
-                      final HttpRetrieveConfig httpRetrieveConfig, final List<ResponseHeader> headers,
+                      final HttpRetrieveConfig httpRetrieveConfig, final Map<String, String> headers,
                       final HttpRetrieveResponse httpRetrieveResponse, final String link) throws MalformedURLException {
         this.channelFactory = channelFactory;
         this.hashedWheelTimer = hashedWheelTimer;

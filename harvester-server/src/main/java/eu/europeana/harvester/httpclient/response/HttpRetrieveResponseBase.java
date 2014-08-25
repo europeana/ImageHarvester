@@ -113,6 +113,13 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
     @Override
     synchronized public void addHeader(String type, String value) {
+        type = type.replace("%", "");
+        type = type.replace("$", "");
+        type = type.replace(".", "");
+        value = value.replace("%", "");
+        value = value.replace("$", "");
+        value = value.replace(".", "");
+
         responseHeaders.put(type, value);
     }
 

@@ -18,6 +18,7 @@ import org.joda.time.Duration;
 
 import javax.net.ssl.SSLEngine;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A custom netty pipeline factory that creates constrained pipelines.
@@ -82,7 +83,7 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
     /**
      * List of headers from the last download, it's needed only if the task type is conditional download
      */
-    private final List<ResponseHeader> headers;
+    private final Map<String, String> headers;
 
     public ConstrainedPipelineFactory(final Long bandwidthLimitReadInBytesPerSec,
                                       final Long bandwidthLimitWriteInBytesPerSec,
@@ -92,7 +93,7 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
                                       final Long terminationThresholdSizeLimitInBytes,
                                       final Duration terminationThresholdTimeLimit, final boolean handleChunks,
                                       final DocumentReferenceTaskType documentReferenceTaskType,
-                                      final List<ResponseHeader> headers,
+                                      final Map<String, String> headers,
                                       final HttpRetrieveResponse httpRetrieveResponse,
                                       final HashedWheelTimer hashedWheelTimer) {
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;

@@ -5,6 +5,7 @@ import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Message sent by slave actor and node master actor after the download is done.
@@ -25,6 +26,11 @@ public class DoneProcessing implements Serializable {
      * The caller jobs id.
      */
     private final String jobId;
+
+    /**
+     * The type of job which generates this document.
+     */
+    private final DocumentReferenceTaskType taskType;
 
     /**
      * The HTTP response code.
@@ -68,7 +74,7 @@ public class DoneProcessing implements Serializable {
     /**
      * The HTTP response headers.
      */
-    private final List<ResponseHeader> httpResponseHeaders;
+    private final Map<String, String> httpResponseHeaders;
 
     /**
      * List of urls until we reach the final url.
@@ -101,7 +107,8 @@ public class DoneProcessing implements Serializable {
     private final String log;
 
     public DoneProcessing(final DoneDownload doneDownload, final ImageMetaInfo imageMetaInfo,
-                        final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo) {
+                          final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo) {
+        this.taskType = doneDownload.getTaskType();
         final HttpRetrieveResponse httpRetrieveResponse = doneDownload.getHttpRetrieveResponse();
 
         this.url = doneDownload.getUrl();
@@ -115,7 +122,7 @@ public class DoneProcessing implements Serializable {
         this.retrievalDurationInMilliSecs = httpRetrieveResponse.getRetrievalDurationInMilliSecs();
         this.checkingDurationInMilliSecs = httpRetrieveResponse.getCheckingDurationInMilliSecs();
         this.sourceIp = httpRetrieveResponse.getSourceIp();
-        this.httpResponseHeaders = httpRetrieveResponse.getHttpResponseHeaders();
+        this.httpResponseHeaders = httpRetrieveResponse.getResponseHeaders();
         this.redirectionPath = httpRetrieveResponse.getRedirectionPath();
         this.imageMetaInfo = imageMetaInfo;
         this.audioMetaInfo = audioMetaInfo;
@@ -124,17 +131,19 @@ public class DoneProcessing implements Serializable {
         this.log = httpRetrieveResponse.getLog();
     }
 
-    public DoneProcessing(final String url, String referenceId, final String jobId, final Integer httpResponseCode,
+    public DoneProcessing(final String url, String referenceId, final String jobId,
+                          final DocumentReferenceTaskType taskType, final Integer httpResponseCode,
                           final String httpResponseContentType, final Long httpResponseContentSizeInBytes,
                           final Long socketConnectToDownloadStartDurationInMilliSecs,
                           final Long retrievalDurationInMilliSecs, final Long checkingDurationInMilliSecs,
-                          final String sourceIp, final List<ResponseHeader> httpResponseHeaders,
+                          final String sourceIp, final Map<String, String> httpResponseHeaders,
                           final List<String> redirectionPath, final ProcessingState processingState, final String log,
                           final ImageMetaInfo imageMetaInfo, final AudioMetaInfo audioMetaInfo,
                           final VideoMetaInfo videoMetaInfo) {
         this.url = url;
         this.referenceId = referenceId;
         this.jobId = jobId;
+        this.taskType = taskType;
         this.httpResponseCode = httpResponseCode;
         this.httpResponseContentType = httpResponseContentType;
         this.httpResponseContentSizeInBytes = httpResponseContentSizeInBytes;
@@ -164,6 +173,10 @@ public class DoneProcessing implements Serializable {
         return jobId;
     }
 
+    public DocumentReferenceTaskType getTaskType() {
+        return taskType;
+    }
+
     public Integer getHttpResponseCode() {
         return httpResponseCode;
     }
@@ -188,7 +201,7 @@ public class DoneProcessing implements Serializable {
         return sourceIp;
     }
 
-    public List<ResponseHeader> getHttpResponseHeaders() {
+    public Map<String, String> getHttpResponseHeaders() {
         return httpResponseHeaders;
     }
 
@@ -221,7 +234,7 @@ public class DoneProcessing implements Serializable {
     }
 
     public DoneProcessing withNewState(ProcessingState newState, String log) {
-        return new DoneProcessing(url, referenceId, jobId, httpResponseCode, httpResponseContentType,
+        return new DoneProcessing(url, referenceId, jobId, taskType, httpResponseCode, httpResponseContentType,
                 httpResponseContentSizeInBytes, socketConnectToDownloadStartDurationInMilliSecs,
                 retrievalDurationInMilliSecs, checkingDurationInMilliSecs, sourceIp, httpResponseHeaders,
                 redirectionPath, newState, log, imageMetaInfo, audioMetaInfo, videoMetaInfo);

@@ -10,6 +10,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Maven: com.google.code.morphia:morphia:0.99.1-patched" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:1.2" level="project" />
     <orderEntry type="module" module-name="harvester-persistence" />
     <orderEntry type="library" name="Maven: org.mongodb:mongo-java-driver:2.10.1" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.morphia:morphia:0.99.1-patched" level="project" />
@@ -91,10 +93,22 @@
     <orderEntry type="library" name="Maven: org.im4java:im4java:1.4.0" level="project" />
     <orderEntry type="library" name="Maven: xuggle:xuggle-xuggler:5.2" level="project" />
     <orderEntry type="library" name="Maven: commons-cli:commons-cli:1.1" level="project" />
+    <orderEntry type="library" name="Maven: eu.europeana.corelib:corelib-utils:2.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" name="Maven: org.springframework:spring-orm:3.1.4.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: org.springframework:spring-beans:3.1.4.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: org.springframework:spring-core:3.1.4.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: org.springframework:spring-asm:3.1.4.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: org.springframework:spring-jdbc:3.1.4.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: org.springframework:spring-tx:3.1.4.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: aopalliance:aopalliance:1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.springframework:spring-aop:3.1.4.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: org.springframework:spring-context:3.1.4.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: org.springframework:spring-expression:3.1.4.RELEASE" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:2.4" level="project" />
+    <orderEntry type="library" name="Maven: org.imgscalr:imgscalr-lib:4.2" level="project" />
     <orderEntry type="library" name="Maven: eu.europeana:servicebus-model:0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: eu.europeana:servicebus-client:0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.rabbitmq:amqp-client:2.7.1" level="project" />
-    <orderEntry type="library" name="Maven: commons-io:commons-io:1.2" level="project" />
   </component>
 </module>
 
