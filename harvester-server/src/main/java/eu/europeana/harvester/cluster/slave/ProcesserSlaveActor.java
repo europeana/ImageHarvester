@@ -17,6 +17,7 @@ import gr.ntua.image.mediachecker.AudioInfo;
 import gr.ntua.image.mediachecker.ImageInfo;
 import gr.ntua.image.mediachecker.MediaChecker;
 import gr.ntua.image.mediachecker.VideoInfo;
+import org.im4java.core.IM4JavaException;
 import org.im4java.core.InfoException;
 
 import java.awt.image.BufferedImage;
@@ -158,9 +159,10 @@ public class ProcesserSlaveActor extends UntypedActor {
      */
     private ImageMetaInfo extractImageMetadata() {
         ImageMetaInfo imageMetaInfo = null;
+        final String colorMapPath = "./harvester-server/src/main/resources/colormap.png";
 
         try {
-            final ImageInfo imageInfo = MediaChecker.getImageInfo(path);
+            final ImageInfo imageInfo = MediaChecker.getImageInfo(path, colorMapPath);
 
             imageMetaInfo =
                     new ImageMetaInfo(imageInfo.getWidth(), imageInfo.getHeight(), imageInfo.getMimeType(),
@@ -169,6 +171,10 @@ public class ProcesserSlaveActor extends UntypedActor {
         } catch (IOException e) {
             error = "In ProcesserSlaveActor: \n" + e.toString();
         } catch (InfoException e) {
+            error = "In ProcesserSlaveActor: \n" + e.toString();
+        } catch (InterruptedException e) {
+            error = "In ProcesserSlaveActor: \n" + e.toString();
+        } catch (IM4JavaException e) {
             error = "In ProcesserSlaveActor: \n" + e.toString();
         }
 
