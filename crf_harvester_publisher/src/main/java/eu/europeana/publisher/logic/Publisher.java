@@ -224,7 +224,7 @@ public class Publisher {
                 for (SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
                     final String recordId = retrievedDocsPerID.get(metaInfo.getId()).getRecordId();
                     if ((documentIdToExistence.containsKey(recordId) == true) && (documentIdToExistence.get(recordId) == true)) {
-                        final WebResourceMetaInfo webResourceMetaInfo = new WebResourceMetaInfo(recordId,
+                        final WebResourceMetaInfo webResourceMetaInfo = new WebResourceMetaInfo(metaInfo.getId(),
                                 metaInfo.getImageMetaInfo(), metaInfo.getAudioMetaInfo(),
                                 metaInfo.getVideoMetaInfo(), metaInfo.getTextMetaInfo());
                         webResourceMetaInfosToUpdate.add(webResourceMetaInfo);
