@@ -13,6 +13,11 @@ import java.util.Map;
 public class DoneProcessing implements Serializable {
 
     /**
+     * The ID of the task.
+     */
+    private final String taskID;
+
+    /**
      * The url.
      */
     private final String url;
@@ -82,19 +87,27 @@ public class DoneProcessing implements Serializable {
     private final List<String> redirectionPath;
 
     /**
-     * Stores meta information about an image type document (width, height, mimetype, fileformat, colorspace).
+     * Stores meta information about an image type document (width, height, mimetype, fileformat, colorspace,
+     * filesize, colorPalette, orientation).
      */
     private final ImageMetaInfo imageMetaInfo;
 
     /**
-     * Stores meta information about an audio type document (samplerate, bitrate, duration, fileformat, mimetype).
+     * Stores meta information about an audio type document (samplerate, bitrate, duration, fileformat,
+     * mimetype, filesize, channels, bitdepth).
      */
     private final AudioMetaInfo audioMetaInfo;
 
     /**
-     * Stores meta information about a video type document (width, height, duration, fileformat, framerate, mimetype).
+     * Stores meta information about a video type document (width, height, duration,
+     * framerate, mimetype, filesize, codec, resolution).
      */
     private final VideoMetaInfo videoMetaInfo;
+
+    /**
+     * Stores meta information about a text type document (mimetype, filesize, resolution).
+     */
+    private final TextMetaInfo textMetaInfo;
 
     /**
      * The state of the task.
@@ -107,10 +120,12 @@ public class DoneProcessing implements Serializable {
     private final String log;
 
     public DoneProcessing(final DoneDownload doneDownload, final ImageMetaInfo imageMetaInfo,
-                          final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo) {
-        this.taskType = doneDownload.getTaskType();
+                          final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo,
+                          final TextMetaInfo textMetaInfo) {
+        this.taskType = doneDownload.getDocumentReferenceTask().getTaskType();
         final HttpRetrieveResponse httpRetrieveResponse = doneDownload.getHttpRetrieveResponse();
 
+        this.taskID = doneDownload.getTaskID();
         this.url = doneDownload.getUrl();
         this.referenceId = doneDownload.getReferenceId();
         this.jobId = doneDownload.getJobId();
@@ -127,11 +142,12 @@ public class DoneProcessing implements Serializable {
         this.imageMetaInfo = imageMetaInfo;
         this.audioMetaInfo = audioMetaInfo;
         this.videoMetaInfo = videoMetaInfo;
+        this.textMetaInfo = textMetaInfo;
         this.processingState = doneDownload.getProcessingState();
         this.log = httpRetrieveResponse.getLog();
     }
 
-    public DoneProcessing(final String url, String referenceId, final String jobId,
+    public DoneProcessing(final String taskID, final String url, String referenceId, final String jobId,
                           final DocumentReferenceTaskType taskType, final Integer httpResponseCode,
                           final String httpResponseContentType, final Long httpResponseContentSizeInBytes,
                           final Long socketConnectToDownloadStartDurationInMilliSecs,
@@ -139,7 +155,8 @@ public class DoneProcessing implements Serializable {
                           final String sourceIp, final Map<String, String> httpResponseHeaders,
                           final List<String> redirectionPath, final ProcessingState processingState, final String log,
                           final ImageMetaInfo imageMetaInfo, final AudioMetaInfo audioMetaInfo,
-                          final VideoMetaInfo videoMetaInfo) {
+                          final VideoMetaInfo videoMetaInfo, final TextMetaInfo textMetaInfo) {
+        this.taskID = taskID;
         this.url = url;
         this.referenceId = referenceId;
         this.jobId = jobId;
@@ -157,6 +174,7 @@ public class DoneProcessing implements Serializable {
         this.imageMetaInfo = imageMetaInfo;
         this.audioMetaInfo = audioMetaInfo;
         this.videoMetaInfo = videoMetaInfo;
+        this.textMetaInfo = textMetaInfo;
         this.processingState = processingState;
         this.log = log;
     }
@@ -225,6 +243,10 @@ public class DoneProcessing implements Serializable {
         return videoMetaInfo;
     }
 
+    public TextMetaInfo getTextMetaInfo() {
+        return textMetaInfo;
+    }
+
     public ProcessingState getProcessingState() {
         return processingState;
     }
@@ -233,10 +255,21 @@ public class DoneProcessing implements Serializable {
         return log;
     }
 
+    public String getTaskID() {
+        return taskID;
+    }
+
     public DoneProcessing withNewState(ProcessingState newState, String log) {
-        return new DoneProcessing(url, referenceId, jobId, taskType, httpResponseCode, httpResponseContentType,
+        return new DoneProcessing(taskID, url, referenceId, jobId, taskType, httpResponseCode, httpResponseContentType,
                 httpResponseContentSizeInBytes, socketConnectToDownloadStartDurationInMilliSecs,
                 retrievalDurationInMilliSecs, checkingDurationInMilliSecs, sourceIp, httpResponseHeaders,
-                redirectionPath, newState, log, imageMetaInfo, audioMetaInfo, videoMetaInfo);
+                redirectionPath, newState, log, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
+    }
+
+    public DoneProcessing withColorPalette(ImageMetaInfo imageMetaInfo) {
+        return new DoneProcessing(taskID, url, referenceId, jobId, taskType, httpResponseCode, httpResponseContentType,
+                httpResponseContentSizeInBytes, socketConnectToDownloadStartDurationInMilliSecs,
+                retrievalDurationInMilliSecs, checkingDurationInMilliSecs, sourceIp, httpResponseHeaders,
+                redirectionPath, processingState, log, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
     }
 }

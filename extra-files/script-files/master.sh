@@ -1,0 +1,2 @@
+#!/bin/bash
+java -server -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -XX:+UseParallelGC -Xms1g -Xmx8g -Xss1M -Djava.library.path="/home/norbert/harvester/extra-files/lib" -Dlogback.configurationFile="/home/norbert/harvester/extra-files/logback_master.xml" -cp ./harvester.jar eu.europeana.harvester.cluster.Master /home/norbert/harvester/extra-files/master.conf

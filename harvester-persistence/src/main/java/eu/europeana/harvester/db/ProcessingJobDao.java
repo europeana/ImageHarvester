@@ -6,7 +6,9 @@ import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.Page;
 import eu.europeana.harvester.domain.ProcessingJob;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DAO for CRUD with processing_job collection
@@ -52,5 +54,19 @@ public interface ProcessingJobDao {
      * @return - list of ProcessingJobs
      */
     public List<ProcessingJob> getJobsWithState(JobState jobState, Page page);
+
+    /**
+     *
+     * @return a map which maps each IP address with the number of processingJobs from that IP address
+     */
+    public Map<String, Integer> getIpDistribution();
+
+    /**
+     * Returns all the jobs from the DB with a specified state, but it's careful to return jobs from different ips.
+     * @param jobState the specific state
+     * @param page an object which contains the number of records needed and the offset.
+     * @return - list of ProcessingJobs
+     */
+     public List<ProcessingJob> getDiffusedJobsWithState(JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs);
 
 }

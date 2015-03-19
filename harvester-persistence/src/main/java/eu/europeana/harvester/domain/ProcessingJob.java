@@ -42,6 +42,11 @@ public class ProcessingJob {
      */
     private final JobState state;
 
+    /**
+     * The IP address of the host machine.
+     */
+    private final String ipAddress;
+
     public ProcessingJob() {
         this.id = null;
         this.priority = null;
@@ -49,11 +54,13 @@ public class ProcessingJob {
         this.referenceOwner = null;
         this.tasks = null;
         this.state = null;
+        this.ipAddress = null;
     }
 
     public ProcessingJob(final Integer priority, final Date expectedStartDate, final ReferenceOwner referenceOwner,
-                         final List<ProcessingJobTaskDocumentReference> tasks, final JobState state) {
+                         final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress) {
         this.priority = priority;
+        this.ipAddress = ipAddress;
         this.id = UUID.randomUUID().toString();
         this.expectedStartDate = expectedStartDate;
         this.referenceOwner = referenceOwner;
@@ -63,13 +70,14 @@ public class ProcessingJob {
 
     public ProcessingJob(final String id, final Integer priority, final Date expectedStartDate,
                          final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks,
-                         final JobState state) {
+                         final JobState state, String ipAddress) {
         this.id = id;
         this.priority = priority;
         this.expectedStartDate = expectedStartDate;
         this.referenceOwner = referenceOwner;
         this.tasks = tasks;
         this.state = state;
+        this.ipAddress = ipAddress;
     }
 
     public String getId() {
@@ -96,8 +104,12 @@ public class ProcessingJob {
         return state;
     }
 
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
     public ProcessingJob withState(JobState state) {
-        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state);
+        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress);
     }
 
 }

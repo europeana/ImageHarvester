@@ -17,7 +17,7 @@ import java.util.*;
  */
 public class HarvesterClientImpl implements HarvesterClient {
 
-    private static final Logger LOG = LogManager.getLogger(HarvesterClientImpl.class.getName());
+        private static final Logger LOG = LogManager.getLogger(HarvesterClientImpl.class.getName());
 
     /**
      * DAO for CRUD with processing_job collection
@@ -79,21 +79,21 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public void createOrModifyLinkCheckLimits(LinkCheckLimits linkCheckLimits) {
-        LOG.debug("Create or modify link check limits");
+        LOG.info("Create or modify link check limits");
 
         linkCheckLimitsDao.createOrModify(linkCheckLimits, harvesterClientConfig.getWriteConcern());
     }
 
     @Override
     public void createOrModifyProcessingLimits(MachineResourceReference machineResourceReference) {
-        LOG.debug("Create or modify processing limits");
+        LOG.info("Create or modify processing limits");
 
         machineResourceReferenceDao.createOrModify(machineResourceReference, harvesterClientConfig.getWriteConcern());
     }
 
     @Override
     public void createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) {
-        LOG.debug("Create or modify SourceDocumentReferences");
+        LOG.info("Create or modify SourceDocumentReferences");
 
         for(final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
             sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, harvesterClientConfig.getWriteConcern());
@@ -102,7 +102,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJob createProcessingJob(ProcessingJob processingJob) {
-        LOG.debug("Create processing job");
+        LOG.info("Create processing job");
 
         processingJobDao.create(processingJob, harvesterClientConfig.getWriteConcern());
         return processingJob;
@@ -120,11 +120,12 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJob stopJob(String jobId) {
-        LOG.debug("Stopping job with id: {}", jobId);
+        LOG.info("Stopping job with id: {}", jobId);
         final ProcessingJob processingJob = processingJobDao.read(jobId);
-        if(processingJob.getState().equals(JobState.RUNNING) ||
-                processingJob.getState().equals(JobState.RESUME) ||
-                processingJob.getState().equals(JobState.READY)) {
+        final JobState currentState = processingJob.getState();
+        if((JobState.RUNNING).equals(currentState) ||
+                (JobState.RESUME).equals(currentState) ||
+                (JobState.READY).equals(currentState)) {
             final ProcessingJob newProcessingJob = processingJob.withState(JobState.PAUSE);
             processingJobDao.update(newProcessingJob, harvesterClientConfig.getWriteConcern());
 
@@ -136,7 +137,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJob startJob(String jobId) {
-        LOG.debug("Starting job with id: {}", jobId);
+        LOG.info("Starting job with id: {}", jobId);
         final ProcessingJob processingJob = processingJobDao.read(jobId);
         final ProcessingJob newProcessingJob = processingJob.withState(JobState.RESUME);
         processingJobDao.update(newProcessingJob, harvesterClientConfig.getWriteConcern());
@@ -151,7 +152,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJobStats statsOfJob(String jobId) {
-        LOG.debug("Retrieving job stats.");
+        LOG.info("Retrieving job stats.");
         final ProcessingJob processingJob = processingJobDao.read(jobId);
 
         final Map<ProcessingState, Set<String>> recordIdsByState = new HashMap<ProcessingState, Set<String>>();
@@ -194,6 +195,30 @@ public class HarvesterClientImpl implements HarvesterClient {
         final String id = hc.toString();
 
         return sourceDocumentReferenceMetaInfoDao.read(id);
+    }
+
+    @Override
+    public void setActive(String recordID, Boolean active) {
+        final List<SourceDocumentReference> sourceDocumentReferenceList =
+                sourceDocumentReferenceDao.findByRecordID(recordID);
+        final List<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatisticsList =
+                sourceDocumentProcessingStatisticsDao.findByRecordID(recordID);
+
+        final List<SourceDocumentReference> newSourceDocumentReferenceList = new ArrayList<>();
+
+        for(final SourceDocumentReference sourceDocumentReference : sourceDocumentReferenceList) {
+            final SourceDocumentReference newSourceDocumentReference = sourceDocumentReference.withActive(active);
+            newSourceDocumentReferenceList.add(newSourceDocumentReference);
+        }
+
+        for(final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics : sourceDocumentProcessingStatisticsList) {
+            final SourceDocumentProcessingStatistics newSourceDocumentProcessingStatistics =
+                    sourceDocumentProcessingStatistics.withActive(active);
+            sourceDocumentProcessingStatisticsDao.createOrUpdate(newSourceDocumentProcessingStatistics,
+                    harvesterClientConfig.getWriteConcern());
+        }
+
+        createOrModifySourceDocumentReference(newSourceDocumentReferenceList);
     }
 
 }

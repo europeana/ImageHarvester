@@ -3,39 +3,41 @@ package eu.europeana.harvester.cluster;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.routing.FromConfig;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
+import com.mongodb.DB;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
-import com.rabbitmq.client.Consumer;
-import com.rabbitmq.client.QueueingConsumer;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
-import eu.europeana.harvester.cluster.domain.*;
+import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
+import eu.europeana.harvester.cluster.domain.DefaultLimits;
+import eu.europeana.harvester.cluster.domain.IPExceptions;
+import eu.europeana.harvester.cluster.domain.PingMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.CheckForTaskTimeout;
-import eu.europeana.harvester.cluster.domain.messages.LookInDB;
-import eu.europeana.harvester.cluster.domain.messages.RecoverAbandonedJobs;
-import eu.europeana.harvester.cluster.domain.messages.StartTasks;
+import eu.europeana.harvester.cluster.domain.messages.LoadJobs;
+import eu.europeana.harvester.cluster.domain.messages.Monitor;
 import eu.europeana.harvester.cluster.master.ClusterMasterActor;
-import eu.europeana.harvester.cluster.master.PingMasterActor;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
-import eu.europeana.servicebus.client.ESBClient;
-import eu.europeana.servicebus.client.rabbitmq.RabbitMQClientAsync;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.Duration;
 
 import java.io.File;
-import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.UnknownHostException;
+import java.util.List;
+
+//import com.rabbitmq.client.Consumer;
+//import com.rabbitmq.client.QueueingConsumer;
+//import eu.europeana.servicebus.client.ESBClient;
+//import eu.europeana.servicebus.client.rabbitmq.RabbitMQClientAsync;
 
 class Master {
-
-    private static final Logger LOG = LogManager.getLogger(Master.class.getName());
+    private static Logger LOG = LogManager.getLogger(Master.class.getName());
 
     private final String[] args;
 
@@ -49,7 +51,7 @@ class Master {
         this.args = args;
     }
 
-    public void init() {
+    public void init() throws MalformedURLException {
         String configFilePath;
 
         if(args.length == 0) {
@@ -65,18 +67,16 @@ class Master {
         }
 
         final Config config = ConfigFactory.parseFileAnySyntax(configFile,
-                        ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
+                ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
 
-        final Duration jobsPollingInterval = Duration.millis(config.getInt("akka.cluster.jobsPollingInterval"));
-        final Duration taskStartingInterval = Duration.millis(config.getInt("akka.cluster.taskStartingInterval"));
-        final Integer maxJobsPerIteration = config.getInt("mongo.maxJobsPerIteration");
+        final Integer jobsPerIP = config.getInt("mongo.jobsPerIP");
         final Duration receiveTimeoutInterval = Duration.millis(config.getInt("akka.cluster.receiveTimeoutInterval"));
         final Integer responseTimeoutFromSlaveInMillis =
                 config.getInt("default-limits.responseTimeoutFromSlaveInMillis");
+        final Long maxTasksInMemory = config.getLong("mongo.maxTasksInMemory");
 
-        final ClusterMasterConfig clusterMasterConfig =
-                new ClusterMasterConfig(jobsPollingInterval, taskStartingInterval, maxJobsPerIteration,
-                        receiveTimeoutInterval, responseTimeoutFromSlaveInMillis, WriteConcern.NONE);
+        final ClusterMasterConfig clusterMasterConfig = new ClusterMasterConfig(jobsPerIP, maxTasksInMemory,
+                receiveTimeoutInterval, responseTimeoutFromSlaveInMillis, WriteConcern.NONE);
 
         final PingMasterConfig pingMasterConfig =
                 new PingMasterConfig(config.getInt("ping.timePeriod"), config.getInt("ping.nrOfPings"),
@@ -85,6 +85,7 @@ class Master {
 
         system = ActorSystem.create("ClusterSystem", config);
 
+        final Integer taskBatchSize = config.getInt("default-limits.taskBatchSize");
         final Long defaultBandwidthLimitReadInBytesPerSec =
                 config.getLong("default-limits.bandwidthLimitReadInBytesPerSec");
         final Long defaultMaxConcurrentConnectionsLimit =
@@ -93,23 +94,30 @@ class Master {
                 config.getInt("default-limits.connectionTimeoutInMillis");
         final Integer maxNrOfRedirects =
                 config.getInt("default-limits.maxNrOfRedirects");
+        final Integer minDistanceInMillisBetweenTwoRequest =
+                config.getInt("default-limits.minDistanceInMillisBetweenTwoRequest");
+        final Double minTasksPerIPPercentage =
+                config.getDouble("default-limits.minTasksPerIPPercentage");
 
-        final DefaultLimits defaultLimits =
-                new DefaultLimits(defaultBandwidthLimitReadInBytesPerSec, defaultMaxConcurrentConnectionsLimit,
-                        connectionTimeoutInMillis, maxNrOfRedirects);
-
-        final Integer thumbnailWidth =
-                config.getInt("thumbnail.width");
-        final Integer thumbnailHeight =
-                config.getInt("thumbnail.height");
-        final ThumbnailConfig thumbnailConfig = new ThumbnailConfig(thumbnailWidth, thumbnailHeight);
-        final JobConfigs jobConfigs = new JobConfigs(thumbnailConfig);
+        final DefaultLimits defaultLimits = new DefaultLimits(taskBatchSize, defaultBandwidthLimitReadInBytesPerSec,
+                defaultMaxConcurrentConnectionsLimit, minDistanceInMillisBetweenTwoRequest,
+                connectionTimeoutInMillis, maxNrOfRedirects, minTasksPerIPPercentage);
 
         Datastore datastore = null;
         try {
             MongoClient mongo = new MongoClient(config.getString("mongo.host"), config.getInt("mongo.port"));
             Morphia morphia = new Morphia();
             String dbName = config.getString("mongo.dbName");
+
+            if(!config.getString("mongo.username").equals("")) {
+                final DB db = mongo.getDB("admin");
+                final Boolean auth = db.authenticate(config.getString("mongo.username"),
+                        config.getString("mongo.password").toCharArray());
+                if(!auth) {
+                    LOG.error("Mongo auth error");
+                    System.exit(-1);
+                }
+            }
 
             datastore = morphia.createDatastore(mongo, dbName);
         } catch (UnknownHostException e) {
@@ -127,47 +135,51 @@ class Master {
         final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao =
                 new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
 
-        final ActorRef router = system.actorOf(FromConfig.getInstance().props(), "nodeSupervisorRouter");
-
         final String ebHost = config.getString("eventbus.host");
         final String ebUsername = config.getString("eventbus.username");
         final String ebPassword = config.getString("eventbus.password");
         final String ebIncomingQueue = config.getString("eventbus.incomingQueue");
         final String ebOutgoingQueue = config.getString("eventbus.outgoingQueue");
 
-        ESBClient esbClientTemp = null;
-        try {
-            final Consumer consumer = new QueueingConsumer(null);
-            esbClientTemp = new RabbitMQClientAsync(ebHost, ebIncomingQueue, ebOutgoingQueue, ebUsername, ebPassword, consumer);
-        } catch (IOException e) {
-            LOG.error(e.getMessage());
-        }
-        final ESBClient esbClient = esbClientTemp;
+//        ESBClient esbClientTemp = null;
+//        try {
+//            final Consumer consumer = new QueueingConsumer(null);
+//            esbClientTemp = new RabbitMQClientAsync(ebHost, ebIncomingQueue, ebOutgoingQueue, ebUsername, ebPassword, consumer);
+//        } catch (IOException e) {
+//            LOG.error(e.getMessage());
+//        }
+//        final ESBClient esbClient = esbClientTemp;
 
-        clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class, jobConfigs,
-                clusterMasterConfig, processingJobDao, machineResourceReferenceDao,
+        final Integer ipExceptionsMaxConcurrentConnectionsLimit = config.getInt("IPExceptions.maxConcurrentConnectionsLimit");
+        final List<String> ips = config.getStringList("IPExceptions.ips");
+        final List<String> ignoredIPs = config.getStringList("IPExceptions.ignoredIPs");
+        final IPExceptions ipExceptions = new IPExceptions(ipExceptionsMaxConcurrentConnectionsLimit, ips, ignoredIPs);
+
+        final Integer cleanupInterval = config.getInt("akka.cluster.cleanupInterval");
+
+        clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class,
+                clusterMasterConfig, ipExceptions, processingJobDao, machineResourceReferenceDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
-                sourceDocumentReferenceMetaInfoDao, linkCheckLimitsDao, router,
-                defaultLimits, esbClient),
-                "clusterMaster");
+                sourceDocumentReferenceMetaInfoDao, linkCheckLimitsDao, defaultLimits,
+                cleanupInterval), "clusterMaster");
 
-        pingMaster = system.actorOf(Props.create(PingMasterActor.class, pingMasterConfig, router,
-                machineResourceReferenceDao, machineResourceReferenceStatDao), "pingMaster");
+//        pingMaster = system.actorOf(Props.create(PingMasterActor.class, pingMasterConfig, router,
+//                machineResourceReferenceDao, machineResourceReferenceStatDao), "pingMaster");
     }
 
     public void start() {
-        clusterMaster.tell(new RecoverAbandonedJobs(), ActorRef.noSender());
-        clusterMaster.tell(new LookInDB(), ActorRef.noSender());
-        clusterMaster.tell(new StartTasks(), ActorRef.noSender());
+        clusterMaster.tell(new LoadJobs(), ActorRef.noSender());
+        clusterMaster.tell(new Monitor(), ActorRef.noSender());
         clusterMaster.tell(new CheckForTaskTimeout(), ActorRef.noSender());
-        pingMaster.tell(new LookInDB(), ActorRef.noSender());
+
+        //pingMaster.tell(new LookInDB(), ActorRef.noSender());
     }
 
     public ActorSystem getActorSystem() {
         return system;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws MalformedURLException {
         final Master master = new Master(args);
         master.init();
         master.start();

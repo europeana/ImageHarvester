@@ -103,11 +103,11 @@ public class HttpRetrieveConfig implements Serializable {
     }
 
     public Long getBandwidthLimitWriteInBytesPerSec() {
-        return bandwidthLimitWriteInBytesPerSec;
+        return 0L; /*bandwidthLimitWriteInBytesPerSec;*/
     }
 
     public Long getBandwidthLimitReadInBytesPerSec() {
-        return bandwidthLimitReadInBytesPerSec;
+        return 0L; /*bandwidthLimitReadInBytesPerSec;*/
     }
 
     public Duration getTerminationThresholdTimeLimit() {
@@ -143,4 +143,5 @@ public class HttpRetrieveConfig implements Serializable {
     public Integer getMaxNrOfRedirects() {
         return maxNrOfRedirects;
     }
+
 }

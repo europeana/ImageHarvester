@@ -42,7 +42,7 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
     @Test
     public void testCreate() throws Exception {
         final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
-                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", ""), null, null);
+                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", "", null, null, null), null, null, null);
 
         assertNotNull(sourceDocumentReferenceMetaInfo.getId());
 
@@ -61,7 +61,7 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
         assertNull(sourceDocumentReferenceMetaInfoFromRead);
 
         final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
-                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", ""), null, null);
+                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", "", null, null, null), null, null, null);
         sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo, WriteConcern.NONE);
         sourceDocumentReferenceMetaInfoFromRead =
                 sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceMetaInfo.getId());
@@ -75,12 +75,12 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
     @Test
     public void testUpdate() throws Exception {
         final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
-                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", ""), null, null);
+                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", "", null, null, null), null, null, null);
         sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo, WriteConcern.NONE);
 
         final SourceDocumentReferenceMetaInfo updatedSourceDocumentReferenceMetaInfo =
                 new SourceDocumentReferenceMetaInfo(sourceDocumentReferenceMetaInfo.getId(),
-                        new ImageMetaInfo(20, 20, "", "", ""), null, null);
+                        new ImageMetaInfo(20, 20, "", "", "", null, null, null), null, null, null);
 
         assertNotEquals(updatedSourceDocumentReferenceMetaInfo.getImageMetaInfo().getHeight(),
                 sourceDocumentReferenceMetaInfoDao.read(
@@ -93,7 +93,7 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
         sourceDocumentReferenceMetaInfoDao.delete(updatedSourceDocumentReferenceMetaInfo.getId());
 
         final SourceDocumentReferenceMetaInfo checkUpdateSourceDocumentReferenceMetaInfo =
-                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(20, 20, "", "", ""), null, null);
+                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(20, 20, "", "", "", null, null, null), null, null, null);
         assertFalse(sourceDocumentReferenceMetaInfoDao.update(checkUpdateSourceDocumentReferenceMetaInfo,
                 WriteConcern.NONE));
     }
@@ -101,7 +101,7 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
     @Test
     public void testDelete() throws Exception {
         final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
-                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", ""), null, null);
+                new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", "", null, null, null), null, null, null);
         sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo, WriteConcern.NONE);
 
         SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfoFromRead =

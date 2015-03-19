@@ -33,21 +33,43 @@ public class ImageMetaInfo implements Serializable {
      */
     private final String colorSpace;
 
+    /**
+     * The size of the file in bytes
+     */
+    private final Long fileSize;
+
+    /**
+     * An array with up to 6 colors (in the HEX code used for web applications)
+     */
+    private final String[] colorPalette;
+
+    /**
+     * The orientation of the image (LANDSCAPE or PORTRAIT)
+     */
+    private final ImageOrientation orientation;
+
     public ImageMetaInfo() {
         this.width = null;
         this.height = null;
         this.mimeType = null;
         this.fileFormat = null;
         this.colorSpace = null;
+        this.fileSize = null;
+        this.colorPalette = null;
+        this.orientation = null;
     }
 
     public ImageMetaInfo(final Integer width, final Integer height,
-                         final String mimeType, final String fileFormat, final String colorSpace) {
+                         final String mimeType, final String fileFormat, final String colorSpace,
+                         final Long fileSize, final String[] colorPalette, final ImageOrientation orientation) {
         this.width = width;
         this.height = height;
         this.mimeType = mimeType;
         this.fileFormat = fileFormat;
         this.colorSpace = colorSpace;
+        this.fileSize = fileSize;
+        this.colorPalette = colorPalette;
+        this.orientation = orientation;
     }
 
     public Integer getWidth() {
@@ -70,4 +92,15 @@ public class ImageMetaInfo implements Serializable {
         return colorSpace;
     }
 
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public String[] getColorPalette() {
+        return colorPalette;
+    }
+
+    public ImageOrientation getOrientation() {
+        return orientation;
+    }
 }

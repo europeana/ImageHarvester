@@ -12,6 +12,7 @@ import eu.europeana.harvester.utils.CallbackInterface;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
@@ -70,6 +71,8 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
     public DownloaderSlaveActor(final ChannelFactory channelFactory, final HashedWheelTimer hashedWheelTimer,
                                 final HttpRetrieveResponseFactory httpRetrieveResponseFactory, final ResponseType responseType,
                                 final String pathToSave, final ExecutorService executorServiceAkka) {
+        LOG.info("DownloaderSlaveActor constructor");
+
         this.channelFactory = channelFactory;
         this.hashedWheelTimer = hashedWheelTimer;
         this.httpRetrieveResponseFactory = httpRetrieveResponseFactory;
@@ -88,7 +91,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
             final HttpRetrieveResponse httpRetrieveResponse = downloadTask(task);
             if(httpRetrieveResponse.getHttpResponseCode() == -1) {
                 final DoneDownload doneDownload =
-                        createDoneDownloadMessage(task, httpRetrieveResponse, ProcessingState.ERROR);
+                        createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.ERROR);
 
                 sender.tell(doneDownload, getSelf());
             }
@@ -107,7 +110,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         final String path = pathToSave + "/" + task.getReferenceId();
 
         try {
-            if(task.getHttpRetrieveConfig().getTaskType().equals(DocumentReferenceTaskType.CHECK_LINK)) {
+            if((DocumentReferenceTaskType.CHECK_LINK).equals(task.getHttpRetrieveConfig().getTaskType())) {
                 httpRetrieveResponse = httpRetrieveResponseFactory.create(ResponseType.NO_STORAGE, path);
             } else {
                 httpRetrieveResponse = httpRetrieveResponseFactory.create(responseType, path);
@@ -136,8 +139,18 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
             //httpRetrieveResponse = httpClient.call();
         } catch (Exception e) {
             LOG.error(e.getMessage());
-            httpRetrieveResponse.setHttpResponseCode(-1);
-            httpRetrieveResponse.setLog("In DownloaderSlaveActor: \n" + e.toString());
+            try {
+                if(httpRetrieveResponse != null) {
+                    httpRetrieveResponse.close();
+                }
+            } catch (IOException e1) {
+                LOG.error("In DownloaderSlaveActor: error at closing httpRetrieveResponse fileOutputStream.");
+                e1.printStackTrace();
+            }
+            if(httpRetrieveResponse != null) {
+                httpRetrieveResponse.setHttpResponseCode(-1);
+                httpRetrieveResponse.setLog("In DownloaderSlaveActor: \n" + e.toString());
+            }
         }
 
         return httpRetrieveResponse;
@@ -149,15 +162,16 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
 
         if(httpRetrieveResponse.getHttpResponseCode() == -1) {
             final DoneDownload doneDownload =
-                    createDoneDownloadMessage(task, httpRetrieveResponse, ProcessingState.ERROR);
+                    createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.ERROR);
 
-            sender.tell(doneDownload, getSelf());
             future.cancel(true);
+            sender.tell(doneDownload, getSelf());
+
             return;
         }
 
         final DoneDownload doneDownload =
-                createDoneDownloadMessage(task, httpRetrieveResponse, ProcessingState.SUCCESS);
+                createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.SUCCESS);
 
         future.cancel(true);
         sender.tell(doneDownload, getSelf());
@@ -165,23 +179,22 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
 
     /**
      * Creates the response message from the result of the task.
-     * @param task given task
      * @param httpRetrieveResponse response from HttpClient
      * @param processingState the state of the task
      * @return - the response message
      */
-    private DoneDownload createDoneDownloadMessage(RetrieveUrl task, HttpRetrieveResponse httpRetrieveResponse,
+    private DoneDownload createDoneDownloadMessage(HttpRetrieveResponse httpRetrieveResponse,
                                                    ProcessingState processingState) {
 
         ProcessingState finalProcessingState = processingState;
-        if(httpRetrieveResponse.getState().equals(ResponseState.ERROR)) { //||
+        if((ResponseState.ERROR).equals(httpRetrieveResponse.getState())) { //||
                 //httpRetrieveResponse.getState().equals(ResponseState.PREPARING) ||
                 //httpRetrieveResponse.getState().equals(ResponseState.PROCESSING)) {
             finalProcessingState = ProcessingState.ERROR;
         }
 
-        return new DoneDownload(task.getUrl(), task.getReferenceId(), task.getJobId(), finalProcessingState,
-                task.getHttpRetrieveConfig().getTaskType(), task.getJobConfigs(), httpRetrieveResponse);
+        return new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), finalProcessingState,
+                httpRetrieveResponse, task.getDocumentReferenceTask(), task.getIpAddress());
     }
 
 }

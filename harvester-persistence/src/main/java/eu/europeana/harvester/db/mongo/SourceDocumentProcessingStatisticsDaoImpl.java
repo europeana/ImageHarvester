@@ -1,10 +1,14 @@
 package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
+import com.google.code.morphia.query.Query;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * MongoDB DAO implementation for CRUD with source_document_processing_stats collection
@@ -48,6 +52,11 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     }
 
     @Override
+    public void createOrUpdate(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern) {
+        datastore.save(sourceDocumentProcessingStatistics, writeConcern);
+    }
+
+    @Override
     public WriteResult delete(String id) {
         return datastore.delete(SourceDocumentProcessingStatistics.class, id);
     }
@@ -55,6 +64,14 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     @Override
     public SourceDocumentProcessingStatistics findBySourceDocumentReferenceAndJobId(String docId, String jobId) {
         return read(docId + "-" + jobId);
+    }
+
+    @Override
+    public List<SourceDocumentProcessingStatistics> findByRecordID(String recordID) {
+        final Query<SourceDocumentProcessingStatistics> query = datastore.find(SourceDocumentProcessingStatistics.class, "referenceOwner.recordId", recordID);
+        if(query == null) {return new ArrayList<>(0);}
+
+        return query.asList();
     }
 
 }

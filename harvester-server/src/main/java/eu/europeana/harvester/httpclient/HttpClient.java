@@ -1,7 +1,6 @@
 package eu.europeana.harvester.httpclient;
 
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ResponseHeader;
 import eu.europeana.harvester.httpclient.request.HttpGET;
 import eu.europeana.harvester.httpclient.request.HttpHEAD;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
@@ -18,7 +17,6 @@ import org.jboss.netty.util.HashedWheelTimer;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -86,16 +84,30 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
      * Collects some information about the target url and then  starts the download.
      */
     private void startDownload() {
-        handleRedirects();
+        try {
+            handleRedirects();
+        } catch (Exception e) {
+            LOG.error("In HttpClient: exception in handleRedirects");
+            try {
+                httpRetrieveResponse.close();
+            } catch (IOException e2) {
+                e2.printStackTrace();
+            }
+            return;
+        }
         if(httpRetrieveResponse.getHttpResponseCode() == -1) {
+            try {
+                httpRetrieveResponse.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             return;
         }
 
         final URL newURL = httpRetrieveResponse.getUrl();
 
         final ChannelPipelineFactory pipelineFactory =
-                new ConstrainedPipelineFactory(httpRetrieveConfig.getBandwidthLimitReadInBytesPerSec(),
-                        httpRetrieveConfig.getBandwidthLimitWriteInBytesPerSec(),
+                new ConstrainedPipelineFactory(
                         httpRetrieveConfig.getLimitsCheckInterval(),
                         httpRetrieveConfig.getConnectionTimeoutInMillis(),
                         newURL.getProtocol().startsWith("https"),
@@ -114,19 +126,32 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
             channelFuture.await();
         } catch (InterruptedException e) {
             LOG.error(e.getMessage());
+            channelFuture.getChannel().close();
+            try {
+                httpRetrieveResponse.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            return;
         }
         channel = channelFuture.getChannel();
 
         try {
             final String address = String.valueOf(channel.getRemoteAddress()).split("/")[1].split(":")[0];
             httpRetrieveResponse.setSourceIp(address);
-        } catch (Exception e){
+        } catch (Exception e) {
             httpRetrieveResponse.setLog("In HttpClient: error at getting IP address");
             httpRetrieveResponse.setHttpResponseCode(-1);
+            try {
+                httpRetrieveResponse.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            channel.close();
             return;
         }
 
-        if(httpRetrieveConfig.getTaskType().equals(DocumentReferenceTaskType.CHECK_LINK)) {
+        if((DocumentReferenceTaskType.CHECK_LINK).equals(httpRetrieveConfig.getTaskType())) {
             channel.write(HttpHEAD.build(newURL));
         } else {
             channel.write(HttpGET.build(newURL));
@@ -135,6 +160,9 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
         closeFuture = channel.getCloseFuture();
     }
 
+    /**
+     * Follows redirects.
+     */
     private void handleRedirects() {
         URL tempUrl = url;
 
@@ -143,8 +171,9 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
         do {
             redirect = false;
             httpRetrieveResponse.setUrl(tempUrl);
+            HttpURLConnection httpURLConnection = null;
             try {
-                final HttpURLConnection httpURLConnection = (HttpURLConnection) tempUrl.openConnection();
+                httpURLConnection = (HttpURLConnection) tempUrl.openConnection();
                 httpURLConnection.setRequestMethod("GET");
                 httpURLConnection.setInstanceFollowRedirects(false);
                 httpURLConnection.setConnectTimeout(httpRetrieveConfig.getConnectionTimeoutInMillis());
@@ -170,6 +199,8 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
                     httpRetrieveResponse.setHttpResponseCode(-1);
                     httpRetrieveResponse.setLog("In HttpClient: \n" + e.toString());
                     return;
+                } finally {
+                    httpURLConnection.disconnect();
                 }
 
             } catch (ClassCastException e) {
@@ -184,6 +215,10 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
                 httpRetrieveResponse.setHttpResponseCode(-1);
                 httpRetrieveResponse.setLog("In HttpClient: \n" + e.toString());
                 return;
+            } finally {
+                if(httpURLConnection != null) {
+                    httpURLConnection.disconnect();
+                }
             }
 
             if(httpRetrieveResponse.getRedirectionPath().size() != depth) {
@@ -212,14 +247,19 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
             if(closeFuture == null) {
                 httpRetrieveResponse.setHttpResponseCode(-1);
                 httpRetrieveResponse.setLog("In HttpClient: closeFuture is null");
-            }
-            else {
+            } else {
                 closeFuture.await();
                 httpRetrieveResponse.setUrl(url);
             }
         } catch (InterruptedException e) {
             httpRetrieveResponse.setState(ResponseState.ERROR);
             httpRetrieveResponse.setLog("In HttpClient: \n" + e.toString());
+        }
+
+        try {
+            httpRetrieveResponse.close();
+        } catch (IOException e) {
+            LOG.error("In HttpClient: exception while closing the fileInputStream.");
         }
 
         if(closeFuture != null) {

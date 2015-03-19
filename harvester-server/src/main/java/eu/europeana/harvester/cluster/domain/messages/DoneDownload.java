@@ -1,6 +1,5 @@
 package eu.europeana.harvester.cluster.domain.messages;
 
-import eu.europeana.harvester.cluster.domain.JobConfigs;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 
@@ -10,6 +9,11 @@ import java.io.Serializable;
  * Message sent by slave actor and node master actor after the download is done.
  */
 public class DoneDownload implements Serializable {
+
+    /**
+     * The ID of the task.
+     */
+    private final String taskID;
 
     /**
      * The url.
@@ -32,30 +36,33 @@ public class DoneDownload implements Serializable {
     private final ProcessingState processingState;
 
     /**
-     * The specific task type: check limit, conditional or unconditional download.
-     */
-    private final DocumentReferenceTaskType taskType;
-
-    /**
-     * An object which contains different configs for different types of tasks.
-     */
-    private final JobConfigs jobConfigs;
-
-    /**
      * Contains different information about the task retrieved while downloading.
      */
     private final HttpRetrieveResponse httpRetrieveResponse;
 
-    public DoneDownload(final String url, final String referenceId, final String jobId,
-                        final ProcessingState processingState, final DocumentReferenceTaskType taskType,
-                        final JobConfigs jobConfigs, final HttpRetrieveResponse httpRetrieveResponse) {
+    /**
+     * The type of the tasks.
+     * Contains:
+     *  - The specific task type: check limit, conditional or unconditional download.
+     *  - a list of subtasks
+     */
+    private final ProcessingJobTaskDocumentReference documentReferenceTask;
+
+    private final String ipAddress;
+
+    public DoneDownload(final String taskID, final String url, final String referenceId, final String jobId,
+                        final ProcessingState processingState,
+                        final HttpRetrieveResponse httpRetrieveResponse,
+                        final ProcessingJobTaskDocumentReference documentReferenceTask,
+                        final String ipAddress) {
+        this.taskID = taskID;
         this.url = url;
         this.referenceId = referenceId;
         this.jobId = jobId;
         this.processingState = processingState;
-        this.taskType = taskType;
-        this.jobConfigs = jobConfigs;
         this.httpRetrieveResponse = httpRetrieveResponse;
+        this.documentReferenceTask = documentReferenceTask;
+        this.ipAddress = ipAddress;
     }
 
     public String getUrl() {
@@ -70,19 +77,23 @@ public class DoneDownload implements Serializable {
         return jobId;
     }
 
-    public DocumentReferenceTaskType getTaskType() {
-        return taskType;
-    }
-
-    public JobConfigs getJobConfigs() {
-        return jobConfigs;
-    }
-
     public HttpRetrieveResponse getHttpRetrieveResponse() {
         return httpRetrieveResponse;
     }
 
     public ProcessingState getProcessingState() {
         return processingState;
+    }
+
+    public ProcessingJobTaskDocumentReference getDocumentReferenceTask() {
+        return documentReferenceTask;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public String getTaskID() {
+        return taskID;
     }
 }

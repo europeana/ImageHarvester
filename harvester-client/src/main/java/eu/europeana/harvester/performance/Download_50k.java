@@ -1,8 +1,5 @@
 package eu.europeana.harvester.performance;
 
-import com.google.code.morphia.Datastore;
-import com.google.code.morphia.Morphia;
-import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -30,7 +27,7 @@ public class Download_50k {
     private static final Logger LOG = LogManager.getLogger(Download_50k.class.getName());
 
     public static void main(String[] args) throws UnknownHostException {
-        LOG.debug("Starting link check test...");
+        LOG.info("Starting link check test...");
 
         String configFilePath;
 
@@ -40,7 +37,7 @@ public class Download_50k {
             configFilePath = args[0];
         }
 
-        File configFile = new File(configFilePath);
+        final File configFile = new File(configFilePath);
         if(!configFile.exists()) {
             LOG.error("Config file not found!");
             System.exit(-1);
@@ -55,8 +52,8 @@ public class Download_50k {
 
         // ============================================================================================================
 
-        //final int nrOfLinks = 500;
-        final int nrOfLinks = 54709;
+        final int nrOfLinks = 1510;
+        //final int nrOfLinks = 54709;
         final int linksPerJobs = 1001;
         final String outputFileName = "outLinkCheck";
 
@@ -76,11 +73,16 @@ public class Download_50k {
 
             while((line = br.readLine()) != null) {
                 final SourceDocumentReference reference =
-                        new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), line,
-                                null, null, 0l, null);
+                        new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, line,
+                                null, null, 0l, null, true);
+                final GenericSubTaskConfiguration jobConfigs = new GenericSubTaskConfiguration(new ThumbnailConfig(50, 50));
+                final List<ProcessingJobSubTask> subTaskList = new ArrayList<ProcessingJobSubTask>();
+                subTaskList.add(new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION, null));
+                subTaskList.add(new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, jobConfigs));
+
                 final ProcessingJobTaskDocumentReference processingJobTaskDocumentReference =
                         new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
-                                reference.getId());
+                                reference.getId(), subTaskList);
                 sourceDocumentReferences.add(reference);
                 processingJobTaskDocumentReferences.add(processingJobTaskDocumentReference);
                 i++;
@@ -88,7 +90,7 @@ public class Download_50k {
                 if(i == linksPerJobs) {
                     ProcessingJob processingJob =
                             new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"),
-                                    processingJobTaskDocumentReferences, JobState.READY);
+                                    processingJobTaskDocumentReferences, JobState.READY, "");
                     processingJobTaskDocumentReferences = new ArrayList<ProcessingJobTaskDocumentReference>();
                     processingJobs.add(processingJob);
                     i = 0;
@@ -96,7 +98,7 @@ public class Download_50k {
             }
             ProcessingJob processingJob =
                     new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"),
-                            processingJobTaskDocumentReferences, JobState.READY);
+                            processingJobTaskDocumentReferences, JobState.READY, "");
             processingJobs.add(processingJob);
             harvesterClient.createOrModifySourceDocumentReference(sourceDocumentReferences);
 

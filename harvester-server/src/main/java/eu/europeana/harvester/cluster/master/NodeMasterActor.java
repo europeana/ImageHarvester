@@ -10,6 +10,7 @@ import eu.europeana.harvester.cluster.domain.utils.ActorState;
 import eu.europeana.harvester.cluster.slave.DownloaderSlaveActor;
 import eu.europeana.harvester.cluster.slave.ProcesserSlaveActor;
 import eu.europeana.harvester.cluster.slave.PingerSlaveActor;
+import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
@@ -37,20 +38,31 @@ public class NodeMasterActor extends UntypedActor {
     private final ChannelFactory channelFactory;
 
     /**
-     * An object which contains all the config information needed by this actor to start.
-     */
-    private final NodeMasterConfig nodeMasterConfig;
-
-    /**
      * The wheel timer usually shared across all clients.
      */
     private final HashedWheelTimer hashedWheelTimer;
 
     /**
-     * Reference to the cluster master actor.
+     * An object which contains all the config information needed by this actor to start.
+     */
+    private final NodeMasterConfig nodeMasterConfig;
+
+    /**
+     * Reference to the node supervisor actor.
+     */
+    private final ActorRef nodeSupervisor;
+
+    /**
+     * Reference to the receiver master actor.
      * We need this to send him back statistics about the download, error messages or any other type of message.
      */
-    private ActorRef clusterMaster;
+    private ActorRef masterReceiver;
+
+    /**
+     * Reference to the cluster master actor.
+     * We need this to send request for new tasks.
+     */
+    private ActorRef masterSender;
 
     /**
      * Reference to the ping master actor.
@@ -61,12 +73,12 @@ public class NodeMasterActor extends UntypedActor {
     /**
      * List of unprocessed messages.
      */
-    private final Queue<Object> messages = new LinkedList<Object>();
+    private final Queue<Object> messages = new LinkedList<>();
 
     /**
      * List of downloaderActors. (this is needed by our locally implemented router)
      */
-    private final HashMap<ActorRef, ActorState> downloaderActors = new HashMap<ActorRef, ActorState>();
+    private final HashMap<ActorRef, ActorState> downloaderActors = new HashMap<>();
 
     /**
      * Router actor which sends messages to slaves which will do different operation on downloaded documents.
@@ -84,17 +96,33 @@ public class NodeMasterActor extends UntypedActor {
      */
     private final Set<String> jobsToStop;
 
-    public NodeMasterActor(final ChannelFactory channelFactory, final NodeMasterConfig nodeMasterConfig) {
+    /**
+     * This client is used to save the thumbnails in Mongo.
+     */
+    private final MediaStorageClient mediaStorageClient;
+
+    private Boolean sentRequest;
+
+    public NodeMasterActor(final ActorRef masterSender, final  ActorRef nodeSupervisor,
+                           final ChannelFactory channelFactory, final NodeMasterConfig nodeMasterConfig,
+                           final MediaStorageClient mediaStorageClient, final HashedWheelTimer hashedWheelTimer) {
+        LOG.info("NodeMasterActor constructor");
+
+        this.masterSender = masterSender;
+        this.nodeSupervisor = nodeSupervisor;
         this.channelFactory = channelFactory;
         this.nodeMasterConfig = nodeMasterConfig;
+        this.mediaStorageClient = mediaStorageClient;
 
-        this.hashedWheelTimer = new HashedWheelTimer();
-        this.jobsToStop = new HashSet<String>();
+        this.hashedWheelTimer = hashedWheelTimer;
+        this.jobsToStop = new HashSet<>();
+
+        this.sentRequest = false;
     }
 
     @Override
     public void preStart() throws Exception {
-        LOG.info("Started node master");
+        LOG.info("NodeMasterActor preStart");
 
         // Slaves for download
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
@@ -107,8 +135,8 @@ public class NodeMasterActor extends UntypedActor {
             downloaderActors.put(newActor, ActorState.READY);
         }
 
-        // Slaves for extracting meta info
-        final int maxNrOfRetries = 5;
+        // Slaves for processing downloaded content
+        final int maxNrOfRetries = nodeMasterConfig.getNrOfRetries();
         final SupervisorStrategy strategy =
                 new OneForOneStrategy(maxNrOfRetries, scala.concurrent.duration.Duration.create(1, TimeUnit.MINUTES),
                         Collections.<Class<? extends Throwable>>singletonList(Exception.class));
@@ -116,7 +144,9 @@ public class NodeMasterActor extends UntypedActor {
         processerRouter = getContext().actorOf(
                 new SmallestMailboxPool(nodeMasterConfig.getNrOfExtractorSlaves())
                         .withSupervisorStrategy(strategy)
-                        .props(Props.create(ProcesserSlaveActor.class, nodeMasterConfig.getResponseType())),
+                        .withDispatcher("processer-dispatcher")
+                        .props(Props.create(ProcesserSlaveActor.class, nodeMasterConfig.getResponseType(),
+                                mediaStorageClient, nodeMasterConfig.getSource(), nodeMasterConfig.getColorMapPath())),
                 "processerRouter");
 
         // Slaves for pinging
@@ -126,32 +156,21 @@ public class NodeMasterActor extends UntypedActor {
                         .props(Props.create(PingerSlaveActor.class)),
                 "pingerRouter");
 
-
-        // only for debug
-        final TimerTask timerTask = new TimerTask() {
-            public void run(final Timeout timeout) throws Exception {
-                int nr = 0;
-                for(ActorRef actorRef : downloaderActors.keySet()) {
-                    if(downloaderActors.get(actorRef).equals(ActorState.BUSY)) {
-                        nr++;
-                    }
-                }
-                LOG.debug("Messages: {}", messages.size());
-                LOG.debug("All downloaderActors: {} working: {}", downloaderActors.size(), nr);
-                hashedWheelTimer.newTimeout(this, 1000, TimeUnit.MILLISECONDS);
-            }
-        };
-        hashedWheelTimer.newTimeout(timerTask, 1000, TimeUnit.MILLISECONDS);
-
+        requestTasks();
         sendMessage();
+
+        monitor();
     }
 
     @Override
     public void onReceive(Object message) throws Exception {
         if(message instanceof RetrieveUrl) {
+            if(sentRequest) {
+                sentRequest = false;
+            }
             messages.add(message);
 
-            clusterMaster = getSender();
+            masterReceiver = getSender();
             return;
         }
         if(message instanceof DoneDownload) {
@@ -160,10 +179,12 @@ public class NodeMasterActor extends UntypedActor {
             downloaderActors.put(getSender(), ActorState.READY);
 
             if(!jobsToStop.contains(jobId)) {
-                if(doneDownload.getTaskType().equals(DocumentReferenceTaskType.CHECK_LINK) ||
-                        doneDownload.getProcessingState().equals(ProcessingState.ERROR)) {
+                masterReceiver.tell(new DownloadConfirmation(doneDownload.getTaskID(), doneDownload.getIpAddress()), getSelf());
 
-                    clusterMaster.tell(new DoneProcessing(doneDownload, null, null, null), getSelf());
+                if((DocumentReferenceTaskType.CHECK_LINK).equals(doneDownload.getDocumentReferenceTask().getTaskType()) ||
+                        (ProcessingState.ERROR).equals(doneDownload.getProcessingState())) {
+
+                    masterReceiver.tell(new DoneProcessing(doneDownload, null, null, null, null), getSelf());
                     deleteFile(doneDownload.getReferenceId());
                 } else {
                     processerRouter.tell(message, getSelf());
@@ -176,14 +197,10 @@ public class NodeMasterActor extends UntypedActor {
             final DoneProcessing doneProcessing = (DoneProcessing)message;
             final String jobId = doneProcessing.getJobId();
 
-            // In the case of images their were thumbnails generated
-            //TODO: why are we downloading documents if we delete them?
-            if(doneProcessing.getImageMetaInfo() == null) {
-                deleteFile(doneProcessing.getReferenceId());
-            }
+            deleteFile(doneProcessing.getReferenceId());
 
             if(!jobsToStop.contains(jobId)) {
-                clusterMaster.tell(message, getSelf());
+                masterReceiver.tell(message, getSelf());
             }
 
             return;
@@ -202,7 +219,7 @@ public class NodeMasterActor extends UntypedActor {
         }
         if(message instanceof ChangeJobState) {
             final ChangeJobState changeJobState = (ChangeJobState) message;
-            LOG.debug("Changing job state to: {}", changeJobState.getNewState());
+            LOG.info("Changing job state to: {}", changeJobState.getNewState());
             switch (changeJobState.getNewState()) {
                 case PAUSE:
                     jobsToStop.add(changeJobState.getJobId());
@@ -216,12 +233,50 @@ public class NodeMasterActor extends UntypedActor {
 
             return;
         }
+        if(message instanceof SendHearbeat) {
+            getSender().tell(new SlaveHeartbeat(), getSelf());
+
+            return;
+        }
         if(message instanceof Clean) {
+            LOG.info("Cleaning up slave");
+
             hashedWheelTimer.stop();
             context().system().stop(getSelf());
 
             return;
         }
+    }
+
+    Long lastRequest;
+    /**
+     * Requests tasks if in the queue are only a few tasks.
+     */
+    private void requestTasks() {
+        final TimerTask timerTask = new TimerTask() {
+            public void run(final Timeout timeout) throws Exception {
+                LOG.info("Request tasks.");
+                if(!sentRequest && masterSender != null && messages.size() < nodeMasterConfig.getTaskNrLimit()) {
+                    LOG.info("Sent request.");
+
+                    masterSender.tell(new RequestTasks(), nodeSupervisor);
+                    sentRequest = true;
+                    lastRequest = System.currentTimeMillis();
+                } else {
+                    LOG.info("No request: " + messages.size() + " " + sentRequest);
+                    if(sentRequest && lastRequest != null) {
+                        final Long currentTime = System.currentTimeMillis();
+                        final Long diff = (currentTime - lastRequest) / 1000;
+                        if(diff > 30) {
+                            sentRequest = false;
+                        }
+                    }
+                }
+                hashedWheelTimer.newTimeout(this, 2, TimeUnit.SECONDS);
+            }
+        };
+
+        hashedWheelTimer.newTimeout(timerTask, 2, TimeUnit.SECONDS);
     }
 
     /**
@@ -255,7 +310,29 @@ public class NodeMasterActor extends UntypedActor {
     private void deleteFile(String fileName) {
         final String path = nodeMasterConfig.getPathToSave() + "/" + fileName;
         final File file = new File(path);
-        file.delete();
+        if(file.exists()) {
+            file.delete();
+        }
+    }
+
+    /**
+     * ONLY for debug
+     */
+    private void monitor() {
+        final TimerTask timerTask = new TimerTask() {
+            public void run(final Timeout timeout) throws Exception {
+                int nr = 0;
+                for(ActorRef actorRef : downloaderActors.keySet()) {
+                    if((ActorState.BUSY).equals(downloaderActors.get(actorRef))) {
+                        nr++;
+                    }
+                }
+                LOG.info("Messages: {}", messages.size());
+                LOG.info("All downloaderActors: {} working: {}", downloaderActors.size(), nr);
+                hashedWheelTimer.newTimeout(this, 1000, TimeUnit.MILLISECONDS);
+            }
+        };
+        hashedWheelTimer.newTimeout(timerTask, 1000, TimeUnit.MILLISECONDS);
     }
 
 }

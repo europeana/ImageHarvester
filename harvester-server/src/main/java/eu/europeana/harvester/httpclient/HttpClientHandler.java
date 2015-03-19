@@ -1,7 +1,6 @@
 package eu.europeana.harvester.httpclient;
 
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ResponseHeader;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +16,6 @@ import org.jboss.netty.util.TimerTask;
 import org.joda.time.Duration;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -210,7 +208,7 @@ class HttpClientHandler extends SimpleChannelHandler {
                 // Redirect url
                 if(name.equals("Location") && httpRetrieveResponse.getHttpResponseCode() >= 300 && httpRetrieveResponse.getHttpResponseCode() < 400) {
                     httpRetrieveResponse.addRedirectionPath(value);
-                    LOG.debug("Redirect");
+                    LOG.info("Redirect");
 
                     ctx.getChannel().close();
                 }

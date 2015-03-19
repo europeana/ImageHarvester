@@ -91,16 +91,16 @@ public class StatsOfJobTest extends TestCase {
                 processingJobStats.getSourceDocumentReferenceIdsByState();
 
         for(final ProcessingState processingState : recordIdsByState.keySet()) {
-            LOG.debug("State: {}", processingState);
+            LOG.info("State: {}", processingState);
             for(final String recordId : recordIdsByState.get(processingState)) {
-                LOG.debug("\trecord id: {}", recordId);
+                LOG.info("\trecord id: {}", recordId);
             }
         }
 
         for(final ProcessingState processingState : sourceDocumentReferenceIdsByState.keySet()) {
-            LOG.debug("State: {}", processingState);
+            LOG.info("State: {}", processingState);
             for(final String sourceDocId : sourceDocumentReferenceIdsByState.get(processingState)) {
-                LOG.debug("\tsource doc id: {}", sourceDocId);
+                LOG.info("\tsource doc id: {}", sourceDocId);
             }
         }
     }

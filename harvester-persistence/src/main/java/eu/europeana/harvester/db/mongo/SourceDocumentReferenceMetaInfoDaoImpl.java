@@ -1,13 +1,20 @@
 package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
+import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.Property;
+import com.google.code.morphia.query.Query;
+import com.mongodb.BasicDBObject;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
-import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.domain.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * MongoDB DAO implementation for CRUD with source_document_reference_metainfo collection
+ * MongoDB DAO implementation for CRUD with SourceDocumentReferenceMetaInfo collection
  */
 public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentReferenceMetaInfoDao {
 
@@ -32,8 +39,22 @@ public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentRef
     }
 
     @Override
+    public void create(List<SourceDocumentReferenceMetaInfo> sourceDocumentReferenceMetaInfos, WriteConcern writeConcern) {
+        datastore.save(sourceDocumentReferenceMetaInfos, writeConcern);
+    }
+
+    @Override
     public SourceDocumentReferenceMetaInfo read(String id) {
         return datastore.get(SourceDocumentReferenceMetaInfo.class, id);
+    }
+
+    @Override
+    public List<SourceDocumentReferenceMetaInfo> read(List<String> ids) {
+
+        final Query<SourceDocumentReferenceMetaInfo> query = datastore.createQuery(SourceDocumentReferenceMetaInfo.class).retrievedFields(true,"id","imageMetaInfo","audioMetaInfo","videoMetaInfo","textMetaInfo").hintIndex("_id_").field("_id").hasAnyOf(ids);
+        if(query == null) {return new ArrayList<>();}
+
+        return query.asList();
     }
 
     @Override

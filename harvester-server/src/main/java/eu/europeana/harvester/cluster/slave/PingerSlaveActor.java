@@ -45,7 +45,7 @@ public class PingerSlaveActor extends UntypedActor {
         long temp;
 
         for(int i=0; i<nrOfPings; i++) {
-            LOG.debug("Pinging #{} : {}", (i + 1), ip);
+            LOG.info("Pinging #{} : {}", (i + 1), ip);
             try {
                 final InetAddress address = InetAddress.getByName(ip);
 
@@ -55,9 +55,9 @@ public class PingerSlaveActor extends UntypedActor {
 
                 if(success) {
                     responses.add(temp);
-                    LOG.debug("Response in: {} ms", temp);
+                    LOG.info("Response in: {} ms", temp);
                 } else {
-                    LOG.debug("Timeout({}) at: ", (i+1), ip);
+                    LOG.info("Timeout({}) at: ", (i+1), ip);
                 }
             } catch (UnknownHostException e) {
                 LOG.error(e.getMessage());

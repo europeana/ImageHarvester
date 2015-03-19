@@ -4,6 +4,8 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 
+import java.util.List;
+
 /**
  * DAO for CRUD with source_document_processing_stats collection
  */
@@ -35,6 +37,15 @@ public interface SourceDocumentProcessingStatisticsDao {
     public boolean update(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
+     * If the object doesn't exists creates it otherwise updates the a SourceDocumentProcessingStatistics record
+     * @param sourceDocumentProcessingStatistics the modified SourceDocumentProcessingStatistics object
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
+     * @return - success or failure
+     */
+    public void createOrUpdate(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
+
+    /**
      * Deletes a record from DB
      * @param id the unique id of the record
      * @return - an object which contains all information about this operation
@@ -49,4 +60,10 @@ public interface SourceDocumentProcessingStatisticsDao {
      */
     public SourceDocumentProcessingStatistics findBySourceDocumentReferenceAndJobId(String id, String jobId);
 
+    /**
+     * Searches for SourceDocumentProcessingStatistics which has referenceOwner.recordId equal with the given ID.
+     * @param recordID resources record ID
+     * @return - a list of SourceDocumentProcessingStatistics objects
+     */
+    public List<SourceDocumentProcessingStatistics> findByRecordID(String recordID);
 }

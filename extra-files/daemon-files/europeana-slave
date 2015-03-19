@@ -1,90 +1,68 @@
-#! /bin/sh
-#  /etc/init.d/europeana-slave
-
+#!/bin/bash
 ### BEGIN INIT INFO
 # Provides:          europeana-slave
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
-# Short-Description: Starts the MyDaemon service
+# Short-Description: Starts the daemon service
 # Description:       This file is used to start the daemon
 #                    and should be placed in /etc/init.d
 ### END INIT INFO
 
-NAME="europeana-slave"
-DESC="Europeana slave service"
+SCRIPT="java -Xmx4g -Djava.library.path=\"/home/norbert/harvester/extra-files/lib\" -Dlog4j.debug=true -Dlogback.configurationFile=\"/home/norbert/harvester/extra-files/logback_slave.xml\" -cp /home/norbert/harvester/harvester.jar eu.europeana.harvester.cluster.Slave /home/norbert/harvester/extra-files/slave.conf"
+RUNAS=root
 
-# The path to Jsvc
-EXEC="/usr/bin/jsvc"
+PIDFILE=/var/run/harvester-slave.pid
+LOGFILE=/var/log/harvester-slave.log
 
-# The path to the folder containing MyDaemon.jar
-FILE_PATH="/home/europeana/code"
+start() {
+  if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
+    echo 'Service already running' >&2
+    return 1
+  fi
+  echo 'Starting harvester-slave...' >&2
+  cd /home/norbert/harvester 
+  local CMD="$SCRIPT > \"$LOGFILE\" & echo \$!"
+  su -c "$CMD" $RUNAS > "$PIDFILE"
+  echo 'Service started' >&2
+}
 
-# The path to the folder containing the java runtime
-JAVA_HOME="/usr/local/java/jdk1.8.0_05"
+stop() {
+  if [ ! -f "$PIDFILE" ] || ! kill -0 $(cat "$PIDFILE"); then
+    echo 'harvester-slave not running' >&2
+    return 1
+  fi
+  echo 'Stopping harvester-slave...' >&2
+  kill -15 $(cat "$PIDFILE") && rm -f "$PIDFILE"
+  echo 'Service stopped' >&2
+}
 
-# Our classpath including our jar file and the Apache Commons Daemon library
-CLASS_PATH="$FILE_PATH/eu.europeana.harvester-0.1-SNAPSHOT-allinone.jar"
-
-# The fully qualified name of the class to execute
-CLASS="eu.europeana.harvester.cluster.SlaveDaemon"
-
-# Any command line arguments to be passed to the our Java Daemon implementations init() method 
-ARGS="$FILE_PATH/slave.conf"
-
-#The user to run the daemon as
-USER="root"
-
-# The file that will contain our process identification number (pid) for other scripts/programs that need to access it.
-PID="/var/run/$NAME.pid"
-
-# System.out writes to this file...
-LOG_OUT="$FILE_PATH/log/$NAME.out"
-
-# System.err writes to this file...
-LOG_ERR="$FILE_PATH/err/$NAME.err"
-
-jsvc_exec()
-{   
-    cd $FILE_PATH
-    sudo $EXEC -home $JAVA_HOME -Xmx512m -Djava.library.path="$FILE_PATH/lib" -cp $CLASS_PATH -user $USER -outfile $LOG_OUT -errfile $LOG_ERR -pidfile $PID $1 $CLASS $ARGS
+uninstall() {
+  echo -n "Are you really sure you want to uninstall harvester slave? That cannot be undone. [yes|No] "
+  local SURE
+  read SURE
+  if [ "$SURE" = "yes" ]; then
+    stop
+    rm -f "$PIDFILE"
+    echo "Notice: log file is not be removed: '$LOGFILE'" >&2
+    update-rc.d -f crawler-master remove
+    rm -fv "$0"
+  fi
 }
 
 case "$1" in
-    start)  
-        echo "Starting the $DESC..."        
-        
-        # Start the service
-        jsvc_exec
-        
-        echo "The $DESC has started."
+  start)
+    start
     ;;
-    stop)
-        echo "Stopping the $DESC..."
-        
-        # Stop the service
-        jsvc_exec "-stop"       
-        
-        echo "The $DESC has stopped."
+  stop)
+    stop
     ;;
-    restart)
-        if [ -f "$PID" ]; then
-            
-            echo "Restarting the $DESC..."
-            
-            # Stop the service
-            jsvc_exec "-stop"
-            
-            # Start the service
-            jsvc_exec
-            
-            echo "The $DESC has restarted."
-        else
-            echo "Daemon not running, no action taken"
-            exit 1
-        fi
-            ;;
-    *)
-    echo "Usage: /etc/init.d/$NAME {start|stop|restart}" >&2
-    exit 3
+  uninstall)
+    uninstall
     ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|uninstall}"
 esac

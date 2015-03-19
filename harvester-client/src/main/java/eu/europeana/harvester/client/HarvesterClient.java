@@ -71,5 +71,7 @@ interface HarvesterClient {
     public ProcessingJobStats statsOfJob(String jobId);
 
     public SourceDocumentReferenceMetaInfo  retrieveMetaInfoByUrl(String url);
+
+    public void setActive(String recordID, Boolean active);
 }
 

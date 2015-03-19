@@ -27,19 +27,26 @@ public class SourceDocumentReferenceMetaInfo {
      */
     private final VideoMetaInfo videoMetaInfo;
 
+    /**
+     * A class which contains information about a TEXT document
+     */
+    private final TextMetaInfo textMetaInfo;
+
     public SourceDocumentReferenceMetaInfo() {
         this.id = null;
         this.imageMetaInfo = null;
         this.audioMetaInfo = null;
         this.videoMetaInfo = null;
+        this.textMetaInfo = null;
     }
 
     public SourceDocumentReferenceMetaInfo(final String sourceDocumentReferenceId, final ImageMetaInfo imageMetaInfo,
-                                           final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo) {
+                                           final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo, TextMetaInfo textMetaInfo) {
         this.id = sourceDocumentReferenceId;
         this.imageMetaInfo = imageMetaInfo;
         this.audioMetaInfo = audioMetaInfo;
         this.videoMetaInfo = videoMetaInfo;
+        this.textMetaInfo = textMetaInfo;
     }
 
     public String getId() {
@@ -58,4 +65,7 @@ public class SourceDocumentReferenceMetaInfo {
         return videoMetaInfo;
     }
 
+    public TextMetaInfo getTextMetaInfo() {
+        return textMetaInfo;
+    }
 }

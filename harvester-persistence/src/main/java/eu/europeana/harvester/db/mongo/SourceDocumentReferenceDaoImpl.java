@@ -1,6 +1,7 @@
 package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
+import com.google.code.morphia.query.Query;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -8,6 +9,9 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.SourceDocumentReference;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * MongoDB DAO implementation for CRUD with source_document_reference collection
@@ -45,6 +49,15 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
     }
 
     @Override
+    public List<SourceDocumentReference> read(List<String> ids) {
+        final Query<SourceDocumentReference> query = datastore.createQuery(SourceDocumentReference.class)
+                .field("_id").hasAnyOf(ids).retrievedFields(true,"id","referenceOwner","urlSourceType","url","ipAddress","lastStatsId","redirectPathDepth","redirectionPath","active")
+                .hintIndex("_id_");
+        if(query == null) {return new ArrayList<>(0);}
+        return query.asList();
+    }
+
+    @Override
     public boolean update(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern) {
         if(read(sourceDocumentReference.getId()) != null) {
             datastore.save(sourceDocumentReference, writeConcern);
@@ -68,5 +81,13 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
                 .hash().toString();
 
         return read(id);
+    }
+
+    @Override
+    public List<SourceDocumentReference> findByRecordID(String recordID) {
+        final Query<SourceDocumentReference> query = datastore.find(SourceDocumentReference.class, "referenceOwner.recordId", recordID);
+        if(query == null) {return new ArrayList<>(0);}
+
+        return query.asList();
     }
 }

@@ -14,29 +14,29 @@ public class SlaveDaemon implements Daemon {
 
     @Override
     public void init(DaemonContext daemonContext) throws DaemonInitException, Exception {
-        LOG.debug("Initializing slave");
+        LOG.info("Initializing slave");
 
         String[] args = daemonContext.getArguments();
         slave = new Slave(args);
-        slave.init();
+        slave.init(slave);
     }
 
     @Override
     public void start() throws Exception {
-        LOG.debug("Starting slave");
+        LOG.info("Starting slave");
 
         slave.start();
     }
 
     @Override
     public void stop() throws Exception {
-        LOG.debug("Stopping slave");
+        LOG.info("Stopping slave");
 
         slave.getActorSystem().shutdown();
     }
 
     @Override
     public void destroy() {
-        LOG.debug("Destroying slave");
+        LOG.info("Destroying slave");
     }
 }

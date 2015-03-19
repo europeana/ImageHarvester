@@ -252,7 +252,7 @@ mongo {
     dbName = "europeana_harvester"
 
     # The number of jobs which are taken by the cluster master at a time. This is used for pagination.
-    maxJobsPerIteration = 10
+    jobsPerIP = 10
 }
 
 *# Default limits in different tasks*

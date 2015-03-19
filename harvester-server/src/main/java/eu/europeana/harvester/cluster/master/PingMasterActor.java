@@ -9,7 +9,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import eu.europeana.harvester.cluster.domain.PingMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.DonePing;
-import eu.europeana.harvester.cluster.domain.messages.LookInDB;
+import eu.europeana.harvester.cluster.domain.messages.LoadJobs;
 import eu.europeana.harvester.cluster.domain.messages.StartPing;
 import eu.europeana.harvester.db.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.MachineResourceReferenceStatDao;
@@ -68,11 +68,13 @@ public class PingMasterActor extends UntypedActor {
         this.routerActor = routerActor;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.machineResourceReferenceStatDao = machineResourceReferenceStatDao;
+
+        LOG.info("PingMasterActor constructor");
     }
 
     @Override
     public void preStart() throws Exception {
-        LOG.debug("Started ping master actor");
+        LOG.info("PingMasterActor preStart");
 
         final Cluster cluster = Cluster.get(getContext().system());
         cluster.subscribe(getSelf(), ClusterEvent.initialStateAsEvents(), MemberEvent.class, UnreachableMember.class);
@@ -83,7 +85,7 @@ public class PingMasterActor extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-        if(message instanceof LookInDB) {
+        if(message instanceof LoadJobs) {
             LOG.info("=========== Starts pinging ===========");
             start();
             LOG.info("======================================");
@@ -132,12 +134,12 @@ public class PingMasterActor extends UntypedActor {
     private void start() {
         if(activeNodes == 0) {
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
-                    TimeUnit.MINUTES), getSelf(), new LookInDB(), getContext().system().dispatcher(), getSelf());
+                    TimeUnit.MINUTES), getSelf(), new LoadJobs(), getContext().system().dispatcher(), getSelf());
         } else {
             updateList();
 
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(pingMasterConfig.getNewPingInterval(),
-                    TimeUnit.MILLISECONDS), getSelf(), new LookInDB(), getContext().system().dispatcher(), getSelf());
+                    TimeUnit.MILLISECONDS), getSelf(), new LoadJobs(), getContext().system().dispatcher(), getSelf());
         }
     }
 
@@ -179,7 +181,7 @@ public class PingMasterActor extends UntypedActor {
      * @param pingTimeout time in milliseconds after the ping stops if the server is not responding
      */
     private void checkIP(String ip, int nrOfPings, int pingTimeout) {
-        LOG.debug("Check ip: " + ip);
+        LOG.info("Check ip: {}", ip);
 
         final StartPing startPing = new StartPing(ip, nrOfPings, pingTimeout);
         routerActor.tell(startPing, getSelf());

@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
  * Wrapper around the morphia datastore that simplifies the creation of the stores.
  */
 public class MorphiaDataStore {
+
     private final MongoClient mongo;
     private final Morphia morphia;
     private final Datastore datastore;

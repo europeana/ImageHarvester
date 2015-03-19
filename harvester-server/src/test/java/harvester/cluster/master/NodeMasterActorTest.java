@@ -7,12 +7,10 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
-import eu.europeana.harvester.cluster.domain.JobConfigs;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
-import eu.europeana.harvester.cluster.domain.ThumbnailConfig;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.master.NodeMasterActor;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import junit.framework.TestCase;
@@ -25,6 +23,8 @@ import org.joda.time.Duration;
 import org.junit.Test;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
@@ -70,7 +70,7 @@ public class NodeMasterActorTest extends TestCase {
 
         final NodeMasterConfig nodeMasterConfig = new NodeMasterConfig(config.getInt("slave.nrOfDownloaderSlaves"),
                 config.getInt("slave.nrOfExtractorSlaves"), config.getInt("slave.nrOfPingerSlaves"),
-                config.getInt("slave.nrOfRetries"), pathToSave, responseType);
+                config.getInt("slave.nrOfRetries"), 50, pathToSave, responseType, "CRF harvester", "./colormap.png");
 
         final ActorSystem system = ActorSystem.create("ClusterSystem", config);
         router = system.actorOf(Props.create(NodeMasterActor.class, channelFactory, nodeMasterConfig),
@@ -91,16 +91,21 @@ public class NodeMasterActorTest extends TestCase {
             Thread.sleep(1000);
             LOG.debug("WAITING");
         }
-LOG.debug("Start");
+        LOG.debug("Start");
+
         try {
             BufferedReader br = new BufferedReader(new FileReader(links));
 
             String line = ""; int i = 0;
-            JobConfigs jobConfigs = new JobConfigs(new ThumbnailConfig(50, 50));
+            final GenericSubTaskConfiguration jobConfigs = new GenericSubTaskConfiguration(new ThumbnailConfig(50, 50));
+            final List<ProcessingJobSubTask> subTaskList = new ArrayList<ProcessingJobSubTask>();
+            subTaskList.add(new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION, null));
+            subTaskList.add(new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, jobConfigs));
+
             while((line = br.readLine()) != null) {
                 LOG.debug(line);
                 router.tell(new RetrieveUrl(line, httpRetrieveConfig, "1", "1", null,
-                        DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, jobConfigs), ActorRef.noSender());
+                        new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, "", subTaskList), ""), ActorRef.noSender());
             }
 
             Timer timer = new Timer();

@@ -7,11 +7,7 @@
     <groupId>eu.europeana</groupId>
     <artifactId>harvester</artifactId>
     <version>0.1-SNAPSHOT</version>
-    <modules>
-        <module>harvester-persistence</module>
-        <!--<module>harvester-server</module>-->
-        <module>harvester-client</module>
-    </modules>
+
     <!-- Jar/Pom TODO -->
     <packaging>pom</packaging>
 
@@ -20,7 +16,7 @@
     <url>http://www.busymachines.com/</url>
 
     <properties>
-        <jdk.version>1.6</jdk.version>
+        <jdk.version>1.7</jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -61,16 +57,5 @@
             <version>2.0.1</version>
         </dependency>
     </dependencies>
-    <distributionManagement>
-        <repository>
-            <id>artifactory.eanadev.org</id>
-            <name>artifactory.eanadev.org-releases</name>
-            <url>http://artifactory.eanadev.org/artifactory/libs-release-local</url>
-        </repository>
-        <snapshotRepository>
-            <id>artifactory.eanadev.org</id>
-            <name>artifactory.eanadev.org-snapshots</name>
-            <url>http://artifactory.eanadev.org/artifactory/libs-snapshot-local</url>
-        </snapshotRepository>
-    </distributionManagement>
+
 </project>

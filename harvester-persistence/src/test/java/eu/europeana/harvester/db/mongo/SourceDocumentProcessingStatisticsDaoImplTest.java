@@ -44,8 +44,8 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
     @Test
     public void testCreate() throws Exception {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                new SourceDocumentProcessingStatistics(new Date(), new Date(), null, null, new ReferenceOwner("1", "1", "1"),
-                        "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
+                new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, new ReferenceOwner("1", "1", "1"),
+                        null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
         assertNotNull(sourceDocumentProcessingStatistics.getId());
 
         sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
@@ -63,8 +63,8 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
         assertNull(sourceDocumentProcessingStatisticsFromRead);
 
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                new SourceDocumentProcessingStatistics(new Date(), new Date(), null, null, new ReferenceOwner("1", "1", "1"),
-                        "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
+                new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, new ReferenceOwner("1", "1", "1"),
+                        null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
         sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
         sourceDocumentProcessingStatisticsFromRead =
                 sourceDocumentProcessingStatisticsDao.read(sourceDocumentProcessingStatistics.getId());
@@ -78,8 +78,8 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
     @Test
     public void testUpdate() throws Exception {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                new SourceDocumentProcessingStatistics(new Date(), new Date(), null, ProcessingState.DOWNLOADING,
-                        new ReferenceOwner("1", "1", "1"), "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
+                new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, ProcessingState.DOWNLOADING,
+                        new ReferenceOwner("1", "1", "1"), null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
         assertFalse(sourceDocumentProcessingStatisticsDao.update(sourceDocumentProcessingStatistics, WriteConcern.NONE));
         sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
 
@@ -87,9 +87,9 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
                 new SourceDocumentProcessingStatistics(sourceDocumentProcessingStatistics.getId(),
                         sourceDocumentProcessingStatistics.getCreatedAt(),
                         sourceDocumentProcessingStatistics.getUpdatedAt(),
-                        null, ProcessingState.SUCCESS,
+                        true, null, ProcessingState.SUCCESS,
                         sourceDocumentProcessingStatistics.getReferenceOwner(),
-                        sourceDocumentProcessingStatistics.getSourceDocumentReferenceId(),
+                        null, sourceDocumentProcessingStatistics.getSourceDocumentReferenceId(),
                         sourceDocumentProcessingStatistics.getProcessingJobId(),
                         sourceDocumentProcessingStatistics.getHttpResponseCode(),
                         sourceDocumentProcessingStatistics.getHttpResponseContentType(),
@@ -110,8 +110,8 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
     @Test
     public void testDelete() throws Exception {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                new SourceDocumentProcessingStatistics(new Date(), new Date(), null, null, new ReferenceOwner("1", "1", "1"),
-                        "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
+                new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, new ReferenceOwner("1", "1", "1"),
+                        null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
         assertFalse(sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics.getId()).getN() == 1);
         sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
 

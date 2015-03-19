@@ -1,15 +1,15 @@
 package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
+import com.google.code.morphia.Key;
 import com.google.code.morphia.query.Query;
-import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
+import com.mongodb.*;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.Page;
 import eu.europeana.harvester.domain.ProcessingJob;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * MongoDB DAO implementation for CRUD with processing_job collection
@@ -66,4 +66,53 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
         return query.asList();
     }
+
+    public Map<String, Integer> getIpDistribution() {
+        final DB db = datastore.getDB();
+        final DBCollection processingJobCollection = db.getCollection("ProcessingJob");
+
+        final DBObject match = new BasicDBObject();
+        match.put("state", "READY");
+
+        final DBObject group = new BasicDBObject();
+        group.put("_id", "$ipAddress");
+        group.put("total", new BasicDBObject("$sum", 1));
+
+        final AggregationOutput output = processingJobCollection.aggregate(new BasicDBObject("$match", match), new BasicDBObject("$group", group));
+        final Map<String, Integer> jobsPerIP = new HashMap<>();
+
+        if (output != null) {
+            for (DBObject result : output.results()) {
+                final String ip = (String) result.get("_id");
+                final Integer count = (Integer) result.get("total");
+                jobsPerIP.put(ip, count);
+            }
+        }
+
+        return jobsPerIP;
+    }
+
+    @Override
+    public List<ProcessingJob> getDiffusedJobsWithState(JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs) {
+        final List<ProcessingJob> processingJobs = new ArrayList<>();
+
+        for(Map.Entry<String, Integer> ip: ipDistribution.entrySet()) {
+            final Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
+            query.criteria("state").equal(jobState);
+            query.criteria("ipAddress").equal(ip.getKey());
+            query.limit(page.getLimit());
+            final List<ProcessingJob> temp = query.asList();
+
+            if(temp.size() == 0) {
+                ipsWithJobs.put(ip.getKey(), false);
+            } else {
+                ipsWithJobs.put(ip.getKey(), true);
+            }
+
+            processingJobs.addAll(temp);
+        }
+
+        return processingJobs;
+    }
+
 }

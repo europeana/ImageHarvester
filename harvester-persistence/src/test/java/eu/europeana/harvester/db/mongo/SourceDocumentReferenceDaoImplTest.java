@@ -40,7 +40,7 @@ public class SourceDocumentReferenceDaoImplTest {
     @Test
     public void testCreate() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "test", null, null, 0l, null);
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
         assertNotNull(sourceDocumentReference.getId());
 
         sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
@@ -56,7 +56,7 @@ public class SourceDocumentReferenceDaoImplTest {
         assertNull(sourceDocumentReferenceFromRead);
 
         final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "test", null, null, 0l, null);
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
         sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
 
         sourceDocumentReferenceFromRead = sourceDocumentReferenceDao.read(sourceDocumentReference.getId());
@@ -68,13 +68,13 @@ public class SourceDocumentReferenceDaoImplTest {
     @Test
     public void testUpdate() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "test", null, null, 0l, null);
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
         assertFalse(sourceDocumentReferenceDao.update(sourceDocumentReference, WriteConcern.NONE));
         sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
 
         final SourceDocumentReference newSourceDocumentReference =
                 new SourceDocumentReference(sourceDocumentReference.getId(),
-                        sourceDocumentReference.getReferenceOwner(), "test2", null, null, 0l, null);
+                        sourceDocumentReference.getReferenceOwner(), null, "test2", null, null, 0l, null, true);
         assertTrue(sourceDocumentReferenceDao.update(newSourceDocumentReference, WriteConcern.NONE));
 
         assertEquals(sourceDocumentReferenceDao.read(sourceDocumentReference.getId()).getUrl(), "test2");
@@ -84,7 +84,7 @@ public class SourceDocumentReferenceDaoImplTest {
     @Test
     public void testDelete() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "test", null, null, 0l, null);
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
         assertFalse(sourceDocumentReferenceDao.delete(sourceDocumentReference.getId()).getN() == 1);
         sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
 
@@ -103,7 +103,7 @@ public class SourceDocumentReferenceDaoImplTest {
     @Test
     public void testCreateOrModify() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "test", null, null, 0l, null);
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
         assertNull(sourceDocumentReferenceDao.read(sourceDocumentReference.getId()));
 
         sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
@@ -113,7 +113,7 @@ public class SourceDocumentReferenceDaoImplTest {
 
         final SourceDocumentReference updatedSourceDocumentReference =
                 new SourceDocumentReference(sourceDocumentReference.getId(),
-                        new ReferenceOwner("1", "1", "1"), "test2", null, null, 0l, null);
+                        new ReferenceOwner("1", "1", "1"), null, "test2", null, null, 0l, null, true);
         sourceDocumentReferenceDao.createOrModify(updatedSourceDocumentReference, WriteConcern.NONE);
         assertEquals(sourceDocumentReferenceDao.read(sourceDocumentReference.getId()).getUrl(),
                 updatedSourceDocumentReference.getUrl());
@@ -126,7 +126,7 @@ public class SourceDocumentReferenceDaoImplTest {
     @Test
     public void testFindByUrl() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "test", null, null, 0l, null);
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
         final String url = "test";
 
         sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);

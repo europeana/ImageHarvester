@@ -46,14 +46,14 @@ public class ProcessingJobDaoImplTest {
     @Test
     public void testCreate() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "a.com", null, null, 0l, null);
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "a.com", null, null, 0l, null, true);
         final ProcessingJobTaskDocumentReference processingJobTaskDocumentReference =
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
-                        sourceDocumentReference.getId());
+                        sourceDocumentReference.getId(), null);
         final List<ProcessingJobTaskDocumentReference> tasks = new ArrayList<ProcessingJobTaskDocumentReference>();
         tasks.add(processingJobTaskDocumentReference);
         final ProcessingJob processingJob =
-                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), tasks, JobState.READY);
+                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), tasks, JobState.READY, "");
 
         processingJobDao.create(processingJob, WriteConcern.NONE);
         assertEquals(processingJob.getId(), processingJobDao.read(processingJob.getId()).getId());
@@ -72,15 +72,15 @@ public class ProcessingJobDaoImplTest {
         final Date date = df.parse(startDateString);
 
         final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), "a.com", null, null, 0l, null);
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "a.com", null, null, 0l, null, true);
         final ProcessingJobTaskDocumentReference processingJobTaskDocumentReference =
             new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
-                    sourceDocumentReference.getId());
+                    sourceDocumentReference.getId(), null);
         final List<ProcessingJobTaskDocumentReference> tasks = new ArrayList<ProcessingJobTaskDocumentReference>();
         tasks.add(processingJobTaskDocumentReference);
 
         final ProcessingJob processingJob =
-                new ProcessingJob(1, date, new ReferenceOwner("1", "1", "1"), tasks, JobState.READY);
+                new ProcessingJob(1, date, new ReferenceOwner("1", "1", "1"), tasks, JobState.READY, "");
         processingJobDao.create(processingJob, WriteConcern.NONE);
 
         assertEquals(processingJob.getExpectedStartDate(),
@@ -92,7 +92,7 @@ public class ProcessingJobDaoImplTest {
     @Test
     public void testUpdate() throws Exception {
         final ProcessingJob processingJob =
-                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
+                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY, "");
         processingJobDao.create(processingJob, WriteConcern.NONE);
 
         final ProcessingJob updatedProcessingJob = processingJob.withState(JobState.FINISHED);
@@ -104,14 +104,14 @@ public class ProcessingJobDaoImplTest {
         processingJobDao.delete(updatedProcessingJob.getId());
 
         final ProcessingJob newProcessingJob =
-                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
+                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY, "");
         assertFalse(processingJobDao.update(newProcessingJob, WriteConcern.NONE));
     }
 
     @Test
     public void testDelete() throws Exception {
         final ProcessingJob processingJob =
-                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
+                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY, "");
         processingJobDao.create(processingJob, WriteConcern.NONE);
 
         ProcessingJob processingJobFromRead = processingJobDao.read(processingJob.getId());
@@ -128,7 +128,7 @@ public class ProcessingJobDaoImplTest {
     @Test
     public void testGetJobsWithState() throws Exception {
         final ProcessingJob processingJob =
-                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY);
+                new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"), null, JobState.READY, "");
         processingJobDao.create(processingJob, WriteConcern.NONE);
 
         List<ProcessingJob> allJobs = processingJobDao.getJobsWithState(JobState.READY, new Page(0, 1));

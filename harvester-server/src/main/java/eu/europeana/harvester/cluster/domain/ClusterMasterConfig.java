@@ -9,20 +9,16 @@ import org.joda.time.Duration;
 public class ClusterMasterConfig {
 
     /**
-     * The time interval in milliseconds between each searching for new jobs.
+     * The maximum number of jobs that you can retrieve from an IP.
      */
-    private final Duration jobsPollingInterval;
+    private final Integer jobsPerIP;
 
     /**
-     * The time interval in milliseconds between each iteration of sending new jobs.
+     * The maximum number of tasks that can be kept in memory.
      */
-    private final Duration taskStartingInterval;
+    private final Long maxTasksInMemory;
 
-    /**
-     * The maximum number of jobs that you can retrieve from the db at a time.
-     */
-    private final Integer maxJobsPerIteration;
-
+    // TODO: remove
     /**
      * The time interval in milliseconds after that akka actor gives timeout error.
      */
@@ -39,19 +35,14 @@ public class ClusterMasterConfig {
      */
     private final WriteConcern writeConcern;
 
-    public ClusterMasterConfig(final Duration jobsPollingInterval, final Duration taskStartingInterval,
-                               final Integer maxJobsPerIteration, final Duration receiveTimeoutInterval,
-                               final Integer responseTimeoutFromSlaveInMillis, final WriteConcern writeConcern) {
-        this.jobsPollingInterval = jobsPollingInterval;
-        this.taskStartingInterval = taskStartingInterval;
-        this.maxJobsPerIteration = maxJobsPerIteration;
+    public ClusterMasterConfig(final Integer jobsPerIP, final Long maxTasksInMemory,
+                               final Duration receiveTimeoutInterval, final Integer responseTimeoutFromSlaveInMillis, 
+                               final WriteConcern writeConcern) {
+        this.jobsPerIP = jobsPerIP;
+        this.maxTasksInMemory = maxTasksInMemory;
         this.receiveTimeoutInterval = receiveTimeoutInterval;
         this.responseTimeoutFromSlaveInMillis = responseTimeoutFromSlaveInMillis;
         this.writeConcern = writeConcern;
-    }
-
-    public Duration getJobsPollingInterval() {
-        return jobsPollingInterval;
     }
 
     public Duration getReceiveTimeoutInterval() {
@@ -62,15 +53,15 @@ public class ClusterMasterConfig {
         return writeConcern;
     }
 
-    public Integer getMaxJobsPerIteration() {
-        return maxJobsPerIteration;
-    }
-
-    public Duration getTaskStartingInterval() {
-        return taskStartingInterval;
+    public Integer getJobsPerIP() {
+        return jobsPerIP;
     }
 
     public Integer getResponseTimeoutFromSlaveInMillis() {
         return responseTimeoutFromSlaveInMillis;
+    }
+
+    public Long getMaxTasksInMemory() {
+        return maxTasksInMemory;
     }
 }

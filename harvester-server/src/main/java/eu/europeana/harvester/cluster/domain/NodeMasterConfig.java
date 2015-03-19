@@ -28,6 +28,11 @@ public class NodeMasterConfig {
     private final Integer nrOfRetries;
 
     /**
+     * The limit under which the NodeMaster actor requests another batch of tasks.
+     */
+    private final Integer taskNrLimit;
+
+    /**
      * The absolute path on disk where the content of the download will be saved.
      */
     private final String pathToSave;
@@ -37,15 +42,23 @@ public class NodeMasterConfig {
      */
     private final ResponseType responseType;
 
+    private final String source;
+
+    private final String colorMapPath;
+
     public NodeMasterConfig(final Integer nrOfDownloaderSlaves, final Integer nrOfExtractorSlaves,
-                            final Integer nrOfPingerSlaves, final Integer nrOfRetries, final String pathToSave,
-                            final ResponseType responseType) {
+                            final Integer nrOfPingerSlaves, final Integer nrOfRetries, final Integer taskNrLimit,
+                            final String pathToSave, final ResponseType responseType, final String source,
+                            final String colorMapPath) {
         this.nrOfDownloaderSlaves = nrOfDownloaderSlaves;
         this.nrOfExtractorSlaves = nrOfExtractorSlaves;
         this.nrOfPingerSlaves = nrOfPingerSlaves;
         this.nrOfRetries = nrOfRetries;
+        this.taskNrLimit = taskNrLimit;
         this.pathToSave = pathToSave;
         this.responseType = responseType;
+        this.source = source;
+        this.colorMapPath = colorMapPath;
     }
 
     public int getNrOfDownloaderSlaves() {
@@ -72,4 +85,15 @@ public class NodeMasterConfig {
         return responseType;
     }
 
+    public String getSource() {
+        return source;
+    }
+
+    public String getColorMapPath() {
+        return colorMapPath;
+    }
+
+    public Integer getTaskNrLimit() {
+        return taskNrLimit;
+    }
 }

@@ -1,8 +1,5 @@
 package eu.europeana.harvester.performance;
 
-import com.google.code.morphia.Datastore;
-import com.google.code.morphia.Morphia;
-import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -30,7 +27,7 @@ public class LinkCheck_500k {
     private static final Logger LOG = LogManager.getLogger(LinkCheck_500k.class.getName());
 
     public static void main(String[] args) throws UnknownHostException {
-        LOG.debug("Starting link check test...");
+        LOG.info("Starting link check test...");
 
         String configFilePath;
 
@@ -75,10 +72,11 @@ public class LinkCheck_500k {
 
             while((line = br.readLine()) != null) {
                 final SourceDocumentReference reference =
-                        new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), line,
-                                null, null, 0l, null);
+                        new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, line,
+                                null, null, 0l, null, true);
                 final ProcessingJobTaskDocumentReference processingJobTaskDocumentReference =
-                        new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK, reference.getId());
+                        new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
+                                reference.getId(), null);
                 sourceDocumentReferences.add(reference);
                 processingJobTaskDocumentReferences.add(processingJobTaskDocumentReference);
                 i++;
@@ -86,7 +84,7 @@ public class LinkCheck_500k {
                 if(i == linksPerJobs) {
                     ProcessingJob processingJob =
                             new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"),
-                                    processingJobTaskDocumentReferences, JobState.READY);
+                                    processingJobTaskDocumentReferences, JobState.READY, "");
                     processingJobTaskDocumentReferences = new ArrayList<ProcessingJobTaskDocumentReference>();
                     processingJobs.add(processingJob);
                     i = 0;
@@ -94,7 +92,7 @@ public class LinkCheck_500k {
             }
             ProcessingJob processingJob =
                     new ProcessingJob(1, new Date(), new ReferenceOwner("1", "1", "1"),
-                            processingJobTaskDocumentReferences, JobState.READY);
+                            processingJobTaskDocumentReferences, JobState.READY, "");
             processingJobs.add(processingJob);
             harvesterClient.createOrModifySourceDocumentReference(sourceDocumentReferences);
 

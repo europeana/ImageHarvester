@@ -4,8 +4,10 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 
+import java.util.List;
+
 /**
- * DAO for CRUD with source_document_reference_metainfo collection
+ * DAO for CRUD with SourceDocumentReferenceMetaInfo collection
  */
 public interface SourceDocumentReferenceMetaInfoDao {
 
@@ -19,11 +21,27 @@ public interface SourceDocumentReferenceMetaInfoDao {
     public boolean create(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo, WriteConcern writeConcern);
 
     /**
+     * Persists a SourceDocumentReferenceMetaInfo object
+     * @param sourceDocumentReferenceMetaInfos - a list of new objects
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
+     */
+    public void create(List<SourceDocumentReferenceMetaInfo> sourceDocumentReferenceMetaInfos, WriteConcern writeConcern);
+
+
+    /**
      * Reads and returns a SourceDocumentReferenceMetaInfo object
      * @param id the unique id of the record
      * @return - found SourceDocumentReferenceMetaInfo object, it can be null
      */
     public SourceDocumentReferenceMetaInfo read(String id);
+
+    /**
+     * Reads and returns a list of SourceDocumentReference objects
+     * @param ids the unique ids of the records
+     * @return - found SourceDocumentReferenceMetaInfo objects
+     */
+    public List<SourceDocumentReferenceMetaInfo> read(List<String> ids);
 
     /**
      * Updates a SourceDocumentReferenceMetaInfo record

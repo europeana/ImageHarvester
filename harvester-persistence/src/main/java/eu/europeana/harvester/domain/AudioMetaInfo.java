@@ -33,21 +33,43 @@ public class AudioMetaInfo implements Serializable {
      */
     private final String fileFormat;
 
+    /**
+     * The size of the file in bytes.
+     */
+    private final Long fileSize;
+
+    /**
+     * Either number of channels (1-7?) or mono/stereo.
+     */
+    private final Integer channels;
+
+    /**
+     * The number of bits of information in each sample.
+     */
+    private final Integer bitDepth;
+
     public AudioMetaInfo() {
         this.sampleRate = null;
         this.bitRate = null;
         this.duration = null;
         this.mimeType = null;
         this.fileFormat = null;
+        this.fileSize = null;
+        this.channels = null;
+        this.bitDepth = null;
     }
 
     public AudioMetaInfo(final Integer sampleRate, final Integer bitRate,
-                         final Long duration, final String mimeType, final String fileFormat) {
+                         final Long duration, final String mimeType, final String fileFormat,
+                         final Long fileSize, final Integer channels, final Integer bitDepth) {
         this.sampleRate = sampleRate;
         this.bitRate = bitRate;
         this.duration = duration;
         this.mimeType = mimeType;
         this.fileFormat = fileFormat;
+        this.fileSize = fileSize;
+        this.channels = channels;
+        this.bitDepth = bitDepth;
     }
 
     public Integer getSampleRate() {
@@ -68,5 +90,17 @@ public class AudioMetaInfo implements Serializable {
 
     public String getFileFormat() {
         return fileFormat;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public Integer getChannels() {
+        return channels;
+    }
+
+    public Integer getBitDepth() {
+        return bitDepth;
     }
 }

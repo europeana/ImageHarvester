@@ -1,9 +1,9 @@
 package eu.europeana.harvester.httpclient;
 
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ResponseHeader;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.utils.SecureChatSslContextFactory;
+
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
@@ -17,7 +17,6 @@ import org.jboss.netty.util.HashedWheelTimer;
 import org.joda.time.Duration;
 
 import javax.net.ssl.SSLEngine;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,12 +32,12 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
     /**
      * The bandwidth limit usage for write (ie. sending). Measured in bytes. 0 means no limit.
      */
-    private final Long bandwidthLimitWriteInBytesPerSec;
+    //private final Long bandwidthLimitWriteInBytesPerSec;
 
     /**
      * The bandwidth limit usage for read (ie. receiving). Measured in bytes. 0 means no limit.
      */
-    private final Long bandwidthLimitReadInBytesPerSec;
+    //private final Long bandwidthLimitReadInBytesPerSec;
 
     /**
      * The time threshold after which the retrieval is terminated. 0 means no limit.
@@ -85,9 +84,7 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
      */
     private final Map<String, String> headers;
 
-    public ConstrainedPipelineFactory(final Long bandwidthLimitReadInBytesPerSec,
-                                      final Long bandwidthLimitWriteInBytesPerSec,
-                                      final Duration limitsCheckInterval,
+    public ConstrainedPipelineFactory(final Duration limitsCheckInterval,
                                       final Integer connectionTimeoutInMillis,
                                       final boolean supportsSSL,
                                       final Long terminationThresholdSizeLimitInBytes,
@@ -96,8 +93,8 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
                                       final Map<String, String> headers,
                                       final HttpRetrieveResponse httpRetrieveResponse,
                                       final HashedWheelTimer hashedWheelTimer) {
-        this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
-        this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
+        //this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
+        //this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.limitsCheckInterval = limitsCheckInterval;
         this.connectionTimeoutInMillis = connectionTimeoutInMillis;
         this.supportsSSL = supportsSSL;
@@ -119,8 +116,7 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
         channelPipeline.addLast("read timeout", readTimeoutHandler);
 
         final ChannelTrafficShapingHandler channelTrafficShapingHandler =
-                new ChannelTrafficShapingHandler(hashedWheelTimer, bandwidthLimitWriteInBytesPerSec,
-                        bandwidthLimitReadInBytesPerSec, limitsCheckInterval.getMillis());
+                new ChannelTrafficShapingHandler(hashedWheelTimer, limitsCheckInterval.getMillis());
         channelPipeline.addLast("CHANNEL_TRAFFIC_SHAPING", channelTrafficShapingHandler);
 
         // Enable HTTPS if necessary.

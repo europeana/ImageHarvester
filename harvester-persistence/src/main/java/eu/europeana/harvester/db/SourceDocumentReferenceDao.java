@@ -4,6 +4,8 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 
+import java.util.List;
+
 /**
  * DAO for CRUD with source_document_reference collection
  */
@@ -34,6 +36,13 @@ public interface SourceDocumentReferenceDao {
     public SourceDocumentReference read(String id);
 
     /**
+     * Reads and returns a list of SourceDocumentReference objects
+     * @param ids the unique ids of the records
+     * @return - found SourceDocumentReference object, it can be null
+     */
+    public List<SourceDocumentReference> read(List<String> ids);
+
+    /**
      * Updates a SourceDocumentReference record
      * @param sourceDocumentReference the modified SourceDocumentReference object
      * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
@@ -50,10 +59,17 @@ public interface SourceDocumentReferenceDao {
     public WriteResult delete(String id);
 
     /**
-     * Search for a SourceDocumentReference object by an id and returns it
+     * Searches for a SourceDocumentReference object by an id and returns it
      * @param url http url
      * @return found MachineResourceReference object
      */
     public SourceDocumentReference findByUrl(String url);
+
+    /**
+     * Searches for SourceDocumentReferences which has referenceOwner.recordId equal with the given ID.
+     * @param recordID resources record ID
+     * @return - a list of SourceDocumentReference objects
+     */
+    public List<SourceDocumentReference> findByRecordID(String recordID);
 
 }

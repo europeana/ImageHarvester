@@ -29,33 +29,55 @@ public class VideoMetaInfo implements Serializable {
     private final String mimeType;
 
     /**
-     * A file format is a standard way that information is encoded for storage in a computer file.
-     */
-    private final String fileFormat;
-
-    /**
      *  also known as frame frequency and frames per second (FPS), is the frequency (rate)
      *  at which an imaging device produces unique consecutive images called frames.
      */
     private final Double frameRate;
+
+    /**
+     * The size of the file in bytes.
+     */
+    private final Long fileSize;
+
+    /**
+     * The Codec the video is encoded with.
+     */
+    private final String codec;
+
+    /**
+     * Width x Height
+     */
+    private final String resolution;
+
+    /**
+     * Number of bits that are transmitted over a set length of time.
+     */
+    private final Integer bitRate;
 
     public VideoMetaInfo() {
         this.width = null;
         this.height = null;
         this.duration = null;
         this.mimeType = null;
-        this.fileFormat = null;
         this.frameRate = null;
+        this.fileSize = null;
+        this.codec = null;
+        this.resolution = null;
+        this.bitRate = null;
     }
 
     public VideoMetaInfo(final Integer width, final Integer height, final Long duration, final String mimeType,
-                         final String fileFormat, final Double frameRate) {
+                         final Double frameRate, final Long fileSize, final String codec,
+                         final String resolution, Integer bitRate) {
         this.width = width;
         this.height = height;
         this.duration = duration;
         this.mimeType = mimeType;
-        this.fileFormat = fileFormat;
         this.frameRate = frameRate;
+        this.fileSize = fileSize;
+        this.codec = codec;
+        this.resolution = resolution;
+        this.bitRate = bitRate;
     }
 
     public Integer getWidth() {
@@ -74,12 +96,23 @@ public class VideoMetaInfo implements Serializable {
         return mimeType;
     }
 
-    public String getFileFormat() {
-        return fileFormat;
-    }
-
     public Double getFrameRate() {
         return frameRate;
     }
 
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public String getCodec() {
+        return codec;
+    }
+
+    public String getResolution() {
+        return resolution;
+    }
+
+    public Integer getBitRate() {
+        return bitRate;
+    }
 }
