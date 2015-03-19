@@ -257,7 +257,10 @@ public class Publisher {
                 final long processingRate = publisherRecordsProcessed/uptimeInSecs;
                 final long publishingRate = publisherRecordsPublished/uptimeInSecs;
 
-                LOG.error("Stats : "+" uptime : "+uptimeInSecs+" s"+" | process rate "+processingRate+" / s |  "+" | publish rate "+publishingRate+" / s |  "+"Last succesful timestamp is : " + lastSuccesfulPublish);
+                final long lastBatchDurationInSecs = (System.currentTimeMillis()-startTimeRetrieveMetaInfoDocs)/1000;
+
+                LOG.error("Global stats : "+" uptime : "+uptimeInSecs+" s"+" | process rate "+processingRate+" / s |  "+" | publish rate "+publishingRate+" / s ");
+                LOG.error("Last batch stats : "+" duration : "+lastBatchDurationInSecs+" s"+" | process rate "+solrCandidateDocuments.size()+" / s |  "+" | publish rate "+solrDocsToUpdate.size()+" / s |  "+"Last succesful timestamp is : " + lastSuccesfulPublish);
 
             }
 
