@@ -155,7 +155,7 @@ public class ClusterMasterActor extends UntypedActor {
         //this.esbClient = esbClient;
         this.cleanupInterval = cleanupInterval;
 
-        this.accountantActor = getContext().system().actorOf(Props.create(AccountantMasterActor.class), "accountant");
+        this.accountantActor = getContext().system().actorOf(Props.create(AccountantMasterActor.class).withDispatcher("prio-dispatcher"), "accountant");
 
         this.actorsPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<ActorRef>>());
         this.tasksPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<String>>());
