@@ -14,6 +14,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ public class SOLRWriter {
      * @param newDocs the list of documents and the new fields
      */
     public void updateDocuments(List<CRFSolrDocument> newDocs) throws IOException, SolrServerException {
+        final List<SolrInputDocument> docsToUpdate = new ArrayList<SolrInputDocument>();
         for (final CRFSolrDocument CRFSolrDocument : newDocs) {
 
             final SolrInputDocument update = new SolrInputDocument();
@@ -63,8 +65,8 @@ public class SOLRWriter {
 
             update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
 
+            docsToUpdate.add(update);
             try {
-                server.add(update);
             } catch (Exception e) {
                 LOG.error("Solr exception when adding document", e);
                 LOG.error("Solr document that caused exception" + update);
@@ -73,6 +75,7 @@ public class SOLRWriter {
         }
 
         LOG.info("SOLR: committing " + newDocs.size() + " documents");
+        server.add(docsToUpdate);
         server.commit();
     }
 
