@@ -65,7 +65,7 @@ public class SOLRWriter {
             update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
 
             try {
-            server.add(update);
+             server.add(update);
             } catch (Exception e) {
                 LOG.error("Solr exception when adding document",e);
                 LOG.error("Solr document that caused exception"+update);
