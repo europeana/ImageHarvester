@@ -52,8 +52,7 @@ public class SOLRWriter {
 
             final SolrInputDocument update = new SolrInputDocument();
 
-
-            update.addField("europeana_id", ClientUtils.escapeQueryChars(CRFSolrDocument.getRecordId()));
+            update.addField("europeana_id", CRFSolrDocument.getRecordId());
 
             update.addField("is_fulltext", singletonMap("set", CRFSolrDocument.getIsFulltext()));
 
