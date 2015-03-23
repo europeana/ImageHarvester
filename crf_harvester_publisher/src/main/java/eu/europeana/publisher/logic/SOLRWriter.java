@@ -96,30 +96,31 @@ public class SOLRWriter {
         // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
         for (int documentIdsStartChunkIndex = 0; documentIdsStartChunkIndex <= documentIds.size(); documentIdsStartChunkIndex += MAX_NUMBER_OF_IDS_IN_SOLR_QUERY) {
             final int endOfArray = (documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY >= documentIds.size()) ? documentIds.size() : documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY;
-            List<String> documentIdsToQuery = documentIds.subList(documentIdsStartChunkIndex, endOfArray);
+            final List<String> documentIdsToQuery = documentIds.subList(documentIdsStartChunkIndex, endOfArray);
 
-            // Do the SOLR query
-            final SolrQuery query = new SolrQuery();
-            final String queryString = "(" + StringUtils.join(documentIdsToQuery, " OR ").replace("/", "\\/") + ")";
-            query.set(CommonParams.Q, "*:*");
-            query.set(CommonParams.ROWS, MAX_NUMBER_OF_IDS_IN_SOLR_QUERY + 1);
-            query.set(CommonParams.FQ, "europeana_id:" + queryString);
-            query.set(CommonParams.FL, "europeana_id");
+            if (!documentIdsToQuery.isEmpty()) {
+                // Do the SOLR query
+                final SolrQuery query = new SolrQuery();
+                final String queryString = "(" + StringUtils.join(documentIdsToQuery, " OR ").replace("/", "\\/") + ")";
+                query.set(CommonParams.Q, "*:*");
+                query.set(CommonParams.ROWS, MAX_NUMBER_OF_IDS_IN_SOLR_QUERY + 1);
+                query.set(CommonParams.FQ, "europeana_id:" + queryString);
+                query.set(CommonParams.FL, "europeana_id");
 
-            try {
-                final QueryResponse response = server.query(query);
-                // Mark in the result the documents id's that have been found
-                if (response != null) {
-                    final SolrDocumentList solrResults = response.getResults();
-                    for (int resultEntryIndex = 0; resultEntryIndex < solrResults.size(); ++resultEntryIndex)
-                        result.put(solrResults.get(resultEntryIndex).getFieldValue("europeana_id").toString(), true);
+                try {
+                    final QueryResponse response = server.query(query);
+                    // Mark in the result the documents id's that have been found
+                    if (response != null) {
+                        final SolrDocumentList solrResults = response.getResults();
+                        for (int resultEntryIndex = 0; resultEntryIndex < solrResults.size(); ++resultEntryIndex)
+                            result.put(solrResults.get(resultEntryIndex).getFieldValue("europeana_id").toString(), true);
+                    }
+                } catch (Exception e) {
+                    LOG.error("SOLR query failed when executing query " + queryString);
+                    throw e;
                 }
-            } catch (Exception e) {
-                LOG.error("SOLR query failed when executing query " + queryString);
-                throw e;
             }
         }
-
 
         return result;
 
