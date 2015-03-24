@@ -4,6 +4,7 @@ import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
@@ -220,5 +221,11 @@ public class HarvesterClientImpl implements HarvesterClient {
 
         createOrModifySourceDocumentReference(newSourceDocumentReferenceList);
     }
+
+    @Override
+    public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo){
+        return sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo, WriteConcern.NORMAL);
+    }
+
 
 }

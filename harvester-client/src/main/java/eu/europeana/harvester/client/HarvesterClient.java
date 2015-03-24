@@ -73,5 +73,12 @@ interface HarvesterClient {
     public SourceDocumentReferenceMetaInfo  retrieveMetaInfoByUrl(String url);
 
     public void setActive(String recordID, Boolean active);
+
+    /**
+     * Updates specific sourceDocumentReferenceMetaInfo document.
+     * @param sourceDocumentReferenceMetaInfo
+     * @return
+     */
+    public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo);
 }
 
