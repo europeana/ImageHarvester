@@ -227,5 +227,21 @@ public class HarvesterClientImpl implements HarvesterClient {
         return sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo, WriteConcern.NORMAL);
     }
 
+    @Override
+    public void updateSourceDocumentProcesssingStatisticsForUrl(String url){
+
+        final HashFunction hf = Hashing.md5();
+        final HashCode hc = hf.newHasher()
+                .putString(url, Charsets.UTF_8)
+                .hash();
+        final String id = hc.toString();
+
+        SourceDocumentProcessingStatistics s = this.sourceDocumentProcessingStatisticsDao.read(id);
+        this.sourceDocumentProcessingStatisticsDao.update(s.withActive(true),WriteConcern.NORMAL);
+
+
+
+    }
+
 
 }
