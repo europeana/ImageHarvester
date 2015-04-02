@@ -21,7 +21,8 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 /**
- * It's responsible for the whole publishing process. It's the engine of the publisher module.
+ * It's responsible for the whole publishing process. It's the engine of the
+ * publisher module.
  */
 public class Publisher {
 
@@ -114,8 +115,7 @@ public class Publisher {
             for (RetrievedDoc doc : retrievedDocsPerID.values()) {
                 if (lastSuccesfulPublish == null) {
                     lastSuccesfulPublish = doc.getUpdatedAt();
-                } else
-                {
+                } else {
                     if (doc.getUpdatedAt().isBefore(lastSuccesfulPublish)) {
                         lastSuccesfulPublish = doc.getUpdatedAt();
                     }
@@ -172,7 +172,6 @@ public class Publisher {
 //                            System.out.println(imageMetaInfo.getMimeType());
 //                            System.out.println(imageMetaInfo.getOrientation());
 //                            System.out.println(imageMetaInfo.getColorPalette().length);
-
                             break;
                         case 2:
                             final AudioMetaInfo audioMetaInfo = metaInfo.getAudioMetaInfo();
@@ -214,7 +213,9 @@ public class Publisher {
                 final Map<String, Boolean> documentIdToExistence = solrWriter.documentExists(candidateDocumentIds);
                 int documentThatExist = 0;
                 for (String id : documentIdToExistence.keySet()) {
-                    if (documentIdToExistence.get(id) == true) documentThatExist++;
+                    if (documentIdToExistence.get(id) == true) {
+                        documentThatExist++;
+                    }
                 }
                 final long endTimeCheckSolrExistence = System.currentTimeMillis();
                 LOG.error("Checked Solr document existence : " + documentThatExist + " in SOLR" + " out of  " + documentIdToExistence.keySet().size() + " in total and took" + (endTimeCheckSolrExistence - startTimeCheckSolrExistence) / 1000 + " seconds");
@@ -253,19 +254,20 @@ public class Publisher {
                 final long endTimeSolrWrite = System.currentTimeMillis();
                 LOG.error("Updating: " + solrDocsToUpdate.size() + " SOLR docs." + " and it took " + (endTimeSolrWrite - startTimeSolrWrite) / 1000 + " seconds");
 
-                final long uptimeInSecs = (System.currentTimeMillis()-publisherStarteAt)/1000;
-                final long processingRate = publisherRecordsProcessed/uptimeInSecs;
-                final long publishingRate = publisherRecordsPublished/uptimeInSecs;
+                final long uptimeInSecs = (System.currentTimeMillis() - publisherStarteAt) / 1000;
+                if (uptimeInSecs > 0) {
 
-                final long lastBatchDurationInSecs = (System.currentTimeMillis()-startTimeRetrieveMetaInfoDocs)/1000;
-                final long lastBatchProcessingRate = solrCandidateDocuments.size()/lastBatchDurationInSecs;
-                final long lastBatchPublishingRate = solrDocsToUpdate.size()/lastBatchDurationInSecs;
+                    final long processingRate = publisherRecordsProcessed / uptimeInSecs;
+                    final long publishingRate = publisherRecordsPublished / uptimeInSecs;
 
-                LOG.error("Global stats : "+" uptime : "+uptimeInSecs+" s"+" | process rate "+processingRate+" / s |  "+" | publish rate "+publishingRate+" / s ");
-                LOG.error("Last batch stats : "+" duration : "+lastBatchDurationInSecs+" s"+" | process rate " + lastBatchProcessingRate +" / s |  "+" | publish rate "+lastBatchPublishingRate+" / s |  "+"Last succesful timestamp is : " + lastSuccesfulPublish);
+                    final long lastBatchDurationInSecs = (System.currentTimeMillis() - startTimeRetrieveMetaInfoDocs) / 1000;
+                    final long lastBatchProcessingRate = solrCandidateDocuments.size() / lastBatchDurationInSecs;
+                    final long lastBatchPublishingRate = solrDocsToUpdate.size() / lastBatchDurationInSecs;
 
+                    LOG.error("Global stats : " + " uptime : " + uptimeInSecs + " s" + " | process rate " + processingRate + " / s |  " + " | publish rate " + publishingRate + " / s ");
+                    LOG.error("Last batch stats : " + " duration : " + lastBatchDurationInSecs + " s" + " | process rate " + lastBatchProcessingRate + " / s |  " + " | publish rate " + lastBatchPublishingRate + " / s |  " + "Last succesful timestamp is : " + lastSuccesfulPublish);
+                }
             }
-
 
         } while (!done);
     }
@@ -279,8 +281,8 @@ public class Publisher {
     private HashMap<String, RetrievedDoc> retrieveStatisticsDocumentIdsThatMatch(Integer skip) {
         final HashMap<String, RetrievedDoc> IDsWithType = new HashMap<>();
 
-        final DBCollection sourceDocumentProcessingStatisticsCollection =
-                sourceDB.getCollection("SourceDocumentProcessingStatistics");
+        final DBCollection sourceDocumentProcessingStatisticsCollection
+                = sourceDB.getCollection("SourceDocumentProcessingStatistics");
 
         // Query construction
         BasicDBObject findQuery;
@@ -295,8 +297,8 @@ public class Publisher {
         final BasicDBObject sortOrder = new BasicDBObject();
         sortOrder.put("$natural", 1);
 
-        DBCursor sourceDocumentProcessingStatisticsCursor =
-                sourceDocumentProcessingStatisticsCollection.find(findQuery, fields).sort(sortOrder).skip(skip).limit(LIMIT);
+        DBCursor sourceDocumentProcessingStatisticsCursor
+                = sourceDocumentProcessingStatisticsCollection.find(findQuery, fields).sort(sortOrder).skip(skip).limit(LIMIT);
         sourceDocumentProcessingStatisticsCursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 
         // Iterates over the loaded documents and takes the important information from them
@@ -318,7 +320,7 @@ public class Publisher {
                 type = type.substring(0, type.indexOf(","));
             }
 
-            final RetrievedDoc retrievedDoc = new RetrievedDoc(type, recordId,updatedAt);
+            final RetrievedDoc retrievedDoc = new RetrievedDoc(type, recordId, updatedAt);
             IDsWithType.put(sourceDocumentReferenceId, retrievedDoc);
         }
 
