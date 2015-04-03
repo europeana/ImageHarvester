@@ -75,8 +75,10 @@ public class SOLRWriter {
         }
 
         LOG.info("SOLR: committing " + newDocs.size() + " documents");
+        if(docsToUpdate.size()>0){
         server.add(docsToUpdate);
         server.commit();
+        }
     }
 
     /**
