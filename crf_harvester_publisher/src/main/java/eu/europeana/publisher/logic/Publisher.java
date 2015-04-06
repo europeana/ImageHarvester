@@ -8,9 +8,9 @@ import eu.europeana.harvester.db.WebResourceMetaInfoDAO;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDAOImpl;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.RetrievedDoc;
-import eu.europeana.publisher.domain.CRFSolrDocument;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -18,7 +18,13 @@ import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * It's responsible for the whole publishing process. It's the engine of the publisher module.
@@ -54,7 +60,7 @@ public class Publisher {
             final Boolean auth = sourceDB.authenticate(config.getSourceDBUsername(),
                     config.getSourceDBPassword().toCharArray());
             if (!auth) {
-                LOG.error("Mongo auth error");
+                LOG.error("Mongo source auth error");
                 System.exit(-1);
             }
         }
@@ -74,7 +80,7 @@ public class Publisher {
             final Boolean auth = targetDB.authenticate(config.getTargetDBUsername(),
                     config.getTargetDBPassword().toCharArray());
             if (!auth) {
-                LOG.error("Mongo auth error");
+                LOG.error("Mongo target auth error");
                 System.exit(-1);
             }
         }
@@ -114,8 +120,7 @@ public class Publisher {
             for (RetrievedDoc doc : retrievedDocsPerID.values()) {
                 if (lastSuccesfulPublish == null) {
                     lastSuccesfulPublish = doc.getUpdatedAt();
-                } else
-                {
+                } else {
                     if (doc.getUpdatedAt().isBefore(lastSuccesfulPublish)) {
                         lastSuccesfulPublish = doc.getUpdatedAt();
                     }
@@ -199,7 +204,9 @@ public class Publisher {
 
                     // Creates the wrapping object for the new properties
                     final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(retrievedDocsPerID.get(ID).getRecordId(), isFulltext, hasThumbnails, hasMedia, filterTags, facetTags);
-                    solrCandidateDocuments.add(CRFSolrDocument);
+                    if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith("/9200365/"))
+                        solrCandidateDocuments.add(CRFSolrDocument);
+                    else LOG.error("Skipping records that starts with /9200365/");
                 }
 
                 // Check which candidate documents have an existing SOLR document
@@ -241,29 +248,38 @@ public class Publisher {
 
                 publisherRecordsPublished += solrDocsToUpdate.size();
 
-                // Writes the meta info to a separate MongoDB instance.
-                final long startTimeMongoWrite = System.currentTimeMillis();
-                webResourceMetaInfoDAO.create(webResourceMetaInfosToUpdate, WriteConcern.NORMAL);
-                final long endTimeMongoWrite = System.currentTimeMillis();
-                LOG.error("Write: " + webResourceMetaInfosToUpdate.size() + " meta infos" + " and it took " + (endTimeMongoWrite - startTimeMongoWrite) / 1000 + " seconds");
 
                 // Writes the properties to the SOLR.
                 final long startTimeSolrWrite = System.currentTimeMillis();
-                solrWriter.updateDocuments(solrDocsToUpdate);
+                final boolean successSolrUpdate = solrWriter.updateDocuments(solrDocsToUpdate);
                 final long endTimeSolrWrite = System.currentTimeMillis();
                 LOG.error("Updating: " + solrDocsToUpdate.size() + " SOLR docs." + " and it took " + (endTimeSolrWrite - startTimeSolrWrite) / 1000 + " seconds");
 
-                final long uptimeInSecs = (System.currentTimeMillis()-publisherStarteAt)/1000;
-                final long processingRate = publisherRecordsProcessed/uptimeInSecs;
-                final long publishingRate = publisherRecordsPublished/uptimeInSecs;
+                // Writes the meta info to a separate MongoDB instance.
+                if (successSolrUpdate) {
+                    final long startTimeMongoWrite = System.currentTimeMillis();
+                    webResourceMetaInfoDAO.create(webResourceMetaInfosToUpdate, WriteConcern.ACKNOWLEDGED);
+                    final long endTimeMongoWrite = System.currentTimeMillis();
+                    LOG.error("Write: " + webResourceMetaInfosToUpdate.size() + " meta infos" + " and it took " + (endTimeMongoWrite - startTimeMongoWrite) / 1000 + " seconds");
+                }
 
-                final long lastBatchDurationInSecs = (System.currentTimeMillis()-startTimeRetrieveMetaInfoDocs)/1000;
-                final long lastBatchProcessingRate = solrCandidateDocuments.size()/lastBatchDurationInSecs;
-                final long lastBatchPublishingRate = solrDocsToUpdate.size()/lastBatchDurationInSecs;
+                final long uptimeInSecs = (System.currentTimeMillis() - publisherStarteAt) / 1000;
+                final long processingRate = publisherRecordsProcessed / uptimeInSecs;
+                final long publishingRate = publisherRecordsPublished / uptimeInSecs;
 
-                LOG.error("Global stats : "+" uptime : "+uptimeInSecs+" s"+" | process rate "+processingRate+" / s |  "+" | publish rate "+publishingRate+" / s ");
-                LOG.error("Last batch stats : "+" duration : "+lastBatchDurationInSecs+" s"+" | process rate " + lastBatchProcessingRate +" / s |  "+" | publish rate "+lastBatchPublishingRate+" / s |  "+"Last succesful timestamp is : " + lastSuccesfulPublish);
+                final long lastBatchDurationInSecs = (System.currentTimeMillis() - startTimeRetrieveMetaInfoDocs) / 1000;
+                final long lastBatchProcessingRate = solrCandidateDocuments.size() / lastBatchDurationInSecs;
+                final long lastBatchPublishingRate = solrDocsToUpdate.size() / lastBatchDurationInSecs;
 
+                LOG.error("Global stats : " + " uptime : " + uptimeInSecs + " s" + " | process rate " + processingRate + " / s |  " + " | publish rate " + publishingRate + " / s ");
+                LOG.error("Last batch stats : " + " duration : " + lastBatchDurationInSecs + " s" + " | process rate " + lastBatchProcessingRate + " / s |  " + " | publish rate " + lastBatchPublishingRate + " / s |  " + "Last succesful timestamp is : " + lastSuccesfulPublish);
+
+                if (config.getStartTimestampFile() != null) {
+                    final Path path = Paths.get(config.getStartTimestampFile());
+                    Files.deleteIfExists(path);
+                    Files.write(path, lastSuccesfulPublish.toString().getBytes());
+                    LOG.error("Writting last succesfull timestamp " + lastSuccesfulPublish.toString() + " to file " + config.getStartTimestampFile());
+                }
             }
 
 
@@ -287,13 +303,16 @@ public class Publisher {
         if (null == config.getStartTimestamp()) {
             findQuery = new BasicDBObject("state", "SUCCESS");
         } else {
+            LOG.error("Retrieving SourceDocumentProcessingStatistics gte than timestamp " + config.getStartTimestamp());
+
             findQuery = new BasicDBObject("updatedAt", new BasicDBObject("$gte", config.getStartTimestamp().toLocalDate().toDate())).append("state", "SUCCESS");
         }
 
         final BasicDBObject fields = new BasicDBObject("sourceDocumentReferenceId", true).append("httpResponseContentType", true).append("referenceOwner.recordId", true).append("_id", false).append("updatedAt", true);
 
+        // Sort query results in ascending order by "updatedAt" field.
         final BasicDBObject sortOrder = new BasicDBObject();
-        sortOrder.put("$natural", 1);
+        sortOrder.put("updatedAt", 1);
 
         DBCursor sourceDocumentProcessingStatisticsCursor =
                 sourceDocumentProcessingStatisticsCollection.find(findQuery, fields).sort(sortOrder).skip(skip).limit(LIMIT);
@@ -318,7 +337,7 @@ public class Publisher {
                 type = type.substring(0, type.indexOf(","));
             }
 
-            final RetrievedDoc retrievedDoc = new RetrievedDoc(type, recordId,updatedAt);
+            final RetrievedDoc retrievedDoc = new RetrievedDoc(type, recordId, updatedAt);
             IDsWithType.put(sourceDocumentReferenceId, retrievedDoc);
         }
 

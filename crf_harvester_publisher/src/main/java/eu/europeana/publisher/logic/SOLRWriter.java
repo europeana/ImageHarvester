@@ -32,14 +32,20 @@ public class SOLRWriter {
      */
     private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 100;
 
+    private static final int MAX_RETRIES = 5;
     private static final Logger LOG = LogManager.getLogger(SOLRWriter.class.getName());
 
-    private final HttpSolrServer server;
+    private final String solrUrl;
 
     public SOLRWriter(String url) {
         LOG.info("SOLR writer");
-        this.server = new HttpSolrServer(url);
+        this.solrUrl = url;
+    }
+
+    private HttpSolrServer createServer() {
+        final HttpSolrServer server = new HttpSolrServer(solrUrl);
         server.setRequestWriter(new BinaryRequestWriter());
+        return server;
     }
 
     /**
@@ -47,36 +53,63 @@ public class SOLRWriter {
      *
      * @param newDocs the list of documents and the new fields
      */
-    public void updateDocuments(List<CRFSolrDocument> newDocs) throws IOException, SolrServerException {
+    public boolean updateDocuments(List<CRFSolrDocument> newDocs) throws IOException, SolrServerException {
         final List<SolrInputDocument> docsToUpdate = new ArrayList<SolrInputDocument>();
-        for (final CRFSolrDocument CRFSolrDocument : newDocs) {
 
-            final SolrInputDocument update = new SolrInputDocument();
+        int retry = 0;
+        while (retry <= MAX_RETRIES) {
+            final HttpSolrServer server = createServer();
 
-            update.addField("europeana_id", CRFSolrDocument.getRecordId());
+            // Adding individual documents in server
+            for (final CRFSolrDocument CRFSolrDocument : newDocs) {
 
-            update.addField("is_fulltext", singletonMap("set", CRFSolrDocument.getIsFulltext()));
+                final SolrInputDocument update = new SolrInputDocument();
 
-            update.addField("has_thumbnails", singletonMap("set", CRFSolrDocument.getHasThumbnails()));
+                update.addField("europeana_id", CRFSolrDocument.getRecordId());
 
-            update.addField("has_media", singletonMap("set", CRFSolrDocument.getHasMedia()));
+                update.addField("is_fulltext", singletonMap("set", CRFSolrDocument.getIsFulltext()));
 
-            update.addField("filter_tags", singletonMap("set", CRFSolrDocument.getFilterTags()));
+                update.addField("has_thumbnails", singletonMap("set", CRFSolrDocument.getHasThumbnails()));
 
-            update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
+                update.addField("has_media", singletonMap("set", CRFSolrDocument.getHasMedia()));
 
-            docsToUpdate.add(update);
+                update.addField("filter_tags", singletonMap("set", CRFSolrDocument.getFilterTags()));
+
+                update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
+
+                try {
+                    server.add(update);
+                } catch (Exception e){
+                    LOG.error("SOLR: exception when adding specific document " + update.toString() + " => document skipped",e);
+                }
+            }
+
             try {
+                LOG.info("SOLR: added " + newDocs.size() + " documents with commit - retry"+retry);
+                server.commit();
+                server.shutdown();
+                return true;
             } catch (Exception e) {
-                LOG.error("Solr exception when adding document", e);
-                LOG.error("Solr document that caused exception" + update);
-                throw e;
+                LOG.error("Got exception while commiting added documents",e);
+                server.shutdown();
+                if (retry >= MAX_RETRIES) {
+                    LOG.error("Reached maximum number of retries. Skipping record set with size="+docsToUpdate.size());
+                    return false;
+                }
+                else {
+                    try {
+                        retry++;
+                        final long secsToSleep = retry * 10;
+                        LOG.error("Exception with SOLR ...."+e.getMessage()+" retries executed already "+retry+" => sleeping "+secsToSleep+" s and retrying");
+                        Thread.sleep(secsToSleep *1000);
+                    } catch (InterruptedException e1) {
+                        e1.printStackTrace();
+                    }
+                }
             }
         }
 
-        LOG.info("SOLR: committing " + newDocs.size() + " documents");
-        server.add(docsToUpdate);
-        server.commit();
+        return false;
     }
 
     /**
@@ -111,6 +144,8 @@ public class SOLRWriter {
                 query.set(CommonParams.FL, "europeana_id");
 
                 try {
+                    final HttpSolrServer server = createServer();
+
                     final QueryResponse response = server.query(query);
                     // Mark in the result the documents id's that have been found
                     if (response != null) {
@@ -118,6 +153,7 @@ public class SOLRWriter {
                         for (int resultEntryIndex = 0; resultEntryIndex < solrResults.size(); ++resultEntryIndex)
                             result.put(solrResults.get(resultEntryIndex).getFieldValue("europeana_id").toString(), true);
                     }
+                    server.shutdown();
                 } catch (Exception e) {
                     LOG.error("SOLR query failed when executing query " + queryString);
                     throw e;

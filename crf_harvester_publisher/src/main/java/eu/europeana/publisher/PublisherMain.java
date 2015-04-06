@@ -1,5 +1,6 @@
 package eu.europeana.publisher;
 
+import com.google.common.io.Files;
 import com.typesafe.config.*;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logic.Publisher;
@@ -10,6 +11,7 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
 
@@ -46,6 +48,19 @@ public class PublisherMain {
         }
         catch (ConfigException.Null e) {
            LOG.info("startTimestamp is null");
+        }
+
+
+        String startTimestampFile = null;
+        try {
+            startTimestampFile = config.getString("criteria.startTimestampFile");
+            if (startTimestampFile != null) {
+                startTimestamp = DateTime.parse(Files.readFirstLine(new File(startTimestampFile), Charset.forName("UTF-8")));
+            }
+            LOG.info("startTimestamp loaded from file is "+startTimestamp);
+        }
+        catch (ConfigException.Null e) {
+            LOG.info("startTimestampFile is null");
         }
 
         final String solrURL = config.getString("solr.url");
@@ -86,7 +101,7 @@ public class PublisherMain {
 
             final PublisherConfig publisherConfig = new PublisherConfig(sourceHost, sourcePort, sourceDBName,
                     sourceDBUsername, sourceDBPassword, targetHost, targetPort, targetDBName, targetDBUsername,
-                    targetDBPassword, startTimestamp, solrURL, batch);
+                    targetDBPassword, startTimestamp,startTimestampFile, solrURL, batch);
 
             final Publisher publisher = new Publisher(publisherConfig);
             publisher.start();
