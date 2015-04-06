@@ -3,7 +3,6 @@ package eu.europeana.harvester.httpclient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.utils.SecureChatSslContextFactory;
-
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
@@ -12,7 +11,6 @@ import org.jboss.netty.handler.codec.http.HttpClientCodec;
 import org.jboss.netty.handler.codec.http.HttpContentDecompressor;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.handler.timeout.ReadTimeoutHandler;
-import org.jboss.netty.handler.traffic.ChannelTrafficShapingHandler;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.joda.time.Duration;
 
@@ -115,9 +113,9 @@ class ConstrainedPipelineFactory implements ChannelPipelineFactory {
         final ReadTimeoutHandler readTimeoutHandler = new ReadTimeoutHandler(hashedWheelTimer, timeoutInSeconds);
         channelPipeline.addLast("read timeout", readTimeoutHandler);
 
-        final ChannelTrafficShapingHandler channelTrafficShapingHandler =
-                new ChannelTrafficShapingHandler(hashedWheelTimer, limitsCheckInterval.getMillis());
-        channelPipeline.addLast("CHANNEL_TRAFFIC_SHAPING", channelTrafficShapingHandler);
+//        final ChannelTrafficShapingHandler channelTrafficShapingHandler =
+//                new ChannelTrafficShapingHandler(hashedWheelTimer, limitsCheckInterval.getMillis());
+//        channelPipeline.addLast("CHANNEL_TRAFFIC_SHAPING", channelTrafficShapingHandler);
 
         // Enable HTTPS if necessary.
         if (supportsSSL) {

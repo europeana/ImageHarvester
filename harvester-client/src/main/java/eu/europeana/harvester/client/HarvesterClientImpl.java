@@ -18,7 +18,7 @@ import java.util.*;
  */
 public class HarvesterClientImpl implements HarvesterClient {
 
-        private static final Logger LOG = LogManager.getLogger(HarvesterClientImpl.class.getName());
+    private static final Logger LOG = LogManager.getLogger(HarvesterClientImpl.class.getName());
 
     /**
      * DAO for CRUD with processing_job collection
@@ -41,7 +41,8 @@ public class HarvesterClientImpl implements HarvesterClient {
     private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
 
     /**
-     * SourceDocumentReferenceMetaInfo DAO object which lets us to read and store data to and from the database.
+     * SourceDocumentReferenceMetaInfo DAO object which lets us to read and
+     * store data to and from the database.
      */
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
@@ -51,7 +52,8 @@ public class HarvesterClientImpl implements HarvesterClient {
     private final LinkCheckLimitsDao linkCheckLimitsDao;
 
     /**
-     * An object which contains different special configurations for Harvester Client.
+     * An object which contains different special configurations for Harvester
+     * Client.
      */
     private final HarvesterClientConfig harvesterClientConfig;
 
@@ -65,9 +67,9 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     public HarvesterClientImpl(ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
-                               SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                               SourceDocumentReferenceDao sourceDocumentReferenceDao,
-                               SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao, LinkCheckLimitsDao linkCheckLimitsDao, HarvesterClientConfig harvesterClientConfig) {
+            SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+            SourceDocumentReferenceDao sourceDocumentReferenceDao,
+            SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao, LinkCheckLimitsDao linkCheckLimitsDao, HarvesterClientConfig harvesterClientConfig) {
 
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
@@ -96,7 +98,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     public void createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) {
         LOG.info("Create or modify SourceDocumentReferences");
 
-        for(final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
+        for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
             sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, harvesterClientConfig.getWriteConcern());
         }
     }
@@ -124,9 +126,9 @@ public class HarvesterClientImpl implements HarvesterClient {
         LOG.info("Stopping job with id: {}", jobId);
         final ProcessingJob processingJob = processingJobDao.read(jobId);
         final JobState currentState = processingJob.getState();
-        if((JobState.RUNNING).equals(currentState) ||
-                (JobState.RESUME).equals(currentState) ||
-                (JobState.READY).equals(currentState)) {
+        if ((JobState.RUNNING).equals(currentState)
+                || (JobState.RESUME).equals(currentState)
+                || (JobState.READY).equals(currentState)) {
             final ProcessingJob newProcessingJob = processingJob.withState(JobState.PAUSE);
             processingJobDao.update(newProcessingJob, harvesterClientConfig.getWriteConcern());
 
@@ -157,24 +159,24 @@ public class HarvesterClientImpl implements HarvesterClient {
         final ProcessingJob processingJob = processingJobDao.read(jobId);
 
         final Map<ProcessingState, Set<String>> recordIdsByState = new HashMap<ProcessingState, Set<String>>();
-        final Map<ProcessingState, Set<String>> sourceDocumentReferenceIdsByState =
-                new HashMap<ProcessingState, Set<String>>();
+        final Map<ProcessingState, Set<String>> sourceDocumentReferenceIdsByState
+                = new HashMap<ProcessingState, Set<String>>();
 
-        for(final ProcessingJobTaskDocumentReference task : processingJob.getTasks()) {
-            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                    sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(
+        for (final ProcessingJobTaskDocumentReference task : processingJob.getTasks()) {
+            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics
+                    = sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(
                             task.getSourceDocumentReferenceID(), jobId);
 
-            if(sourceDocumentProcessingStatistics != null) {
+            if (sourceDocumentProcessingStatistics != null) {
                 final ProcessingState processingState = sourceDocumentProcessingStatistics.getState();
                 Set<String> recordIds = recordIdsByState.get(processingState);
-                if(recordIds == null) {
+                if (recordIds == null) {
                     recordIds = new HashSet<String>();
                 }
                 recordIds.add(sourceDocumentProcessingStatistics.getReferenceOwner().getRecordId());
 
                 Set<String> sourceDocIds = sourceDocumentReferenceIdsByState.get(processingState);
-                if(sourceDocIds == null) {
+                if (sourceDocIds == null) {
                     sourceDocIds = new HashSet<String>();
                 }
                 sourceDocIds.add(sourceDocumentProcessingStatistics.getSourceDocumentReferenceId());
@@ -200,21 +202,21 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public void setActive(String recordID, Boolean active) {
-        final List<SourceDocumentReference> sourceDocumentReferenceList =
-                sourceDocumentReferenceDao.findByRecordID(recordID);
-        final List<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatisticsList =
-                sourceDocumentProcessingStatisticsDao.findByRecordID(recordID);
+        final List<SourceDocumentReference> sourceDocumentReferenceList
+                = sourceDocumentReferenceDao.findByRecordID(recordID);
+        final List<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatisticsList
+                = sourceDocumentProcessingStatisticsDao.findByRecordID(recordID);
 
         final List<SourceDocumentReference> newSourceDocumentReferenceList = new ArrayList<>();
 
-        for(final SourceDocumentReference sourceDocumentReference : sourceDocumentReferenceList) {
+        for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferenceList) {
             final SourceDocumentReference newSourceDocumentReference = sourceDocumentReference.withActive(active);
             newSourceDocumentReferenceList.add(newSourceDocumentReference);
         }
 
-        for(final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics : sourceDocumentProcessingStatisticsList) {
-            final SourceDocumentProcessingStatistics newSourceDocumentProcessingStatistics =
-                    sourceDocumentProcessingStatistics.withActive(active);
+        for (final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics : sourceDocumentProcessingStatisticsList) {
+            final SourceDocumentProcessingStatistics newSourceDocumentProcessingStatistics
+                    = sourceDocumentProcessingStatistics.withActive(active);
             sourceDocumentProcessingStatisticsDao.createOrUpdate(newSourceDocumentProcessingStatistics,
                     harvesterClientConfig.getWriteConcern());
         }
@@ -223,9 +225,24 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo){
+    public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo) {
         return sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo, WriteConcern.NORMAL);
     }
 
+    @Override
+    public void updateSourceDocumentProcesssingStatisticsForUrl(String url) {
+
+        final HashFunction hf = Hashing.md5();
+        final HashCode hc = hf.newHasher()
+                .putString(url, Charsets.UTF_8)
+                .hash();
+        final String id = hc.toString();
+
+        SourceDocumentProcessingStatistics s = this.sourceDocumentProcessingStatisticsDao.read(id);
+        if (s != null) {
+            this.sourceDocumentProcessingStatisticsDao.update(s.withActive(true), WriteConcern.NORMAL);
+        }
+
+    }
 
 }
