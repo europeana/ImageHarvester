@@ -79,41 +79,35 @@ public class SOLRWriter {
 
                 try {
                     server.add(update);
-                } catch (Exception e){
-                    LOG.error("SOLR: exception when adding specific document " + update.toString() + " => document skipped",e);
+                } catch (Exception e) {
+                    LOG.error("SOLR: exception when adding specific document " + update.toString() + " => document skipped", e);
                 }
             }
 
             try {
-                LOG.info("SOLR: added " + newDocs.size() + " documents with commit - retry"+retry);
+                LOG.info("SOLR: added " + newDocs.size() + " documents with commit - retry" + retry);
                 server.commit();
                 server.shutdown();
                 return true;
             } catch (Exception e) {
-                LOG.error("Got exception while commiting added documents",e);
+                LOG.error("Got exception while commiting added documents", e);
                 server.shutdown();
                 if (retry >= MAX_RETRIES) {
-                    LOG.error("Reached maximum number of retries. Skipping record set with size="+docsToUpdate.size());
+                    LOG.error("Reached maximum number of retries. Skipping record set with size=" + docsToUpdate.size());
                     return false;
-                }
-                else {
+                } else {
                     try {
                         retry++;
                         final long secsToSleep = retry * 10;
-                        LOG.error("Exception with SOLR ...."+e.getMessage()+" retries executed already "+retry+" => sleeping "+secsToSleep+" s and retrying");
-                        Thread.sleep(secsToSleep *1000);
+                        LOG.error("Exception with SOLR ...." + e.getMessage() + " retries executed already " + retry + " => sleeping " + secsToSleep + " s and retrying");
+                        Thread.sleep(secsToSleep * 1000);
                     } catch (InterruptedException e1) {
                         e1.printStackTrace();
                     }
                 }
             }
         }
-
-        LOG.info("SOLR: committing " + newDocs.size() + " documents");
-        if(docsToUpdate.size() > 0) {
-            server.add(docsToUpdate);
-            server.commit();
-        }
+        return false;
     }
 
     /**

@@ -257,7 +257,6 @@ public class Publisher {
                 final long endTimeSolrWrite = System.currentTimeMillis();
                 LOG.error("Updating: " + solrDocsToUpdate.size() + " SOLR docs." + " and it took " + (endTimeSolrWrite - startTimeSolrWrite) / 1000 + " seconds");
 
-<<<<<<< HEAD
                 // Writes the meta info to a separate MongoDB instance.
                 if (successSolrUpdate) {
                     final long startTimeMongoWrite = System.currentTimeMillis();
@@ -282,20 +281,6 @@ public class Publisher {
                     Files.deleteIfExists(path);
                     Files.write(path, lastSuccesfulPublish.toString().getBytes());
                     LOG.error("Writting last succesfull timestamp " + lastSuccesfulPublish.toString() + " to file " + config.getStartTimestampFile());
-=======
-                final long uptimeInSecs = (System.currentTimeMillis() - publisherStarteAt) / 1000;
-                if (uptimeInSecs > 0) {
-
-                    final long processingRate = publisherRecordsProcessed / uptimeInSecs;
-                    final long publishingRate = publisherRecordsPublished / uptimeInSecs;
-
-                    final long lastBatchDurationInSecs = (System.currentTimeMillis() - startTimeRetrieveMetaInfoDocs) / 1000;
-                    final long lastBatchProcessingRate = solrCandidateDocuments.size() / lastBatchDurationInSecs;
-                    final long lastBatchPublishingRate = solrDocsToUpdate.size() / lastBatchDurationInSecs;
-
-                    LOG.error("Global stats : " + " uptime : " + uptimeInSecs + " s" + " | process rate " + processingRate + " / s |  " + " | publish rate " + publishingRate + " / s ");
-                    LOG.error("Last batch stats : " + " duration : " + lastBatchDurationInSecs + " s" + " | process rate " + lastBatchProcessingRate + " / s |  " + " | publish rate " + lastBatchPublishingRate + " / s |  " + "Last succesful timestamp is : " + lastSuccesfulPublish);
->>>>>>> origin/master
                 }
             }
 
