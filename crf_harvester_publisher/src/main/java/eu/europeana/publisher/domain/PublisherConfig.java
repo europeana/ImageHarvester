@@ -91,7 +91,6 @@ public class PublisherConfig {
         this.startTimestamp = startTimestamp;
         this.startTimestampFile = startTimestampFile;
         this.solrURL = solrURL;
-        startTimestampFile = solrURL;
         this.batch = batch;
     }
 
@@ -149,6 +148,28 @@ public class PublisherConfig {
 
     public Integer getBatch() {
         return batch;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer();
+
+        buffer.append("--------------------------------------------------------------\n");
+        buffer.append("sourceHost: " + sourceHost);
+        buffer.append("sourcePort: " + sourcePort);
+        buffer.append("sourceDBName: " + sourceDBName);
+        buffer.append("sourceDBUsername: " + sourceDBUsername);
+        buffer.append("sourceDBPassword: " + sourceDBPassword);
+        buffer.append("targetHost: " + targetHost);
+        buffer.append("targetPort: " + targetPort);
+        buffer.append("targetDBName: " + targetDBName);
+        buffer.append("targetDBUsername: " + targetDBUsername);
+        buffer.append("targetDBPassword: " + targetDBPassword);
+        buffer.append("startTimestamp: " + startTimestamp);
+        buffer.append("startTimestampFile: " + startTimestampFile);
+        buffer.append("--------------------------------------------------------------\n");
+
+        return buffer.toString();
     }
 
 

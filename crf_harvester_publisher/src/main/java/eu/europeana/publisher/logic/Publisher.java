@@ -77,7 +77,7 @@ public class Publisher {
         final Mongo targetMongo = new Mongo(config.getTargetHost(), config.getTargetPort());
 
         if (!config.getTargetDBUsername().equals("")) {
-            targetDB = sourceMongo.getDB("admin");
+            targetDB = targetMongo.getDB("admin");
             final Boolean auth = targetDB.authenticate(config.getTargetDBUsername(),
                     config.getTargetDBPassword().toCharArray());
             if (!auth) {
