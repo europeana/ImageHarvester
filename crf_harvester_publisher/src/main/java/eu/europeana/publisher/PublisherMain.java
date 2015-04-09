@@ -4,10 +4,13 @@ import com.google.common.io.Files;
 import com.typesafe.config.*;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logic.Publisher;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.joda.time.DateTime;
+import scala.Char;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,10 +57,19 @@ public class PublisherMain {
         String startTimestampFile = null;
         try {
             startTimestampFile = config.getString("criteria.startTimestampFile");
-            if (startTimestampFile != null) {
-                startTimestamp = DateTime.parse(Files.readFirstLine(new File(startTimestampFile), Charset.forName("UTF-8")));
+            if (null != startTimestampFile) {
+                String file = FileUtils.readFileToString(new File(startTimestampFile));
+                if (StringUtils.isEmpty(file)) {
+                    LOG.info("File is empty => startTimestamp is null");
+                }
+                else {
+                    startTimestamp = DateTime.parse(file);
+                    LOG.info("startTimestamp loaded from file is "+startTimestamp);
+                }
             }
-            LOG.info("startTimestamp loaded from file is "+startTimestamp);
+            else {
+                LOG.info("startTimestampFile is null");
+            }
         }
         catch (ConfigException.Null e) {
             LOG.info("startTimestampFile is null");
