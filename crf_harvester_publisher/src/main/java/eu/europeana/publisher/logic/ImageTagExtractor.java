@@ -5,6 +5,7 @@ import eu.europeana.harvester.domain.ImageOrientation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.swing.text.html.HTML;
 import java.util.*;
 
 /**
@@ -233,7 +234,7 @@ public class ImageTagExtractor {
      */
     public static List<Integer> getFilterTags(final ImageMetaInfo imageMetaInfo, Integer mimeTypeCode) {
         final List<Integer> filterTags = new ArrayList<>();
-        final Integer mediaTypeCode = 1;
+        final Integer mediaTypeCode = MediaTypeEncoding.IMAGE.getEncodedValue();
 
         if(imageMetaInfo.getMimeType() != null) {
             mimeTypeCode = CommonTagExtractor.getMimeTypeCode(imageMetaInfo.getMimeType());
@@ -271,7 +272,12 @@ public class ImageTagExtractor {
                 for (Integer colorSpace : colorSpaceCodes) {
                     for (Integer aspectRatio : aspectRatioCodes) {
                         for (Integer color : colorCodes) {
-                            final Integer result = mediaTypeCode<<25 | mimeType<<15 | fileSize<<12 | colorSpace<<10 | aspectRatio<<8 | color;
+                            final Integer result = mediaTypeCode |
+                                                    (mimeType << TagEncoding.MIME_TYPE.getBitPos())  |
+                                                    (fileSize << TagEncoding.IMAGE_SIZE.getBitPos()) |
+                                                    (colorSpace << TagEncoding.IMAGE_COLOURSPACE.getBitPos()) |
+                                                    (aspectRatio << TagEncoding.IMAGE_ASPECTRATIO.getBitPos()) |
+                                                    (color << TagEncoding.IMAGE_COLOUR.getBitPos());
 
                             filterTags.add(result);
 
@@ -296,32 +302,32 @@ public class ImageTagExtractor {
     public static List<Integer> getFacetTags(final ImageMetaInfo imageMetaInfo, Integer mimeTypeCode) {
         final List<Integer> facetTags = new ArrayList<>();
 
-        final Integer mediaTypeCode = 1;
+        final Integer mediaTypeCode = MediaTypeEncoding.IMAGE.getEncodedValue();
 
         Integer facetTag;
 
         if(imageMetaInfo.getMimeType() != null) {
             mimeTypeCode = CommonTagExtractor.getMimeTypeCode(imageMetaInfo.getMimeType());
-            facetTag = mediaTypeCode<<25 | mimeTypeCode<<15;
+            facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
             facetTags.add(facetTag);
         }
 
         final Integer fileSizeCode = getSizeCode(imageMetaInfo.getWidth(), imageMetaInfo.getHeight());
-        facetTag = mediaTypeCode<<25 | fileSizeCode<<12;
+        facetTag = mediaTypeCode | (fileSizeCode << TagEncoding.IMAGE_SIZE.getBitPos());
         facetTags.add(facetTag);
 
         final Integer colorSpaceCode = getColorSpaceCode(imageMetaInfo.getColorSpace());
-        facetTag = mediaTypeCode<<25 | colorSpaceCode<<10;
+        facetTag = mediaTypeCode | (colorSpaceCode << TagEncoding.IMAGE_COLOURSPACE.getBitPos());
         facetTags.add(facetTag);
 
         final Integer aspectRatioCode = getAspectRatioCode(imageMetaInfo.getOrientation());
-        facetTag = mediaTypeCode<<25 | aspectRatioCode<<8;
+        facetTag = mediaTypeCode | (aspectRatioCode << TagEncoding.IMAGE_ASPECTRATIO.getBitPos());
         facetTags.add(facetTag);
 
         for(final String color : imageMetaInfo.getColorPalette()) {
             final Integer colorCode = getColorCode(color);
 
-            facetTag = mediaTypeCode<<25 | colorCode;
+            facetTag = mediaTypeCode | (colorCode << TagEncoding.IMAGE_COLOUR.getBitPos());
             facetTags.add(facetTag);
         }
 

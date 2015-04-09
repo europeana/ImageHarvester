@@ -181,8 +181,8 @@ public class Publisher {
                             break;
                         case 2:
                             final AudioMetaInfo audioMetaInfo = metaInfo.getAudioMetaInfo();
-                            filterTags = AudioTagExtractor.getFilterTags(audioMetaInfo, mimeTypeCode);
-                            facetTags = AudioTagExtractor.getFacetTags(audioMetaInfo, mimeTypeCode);
+                            filterTags = SoundTagExtractor.getFilterTags(audioMetaInfo, mimeTypeCode);
+                            facetTags = SoundTagExtractor.getFacetTags(audioMetaInfo, mimeTypeCode);
 
                             hasMedia = true;
 

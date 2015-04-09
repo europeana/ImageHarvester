@@ -90,7 +90,7 @@ public class SOLRWriter {
                 server.shutdown();
                 return true;
             } catch (Exception e) {
-                LOG.error("Got exception while commiting added documents", e);
+                LOG.error("Got exception while committing added documents", e);
                 server.shutdown();
                 if (retry >= MAX_RETRIES) {
                     LOG.error("Reached maximum number of retries. Skipping record set with size=" + docsToUpdate.size());
