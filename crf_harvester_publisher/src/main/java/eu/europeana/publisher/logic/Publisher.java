@@ -16,7 +16,9 @@ import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.joda.time.DateTime;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -146,6 +148,11 @@ public class Publisher {
                     final String ID = metaInfo.getId();
                     final Integer mediaTypeCode = CommonTagExtractor.getMediaTypeCode(metaInfo);
                     Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(retrievedDocsPerID.get(metaInfo.getId()).getType());
+
+                    if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
+                        LOG.error ("Skinping record with mimetype text/html. ID: " + ID);
+                        continue;
+                    }
 
                     // The new properties
                     Boolean isFulltext = false;
