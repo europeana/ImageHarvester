@@ -16,9 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.joda.time.DateTime;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -147,9 +145,23 @@ public class Publisher {
                 for (SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
                     final String ID = metaInfo.getId();
                     final Integer mediaTypeCode = CommonTagExtractor.getMediaTypeCode(metaInfo);
-                    Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(retrievedDocsPerID.get(metaInfo.getId()).getType());
+                    Integer mimeTypeCode = null;
 
-                    if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
+                    if (null != metaInfo.getAudioMetaInfo()) {
+                        mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getAudioMetaInfo().getMimeType());
+                    }
+
+                    if (null != metaInfo.getVideoMetaInfo()) {
+                        mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getVideoMetaInfo().getMimeType());
+                    }
+
+                    if (null != metaInfo.getImageMetaInfo()) {
+                        mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getImageMetaInfo().getMimeType());
+                    }
+
+                    System.out.println("mimeTypeCode is " + mimeTypeCode);
+
+                    if (null != mimeTypeCode && mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
                         LOG.error ("Skinping record with mimetype text/html. ID: " + ID);
                         continue;
                     }
@@ -167,9 +179,8 @@ public class Publisher {
                             break;
                         case 1:
                             final ImageMetaInfo imageMetaInfo = metaInfo.getImageMetaInfo();
-                            filterTags = ImageTagExtractor.getFilterTags(imageMetaInfo, mimeTypeCode);
-                            facetTags = ImageTagExtractor.getFacetTags(imageMetaInfo, mimeTypeCode);
-
+                            filterTags = ImageTagExtractor.getFilterTags(imageMetaInfo);
+                            facetTags = ImageTagExtractor.getFacetTags(imageMetaInfo);
                             hasMedia = true;
                             hasThumbnails = isImageWithThumbnail(imageMetaInfo);
                             if (hasThumbnails) {
@@ -188,19 +199,17 @@ public class Publisher {
                             break;
                         case 2:
                             final AudioMetaInfo audioMetaInfo = metaInfo.getAudioMetaInfo();
-                            filterTags = SoundTagExtractor.getFilterTags(audioMetaInfo, mimeTypeCode);
-                            facetTags = SoundTagExtractor.getFacetTags(audioMetaInfo, mimeTypeCode);
+                            filterTags = SoundTagExtractor.getFilterTags(audioMetaInfo);
+                            facetTags = SoundTagExtractor.getFacetTags(audioMetaInfo);
 
                             hasMedia = true;
-
                             break;
                         case 3:
                             final VideoMetaInfo videoMetaInfo = metaInfo.getVideoMetaInfo();
-                            filterTags = VideoTagExtractor.getFilterTags(videoMetaInfo, mimeTypeCode);
-                            facetTags = VideoTagExtractor.getFacetTags(videoMetaInfo, mimeTypeCode);
+                            filterTags = VideoTagExtractor.getFilterTags(videoMetaInfo);
+                            facetTags = VideoTagExtractor.getFacetTags(videoMetaInfo);
 
                             hasMedia = true;
-
                             break;
                         case 4:
                             final TextMetaInfo textMetaInfo = metaInfo.getTextMetaInfo();

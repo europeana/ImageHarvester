@@ -229,16 +229,17 @@ public class ImageTagExtractor {
     /**
      * Generates the filter/fake tags
      * @param imageMetaInfo the meta info object
-     * @param mimeTypeCode the mimetype of the resource
      * @return the list of fake tags
      */
-    public static List<Integer> getFilterTags(final ImageMetaInfo imageMetaInfo, Integer mimeTypeCode) {
+    public static List<Integer> getFilterTags(final ImageMetaInfo imageMetaInfo) {
         final List<Integer> filterTags = new ArrayList<>();
         final Integer mediaTypeCode = MediaTypeEncoding.IMAGE.getEncodedValue();
 
-        if(imageMetaInfo.getMimeType() != null) {
-            mimeTypeCode = CommonTagExtractor.getMimeTypeCode(imageMetaInfo.getMimeType());
+        if (null == imageMetaInfo.getMimeType() || null == imageMetaInfo.getWidth() || null == imageMetaInfo.getHeight()
+            || null == imageMetaInfo.getColorPalette() || null == imageMetaInfo.getColorSpace() || null == imageMetaInfo.getOrientation()) {
+            return new ArrayList<>();
         }
+
         final Integer fileSizeCode = getSizeCode(imageMetaInfo.getWidth(), imageMetaInfo.getHeight());
         final Integer colorSpaceCode = getColorSpaceCode(imageMetaInfo.getColorSpace());
         final Integer aspectRatioCode = getAspectRatioCode(imageMetaInfo.getOrientation());
@@ -252,7 +253,7 @@ public class ImageTagExtractor {
         colorCodes.add(0);
 
         final Set<Integer> mimeTypeCodes = new HashSet<>();
-        mimeTypeCodes.add(mimeTypeCode);
+        mimeTypeCodes.add(CommonTagExtractor.getMimeTypeCode(imageMetaInfo.getMimeType()));
         mimeTypeCodes.add(0);
 
         final Set<Integer> fileSizeCodes = new HashSet<>();
@@ -296,10 +297,9 @@ public class ImageTagExtractor {
     /**
      * Generates the list of facet tags.
      * @param imageMetaInfo the meta info object
-     * @param mimeTypeCode the mimetype of the resource
      * @return the list of facet tags
      */
-    public static List<Integer> getFacetTags(final ImageMetaInfo imageMetaInfo, Integer mimeTypeCode) {
+    public static List<Integer> getFacetTags(final ImageMetaInfo imageMetaInfo) {
         final List<Integer> facetTags = new ArrayList<>();
 
         final Integer mediaTypeCode = MediaTypeEncoding.IMAGE.getEncodedValue();
@@ -307,7 +307,7 @@ public class ImageTagExtractor {
         Integer facetTag;
 
         if(imageMetaInfo.getMimeType() != null) {
-            mimeTypeCode = CommonTagExtractor.getMimeTypeCode(imageMetaInfo.getMimeType());
+            final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(imageMetaInfo.getMimeType());
             facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
             facetTags.add(facetTag);
         }
