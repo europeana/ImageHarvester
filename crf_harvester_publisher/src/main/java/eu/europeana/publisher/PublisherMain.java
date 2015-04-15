@@ -13,6 +13,7 @@ import org.joda.time.DateTime;
 import scala.Char;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Iterator;
@@ -58,12 +59,12 @@ public class PublisherMain {
         try {
             startTimestampFile = config.getString("criteria.startTimestampFile");
             if (null != startTimestampFile) {
-                String file = FileUtils.readFileToString(new File(startTimestampFile));
+                String file = FileUtils.readFileToString(new File(startTimestampFile), Charset.forName("UTF-8").name());
                 if (StringUtils.isEmpty(file)) {
                     LOG.info("File is empty => startTimestamp is null");
                 }
                 else {
-                    startTimestamp = DateTime.parse(file);
+                    startTimestamp = DateTime.parse(file.trim());
                     LOG.info("startTimestamp loaded from file is "+startTimestamp);
                 }
             }
@@ -73,6 +74,9 @@ public class PublisherMain {
         }
         catch (ConfigException.Null e) {
             LOG.info("startTimestampFile is null");
+        }
+        catch (FileNotFoundException e) {
+            LOG.info("Timestamp file doesn't exist => startTimestampFile is null");
         }
 
         final String solrURL = config.getString("solr.url");
