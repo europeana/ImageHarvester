@@ -147,22 +147,27 @@ public class Publisher {
                     final Integer mediaTypeCode = CommonTagExtractor.getMediaTypeCode(metaInfo);
                     Integer mimeTypeCode = null;
 
-                    if (null != metaInfo.getAudioMetaInfo()) {
+                    if (null != metaInfo.getAudioMetaInfo() && null != metaInfo.getAudioMetaInfo().getMimeType()) {
                         mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getAudioMetaInfo().getMimeType());
                     }
 
-                    if (null != metaInfo.getVideoMetaInfo()) {
+                    if (null != metaInfo.getVideoMetaInfo() && null != metaInfo.getVideoMetaInfo().getMimeType()) {
                         mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getVideoMetaInfo().getMimeType());
                     }
 
-                    if (null != metaInfo.getImageMetaInfo()) {
+                    if (null != metaInfo.getImageMetaInfo() && null != metaInfo.getImageMetaInfo().getMimeType()) {
                         mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getImageMetaInfo().getMimeType());
                     }
 
-                    System.out.println("mimeTypeCode is " + mimeTypeCode);
+                    if (null != metaInfo.getTextMetaInfo() && null != metaInfo.getTextMetaInfo().getMimeType()) {
+                        mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getTextMetaInfo().getMimeType());
+                    }
 
-                    if (null != mimeTypeCode && mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
-                        LOG.error ("Skinping record with mimetype text/html. ID: " + ID);
+                    if (null == mimeTypeCode) {
+                        LOG.info ("Mime-Type null for document id: " + ID );
+                    }
+                    else if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
+                        LOG.error ("Skipping record with mimetype text/html. ID: " + ID);
                         continue;
                     }
 
@@ -219,7 +224,12 @@ public class Publisher {
                     }
 
                     // Creates the wrapping object for the new properties
-                    final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(retrievedDocsPerID.get(ID).getRecordId(), isFulltext, hasThumbnails, hasMedia, filterTags, facetTags);
+                    final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(retrievedDocsPerID.get(ID).getRecordId(),
+                                                                                isFulltext,
+                                                                                hasThumbnails,
+                                                                                hasMedia,
+                                                                                filterTags,
+                                                                                facetTags);
                     if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith("/9200365/"))
                         solrCandidateDocuments.add(CRFSolrDocument);
                     else LOG.error("Skipping records that starts with /9200365/");
