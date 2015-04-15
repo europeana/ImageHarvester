@@ -102,16 +102,20 @@ public class SoundTagExtractor {
      * @return the list of facet tags
      */
     public static List<Integer> getFacetTags(final AudioMetaInfo audioMetaInfo) {
+        if (null == audioMetaInfo.getMimeType() || null == audioMetaInfo.getDuration() ||
+            null == audioMetaInfo.getBitDepth() || null == audioMetaInfo.getSampleRate() ||
+            null == audioMetaInfo.getFileFormat()) {
+            return new ArrayList<>();
+        }
+
         final List<Integer> facetTags = new ArrayList<>();
         final Integer mediaTypeCode = MediaTypeEncoding.SOUND.getEncodedValue();
 
         Integer facetTag;
 
-        if(audioMetaInfo.getMimeType() != null) {
-            final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(audioMetaInfo.getMimeType());
-            facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
-            facetTags.add(facetTag);
-        }
+        final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(audioMetaInfo.getMimeType());
+        facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
+        facetTags.add(facetTag);
 
         final Integer qualityCode = getQualityCode(audioMetaInfo.getBitDepth(), audioMetaInfo.getSampleRate(), audioMetaInfo.getFileFormat());
         facetTag = mediaTypeCode | (qualityCode << TagEncoding.SOUND_QUALITY.getBitPos());

@@ -306,11 +306,14 @@ public class ImageTagExtractor {
 
         Integer facetTag;
 
-        if(imageMetaInfo.getMimeType() != null) {
-            final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(imageMetaInfo.getMimeType());
-            facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
-            facetTags.add(facetTag);
+        if (null == imageMetaInfo.getMimeType() || null == imageMetaInfo.getWidth() || null == imageMetaInfo.getHeight()
+                || null == imageMetaInfo.getColorPalette() || null == imageMetaInfo.getColorSpace() || null == imageMetaInfo.getOrientation()) {
+            return new ArrayList<>();
         }
+
+        final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(imageMetaInfo.getMimeType());
+        facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
+        facetTags.add(facetTag);
 
         final Integer fileSizeCode = getSizeCode(imageMetaInfo.getWidth(), imageMetaInfo.getHeight());
         facetTag = mediaTypeCode | (fileSizeCode << TagEncoding.IMAGE_SIZE.getBitPos());

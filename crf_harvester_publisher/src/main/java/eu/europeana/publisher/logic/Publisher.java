@@ -289,7 +289,7 @@ public class Publisher {
                 final long lastBatchProcessingRate = solrCandidateDocuments.size() / lastBatchDurationInSecs;
                 final long lastBatchPublishingRate = solrDocsToUpdate.size() / lastBatchDurationInSecs;
 
-                LOG.error("Global stats : " + " uptime : " + uptimeInSecs + " s" + " | process rate " + processingRate + " / s |  " + " | publish rate " + publishingRate + " / s ");
+                LOG.error("Global stats : " + "Total number of processed documents: " + publisherRecordsProcessed + "| Total number of published records: " + publisherRecordsPublished + " | uptime : " + uptimeInSecs + " s" + " | process rate " + processingRate + " / s |  " + " | publish rate " + publishingRate + " / s ");
                 LOG.error("Last batch stats : " + " duration : " + lastBatchDurationInSecs + " s" + " | process rate " + lastBatchProcessingRate + " / s |  " + " | publish rate " + lastBatchPublishingRate + " / s |  " + "Last succesful timestamp is : " + lastSuccesfulPublish);
 
                 if (config.getStartTimestampFile() != null) {

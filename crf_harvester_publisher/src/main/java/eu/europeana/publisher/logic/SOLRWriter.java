@@ -5,8 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
+import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.singletonMap;
 
@@ -42,7 +45,7 @@ public class SOLRWriter {
         this.solrUrl = url;
     }
 
-    private HttpSolrServer createServer() {
+    private SolrServer createServer() {
         final HttpSolrServer server = new HttpSolrServer(solrUrl);
         server.setRequestWriter(new BinaryRequestWriter());
         return server;
@@ -58,7 +61,7 @@ public class SOLRWriter {
 
         int retry = 0;
         while (retry <= MAX_RETRIES) {
-            final HttpSolrServer server = createServer();
+            final SolrServer server = createServer();
 
             // Adding individual documents in server
             for (final CRFSolrDocument CRFSolrDocument : newDocs) {
@@ -100,7 +103,7 @@ public class SOLRWriter {
                         retry++;
                         final long secsToSleep = retry * 10;
                         LOG.error("Exception with SOLR ...." + e.getMessage() + " retries executed already " + retry + " => sleeping " + secsToSleep + " s and retrying");
-                        Thread.sleep(secsToSleep * 1000);
+                        TimeUnit.SECONDS.sleep(secsToSleep);
                     } catch (InterruptedException e1) {
                         e1.printStackTrace();
                     }
@@ -142,7 +145,7 @@ public class SOLRWriter {
                 query.set(CommonParams.FL, "europeana_id");
 
                 try {
-                    final HttpSolrServer server = createServer();
+                    final SolrServer server = createServer();
 
                     final QueryResponse response = server.query(query);
                     // Mark in the result the documents id's that have been found

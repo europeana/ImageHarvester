@@ -89,17 +89,20 @@ public class VideoTagExtractor {
      * @return the list of facet tags
      */
     public static List<Integer> getFacetTags(final VideoMetaInfo videoMetaInfo) {
+        if (null == videoMetaInfo.getMimeType() || null == videoMetaInfo.getHeight() || null == videoMetaInfo.getDuration()) {
+            return new ArrayList<>();
+        }
+
+
         final List<Integer> facetTags = new ArrayList<>();
 
         final Integer mediaTypeCode = MediaTypeEncoding.VIDEO.getEncodedValue();
 
         Integer facetTag;
 
-        if(videoMetaInfo.getMimeType() != null) {
-            final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(videoMetaInfo.getMimeType());
-            facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
-            facetTags.add(facetTag);
-        }
+        final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(videoMetaInfo.getMimeType());
+        facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
+        facetTags.add(facetTag);
 
         final Integer qualityCode = getQualityCode(videoMetaInfo.getHeight());
         facetTag = mediaTypeCode | (qualityCode << TagEncoding.VIDEO_QUALITY.getBitPos());
