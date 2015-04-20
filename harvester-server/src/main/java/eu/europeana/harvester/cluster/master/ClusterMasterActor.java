@@ -563,29 +563,35 @@ public class ClusterMasterActor extends UntypedActor {
      * Checks for tasks which was not acknowledged by any slave so they will be reloaded.
      */
     private void checkForMissedTasks() {
+
+        LOG.info("Checking for long running tasks");
+
         final DateTime currentTime = new DateTime();
 
         List<String> tasksToRemove = new ArrayList<>();
 
         try {
             final Map<String, DateTime> tasks = new HashMap<>(tasksPerTime);
+            int howMany = 0;
 
             for (final String task : tasks.keySet()) {
                 final DateTime timeout =
                         tasks.get(task).plusMillis(clusterMasterConfig.getResponseTimeoutFromSlaveInMillis());
                 if (timeout.isBefore(currentTime)) {
                     tasksToRemove.add(task);
+                    howMany++;
 
                     accountantActor.tell(new ModifyState(task, TaskState.READY), getSelf());
-                    accountantActor.tell(new RemoveDownloadSpeed(task), getSelf());
+                    //accountantActor.tell(new RemoveDownloadSpeed(task), getSelf());
                 }
             }
 
             for(final String task : tasksToRemove) {
                 tasksPerTime.remove(task);
             }
+            LOG.info( "Removed {} tasks",howMany);
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+            LOG.error("Check for missed tasks error: {}",e.getMessage());
         }
 
         final int period = clusterMasterConfig.getResponseTimeoutFromSlaveInMillis()/1000;
