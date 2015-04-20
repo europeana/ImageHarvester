@@ -130,7 +130,7 @@ public class ReceiverMasterActor extends UntypedActor {
         }
         if(message instanceof DownloadConfirmation) {
             accountantActor.tell(new ModifyState(((DownloadConfirmation) message).getTaskID(), TaskState.PROCESSING), getSelf());
-            accountantActor.tell(new RemoveDownloadSpeed(((DownloadConfirmation) message).getTaskID()), getSelf());
+            //accountantActor.tell(new RemoveDownloadSpeed(((DownloadConfirmation) message).getTaskID()), getSelf());
 
             return;
         }

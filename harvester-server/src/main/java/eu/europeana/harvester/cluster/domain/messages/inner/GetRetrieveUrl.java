@@ -26,7 +26,7 @@ public class GetRetrieveUrl implements Serializable{
         return taskID;
     }
 
-    public boolean isException() {
+    public boolean isIPException() {
         return isException;
     }
 
@@ -36,5 +36,9 @@ public class GetRetrieveUrl implements Serializable{
 
     public int getExceptionLimit() {
         return exceptionLimit;
+    }
+
+    public String toString() {
+        return "IP: "+IP+", taskID: "+taskID;
     }
 }

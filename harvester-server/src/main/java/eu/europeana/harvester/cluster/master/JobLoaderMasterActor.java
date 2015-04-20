@@ -176,6 +176,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         LOG.info("========== Looking for new jobs from MongoDB ==========");
         Long start = System.currentTimeMillis();
         LOG.info("#IPs with tasks: {}", ipDistribution.size());
+        final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
 
         final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
         final List<ProcessingJob> all =
@@ -203,7 +204,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         int i = 0;
         for (final ProcessingJob job : all) {
             try {
-                final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
+
                 final Future<Object> future = Patterns.ask(accountantActor, new IsJobLoaded(job.getId()), timeout);
                 Boolean isLoaded = false;
                 try {
@@ -218,8 +219,6 @@ public class JobLoaderMasterActor extends UntypedActor {
                         i = 0;
                     }
                     addJob(job, resources);
-                } else {
-                    LOG.info("Job is already loaded.");
                 }
             } catch(Exception e) {
                 LOG.error("JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());

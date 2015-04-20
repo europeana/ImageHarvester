@@ -132,6 +132,10 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private final HashMap<String, Boolean> ipsWithJobs = new HashMap<>();
 
+
+
+    private final HashMap< Integer , RequestHolder> jobRequests = new HashMap<>();
+
     public ClusterMasterActor(final ClusterMasterConfig clusterMasterConfig, final IPExceptions ipExceptions,
                               final ProcessingJobDao processingJobDao,
                               final MachineResourceReferenceDao machineResourceReferenceDao,
@@ -156,7 +160,6 @@ public class ClusterMasterActor extends UntypedActor {
         this.cleanupInterval = cleanupInterval;
 
         this.accountantActor = getContext().system().actorOf(Props.create(AccountantMasterActor.class), "accountant");
-        //        this.accountantActor = getContext().system().actorOf(Props.create(AccountantMasterActor.class).withDispatcher("prio-dispatcher"), "accountant");
 
         this.actorsPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<ActorRef>>());
         this.tasksPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<String>>());
@@ -213,8 +216,10 @@ public class ClusterMasterActor extends UntypedActor {
             return;
         }
         if(message instanceof LoadJobs) {
-            jobLoaderActor.tell(message, ActorRef.noSender());
-            jobLoaderActor.tell(new LookInDB(), ActorRef.noSender());
+            if( checkRequest(getSender().hashCode())) {
+                jobLoaderActor.tell(message, ActorRef.noSender());
+                jobLoaderActor.tell(new LookInDB(), ActorRef.noSender());
+            }
 
             return;
         }
@@ -225,8 +230,12 @@ public class ClusterMasterActor extends UntypedActor {
             monitor();
             LOG.info("===================================");
 
-            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(30,
-                    TimeUnit.SECONDS), getSelf(), new Monitor(), getContext().system().dispatcher(), getSelf());
+
+
+
+
+            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+                    TimeUnit.MINUTES), getSelf(), new Monitor(), getContext().system().dispatcher(), getSelf());
             return;
         }
         if(message instanceof CheckForTaskTimeout) {
@@ -301,14 +310,16 @@ public class ClusterMasterActor extends UntypedActor {
         }
     }
 
+    private boolean checkRequest(int requester) {
+
+        return true;
+    }
+
     /**
      * Handles the request for new tasks. Sends a predefined number of tasks.
      * @param sender sender actor.
      */
     private void handleRequest(ActorRef sender) {
-        LOG.info("Request tasks from: {}", sender);
-
-        final Long start = System.currentTimeMillis();
 
         final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
         final Future<Object> future = Patterns.ask(accountantActor, new CheckIPsWithJobs(ipsWithJobs), timeout);
@@ -320,12 +331,21 @@ public class ClusterMasterActor extends UntypedActor {
             percentage = 0.0;
         }
 
+
+
         LOG.info("Percentage of IPs which has loaded requests: {}% load when it's below: {}",
                 percentage, defaultLimits.getMinTasksPerIPPercentage());
         if(percentage < defaultLimits.getMinTasksPerIPPercentage()) {
             accountantActor.tell(new CleanIPs(), getSelf());
             jobLoaderActor.tell(new LoadJobs(), ActorRef.noSender());
         }
+
+
+        LOG.info("Request tasks from: {}", sender);
+
+        final Long start = System.currentTimeMillis();
+
+
 
         startTasks();
 
@@ -345,9 +365,12 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private void startTasks() {
         tasksToSend = new ArrayList<>();
+        final int maxToSend = defaultLimits.getTaskBatchSize();
         try {
             // Each server is a different case. We treat them different.
             for (final String IP : ipsWithJobs.keySet()) {
+
+                final Long start = System.currentTimeMillis();
                 final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
                 final Future<Object> future = Patterns.ask(accountantActor, new GetTasksFromIP(IP), timeout);
 
@@ -359,19 +382,31 @@ public class ClusterMasterActor extends UntypedActor {
                     continue;
                 }
 
-                if(tasksFromIP == null) {continue;}
+
+
+                if (tasksFromIP == null) {
+                    continue;
+                }
+
+                //LOG.info("Got answer from AccountantActor for IP {} in {} seconds", IP, (System.currentTimeMillis() - start) / 1000.0);
+
                 //Long consumedBandwidth = calculateConsumedBandwidth(tasksFromIP);
                 //final Long speedLimitPerLink = getSpeed(IP);
                 Boolean success = true;
 
                 // Starts tasks until we have resources or there are tasks to start. (mainly bandwidth)
-                while(success && tasksToSend.size() < defaultLimits.getTaskBatchSize()) {
+                while (success && tasksToSend.size() < maxToSend) {
                     success = startOneDownload(tasksFromIP, IP);
 
-//                    if(success) {
-//                        consumedBandwidth += speedLimitPerLink;
-//                    }
+                    //                    if(success) {
+                    //                        consumedBandwidth += speedLimitPerLink;
+                    //                    }
                 }
+
+                if ( tasksToSend.size() >= maxToSend ) break;
+
+                //LOG.info("Started downloads for IP {} in {} seconds", IP, (System.currentTimeMillis() - start) / 1000.0);
+
             }
         } catch (Exception e) {
             LOG.error(e.getMessage());
@@ -385,50 +420,85 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private Boolean startOneDownload(final List<String> tasksFromIP, final String IP) {
 
-        for (final String taskID : tasksFromIP) {
+//        for (final String taskID : tasksFromIP) {
+//
+//            Integer nrOfConcurrentDownloads = 0;
+//            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
+//            Future<Object> future = Patterns.ask(accountantActor, new GetNumberOfParallelDownloadsPerIP(IP), timeout);
+//            try {
+//                nrOfConcurrentDownloads = (Integer) Await.result(future, timeout.duration());
+//            } catch (Exception e) {
+//                LOG.error("Error at startOneDownload -> getNumberOfConcurrentDownloadsPerIP: {}", e);
+//            }
+//
+//            if(!ipExceptions.getIps().contains(IP) && nrOfConcurrentDownloads >= defaultLimits.getDefaultMaxConcurrentConnectionsLimit()) {
+//                return false;
+//            }
+//            if(ipExceptions.getIps().contains(IP) && nrOfConcurrentDownloads > ipExceptions.getMaxConcurrentConnectionsLimit()) {
+//                return false;
+//            }
+//            if(ipExceptions.getIgnoredIPs().contains(IP)) {
+//                return false;
+//            }
+//
+//            TaskState state = TaskState.DONE;
+//            future = Patterns.ask(accountantActor, new GetTaskState(taskID), timeout);
+//            try {
+//                state = (TaskState)Await.result(future, timeout.duration());
+//            } catch (Exception e) {
+//                LOG.error("Error at startOneDownload -> getTaskState: {}", e);
+//            }
+//            if((TaskState.READY).equals(state)) {
+//                accountantActor.tell(new ModifyState(taskID, TaskState.DOWNLOADING), getSelf());
+//
+//                RetrieveUrl retrieveUrl = null;
+//                future = Patterns.ask(accountantActor, new GetTask(taskID), timeout);
+//                try {
+//                    retrieveUrl = (RetrieveUrl)Await.result(future, timeout.duration());
+//                } catch (Exception e) {
+//                    LOG.error("Error at startOneDownload -> getTask: {}", e);
+//                }
+//                if(retrieveUrl == null || retrieveUrl.getId().equals("")) {continue;}
+//
+//                tasksToSend.add(retrieveUrl);
+//                //accountantActor.tell(new AddDownloadSpeed(taskID, speed), getSelf());
+//
+//                return true;
+//            }
+//        }
+        if (! ipExceptions.getIgnoredIPs().contains(IP)) {
 
-            Integer nrOfConcurrentDownloads = 0;
-            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-            Future<Object> future = Patterns.ask(accountantActor, new GetNumberOfParallelDownloadsPerIP(IP), timeout);
-            try {
-                nrOfConcurrentDownloads = (Integer) Await.result(future, timeout.duration());
-            } catch (Exception e) {
-                LOG.error("Error at startOneDownload -> getNumberOfConcurrentDownloadsPerIP: {}", e);
-            }
+            for (final String taskID : tasksFromIP) {
 
-            if(!ipExceptions.getIps().contains(IP) && nrOfConcurrentDownloads >= defaultLimits.getDefaultMaxConcurrentConnectionsLimit()) {
-                return false;
-            }
-            if(ipExceptions.getIps().contains(IP) && nrOfConcurrentDownloads > ipExceptions.getMaxConcurrentConnectionsLimit()) {
-                return false;
-            }
-            if(ipExceptions.getIgnoredIPs().contains(IP)) {
-                return false;
-            }
+                final Long start = System.currentTimeMillis();
+                final boolean isException = ipExceptions.getIps().contains(IP);
+                final Long defaultLimit = defaultLimits.getDefaultMaxConcurrentConnectionsLimit();
+                final int exceptionLimit = ipExceptions.getMaxConcurrentConnectionsLimit();
 
-            TaskState state = TaskState.DONE;
-            future = Patterns.ask(accountantActor, new GetTaskState(taskID), timeout);
-            try {
-                state = (TaskState)Await.result(future, timeout.duration());
-            } catch (Exception e) {
-                LOG.error("Error at startOneDownload -> getTaskState: {}", e);
-            }
-            if((TaskState.READY).equals(state)) {
-                accountantActor.tell(new ModifyState(taskID, TaskState.DOWNLOADING), getSelf());
+
+                final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
+                Future<Object> future;
 
                 RetrieveUrl retrieveUrl = null;
-                future = Patterns.ask(accountantActor, new GetTask(taskID), timeout);
+                GetRetrieveUrl message = new GetRetrieveUrl(taskID, IP, isException, defaultLimit, exceptionLimit);
+
+
+                future = Patterns.ask(accountantActor, message , timeout);
                 try {
-                    retrieveUrl = (RetrieveUrl)Await.result(future, timeout.duration());
+                    retrieveUrl = (RetrieveUrl) Await.result(future, timeout.duration());
                 } catch (Exception e) {
                     LOG.error("Error at startOneDownload -> getTask: {}", e);
                 }
-                if(retrieveUrl == null || retrieveUrl.getId().equals("")) {continue;}
+                if (retrieveUrl == null || retrieveUrl.getId().equals("")) {
+                    continue;
+                }
 
                 tasksToSend.add(retrieveUrl);
-                //accountantActor.tell(new AddDownloadSpeed(taskID, speed), getSelf());
+                //LOG.info("Start one download, added retrieve URL {} in {} seconds", retrieveUrl.getUrl(),(System.currentTimeMillis() - start) / 1000.0);
 
                 return true;
+
+
             }
         }
 
@@ -574,6 +644,43 @@ public class ClusterMasterActor extends UntypedActor {
         for(final Map.Entry<Address, HashSet<String>> elem : tasksPerAddress.entrySet()) {
             LOG.info("Address: {}, nr of requests: {}", elem.getKey(), elem.getValue().size());
         }
+    }
+
+    private class RequestHolder {
+
+        private boolean was_requested;
+        private DateTime when;
+        private final long delta = 20000L;
+
+        public RequestHolder ( DateTime t) {
+            this.was_requested = true;
+            this.when = t;
+        }
+
+        public void setTime ( DateTime t) {
+            this.when = t;
+        }
+
+        public DateTime getTime (){
+            return when;
+        }
+
+        public void setRequested ( boolean that) {
+            this.was_requested = that;
+        }
+
+        public boolean getRequested(){
+            return this.was_requested;
+        }
+
+        public boolean should_request(){
+            if ((new DateTime().getMillis() - this.when.getMillis()) <= delta )
+                return false;
+            else
+                return true;
+        }
+
+
     }
 
 }
