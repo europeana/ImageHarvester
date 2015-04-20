@@ -113,7 +113,7 @@ public class Publisher {
             final long startTimeRetrieveDocs = System.currentTimeMillis();
             retrievedDocsPerID = retrieveStatisticsDocumentIdsThatMatch(skip);
             final long endTimeRetrieveDocs = System.currentTimeMillis();
-            LOG.error("Retrieved: " + retrievedDocsPerID.size() + " docs" + " and it took " + (endTimeRetrieveDocs - startTimeRetrieveDocs) / 1000 + " seconds");
+            LOG.info("Retrieved: " + retrievedDocsPerID.size() + " docs" + " and it took " + (endTimeRetrieveDocs - startTimeRetrieveDocs) / 1000 + " seconds");
 
             DateTime lastSuccesfulPublish = null;
 
@@ -139,7 +139,7 @@ public class Publisher {
                 final long startTimeRetrieveMetaInfoDocs = System.currentTimeMillis();
                 metaInfos = sourceDocumentReferenceMetaInfoDaoFromSource.read(list);
                 final long endTimeRetrieveMetaInfoDocs = System.currentTimeMillis();
-                LOG.error("Retrieved meta info docs: " + metaInfos.size() + " docs" + " and it took " + (endTimeRetrieveMetaInfoDocs - startTimeRetrieveMetaInfoDocs) / 1000 + " seconds");
+                LOG.info("Retrieved meta info docs: " + metaInfos.size() + " docs" + " and it took " + (endTimeRetrieveMetaInfoDocs - startTimeRetrieveMetaInfoDocs) / 1000 + " seconds");
 
                 // Iterates over the meta info objects.
                 for (SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
@@ -167,7 +167,7 @@ public class Publisher {
                         LOG.info ("Mime-Type null for document id: " + ID );
                     }
                     else if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
-                        LOG.error ("Skipping record with mimetype text/html. ID: " + ID);
+                        LOG.info ("Skipping record with mimetype text/html. ID: " + ID);
                         continue;
                     }
 
@@ -232,7 +232,7 @@ public class Publisher {
                                                                                 facetTags);
                     if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith("/9200365/"))
                         solrCandidateDocuments.add(CRFSolrDocument);
-                    else LOG.error("Skipping records that starts with /9200365/");
+                    else LOG.info("Skipping records that starts with /9200365/");
                 }
 
                 // Check which candidate documents have an existing SOLR document
@@ -252,7 +252,7 @@ public class Publisher {
                     }
                 }
                 final long endTimeCheckSolrExistence = System.currentTimeMillis();
-                LOG.error("Checked Solr document existence : " + documentThatExist + " in SOLR" + " out of  " + documentIdToExistence.keySet().size() + " in total and took" + (endTimeCheckSolrExistence - startTimeCheckSolrExistence) / 1000 + " seconds");
+                LOG.info("Checked Solr document existence : " + documentThatExist + " in SOLR" + " out of  " + documentIdToExistence.keySet().size() + " in total and took" + (endTimeCheckSolrExistence - startTimeCheckSolrExistence) / 1000 + " seconds");
 
                 // Generate the MongoDB documents that will be written in MongoDB : only the ones that have a corresponding SOLR document qualify
                 final List<WebResourceMetaInfo> webResourceMetaInfosToUpdate = new ArrayList<>();
@@ -265,7 +265,7 @@ public class Publisher {
                         webResourceMetaInfosToUpdate.add(webResourceMetaInfo);
                     }
                 }
-
+                if(solrCandidateDocuments!= null && solrCandidateDocuments.size()>0){
                 // Filter the SOLR documents that will be written in SOLR : only the ones that have a coresponding SOLR document qualify
                 final List<CRFSolrDocument> solrDocsToUpdate = new ArrayList<>();
                 for (CRFSolrDocument doc : solrCandidateDocuments) {
@@ -281,14 +281,14 @@ public class Publisher {
                 final long startTimeSolrWrite = System.currentTimeMillis();
                 final boolean successSolrUpdate = solrWriter.updateDocuments(solrDocsToUpdate);
                 final long endTimeSolrWrite = System.currentTimeMillis();
-                LOG.error("Updating: " + solrDocsToUpdate.size() + " SOLR docs." + " and it took " + (endTimeSolrWrite - startTimeSolrWrite) / 1000 + " seconds");
+                LOG.info("Updating: " + solrDocsToUpdate.size() + " SOLR docs." + " and it took " + (endTimeSolrWrite - startTimeSolrWrite) / 1000 + " seconds");
 
                 // Writes the meta info to a separate MongoDB instance.
                 if (successSolrUpdate) {
                     final long startTimeMongoWrite = System.currentTimeMillis();
                     webResourceMetaInfoDAO.create(webResourceMetaInfosToUpdate, WriteConcern.ACKNOWLEDGED);
                     final long endTimeMongoWrite = System.currentTimeMillis();
-                    LOG.error("Write: " + webResourceMetaInfosToUpdate.size() + " meta infos" + " and it took " + (endTimeMongoWrite - startTimeMongoWrite) / 1000 + " seconds");
+                    LOG.info("Write: " + webResourceMetaInfosToUpdate.size() + " meta infos" + " and it took " + (endTimeMongoWrite - startTimeMongoWrite) / 1000 + " seconds");
                 }
 
                 final long uptimeInSecs = (System.currentTimeMillis() - publisherStarteAt) / 1000;
@@ -299,16 +299,20 @@ public class Publisher {
                 final long lastBatchProcessingRate = solrCandidateDocuments.size() / lastBatchDurationInSecs;
                 final long lastBatchPublishingRate = solrDocsToUpdate.size() / lastBatchDurationInSecs;
 
-                LOG.error("Global stats : Total number of processed documents: " + publisherRecordsProcessed + " | Total number of published records: " + publisherRecordsPublished);
-                LOG.error("Global stats : uptime : " + uptimeInSecs + " s" + " | process rate " + processingRate + " / s |  " + " | publish rate " + publishingRate + " / s ");
-                LOG.error("Last batch stats : " + " duration : " + lastBatchDurationInSecs + " s" + " | process rate " + lastBatchProcessingRate + " / s |  " + " | publish rate " + lastBatchPublishingRate + " / s |  " + "Last succesful timestamp is : " + lastSuccesfulPublish);
+                LOG.info("Global stats : Total number of processed documents: " + publisherRecordsProcessed + " | Total number of published records: " + publisherRecordsPublished);
+                LOG.info("Global stats : uptime : " + uptimeInSecs + " s" + " | process rate " + processingRate + " / s |  " + " | publish rate " + publishingRate + " / s ");
+                LOG.info("Last batch stats : " + " duration : " + lastBatchDurationInSecs + " s" + " | process rate " + lastBatchProcessingRate + " / s |  " + " | publish rate " + lastBatchPublishingRate + " / s |  " + "Last succesful timestamp is : " + lastSuccesfulPublish);
 
                 if (config.getStartTimestampFile() != null) {
                     final Path path = Paths.get(config.getStartTimestampFile());
                     Files.deleteIfExists(path);
                     Files.write(path, lastSuccesfulPublish.toString().getBytes());
-                    LOG.error("Writting last succesfull timestamp " + lastSuccesfulPublish.toString() + " to file " + config.getStartTimestampFile());
+                    LOG.info("Writing last succesfull timestamp " + lastSuccesfulPublish.toString() + " to file " + config.getStartTimestampFile());
                 }
+                } else {
+                	LOG.info("No records found in Solr");
+                }
+                
             }
 
         } while (!done);
