@@ -234,24 +234,26 @@ class HttpClientHandler extends SimpleChannelHandler {
                     boolean changedModifiedDate = false;
                     boolean changedContentLength = false;
 
-                    String lastModified = null;
-                    String contentLength = null;
+                    String presentLastModifiedResponseHeaderValue = null;
+                    String presentContentLengthResponseValue = null;
 
-                    for(Map.Entry<String, String> responseHeader : httpRetrieveResponse.getResponseHeaders().entrySet()) {
-                        if(responseHeader.getKey().equals("Last-Modified")) {
-                            lastModified = responseHeader.getValue();
+                    // Step (1) : Collect the relevant values from the header response.
+                    for(Map.Entry<String, String> presentResponseHeaders : httpRetrieveResponse.getResponseHeaders().entrySet()) {
+                        if(presentResponseHeaders.getKey().equalsIgnoreCase("Last-Modified")) {
+                            presentLastModifiedResponseHeaderValue = presentResponseHeaders.getValue();
                         } else
-                        if(responseHeader.getKey().equals("Content-Length")) {
-                            contentLength = responseHeader.getValue();
+                        if(presentResponseHeaders.getKey().equalsIgnoreCase("Content-Length")) {
+                            presentContentLengthResponseValue = presentResponseHeaders.getValue();
                         }
                     }
 
-                    for (Map.Entry<String, String> responseHeader : headers.entrySet()) {
-                        if(responseHeader.getKey().equals("Last-Modified") && lastModified != null) {
-                            changedModifiedDate = lastModified.equals(responseHeader.getValue());
+                    // Step (2) : Detect if the previous values were the same as the present values.
+                    for (Map.Entry<String, String> previousResponseHeaders : headers.entrySet()) {
+                        if(previousResponseHeaders.getKey().equalsIgnoreCase("Last-Modified") && presentLastModifiedResponseHeaderValue != null) {
+                            changedModifiedDate = presentLastModifiedResponseHeaderValue.equalsIgnoreCase(previousResponseHeaders.getValue());
                         } else
-                        if(responseHeader.getKey().equals("Content-Length") && contentLength != null) {
-                            changedContentLength = contentLength.equals(responseHeader.getValue());
+                        if(previousResponseHeaders.getKey().equalsIgnoreCase("Content-Length") && presentContentLengthResponseValue != null) {
+                            changedContentLength = presentContentLengthResponseValue.equalsIgnoreCase(previousResponseHeaders.getValue());
                         }
                     }
 
