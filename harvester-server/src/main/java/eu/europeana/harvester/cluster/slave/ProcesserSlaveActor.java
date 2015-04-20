@@ -184,17 +184,7 @@ public class ProcesserSlaveActor extends UntypedActor {
      * @throws InterruptedException
      */
     private DoneProcessing metadataExtraction() throws InterruptedException {
-        DoneProcessing doneProcessing = null;
-        try {
-            doneProcessing = extract();
-        } catch (Exception e) {
-            error = "In ProcesserSlaveActor: " + e.getMessage();
-        }
-
-        if (doneProcessing != null) {
-            doneProcessing = doneProcessing.withNewState(ProcessingState.ERROR, error);
-        }
-        return doneProcessing;
+        return extract();
     }
 
     /**
@@ -241,19 +231,11 @@ public class ProcesserSlaveActor extends UntypedActor {
                         break;
                 }
             }
-        } catch (InfoException e) {
-            error = "In ProcesserSlaveActor: \n" + e.toString();
-        } catch (InterruptedException e) {
-            error = "In ProcesserSlaveActor: \n" + e.toString();
-        } catch (IM4JavaException e) {
-            error = "In ProcesserSlaveActor: \n" + e.toString();
-        } catch (IOException e) {
-            error = "In ProcesserSlaveActor: \n" + e.toString();
+            return new DoneProcessing(doneDownload, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
         } catch (Exception e) {
-            error = "In ProcesserSlaveActor: \n" + e.toString();
+            return new DoneProcessing(doneDownload, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo).withNewState(ProcessingState.DOWNLOADING.ERROR,error);
         }
 
-        return new DoneProcessing(doneDownload, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
     }
 
 }
