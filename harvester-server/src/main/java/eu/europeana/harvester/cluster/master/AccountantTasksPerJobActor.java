@@ -80,7 +80,21 @@ public class AccountantTasksPerJobActor extends UntypedActor {
             }
 
             if (message instanceof RemoveJob) {
+
                 final String jobID = ((RemoveJob) message).getJobID();
+                final String IP = ((RemoveJob) message).getJobID();
+                final ActorRef accountantAll = getContext().actorFor("../accountantAll");
+                final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
+
+                List<String> tasks = tasksPerJob.get(jobID);
+
+                if(tasks != null) {
+                    for (final String taskID : tasks) {
+                        accountantAll.tell(new RemoveTask(taskID), getSelf());
+                        accountantPerIP.tell(new RemoveTaskFromIP(taskID, IP), getSelf());
+                    }
+                }
+
 
                 tasksPerJob.remove(jobID);
                 return;

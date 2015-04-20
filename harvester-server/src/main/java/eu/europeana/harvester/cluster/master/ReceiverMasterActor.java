@@ -92,6 +92,7 @@ public class ReceiverMasterActor extends UntypedActor {
      */
     private Integer success = 0;
     private Integer error = 0;
+    int counter = 0;
 
     public ReceiverMasterActor(final ClusterMasterConfig clusterMasterConfig,
                                final ActorRef accountantActor,
@@ -334,28 +335,31 @@ public class ReceiverMasterActor extends UntypedActor {
         if(allDone) {
             final ProcessingJob processingJob = processingJobDao.read(jobID);
             //only for debug
-            LOG.info("Finished with success: {}, with error: {}", success, error);
+            if ( success+error > counter+100 ) {
+                LOG.info("Finished 100+ tasks with success: {}, with error: {}", success, error);
+                counter = success + error;
+            }
 
             final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
             processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
 
-            List<String> tasks = new ArrayList<>();
-            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-
-            final Future<Object> future = Patterns.ask(accountantActor, new GetTasksFromJob(jobID), timeout);
-            try {
-                tasks = (List<String>) Await.result(future, timeout.duration());
-            } catch (Exception e) {
-                LOG.error("Error at markDone->GetTasksFromJob: {}", e);
-            }
-
-            if(tasks != null) {
-                for (final String taskID : tasks) {
-                    accountantActor.tell(new RemoveTask(taskID), getSelf());
-                    accountantActor.tell(new RemoveTaskFromIP(taskID, ipAddress), getSelf());
-                }
-            }
-            accountantActor.tell(new RemoveJob(newProcessingJob.getId()), getSelf());
+//            List<String> tasks = new ArrayList<>();
+//            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
+//
+//            final Future<Object> future = Patterns.ask(accountantActor, new GetTasksFromJob(jobID), timeout);
+//            try {
+//                tasks = (List<String>) Await.result(future, timeout.duration());
+//            } catch (Exception e) {
+//                LOG.error("Error at markDone->GetTasksFromJob: {}", e);
+//            }
+//
+//            if(tasks != null) {
+//                for (final String taskID : tasks) {
+//                    accountantActor.tell(new RemoveTask(taskID), getSelf());
+//                    accountantActor.tell(new RemoveTaskFromIP(taskID, ipAddress), getSelf());
+//                }
+//            }
+            accountantActor.tell(new RemoveJob(newProcessingJob.getId(),ipAddress), getSelf());
 
 
 //            final Message message = new Message();

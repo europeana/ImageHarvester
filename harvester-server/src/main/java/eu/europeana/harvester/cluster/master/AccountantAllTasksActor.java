@@ -27,6 +27,7 @@ public class AccountantAllTasksActor extends UntypedActor {
      * Maps all tasks ids with a pair of task and its state.
      */
     private final Map<String, Pair<RetrieveUrl, TaskState>> allTasks = new HashMap<>();
+//    private final Map<String,Long> allTasksTimer = new HashMap<>();
 
 
     @Override
@@ -134,6 +135,8 @@ public class AccountantAllTasksActor extends UntypedActor {
                 if (allTasks.containsKey(taskID)) {
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
                     allTasks.put(taskID, new Pair<>(retrieveUrl, state));
+//                    if ( state==TaskState.DOWNLOADING || state==TaskState.PROCESSING)
+//                        allTasksTimer.put(taskID, new Long(System.currentTimeMillis()));
                 }
                 return;
             }
@@ -150,6 +153,8 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final String taskID = ((RemoveTask) message).getTaskID();
 
                 allTasks.remove(taskID);
+//                allTasksTimer.remove(taskID);
+
                 return;
             }
 
