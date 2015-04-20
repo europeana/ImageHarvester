@@ -2,6 +2,7 @@ package eu.europeana.publisher.logic;
 
 import eu.europeana.harvester.domain.AudioMetaInfo;
 
+import javax.print.attribute.standard.Media;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.Set;
 /**
  * Extracts the pure tags from an audio resource and generates the fake tags.
  */
-public class AudioTagExtractor {
+public class SoundTagExtractor {
 
     private static Integer getQualityCode(Integer bitDepth, Integer sampleRate, String fileFormat) {
         if(bitDepth != null && sampleRate != null && bitDepth >= 16 && sampleRate >= 44100) {
@@ -48,21 +49,23 @@ public class AudioTagExtractor {
     /**
      * Generates the filter/fake tags
      * @param audioMetaInfo the meta info object
-     * @param mimeTypeCode the mimetype of the resource
      * @return the list of fake tags
      */
-    public static List<Integer> getFilterTags(final AudioMetaInfo audioMetaInfo, Integer mimeTypeCode) {
+    public static List<Integer> getFilterTags(final AudioMetaInfo audioMetaInfo) {
         final List<Integer> filterTags = new ArrayList<>();
-        final Integer mediaTypeCode = 2;
+        final Integer mediaTypeCode = MediaTypeEncoding.SOUND.getEncodedValue();
 
-        if(audioMetaInfo.getMimeType() != null) {
-            mimeTypeCode = CommonTagExtractor.getMimeTypeCode(audioMetaInfo.getMimeType());
+        if (null == audioMetaInfo.getMimeType() || null == audioMetaInfo.getDuration() ||
+            null == audioMetaInfo.getBitDepth() || null == audioMetaInfo.getSampleRate() ||
+            null == audioMetaInfo.getFileFormat()) {
+            return new ArrayList<>();
         }
+
         final Integer qualityCode = getQualityCode(audioMetaInfo.getBitDepth(), audioMetaInfo.getSampleRate(), audioMetaInfo.getFileFormat());
         final Integer durationCode = getDurationCode(audioMetaInfo.getDuration());
 
         final Set<Integer> mimeTypeCodes = new HashSet<>();
-        mimeTypeCodes.add(mimeTypeCode);
+        mimeTypeCodes.add(CommonTagExtractor.getMimeTypeCode(audioMetaInfo.getMimeType()));
         mimeTypeCodes.add(0);
 
         final Set<Integer> qualityCodes = new HashSet<>();
@@ -76,7 +79,10 @@ public class AudioTagExtractor {
         for (Integer mimeType : mimeTypeCodes) {
             for (Integer quality : qualityCodes) {
                 for (Integer duration : durationCodes) {
-                    final Integer result = mediaTypeCode<<25 | mimeType<<15 | quality<<13 | duration<<10;
+                    final Integer result = mediaTypeCode |
+                                           (mimeType << TagEncoding.MIME_TYPE.getBitPos())  |
+                                           (quality  << TagEncoding.SOUND_QUALITY.getBitPos()) |
+                                           (duration << TagEncoding.SOUND_DURATION.getBitPos());
 
                     filterTags.add(result);
 
@@ -93,28 +99,30 @@ public class AudioTagExtractor {
     /**
      * Generates the list of facet tags.
      * @param audioMetaInfo the meta info object
-     * @param mimeTypeCode the mimetype of the resource
      * @return the list of facet tags
      */
-    public static List<Integer> getFacetTags(final AudioMetaInfo audioMetaInfo, Integer mimeTypeCode) {
-        final List<Integer> facetTags = new ArrayList<>();
+    public static List<Integer> getFacetTags(final AudioMetaInfo audioMetaInfo) {
+        if (null == audioMetaInfo.getMimeType() || null == audioMetaInfo.getDuration() ||
+            null == audioMetaInfo.getBitDepth() || null == audioMetaInfo.getSampleRate() ||
+            null == audioMetaInfo.getFileFormat()) {
+            return new ArrayList<>();
+        }
 
-        final Integer mediaTypeCode = 2;
+        final List<Integer> facetTags = new ArrayList<>();
+        final Integer mediaTypeCode = MediaTypeEncoding.SOUND.getEncodedValue();
 
         Integer facetTag;
 
-        if(audioMetaInfo.getMimeType() != null) {
-            mimeTypeCode = CommonTagExtractor.getMimeTypeCode(audioMetaInfo.getMimeType());
-            facetTag = mediaTypeCode<<25 | mimeTypeCode<<15;
-            facetTags.add(facetTag);
-        }
+        final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(audioMetaInfo.getMimeType());
+        facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
+        facetTags.add(facetTag);
 
         final Integer qualityCode = getQualityCode(audioMetaInfo.getBitDepth(), audioMetaInfo.getSampleRate(), audioMetaInfo.getFileFormat());
-        facetTag = mediaTypeCode<<25 | qualityCode<<13;
+        facetTag = mediaTypeCode | (qualityCode << TagEncoding.SOUND_QUALITY.getBitPos());
         facetTags.add(facetTag);
 
         final Integer durationCode = getDurationCode(audioMetaInfo.getDuration());
-        facetTag = mediaTypeCode<<25 | durationCode<<10;
+        facetTag = mediaTypeCode | (durationCode << TagEncoding.SOUND_DURATION.getBitPos());
         facetTags.add(facetTag);
 
         return facetTags;

@@ -38,21 +38,21 @@ public class VideoTagExtractor {
     /**
      * Generates the filter/fake tags
      * @param videoMetaInfo the meta info object
-     * @param mimeTypeCode the mimetype of the resource
      * @return the list of fake tags
      */
-    public static List<Integer> getFilterTags(final VideoMetaInfo videoMetaInfo, Integer mimeTypeCode) {
+    public static List<Integer> getFilterTags(final VideoMetaInfo videoMetaInfo) {
         final List<Integer> filterTags = new ArrayList<>();
-        final Integer mediaTypeCode = 3;
+        final Integer mediaTypeCode = MediaTypeEncoding.VIDEO.getEncodedValue();
 
-        if(videoMetaInfo.getMimeType() != null) {
-            mimeTypeCode = CommonTagExtractor.getMimeTypeCode(videoMetaInfo.getMimeType());
+        if (null == videoMetaInfo.getMimeType() || null == videoMetaInfo.getHeight() || null == videoMetaInfo.getDuration()) {
+            return new ArrayList<>();
         }
+
         final Integer qualityCode = getQualityCode(videoMetaInfo.getHeight());
         final Integer durationCode = getDurationCode(videoMetaInfo.getDuration());
 
         final Set<Integer> mimeTypeCodes = new HashSet<>();
-        mimeTypeCodes.add(mimeTypeCode);
+        mimeTypeCodes.add(CommonTagExtractor.getMimeTypeCode(videoMetaInfo.getMimeType()));
         mimeTypeCodes.add(0);
 
         final Set<Integer> qualityCodes = new HashSet<>();
@@ -66,7 +66,10 @@ public class VideoTagExtractor {
         for (Integer mimeType : mimeTypeCodes) {
             for (Integer quality : qualityCodes) {
                 for (Integer duration : durationCodes) {
-                    final Integer result = mediaTypeCode<<25 | mimeType<<15 | quality<<13 | duration<<10;
+                    final Integer result = mediaTypeCode |
+                                          (mimeType << TagEncoding.MIME_TYPE.getBitPos()) |
+                                          (quality  << TagEncoding.VIDEO_QUALITY.getBitPos()) |
+                                          (duration << TagEncoding.VIDEO_DURATION.getBitPos());
 
                     filterTags.add(result);
 
@@ -83,28 +86,30 @@ public class VideoTagExtractor {
     /**
      * Generates the list of facet tags.
      * @param videoMetaInfo the meta info object
-     * @param mimeTypeCode the mimetype of the resource
      * @return the list of facet tags
      */
-    public static List<Integer> getFacetTags(final VideoMetaInfo videoMetaInfo, Integer mimeTypeCode) {
+    public static List<Integer> getFacetTags(final VideoMetaInfo videoMetaInfo) {
+        if (null == videoMetaInfo.getMimeType() || null == videoMetaInfo.getHeight() || null == videoMetaInfo.getDuration()) {
+            return new ArrayList<>();
+        }
+
+
         final List<Integer> facetTags = new ArrayList<>();
 
-        final Integer mediaTypeCode = 3;
+        final Integer mediaTypeCode = MediaTypeEncoding.VIDEO.getEncodedValue();
 
         Integer facetTag;
 
-        if(videoMetaInfo.getMimeType() != null) {
-            mimeTypeCode = CommonTagExtractor.getMimeTypeCode(videoMetaInfo.getMimeType());
-            facetTag = mediaTypeCode<<25 | mimeTypeCode<<15;
-            facetTags.add(facetTag);
-        }
+        final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(videoMetaInfo.getMimeType());
+        facetTag = mediaTypeCode | (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos());
+        facetTags.add(facetTag);
 
         final Integer qualityCode = getQualityCode(videoMetaInfo.getHeight());
-        facetTag = mediaTypeCode<<25 | qualityCode<<13;
+        facetTag = mediaTypeCode | (qualityCode << TagEncoding.VIDEO_QUALITY.getBitPos());
         facetTags.add(facetTag);
 
         final Integer durationCode = getDurationCode(videoMetaInfo.getDuration());
-        facetTag = mediaTypeCode<<25 | durationCode<<10;
+        facetTag = mediaTypeCode | (durationCode << TagEncoding.VIDEO_DURATION.getBitPos());
         facetTags.add(facetTag);
 
         return facetTags;

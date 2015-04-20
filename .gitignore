@@ -7,16 +7,14 @@ harvester.iml
 
 *.iml
 
-*.iml
+*.jar
 
 harvester-persistence/harvester-persistence.iml
-
-harvester-persistence/harvester-persistence.iml
-
 harvester-server/harvester-server.iml
-
-harvester-server/harvester-server.iml
-
 harvester-client/harvester-client.iml
 
-harvester-server/harvester-server.iml
+#ignore target compilation
+harvester-persistence/target/
+harvester-server/target/
+media-storage-client/target/
+

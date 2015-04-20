@@ -60,6 +60,8 @@ public class PublisherConfig {
      */
     private final DateTime startTimestamp;
 
+    private final String startTimestampFile;
+
     /**
      * The URL of the Solr instance.
      * e.g.: http://IP:Port/solr
@@ -74,7 +76,7 @@ public class PublisherConfig {
     public PublisherConfig(final String sourceHost, final Integer sourcePort, final String sourceDBName,
                            final String sourceDBUsername, final String sourceDBPassword, final String targetHost,
                            final Integer targetPort, final String targetDBName, final String targetDBUsername,
-                           final String targetDBPassword, final DateTime startTimestamp,
+                           final String targetDBPassword, final DateTime startTimestamp,String startTimestampFile,
                            final String solrURL, final Integer batch) {
         this.sourceHost = sourceHost;
         this.sourcePort = sourcePort;
@@ -87,6 +89,7 @@ public class PublisherConfig {
         this.targetDBUsername = targetDBUsername;
         this.targetDBPassword = targetDBPassword;
         this.startTimestamp = startTimestamp;
+        this.startTimestampFile = startTimestampFile;
         this.solrURL = solrURL;
         this.batch = batch;
     }
@@ -135,6 +138,10 @@ public class PublisherConfig {
         return startTimestamp;
     }
 
+    public String getStartTimestampFile() {
+        return startTimestampFile;
+    }
+
     public String getSolrURL() {
         return solrURL;
     }
@@ -142,4 +149,28 @@ public class PublisherConfig {
     public Integer getBatch() {
         return batch;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer();
+
+        buffer.append("--------------------------------------------------------------\n");
+        buffer.append("sourceHost: " + sourceHost);
+        buffer.append("sourcePort: " + sourcePort);
+        buffer.append("sourceDBName: " + sourceDBName);
+        buffer.append("sourceDBUsername: " + sourceDBUsername);
+        buffer.append("sourceDBPassword: " + sourceDBPassword);
+        buffer.append("targetHost: " + targetHost);
+        buffer.append("targetPort: " + targetPort);
+        buffer.append("targetDBName: " + targetDBName);
+        buffer.append("targetDBUsername: " + targetDBUsername);
+        buffer.append("targetDBPassword: " + targetDBPassword);
+        buffer.append("startTimestamp: " + startTimestamp);
+        buffer.append("startTimestampFile: " + startTimestampFile);
+        buffer.append("--------------------------------------------------------------\n");
+
+        return buffer.toString();
+    }
+
+
 }
