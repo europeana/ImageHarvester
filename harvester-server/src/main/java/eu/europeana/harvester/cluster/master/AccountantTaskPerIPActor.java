@@ -191,7 +191,8 @@ public class AccountantTaskPerIPActor extends UntypedActor {
                 LOG.error("Error: {}", e);
             }
 
-            if ((taskState!=null) && (taskState.equals(TaskState.READY)||taskState.equals(TaskState.DOWNLOADING) || taskState.equals(TaskState.PROCESSING)) ) {
+//            if ((taskState!=null) && (taskState.equals(TaskState.READY)||taskState.equals(TaskState.DOWNLOADING) || taskState.equals(TaskState.PROCESSING)) ) {
+            if ((taskState!=null) && (taskState.equals(TaskState.READY)||taskState.equals(TaskState.DOWNLOADING)) ) {
                 foundActive = true;
                 break;
             }

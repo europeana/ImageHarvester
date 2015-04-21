@@ -383,29 +383,22 @@ public class ClusterMasterActor extends UntypedActor {
                 }
 
 
-
                 if (tasksFromIP == null) {
                     continue;
                 }
 
-                //LOG.info("Got answer from AccountantActor for IP {} in {} seconds", IP, (System.currentTimeMillis() - start) / 1000.0);
+                //LOG.info("Got {} tasks for IP {} ", tasksFromIP.size(), IP);
 
-                //Long consumedBandwidth = calculateConsumedBandwidth(tasksFromIP);
-                //final Long speedLimitPerLink = getSpeed(IP);
                 Boolean success = true;
 
                 // Starts tasks until we have resources or there are tasks to start. (mainly bandwidth)
                 while (success && tasksToSend.size() < maxToSend) {
                     success = startOneDownload(tasksFromIP, IP);
-
-                    //                    if(success) {
-                    //                        consumedBandwidth += speedLimitPerLink;
-                    //                    }
-                }
+               }
 
                 if ( tasksToSend.size() >= maxToSend ) break;
 
-                //LOG.info("Started downloads for IP {} in {} seconds", IP, (System.currentTimeMillis() - start) / 1000.0);
+                //LOG.info("Started {} downloads for IP {} in {} seconds", tasksToSend.size(), IP, (System.currentTimeMillis() - start) / 1000.0);
 
             }
         } catch (Exception e) {
@@ -420,52 +413,6 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private Boolean startOneDownload(final List<String> tasksFromIP, final String IP) {
 
-//        for (final String taskID : tasksFromIP) {
-//
-//            Integer nrOfConcurrentDownloads = 0;
-//            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-//            Future<Object> future = Patterns.ask(accountantActor, new GetNumberOfParallelDownloadsPerIP(IP), timeout);
-//            try {
-//                nrOfConcurrentDownloads = (Integer) Await.result(future, timeout.duration());
-//            } catch (Exception e) {
-//                LOG.error("Error at startOneDownload -> getNumberOfConcurrentDownloadsPerIP: {}", e);
-//            }
-//
-//            if(!ipExceptions.getIps().contains(IP) && nrOfConcurrentDownloads >= defaultLimits.getDefaultMaxConcurrentConnectionsLimit()) {
-//                return false;
-//            }
-//            if(ipExceptions.getIps().contains(IP) && nrOfConcurrentDownloads > ipExceptions.getMaxConcurrentConnectionsLimit()) {
-//                return false;
-//            }
-//            if(ipExceptions.getIgnoredIPs().contains(IP)) {
-//                return false;
-//            }
-//
-//            TaskState state = TaskState.DONE;
-//            future = Patterns.ask(accountantActor, new GetTaskState(taskID), timeout);
-//            try {
-//                state = (TaskState)Await.result(future, timeout.duration());
-//            } catch (Exception e) {
-//                LOG.error("Error at startOneDownload -> getTaskState: {}", e);
-//            }
-//            if((TaskState.READY).equals(state)) {
-//                accountantActor.tell(new ModifyState(taskID, TaskState.DOWNLOADING), getSelf());
-//
-//                RetrieveUrl retrieveUrl = null;
-//                future = Patterns.ask(accountantActor, new GetTask(taskID), timeout);
-//                try {
-//                    retrieveUrl = (RetrieveUrl)Await.result(future, timeout.duration());
-//                } catch (Exception e) {
-//                    LOG.error("Error at startOneDownload -> getTask: {}", e);
-//                }
-//                if(retrieveUrl == null || retrieveUrl.getId().equals("")) {continue;}
-//
-//                tasksToSend.add(retrieveUrl);
-//                //accountantActor.tell(new AddDownloadSpeed(taskID, speed), getSelf());
-//
-//                return true;
-//            }
-//        }
         if (! ipExceptions.getIgnoredIPs().contains(IP)) {
 
             for (final String taskID : tasksFromIP) {
@@ -505,93 +452,34 @@ public class ClusterMasterActor extends UntypedActor {
         return false;
     }
 
-    /**
-     * Calculates the currently consumed bandwidth per IP
-     * @param tasksFromIP
-     * @return the consumed bandwidth
-     */
-//    private Long calculateConsumedBandwidth(final List<String> tasksFromIP) {
-//        Long consumedBandwidth = 0l;
-//        for (final String taskID : tasksFromIP) {
-//            try {
-//                TaskState state = TaskState.DONE;
-//                final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-//                Future<Object> future = Patterns.ask(accountantActor, new GetTaskState(taskID), timeout);
-//                try {
-//                    state = (TaskState)Await.result(future, timeout.duration());
-//                } catch (Exception e) {
-//                    LOG.error("Error at calculateConsumedBandwidth -> GetTaskState: {}", e);
-//                }
-//                if ((TaskState.DOWNLOADING).equals(state)) {
-//                    Long speed = 0l;
-//                    future = Patterns.ask(accountantActor, new GetDownloadSpeed(taskID), timeout);
-//                    try {
-//                        speed = (Long)Await.result(future, timeout.duration());
-//                    } catch (Exception e) {
-//                        LOG.error("Error at calculateConsumedBandwidth -> GetDownloadSpeed: {}", e);
-//                    }
-//
-//                    consumedBandwidth += speed;
-//                }
-//            } catch (Exception e) {
-//                LOG.info("Exception at consumed bandwidth calculation: ", e.getMessage());
-//            }
-//        }
-//
-//        return consumedBandwidth;
-//    }
-
-    /**
-     * Calculates the allowed download speed.
-     * @param ipAddress
-     * @return the download speed
-     */
-//    private Long getSpeed(final String ipAddress) {
-//        Long speedLimitPerLink;
-//        if(ipExceptions.getIps().contains(ipAddress)) {
-//            speedLimitPerLink = defaultLimits.getDefaultBandwidthLimitReadInBytesPerSec() /
-//                    ipExceptions.getMaxConcurrentConnectionsLimit();
-//        } else {
-//            speedLimitPerLink = defaultLimits.getDefaultBandwidthLimitReadInBytesPerSec() /
-//                    defaultLimits.getDefaultMaxConcurrentConnectionsLimit();
-//        }
-//
-//        return speedLimitPerLink;
-//    }
 
     /**
      * Checks for tasks which was not acknowledged by any slave so they will be reloaded.
      */
     private void checkForMissedTasks() {
-
-        LOG.info("Checking for long running tasks");
-
         final DateTime currentTime = new DateTime();
 
         List<String> tasksToRemove = new ArrayList<>();
 
         try {
             final Map<String, DateTime> tasks = new HashMap<>(tasksPerTime);
-            int howMany = 0;
 
             for (final String task : tasks.keySet()) {
                 final DateTime timeout =
                         tasks.get(task).plusMillis(clusterMasterConfig.getResponseTimeoutFromSlaveInMillis());
                 if (timeout.isBefore(currentTime)) {
                     tasksToRemove.add(task);
-                    howMany++;
 
                     accountantActor.tell(new ModifyState(task, TaskState.READY), getSelf());
-                    //accountantActor.tell(new RemoveDownloadSpeed(task), getSelf());
+                    accountantActor.tell(new RemoveDownloadSpeed(task), getSelf());
                 }
             }
 
             for(final String task : tasksToRemove) {
                 tasksPerTime.remove(task);
             }
-            LOG.info( "Removed {} tasks",howMany);
         } catch (Exception e) {
-            LOG.error("Check for missed tasks error: {}",e.getMessage());
+            LOG.error(e.getMessage());
         }
 
         final int period = clusterMasterConfig.getResponseTimeoutFromSlaveInMillis()/1000;
