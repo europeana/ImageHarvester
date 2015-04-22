@@ -82,7 +82,7 @@ public class AccountantTasksPerJobActor extends UntypedActor {
             if (message instanceof RemoveJob) {
 
                 final String jobID = ((RemoveJob) message).getJobID();
-                final String IP = ((RemoveJob) message).getJobID();
+                final String IP = ((RemoveJob) message).getIP();
                 final ActorRef accountantAll = getContext().actorFor("../accountantAll");
                 final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
 

@@ -325,7 +325,7 @@ public class AccountantAllTasksActor extends UntypedActor {
             if ( currentTime-sinceWhen.longValue() > 30*60*1000 ) {
                 if (allTasks.containsKey(taskID)) {
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
-                    allTasks.put(taskID, new Pair<>(retrieveUrl, TaskState.DONE));
+                    allTasks.remove(taskID);
                 }
             }
         }
