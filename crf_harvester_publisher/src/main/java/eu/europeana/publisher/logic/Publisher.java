@@ -210,6 +210,12 @@ public class Publisher {
 						continue;
 					}
 
+					if (null == metaInfo.getAudioMetaInfo() && null == metaInfo.getImageMetaInfo()
+						&& null == metaInfo.getVideoMetaInfo() && null == metaInfo.getTextMetaInfo()) {
+						LOG.error("Record : " + ID + " with metaInfo id: " + metaInfo.getId() + " has no metainfo");
+						continue;
+					}
+
 					// The new properties
 					Boolean isFulltext = false;
 					Boolean hasThumbnails = false;
@@ -221,7 +227,8 @@ public class Publisher {
 					// type.
 					switch (mediaTypeCode) {
 					case 0:
-						break;
+						LOG.error ("RecordID " + ID + " with metainfo id: " + metaInfo.getId() + " has mediaTypeCode 0 skipping.");
+						continue;
 					case 1:
 						final ImageMetaInfo imageMetaInfo = metaInfo
 								.getImageMetaInfo();
@@ -231,6 +238,7 @@ public class Publisher {
 								.getFacetTags(imageMetaInfo);
 						hasMedia = true;
 						hasThumbnails = isImageWithThumbnail(imageMetaInfo);
+
 						if (hasThumbnails) {
 							hasMedia = false;
 						}
@@ -248,6 +256,7 @@ public class Publisher {
 					case 2:
 						final AudioMetaInfo audioMetaInfo = metaInfo
 								.getAudioMetaInfo();
+
 						filterTags = SoundTagExtractor
 								.getFilterTags(audioMetaInfo);
 						facetTags = SoundTagExtractor
@@ -271,6 +280,11 @@ public class Publisher {
 						isFulltext = textMetaInfo.getIsSearchable();
 
 						break;
+					}
+
+					if (false == hasMedia) {
+						LOG.error("Has Media is false for record: " + ID + " with metainfo: " + metaInfo.getId());
+						continue;
 					}
 
 					// Creates the wrapping object for the new properties
@@ -304,6 +318,8 @@ public class Publisher {
 						documentThatExist++;
 					}
 				}
+
+
 				final long endTimeCheckSolrExistence = System
 						.currentTimeMillis();
 				LOG.error("Checked Solr document existence : "
