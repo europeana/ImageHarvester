@@ -7,6 +7,7 @@ import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.TaskState;
+import eu.europeana.harvester.cluster.domain.messages.CleanUp;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
@@ -15,7 +16,10 @@ import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class AccountantAllTasksActor extends UntypedActor {
@@ -27,7 +31,7 @@ public class AccountantAllTasksActor extends UntypedActor {
      * Maps all tasks ids with a pair of task and its state.
      */
     private final Map<String, Pair<RetrieveUrl, TaskState>> allTasks = new HashMap<>();
-//    private final Map<String,Long> allTasksTimer = new HashMap<>();
+    private final Map<String,Long> allTasksTimer = new HashMap<>();
 
 
     @Override
@@ -135,8 +139,8 @@ public class AccountantAllTasksActor extends UntypedActor {
                 if (allTasks.containsKey(taskID)) {
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
                     allTasks.put(taskID, new Pair<>(retrieveUrl, state));
-//                    if ( state==TaskState.DOWNLOADING || state==TaskState.PROCESSING)
-//                        allTasksTimer.put(taskID, new Long(System.currentTimeMillis()));
+                    if ( state==TaskState.DOWNLOADING || state==TaskState.PROCESSING)
+                        allTasksTimer.put(taskID, new Long(System.currentTimeMillis()));
                 }
                 return;
             }
@@ -153,7 +157,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final String taskID = ((RemoveTask) message).getTaskID();
 
                 allTasks.remove(taskID);
-//                allTasksTimer.remove(taskID);
+                allTasksTimer.remove(taskID);
 
                 return;
             }
@@ -167,6 +171,16 @@ public class AccountantAllTasksActor extends UntypedActor {
             if (message instanceof Clean) {
                 LOG.info("Clean maps accountant actor");
                 allTasks.clear();
+
+                return;
+            }
+
+            if (message instanceof CleanUp) {
+                LOG.info("Clean old entries with processing or downloading state accountant actor");
+                cleanTasks();
+                getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+                        TimeUnit.MINUTES), getSelf(), new CleanUp(), getContext().system().dispatcher(), getSelf());
+
 
                 return;
             }
@@ -298,6 +312,22 @@ public class AccountantAllTasksActor extends UntypedActor {
         for (final String id : IDs) {
             final RetrieveUrl retrieveUrl = allTasks.get(id).getKey();
             allTasks.put(id, new Pair<>(retrieveUrl, TaskState.READY));
+        }
+    }
+
+
+    // to be calles every x minutes to do the cleanup
+    // marks old tasks that aren't done yet as Done so they can be removed
+    private void cleanTasks () {
+        long currentTime = System.currentTimeMillis();
+        for ( String taskID: allTasksTimer.keySet()) {
+            Long sinceWhen = allTasksTimer.get(taskID);
+            if ( currentTime-sinceWhen.longValue() > 30*60*1000 ) {
+                if (allTasks.containsKey(taskID)) {
+                    final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
+                    allTasks.remove(taskID);
+                }
+            }
         }
     }
 

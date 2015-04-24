@@ -173,57 +173,77 @@ public class JobLoaderMasterActor extends UntypedActor {
      * Checks if there were added any new jobs in the db
      */
     private void checkForNewJobs() {
-        LOG.info("========== Looking for new jobs from MongoDB ==========");
-        Long start = System.currentTimeMillis();
-        LOG.info("#IPs with tasks: {}", ipDistribution.size());
-        final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
+        final int taskSize = getAllTasks();
 
-        final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
-        final List<ProcessingJob> all =
-                processingJobDao.getDiffusedJobsWithState(JobState.READY, page, ipDistribution, ipsWithJobs);
-        LOG.info("Done with loading jobs in {} seconds. Creating tasks from {} jobs.",
-                (System.currentTimeMillis() - start) / 1000.0, all.size());
-        start = System.currentTimeMillis();
+        if (taskSize<clusterMasterConfig.getMaxTasksInMemory() ) {
+            LOG.info("========== Looking for new jobs from MongoDB ==========");
+            Long start = System.currentTimeMillis();
+            LOG.info("#IPs with tasks: {}", ipDistribution.size());
+            final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
 
-        final List<String> resourceIds = new ArrayList<>();
-        for(final ProcessingJob job : all) {
-            if(job == null || job.getTasks() == null) {continue;}
-            for(final ProcessingJobTaskDocumentReference task : job.getTasks()) {
-                final String resourceId = task.getSourceDocumentReferenceID();
-                resourceIds.add(resourceId);
+            final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
+            final List<ProcessingJob> all =
+                    processingJobDao.getDiffusedJobsWithState(JobState.READY, page, ipDistribution, ipsWithJobs);
+            LOG.info("Done with loading jobs in {} seconds. Creating tasks from {} jobs.",
+                    (System.currentTimeMillis() - start) / 1000.0, all.size());
+            start = System.currentTimeMillis();
+
+            final List<String> resourceIds = new ArrayList<>();
+            for (final ProcessingJob job : all) {
+                if (job == null || job.getTasks() == null) {
+                    continue;
+                }
+                for (final ProcessingJobTaskDocumentReference task : job.getTasks()) {
+                    final String resourceId = task.getSourceDocumentReferenceID();
+                    resourceIds.add(resourceId);
+                }
             }
-        }
-        final List<SourceDocumentReference> sourceDocumentReferences = sourceDocumentReferenceDao.read(resourceIds);
-        final Map<String, SourceDocumentReference> resources = new HashMap<>();
-        for(SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
-            resources.put(sourceDocumentReference.getId(), sourceDocumentReference);
-        }
-        LOG.info("Done with loading resources in {} seconds. Creating tasks from {} resources.",
-                (System.currentTimeMillis() - start) / 1000.0, resources.size());
+            final List<SourceDocumentReference> sourceDocumentReferences = sourceDocumentReferenceDao.read(resourceIds);
+            final Map<String, SourceDocumentReference> resources = new HashMap<>();
+            for (SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
+                resources.put(sourceDocumentReference.getId(), sourceDocumentReference);
+            }
+            LOG.info("Done with loading resources in {} seconds. Creating tasks from {} resources.",
+                    (System.currentTimeMillis() - start) / 1000.0, resources.size());
 
-        int i = 0;
-        for (final ProcessingJob job : all) {
-            try {
-
-                final Future<Object> future = Patterns.ask(accountantActor, new IsJobLoaded(job.getId()), timeout);
-                Boolean isLoaded = false;
+            int i = 0;
+            for (final ProcessingJob job : all) {
                 try {
-                    isLoaded = (Boolean) Await.result(future, timeout.duration());
-                } catch (Exception e) {
-                    LOG.error("Error in loadNewJobs->IsJobLoaded: {}", e);
-                }
-                if (!isLoaded) {
-                    i++;
-                    if(i >= 500) {
-                        LOG.info("Done with another 500 jobs out of {}", all.size());
-                        i = 0;
+
+                    final Future<Object> future = Patterns.ask(accountantActor, new IsJobLoaded(job.getId()), timeout);
+                    Boolean isLoaded = false;
+                    try {
+                        isLoaded = (Boolean) Await.result(future, timeout.duration());
+                    } catch (Exception e) {
+                        LOG.error("Error in loadNewJobs->IsJobLoaded: {}", e);
                     }
-                    addJob(job, resources);
+                    if (!isLoaded) {
+                        i++;
+                        if (i >= 500) {
+                            LOG.info("Done with another 500 jobs out of {}", all.size());
+                            i = 0;
+                        }
+                        addJob(job, resources);
+                    }
+                } catch (Exception e) {
+                    LOG.error("JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());
                 }
-            } catch(Exception e) {
-                LOG.error("JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());
             }
         }
+    }
+
+
+    private int getAllTasks(){
+        final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
+        final Future<Object> future = Patterns.ask(accountantActor, new GetNumberOfTasks(), timeout);
+        int tasks = 0;
+        try {
+            tasks = (int) Await.result(future, timeout.duration());
+        } catch (Exception e) {
+            LOG.error("Error: {}", e);
+        }
+
+        return tasks;
     }
 
     /**
