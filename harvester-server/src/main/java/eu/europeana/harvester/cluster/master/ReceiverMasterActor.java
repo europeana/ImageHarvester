@@ -2,30 +2,26 @@ package eu.europeana.harvester.cluster.master;
 
 import akka.actor.ActorRef;
 import akka.actor.Address;
+import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.pattern.Patterns;
-import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.DownloadConfirmation;
-import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.StartedTask;
-import eu.europeana.harvester.cluster.domain.messages.inner.*;
+import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
-import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.domain.ProcessingState;
 import org.apache.james.mime4j.dom.datetime.DateTime;
-import scala.concurrent.Await;
-import scala.concurrent.Future;
-import scala.concurrent.duration.Duration;
+import scala.Option;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.HashSet;
+import java.util.Map;
 
 public class ReceiverMasterActor extends UntypedActor {
 
@@ -79,10 +75,9 @@ public class ReceiverMasterActor extends UntypedActor {
      */
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
-    /**
-     * Used to send messages after each finished job.
-     */
-    //private final ESBClient esbClient;
+    private ActorRef receiverJobDumper;
+    private ActorRef receiverStatisticsDumper;
+    private ActorRef receiverMetaInfoDumper;
 
     /**
      * ONLY FOR DEBUG
@@ -103,7 +98,6 @@ public class ReceiverMasterActor extends UntypedActor {
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao ){
-        //                          final ESBClient esbClient) {
         LOG.info("ReceiverMasterActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
@@ -115,10 +109,39 @@ public class ReceiverMasterActor extends UntypedActor {
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
-        //this.esbClient = esbClient;
+    }
+
+
+
+    @Override
+    public void preStart() throws Exception {
+        LOG.info("ReceiverMasterActor preStart");
+
+        receiverJobDumper = getContext().system().actorOf(Props.create(ReceiverJobDumperActor.class, clusterMasterConfig,
+                accountantActor,  processingJobDao), "jobDumper");
+
+        receiverStatisticsDumper = getContext().system().actorOf(Props.create(ReceiverStatisticsDumperActor.class, clusterMasterConfig,
+                sourceDocumentProcessingStatisticsDao,  sourceDocumentReferenceDao), "statisticsDumper");
+
+        receiverMetaInfoDumper = getContext().system().actorOf(Props.create(ReceiverMetaInfoDumperActor.class, clusterMasterConfig,
+                accountantActor,  sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");
+
+
+
     }
 
     @Override
+    public void preRestart(Throwable reason, Option<Object> message) throws Exception {
+        super.preRestart(reason, message);
+        LOG.info("ReceiverMasterActor preRestart");
+
+        getContext().system().stop(receiverJobDumper);
+        getContext().system().stop(receiverMetaInfoDumper);
+        getContext().system().stop(receiverStatisticsDumper);
+    }
+
+
+        @Override
     public void onReceive(Object message) throws Exception {
         if(message instanceof StartedTask) {
             final StartedTask startedTask = (StartedTask) message;
@@ -131,7 +154,7 @@ public class ReceiverMasterActor extends UntypedActor {
         }
         if(message instanceof DownloadConfirmation) {
             accountantActor.tell(new ModifyState(((DownloadConfirmation) message).getTaskID(), TaskState.PROCESSING), getSelf());
-            //accountantActor.tell(new RemoveDownloadSpeed(((DownloadConfirmation) message).getTaskID()), getSelf());
+
 
             return;
         }
@@ -207,168 +230,35 @@ public class ReceiverMasterActor extends UntypedActor {
      * @param msg - the message from the slave actor with url, jobId and other statistics
      */
     private void markDone(DoneProcessing msg) {
-        final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.findByUrl(msg.getUrl());
-
-        final String jobId = msg.getJobId();
-        final String docId = finishedDocument.getId();
 
         try {
+            // save the data in Mongo
+            receiverJobDumper.tell(msg,ActorRef.noSender());
+            receiverMetaInfoDumper.tell(msg, ActorRef.noSender());
+            receiverStatisticsDumper.tell(msg, ActorRef.noSender());
+            //update accountant
+            accountantActor.tell(new ModifyState(msg.getTaskID(), TaskState.DONE), getSelf());
+
             if ((ProcessingState.SUCCESS).equals(msg.getProcessingState())) {
 
-                success += 1;
+                success++;
             } else {
-                error += 1;
+                error++;
             }
-            accountantActor.tell(new ModifyState(msg.getTaskID(), TaskState.DONE), getSelf());
+
+            if ( counter+100 < success + error) {
+                LOG.info("Finished 100+ tasks with success: {}, with error: {}", success, error);
+                counter = success+error;
+            }
+
         } catch (Exception e) {
             LOG.error(e.getMessage());
             return;
         }
 
-        final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                new SourceDocumentProcessingStatistics(new Date(), new Date(), finishedDocument.getActive(),
-                        msg.getTaskType(), msg.getProcessingState(), finishedDocument.getReferenceOwner(),
-                        finishedDocument.getUrlSourceType(), docId,
-                        msg.getJobId(), msg.getHttpResponseCode(), msg.getHttpResponseContentType(),
-                        msg.getHttpResponseContentSizeInBytes(),
-                        msg.getSocketConnectToDownloadStartDurationInMilliSecs(),
-                        msg.getRetrievalDurationInMilliSecs(), msg.getCheckingDurationInMilliSecs(),
-                        msg.getSourceIp(), msg.getHttpResponseHeaders(), msg.getLog());
 
-        sourceDocumentProcessingStatisticsDao.createOrUpdate(sourceDocumentProcessingStatistics,
-                clusterMasterConfig.getWriteConcern());
 
-        saveMetaInfo(docId, msg);
-
-        SourceDocumentReference updatedDocument =
-                finishedDocument.withLastStatsId(sourceDocumentProcessingStatistics.getId());
-        updatedDocument = updatedDocument.withRedirectionPath(msg.getRedirectionPath());
-        sourceDocumentReferenceDao.update(updatedDocument, clusterMasterConfig.getWriteConcern());
-
-        List<TaskState> taskStates = new ArrayList<>();
-        final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-        Future<Object> future = Patterns.ask(accountantActor, new GetTaskStatesPerJob(jobId), timeout);
-        try {
-            taskStates = (List<TaskState>) Await.result(future, timeout.duration());
-        } catch (Exception e) {
-            LOG.error("Error at markDone->GetTaskStatesPerJob: {}", e);
-        }
-
-        RetrieveUrl retrieveUrl = null;
-        future = Patterns.ask(accountantActor, new GetTask(msg.getTaskID()), timeout);
-        try {
-            retrieveUrl = (RetrieveUrl) Await.result(future, timeout.duration());
-        } catch (Exception e) {
-            LOG.error("Error at markDone->GetTask: {}", e);
-        }
-
-        if(retrieveUrl != null && !retrieveUrl.getId().equals("")) {
-            final String ipAddress = retrieveUrl.getIpAddress();
-            checkJobStatus(jobId, taskStates, ipAddress);
-        }
     }
 
-    /**
-     * Saves the meta information of a document
-     * @param docId the unique id of a source document
-     * @param msg all the information retrieved while downloading
-     */
-    private void saveMetaInfo(final String docId, final DoneProcessing msg) {
-        ProcessingJobTaskDocumentReference documentReference = null;
-        final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
 
-        final Future<Object> future = Patterns.ask(accountantActor, new GetConcreteTask(msg.getTaskID()), timeout);
-        try {
-            documentReference = (ProcessingJobTaskDocumentReference) Await.result(future, timeout.duration());
-        } catch (Exception e) {
-            LOG.error("Error at markDone->GetConcreteTask: {}", e);
-        }
-
-        if(documentReference == null || documentReference.getSourceDocumentReferenceID().equals("")) {
-            if(msg.getAudioMetaInfo() != null || msg.getImageMetaInfo() != null ||
-                    msg.getVideoMetaInfo() != null || msg.getTextMetaInfo() != null) {
-                final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
-                        new SourceDocumentReferenceMetaInfo(docId, msg.getImageMetaInfo(),
-                                msg.getAudioMetaInfo(), msg.getVideoMetaInfo(), msg.getTextMetaInfo());
-                final boolean success = sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo,
-                        clusterMasterConfig.getWriteConcern());
-
-                if(!success) {
-                    sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo,
-                            clusterMasterConfig.getWriteConcern());
-                }
-            }
-        } else {
-            if(msg.getAudioMetaInfo() != null || msg.getImageMetaInfo() != null ||
-                    msg.getVideoMetaInfo() != null || msg.getTextMetaInfo() != null) {
-                final DocumentReferenceTaskType documentReferenceTaskType = documentReference.getTaskType();
-                if (!(DocumentReferenceTaskType.CHECK_LINK).equals(documentReferenceTaskType)) {
-                    final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
-                            new SourceDocumentReferenceMetaInfo(docId, msg.getImageMetaInfo(),
-                                    msg.getAudioMetaInfo(), msg.getVideoMetaInfo(), msg.getTextMetaInfo());
-                    final boolean success = sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo,
-                            clusterMasterConfig.getWriteConcern());
-
-                    if (!success) {
-                        sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo,
-                                clusterMasterConfig.getWriteConcern());
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Checks if a job is done, and if it's done than generates an event.
-     * @param jobID the unique ID of the job
-     * @param states all request states the job
-     */
-    private void checkJobStatus(final String jobID, final List<TaskState> states, final String ipAddress) {
-        boolean allDone = true;
-        for (final TaskState state : states) {
-            if(!(TaskState.DONE).equals(state)) {
-                allDone = false;
-                break;
-            }
-        }
-
-        if(allDone) {
-            final ProcessingJob processingJob = processingJobDao.read(jobID);
-            //only for debug
-            if ( success+error > counter+100 ) {
-                LOG.info("Finished 100+ tasks with success: {}, with error: {}", success, error);
-                counter = success + error;
-            }
-
-            final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
-            processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
-
-//            List<String> tasks = new ArrayList<>();
-//            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-//
-//            final Future<Object> future = Patterns.ask(accountantActor, new GetTasksFromJob(jobID), timeout);
-//            try {
-//                tasks = (List<String>) Await.result(future, timeout.duration());
-//            } catch (Exception e) {
-//                LOG.error("Error at markDone->GetTasksFromJob: {}", e);
-//            }
-//
-//            if(tasks != null) {
-//                for (final String taskID : tasks) {
-//                    accountantActor.tell(new RemoveTask(taskID), getSelf());
-//                    accountantActor.tell(new RemoveTaskFromIP(taskID, ipAddress), getSelf());
-//                }
-//            }
-            accountantActor.tell(new RemoveJob(newProcessingJob.getId(),ipAddress), getSelf());
-
-
-//            final Message message = new Message();
-//            message.setStatus(Status.SUCCESS);
-//            message.setJobId(newProcessingJob.getId());
-//
-//            if(esbClient != null) {
-//                esbClient.send(message);
-//            }
-        }
-    }
 }
