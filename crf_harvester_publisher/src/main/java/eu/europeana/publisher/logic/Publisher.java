@@ -21,6 +21,8 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +54,7 @@ public class Publisher {
 	long publisherRecordsProcessed = 0;
 
 	long publisherRecordsPublished = 0;
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
 
 	public Publisher(PublisherConfig config) throws UnknownHostException {
 		this.config = config;
@@ -113,39 +116,40 @@ public class Publisher {
 		HashMap<String, RetrievedDoc> retrievedDocsPerID;
 		List<SourceDocumentReferenceMetaInfo> metaInfos;
 		List<CRFSolrDocument> solrCandidateDocuments = new ArrayList<>();
-		Integer skip = 0;
+        DateTime lastSuccesfulPublish = config.getStartTimestamp();
 
 		do {
 			solrCandidateDocuments.clear();
 			// Retrieves the docs
 			final long startTimeRetrieveDocs = System.currentTimeMillis();
-			retrievedDocsPerID = retrieveStatisticsDocumentIdsThatMatch(skip);
+			retrievedDocsPerID = retrieveStatisticsDocumentIdsThatMatch(lastSuccesfulPublish);
 			final long endTimeRetrieveDocs = System.currentTimeMillis();
 			LOG.error("Retrieved: " + retrievedDocsPerID.size() + " docs"
 					+ " and it took "
 					+ (endTimeRetrieveDocs - startTimeRetrieveDocs) / 1000
 					+ " seconds");
 
-			DateTime lastSuccesfulPublish = null;
-
-			// Find the earliest updatedAt (so we know where to continue from if
+			// Find the latest updatedAt (so we know where to continue from if
 			// the batch update fails)
-			for (RetrievedDoc doc : retrievedDocsPerID.values()) {
+            DateTime lastSuccesfulPublishBeforeMax =  lastSuccesfulPublish;
+            for (RetrievedDoc doc : retrievedDocsPerID.values()) {
 				if (lastSuccesfulPublish == null) {
 					lastSuccesfulPublish = doc.getUpdatedAt();
 				} else {
-					if (doc.getUpdatedAt().isBefore(lastSuccesfulPublish)) {
+					if (doc.getUpdatedAt().isAfter(lastSuccesfulPublish)) {
 						lastSuccesfulPublish = doc.getUpdatedAt();
 					}
 				}
 			}
 
+            // Advance with 1 minute if it's exactly the same (very unlikely).
+            if (lastSuccesfulPublishBeforeMax.isEqual(lastSuccesfulPublish)) {
+                lastSuccesfulPublish = lastSuccesfulPublish.plusMinutes(30);
+            }
+
 			if (retrievedDocsPerID.size() == 0) {
 				done = true;
 			} else {
-				// Sets the new value for the pagination
-				skip += retrievedDocsPerID.size() < LIMIT ? retrievedDocsPerID
-						.size() : LIMIT;
 
 				// Retrieves the corresponding metaInformation objects
 				final List<String> list = new ArrayList<>(
@@ -397,8 +401,10 @@ public class Publisher {
 					final long publishingRate = publisherRecordsPublished
 							/ uptimeInSecs;
 
-					final long lastBatchDurationInSecs = (System
+					long lastBatchDurationInSecs = (System
 							.currentTimeMillis() - startTimeRetrieveMetaInfoDocs) / 1000;
+                    if (lastBatchDurationInSecs == 0) lastBatchDurationInSecs = 1;
+
 					final long lastBatchProcessingRate = solrCandidateDocuments
 							.size() / lastBatchDurationInSecs;
 					final long lastBatchPublishingRate = solrDocsToUpdate
@@ -441,12 +447,10 @@ public class Publisher {
 	/**
 	 * Retrieves a batch of documents
 	 *
-	 * @param skip
-	 *            how many documents will be skipped (needed for pagination)
 	 * @return the needed information from the retrieved documents.
 	 */
 	private HashMap<String, RetrievedDoc> retrieveStatisticsDocumentIdsThatMatch(
-			Integer skip) {
+			final DateTime startTimeStamp) {
 		final HashMap<String, RetrievedDoc> IDsWithType = new HashMap<>();
 
 		final DBCollection sourceDocumentProcessingStatisticsCollection = sourceDB
@@ -454,15 +458,16 @@ public class Publisher {
 
 		// Query construction
 		BasicDBObject findQuery;
-		if (null == config.getStartTimestamp()) {
+		if (null == startTimeStamp) {
 			findQuery = new BasicDBObject("state", "SUCCESS");
 		} else {
-			LOG.error("Retrieving SourceDocumentProcessingStatistics gte than timestamp "
-					+ config.getStartTimestamp());
+			LOG.error("Retrieving SourceDocumentProcessingStatistics gt than timestamp "
+					+ startTimeStamp);
 
-			findQuery = new BasicDBObject("updatedAt", new BasicDBObject(
-					"$gte", config.getStartTimestamp().toLocalDate().toDate()))
-					.append("state", "SUCCESS");
+			findQuery = new BasicDBObject();
+            findQuery.put("updatedAt",new BasicDBObject("$gt",startTimeStamp.toDate()));
+            findQuery.put("state", "SUCCESS");
+
 		}
 
 		final BasicDBObject fields = new BasicDBObject(
@@ -476,13 +481,18 @@ public class Publisher {
 		sortOrder.put("updatedAt", 1);
 
 		DBCursor sourceDocumentProcessingStatisticsCursor = sourceDocumentProcessingStatisticsCollection
-				.find(findQuery, fields).sort(sortOrder).skip(skip)
-				.limit(LIMIT);
-		sourceDocumentProcessingStatisticsCursor
+				.find(findQuery, fields).sort(sortOrder)
+				.limit(LIMIT)
 				.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 
-		// Iterates over the loaded documents and takes the important
+
+        LOG.error("Executing MongoDB query to retrieve stats " + sourceDocumentProcessingStatisticsCursor.getQuery().toString());
+
+        // Iterates over the loaded documents and takes the important
 		// information from them
+        LOG.error("Retrieving SourceDocumentProcessingStatistics from cursor with size "
+                + sourceDocumentProcessingStatisticsCursor.size());
+
 		while (sourceDocumentProcessingStatisticsCursor.hasNext()) {
 			final BasicDBObject item = (BasicDBObject) sourceDocumentProcessingStatisticsCursor
 					.next();
