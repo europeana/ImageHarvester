@@ -118,14 +118,14 @@ public class JobLoaderMasterActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if(message instanceof LoadJobs) {
-            LOG.info("============== Looking for new jobs from MongoDB =============="); //only for debug
+
 
             try {
-                final Long start = System.currentTimeMillis();
+
                 checkForNewJobs();
-                LOG.info("Done with loading jobs and creating tasks from MongoDB in {} seconds.", (System.currentTimeMillis() - start) / 1000.0); //only for debug
+
             } catch(Exception e) {
-                LOG.error(e.getMessage());
+                LOG.error("Error in LoadJobs: "+e.getMessage());
             }
 
             return;

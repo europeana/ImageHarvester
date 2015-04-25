@@ -302,7 +302,7 @@ public class ClusterMasterActor extends UntypedActor {
         if(message instanceof Clean) {
             LOG.info("Cleaning up ClusterMasterActor and its slaves.");
 
-            clean();
+            //clean();
 
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,
                     TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
@@ -336,7 +336,7 @@ public class ClusterMasterActor extends UntypedActor {
         LOG.info("Percentage of IPs which has loaded requests: {}% load when it's below: {}",
                 percentage, defaultLimits.getMinTasksPerIPPercentage());
         if(percentage < defaultLimits.getMinTasksPerIPPercentage()) {
-            accountantActor.tell(new CleanIPs(), getSelf());
+            //accountantActor.tell(new CleanIPs(), getSelf());
             jobLoaderActor.tell(new LoadJobs(), ActorRef.noSender());
         }
 
@@ -368,6 +368,7 @@ public class ClusterMasterActor extends UntypedActor {
         final int maxToSend = defaultLimits.getTaskBatchSize();
         try {
             // Each server is a different case. We treat them different.
+
             for (final String IP : ipsWithJobs.keySet()) {
 
                 final Long start = System.currentTimeMillis();

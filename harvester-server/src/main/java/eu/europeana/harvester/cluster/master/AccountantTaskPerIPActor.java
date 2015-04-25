@@ -95,13 +95,14 @@ public class AccountantTaskPerIPActor extends UntypedActor {
 
 
     private void cleanIPs() {
-        for (final Map.Entry<String, List<String>> task : tasksPerIP.entrySet()) {
-            if (!checkTaskStates(task.getValue())) {
-                String IP = task.getKey();
-                tasksPerIP.remove(IP);
-                LOG.info("Removed " + IP);
-            }
-        }
+//        for (final Map.Entry<String, List<String>> task : tasksPerIP.entrySet()) {
+//            if (!checkTaskStates(task.getValue())) {
+//                String IP = task.getKey();
+//                tasksPerIP.remove(IP);
+//                LOG.info("Removed " + IP);
+//            }
+//        }
+        return;
     }
 
 

@@ -38,7 +38,14 @@ public class AccountantAllTasksActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         try {
             if (message instanceof GetNumberOfTasks) {
-                final Integer nr = allTasks.size();
+                //final Integer nr = allTasks.size();
+                Integer nr = 0;
+                for (final Map.Entry<String, Pair<RetrieveUrl, TaskState>> entry : allTasks.entrySet()) {
+                    final TaskState current = entry.getValue().getValue();
+                    if (current.equals(TaskState.READY) || current.equals(TaskState.DOWNLOADING) )
+                        nr++;
+
+                }
 
                 getSender().tell(nr, getSelf());
                 return;
