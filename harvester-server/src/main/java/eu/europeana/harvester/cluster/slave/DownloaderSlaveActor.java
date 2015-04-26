@@ -4,10 +4,15 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import eu.europeana.harvester.cluster.domain.messages.*;
-import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
+import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
+import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.HttpClient;
-import eu.europeana.harvester.httpclient.response.*;
+import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
+import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
+import eu.europeana.harvester.httpclient.response.ResponseState;
+import eu.europeana.harvester.httpclient.response.ResponseType;
 import eu.europeana.harvester.utils.CallbackInterface;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
@@ -88,6 +93,8 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         if(message instanceof RetrieveUrl) {
             task = (RetrieveUrl) message;
 
+            LOG.info("Starting download for task ID {}", task.getId());
+
             final HttpRetrieveResponse httpRetrieveResponse = downloadTask(task);
             if(httpRetrieveResponse.getHttpResponseCode() == -1) {
                 final DoneDownload doneDownload =
@@ -163,6 +170,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         if(httpRetrieveResponse.getHttpResponseCode() == -1) {
             final DoneDownload doneDownload =
                     createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.ERROR);
+            LOG.info("Done download for task ID {} with error", doneDownload.getTaskID());
 
             future.cancel(true);
             sender.tell(doneDownload, getSelf());
@@ -172,6 +180,8 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
 
         final DoneDownload doneDownload =
                 createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.SUCCESS);
+
+        LOG.info("Done download for task ID {} with success", doneDownload.getTaskID());
 
         future.cancel(true);
         sender.tell(doneDownload, getSelf());

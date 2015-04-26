@@ -120,10 +120,12 @@ public class ReceiverJobDumperActor extends UntypedActor {
         }
 
         if(allDone) {
+            LOG.info("Job dumper checkjobstatus - Marking job {} as processed and removing it from accounting", jobID);
+            accountantActor.tell(new RemoveJob(jobID,ipAddress), getSelf());
             final ProcessingJob processingJob = processingJobDao.read(jobID);
             final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
             processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
-            accountantActor.tell(new RemoveJob(newProcessingJob.getId(),ipAddress), getSelf());
+
 
 
         }

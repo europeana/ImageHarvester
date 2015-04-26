@@ -12,8 +12,6 @@ import eu.europeana.harvester.httpclient.response.ResponseType;
 import eu.europeana.harvester.utils.FileUtils;
 import eu.europeana.harvester.utils.MediaMetaDataUtils;
 import eu.europeana.harvester.utils.ThumbnailUtils;
-import org.im4java.core.IM4JavaException;
-import org.im4java.core.InfoException;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,6 +80,8 @@ public class ProcesserSlaveActor extends UntypedActor {
         if (message instanceof DoneDownload) {
             doneDownload = (DoneDownload) message;
 
+            LOG.info("Start processing for task ID {} with success", doneDownload.getTaskID());
+
             path = doneDownload.getHttpRetrieveResponse().getAbsolutePath();
             if (path.equals("")) {
                 path = FileUtils.createFileAndFolderIfMissing(LOG, tmpFolder, doneDownload.getReferenceId(), doneDownload.getHttpRetrieveResponse().getContent());
@@ -109,48 +109,54 @@ public class ProcesserSlaveActor extends UntypedActor {
         Boolean isThumbnail = false;
         ImageMetaInfo metaInfoForThumbnails = null;
 
-        for (ProcessingJobSubTask subTask : subTasks) {
-            switch (subTask.getTaskType()) {
-                case META_EXTRACTION:
-                    doneProcessing = metadataExtraction();
+        try {
 
-                    break;
-                case GENERATE_THUMBNAIL:
-                    final GenericSubTaskConfiguration config = subTask.getConfig();
-                    generateThumbnail(config);
+            for (ProcessingJobSubTask subTask : subTasks) {
+                switch (subTask.getTaskType()) {
+                    case META_EXTRACTION:
+                        doneProcessing = metadataExtraction();
 
-                    break;
-                case COLOR_EXTRACTION:
-                    metaInfoForThumbnails = MediaMetaDataUtils.colorExtraction(path, colorMapPath);
-                    isThumbnail = true;
-                    if (metaInfoForThumbnails == null) {
-                        doneProcessing = new DoneProcessing(doneDownload, null, null, null, null);
                         break;
-                    }
+                    case GENERATE_THUMBNAIL:
+                        final GenericSubTaskConfiguration config = subTask.getConfig();
+                        generateThumbnail(config);
 
-                    if (doneProcessing != null) {
-                        doneProcessing = doneProcessing.withColorPalette(metaInfoForThumbnails);
-                    } else {
-                        doneProcessing = new DoneProcessing(doneDownload, metaInfoForThumbnails, null, null, null);
-                    }
+                        break;
+                    case COLOR_EXTRACTION:
+                        metaInfoForThumbnails = MediaMetaDataUtils.colorExtraction(path, colorMapPath);
+                        isThumbnail = true;
+                        if (metaInfoForThumbnails == null) {
+                            doneProcessing = new DoneProcessing(doneDownload, null, null, null, null);
+                            break;
+                        }
 
-                    break;
-                default:
-                    LOG.info("Unknown subtask in job: {}, referenceId: {}", doneDownload.getJobId(),
-                            doneDownload.getReferenceId());
-            }
-        }
+                        if (doneProcessing != null) {
+                            doneProcessing = doneProcessing.withColorPalette(metaInfoForThumbnails);
+                        } else {
+                            doneProcessing = new DoneProcessing(doneDownload, metaInfoForThumbnails, null, null, null);
+                        }
 
-        if (isThumbnail) {
-            for (MediaFile thumbnail : thumbnails) {
-                if (metaInfoForThumbnails != null) {
-                    final MediaFile newThumbnail = thumbnail.withMetaInfo(metaInfoForThumbnails.getColorPalette());
-                    mediaStorageClient.createOrModify(newThumbnail);
-                } else {
-                    mediaStorageClient.createOrModify(thumbnail);
+                        break;
+                    default:
+                        LOG.info("Unknown subtask in job: {}, referenceId: {}", doneDownload.getJobId(),
+                                doneDownload.getReferenceId());
                 }
             }
-            thumbnails.clear();
+
+            if (isThumbnail) {
+                for (MediaFile thumbnail : thumbnails) {
+                    if (metaInfoForThumbnails != null) {
+                        final MediaFile newThumbnail = thumbnail.withMetaInfo(metaInfoForThumbnails.getColorPalette());
+                        mediaStorageClient.createOrModify(newThumbnail);
+                    } else {
+                        mediaStorageClient.createOrModify(thumbnail);
+                    }
+                }
+                thumbnails.clear();
+            }
+            deleteFile();
+        } catch (Exception e) {
+            LOG.info("Error in startProcessing : {}",e.getMessage());
         }
 
         if (error.length() != 0 && doneProcessing != null) {
@@ -161,7 +167,8 @@ public class ProcesserSlaveActor extends UntypedActor {
             doneProcessing = doneProcessing.withNewState(ProcessingState.ERROR, "Error in processing");
         }
 
-        deleteFile();
+        //deleteFile();
+        LOG.info("Done processing for task ID {} ", doneProcessing.getTaskID());
         getSender().tell(doneProcessing, getSelf());
     }
 
@@ -233,7 +240,8 @@ public class ProcesserSlaveActor extends UntypedActor {
             }
             return new DoneProcessing(doneDownload, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
         } catch (Exception e) {
-            return new DoneProcessing(doneDownload, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo).withNewState(ProcessingState.DOWNLOADING.ERROR,error);
+            LOG.info("Error in Processing slave - extract : {}",e.getMessage());
+            return new DoneProcessing(doneDownload, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo).withNewState(ProcessingState.ERROR,error);
         }
 
     }

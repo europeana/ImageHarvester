@@ -155,12 +155,12 @@ public class ReceiverMasterActor extends UntypedActor {
         if(message instanceof DownloadConfirmation) {
             accountantActor.tell(new ModifyState(((DownloadConfirmation) message).getTaskID(), TaskState.PROCESSING), getSelf());
 
-
             return;
         }
         if(message instanceof DoneProcessing) {
             final Address address = getSender().path().address();
             final DoneProcessing doneProcessing = (DoneProcessing) message;
+            LOG.info("Got DOneProcessing for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
 
             markDone(doneProcessing);
 

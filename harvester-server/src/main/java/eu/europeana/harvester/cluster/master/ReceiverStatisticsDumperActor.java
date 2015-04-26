@@ -67,6 +67,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
 
 
         final String docId = finishedDocument.getId();
+        //LOG.info("save statistics for document with ID: {}",docId);
 
 
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =

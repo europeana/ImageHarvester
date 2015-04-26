@@ -201,6 +201,7 @@ public class NodeMasterActor extends UntypedActor {
 
             if(!jobsToStop.contains(jobId)) {
                 masterReceiver.tell(message, getSelf());
+                LOG.info("Slave sending Doneprocessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
             }
 
             return;
@@ -263,7 +264,7 @@ public class NodeMasterActor extends UntypedActor {
                     sentRequest = true;
                     lastRequest = System.currentTimeMillis();
                 } else {
-                    LOG.info("No request: " + messages.size() + " " + sentRequest);
+                    //LOG.info("No request: " + messages.size() + " " + sentRequest);
                     if(sentRequest && lastRequest != null) {
                         final Long currentTime = System.currentTimeMillis();
                         final Long diff = (currentTime - lastRequest) / 1000;
@@ -272,11 +273,11 @@ public class NodeMasterActor extends UntypedActor {
                         }
                     }
                 }
-                hashedWheelTimer.newTimeout(this, 2, TimeUnit.SECONDS);
+                hashedWheelTimer.newTimeout(this, 5, TimeUnit.SECONDS);
             }
         };
 
-        hashedWheelTimer.newTimeout(timerTask, 2, TimeUnit.SECONDS);
+        hashedWheelTimer.newTimeout(timerTask, 5, TimeUnit.SECONDS);
     }
 
     /**
@@ -329,10 +330,10 @@ public class NodeMasterActor extends UntypedActor {
                 }
                 LOG.info("Messages: {}", messages.size());
                 LOG.info("All downloaderActors: {} working: {}", downloaderActors.size(), nr);
-                hashedWheelTimer.newTimeout(this, 1000, TimeUnit.MILLISECONDS);
+                hashedWheelTimer.newTimeout(this, 10000, TimeUnit.MILLISECONDS);
             }
         };
-        hashedWheelTimer.newTimeout(timerTask, 1000, TimeUnit.MILLISECONDS);
+        hashedWheelTimer.newTimeout(timerTask, 10000, TimeUnit.MILLISECONDS);
     }
 
 }
