@@ -156,8 +156,8 @@ public class SOLRWriter {
                     }
                     server.shutdown();
                 } catch (Exception e) {
-                    LOG.error("SOLR query failed when executing query " + queryString);
-                    throw e;
+                    LOG.error("SOLR query failed when executing existence query " + queryString+" => will mark the docs as non-existing");
+                    LOG.error(e);
                 }
             }
         }
