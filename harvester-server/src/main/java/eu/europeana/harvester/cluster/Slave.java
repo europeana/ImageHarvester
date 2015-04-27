@@ -4,6 +4,8 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.routing.FromConfig;
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.MetricRegistry;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
@@ -23,10 +25,13 @@ import java.io.File;
 import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Slave {
 
     private static final Logger LOG = LogManager.getLogger(Slave.class.getName());
+
+    private static final MetricRegistry metrics = new MetricRegistry();
 
     private final String[] args;
 
@@ -37,6 +42,15 @@ public class Slave {
     }
 
     public void init(Slave slave) {
+
+        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .build();
+
+        reporter.start(60, TimeUnit.SECONDS);
+
+
         String configFilePath;
 
         if(args.length == 0) {
@@ -108,7 +122,7 @@ public class Slave {
         final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
 
         system.actorOf(Props.create(NodeSupervisor.class, slave, masterSender, channelFactory, nodeMasterConfig,
-                        mediaStorageClient), "nodeSupervisor");
+                        mediaStorageClient, metrics), "nodeSupervisor");
 
         //system.actorOf(Props.create(MetricsListener.class), "metricsListener");
     }

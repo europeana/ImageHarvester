@@ -7,6 +7,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.remote.AssociatedEvent;
 import akka.remote.DisassociatedEvent;
+import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.Slave;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
@@ -59,8 +60,10 @@ public class NodeSupervisor extends UntypedActor {
      */
     private Integer missedHeartbeats;
 
+    private final MetricRegistry metrics;
+
     public NodeSupervisor(final Slave slave, final ActorRef masterSender, final ChannelFactory channelFactory,
-                          final NodeMasterConfig nodeMasterConfig, final MediaStorageClient mediaStorageClient) {
+                          final NodeMasterConfig nodeMasterConfig, final MediaStorageClient mediaStorageClient, MetricRegistry metrics) {
         LOG.info("NodeSupervisor constructor");
 
         this.slave = slave;
@@ -69,6 +72,7 @@ public class NodeSupervisor extends UntypedActor {
         this.nodeMasterConfig = nodeMasterConfig;
         this.mediaStorageClient = mediaStorageClient;
         this.missedHeartbeats = 0;
+        this.metrics = metrics;
     }
 
     @Override
@@ -76,7 +80,7 @@ public class NodeSupervisor extends UntypedActor {
         LOG.info("NodeSupervisor preStart");
 
         nodeMaster = context().system().actorOf(Props.create(NodeMasterActor.class,
-                masterSender, getSelf(), channelFactory, nodeMasterConfig, mediaStorageClient, hashedWheelTimer),
+                masterSender, getSelf(), channelFactory, nodeMasterConfig, mediaStorageClient, hashedWheelTimer, metrics),
                 "nodeMaster");
         context().watch(nodeMaster);
 

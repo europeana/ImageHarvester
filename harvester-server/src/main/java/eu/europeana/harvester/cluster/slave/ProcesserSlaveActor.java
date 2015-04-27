@@ -3,6 +3,8 @@ package eu.europeana.harvester.cluster.slave;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.ContentType;
 import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
@@ -17,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 /**
  * This type of actor extracts the metadata from a downloaded document,
@@ -66,11 +70,18 @@ public class ProcesserSlaveActor extends UntypedActor {
      */
     private final List<MediaFile> thumbnails = new ArrayList<>();
 
-    public ProcesserSlaveActor(final ResponseType responseType, MediaStorageClient mediaStorageClient, String source, String colorMapPath) {
+
+    private final MetricRegistry metrics;
+    private Timer responses ;
+
+    public ProcesserSlaveActor(final ResponseType responseType, MediaStorageClient mediaStorageClient, String source,
+                               String colorMapPath, MetricRegistry metrics) {
         this.responseType = responseType;
         this.mediaStorageClient = mediaStorageClient;
         this.source = source;
         this.colorMapPath = colorMapPath;
+        this.metrics = metrics;
+        responses = metrics.timer(name(ProcesserSlaveActor.class, "Processing responses"));
 
         LOG.info("ProcesserSlaveActor constructor");
     }
@@ -79,8 +90,9 @@ public class ProcesserSlaveActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         if (message instanceof DoneDownload) {
             doneDownload = (DoneDownload) message;
+            final Timer.Context context = responses.time();
 
-            LOG.info("Start processing for task ID {} with success", doneDownload.getTaskID());
+            //LOG.info("Start processing for task ID {} with success", doneDownload.getTaskID());
 
             path = doneDownload.getHttpRetrieveResponse().getAbsolutePath();
             if (path.equals("")) {
@@ -90,6 +102,7 @@ public class ProcesserSlaveActor extends UntypedActor {
 
             final ProcessingJobTaskDocumentReference task = doneDownload.getDocumentReferenceTask();
             startProcessing(task);
+            context.stop();
 
             return;
         }

@@ -4,12 +4,14 @@ import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.SmallestMailboxPool;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.domain.utils.ActorState;
 import eu.europeana.harvester.cluster.slave.DownloaderSlaveActor;
-import eu.europeana.harvester.cluster.slave.ProcesserSlaveActor;
 import eu.europeana.harvester.cluster.slave.PingerSlaveActor;
+import eu.europeana.harvester.cluster.slave.ProcesserSlaveActor;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingState;
@@ -103,9 +105,13 @@ public class NodeMasterActor extends UntypedActor {
 
     private Boolean sentRequest;
 
+    private final MetricRegistry metrics;
+
+    private Meter retrieve, doneDl, doneProc;
+
     public NodeMasterActor(final ActorRef masterSender, final  ActorRef nodeSupervisor,
                            final ChannelFactory channelFactory, final NodeMasterConfig nodeMasterConfig,
-                           final MediaStorageClient mediaStorageClient, final HashedWheelTimer hashedWheelTimer) {
+                           final MediaStorageClient mediaStorageClient, final HashedWheelTimer hashedWheelTimer, final MetricRegistry metrics ) {
         LOG.info("NodeMasterActor constructor");
 
         this.masterSender = masterSender;
@@ -118,11 +124,16 @@ public class NodeMasterActor extends UntypedActor {
         this.jobsToStop = new HashSet<>();
 
         this.sentRequest = false;
+        this.metrics = metrics;
     }
 
     @Override
     public void preStart() throws Exception {
         LOG.info("NodeMasterActor preStart");
+
+        retrieve = metrics.meter("RetrieveURL");
+        doneDl = metrics.meter("DoneDownload");
+        doneProc = metrics.meter("DoneProcessing");
 
         // Slaves for download
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
@@ -131,7 +142,7 @@ public class NodeMasterActor extends UntypedActor {
         for(int i = 0; i < nodeMasterConfig.getNrOfDownloaderSlaves(); i++) {
             final ActorRef newActor = getContext().system().actorOf(Props.create(DownloaderSlaveActor.class,
                     channelFactory, hashedWheelTimer, httpRetrieveResponseFactory, nodeMasterConfig.getResponseType(),
-                    nodeMasterConfig.getPathToSave(), service));
+                    nodeMasterConfig.getPathToSave(), service, metrics ));
             downloaderActors.put(newActor, ActorState.READY);
         }
 
@@ -171,6 +182,8 @@ public class NodeMasterActor extends UntypedActor {
             messages.add(message);
 
             masterReceiver = getSender();
+            retrieve.mark();
+
             return;
         }
         if(message instanceof DoneDownload) {
@@ -190,6 +203,7 @@ public class NodeMasterActor extends UntypedActor {
                     processerRouter.tell(message, getSelf());
                 }
             }
+            doneDl.mark();
 
             return;
         }
@@ -203,6 +217,8 @@ public class NodeMasterActor extends UntypedActor {
                 masterReceiver.tell(message, getSelf());
                 LOG.info("Slave sending Doneprocessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
             }
+
+            doneProc.mark();
 
             return;
         }

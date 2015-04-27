@@ -4,6 +4,8 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
@@ -22,6 +24,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 /**
  * This type of actors checks for a link or downloads a document.
@@ -73,9 +77,12 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
 
     private Future future;
 
+    private final MetricRegistry metrics;
+    private Timer responses ;
+
     public DownloaderSlaveActor(final ChannelFactory channelFactory, final HashedWheelTimer hashedWheelTimer,
                                 final HttpRetrieveResponseFactory httpRetrieveResponseFactory, final ResponseType responseType,
-                                final String pathToSave, final ExecutorService executorServiceAkka) {
+                                final String pathToSave, final ExecutorService executorServiceAkka, MetricRegistry metrics) {
         LOG.info("DownloaderSlaveActor constructor");
 
         this.channelFactory = channelFactory;
@@ -84,6 +91,8 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         this.responseType = responseType;
         this.pathToSave = pathToSave;
         this.executorServiceAkka = executorServiceAkka;
+        this.metrics = metrics;
+        responses = metrics.timer(name(DownloaderSlaveActor.class, "Download responses"));
     }
 
     @Override
@@ -92,8 +101,9 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
 
         if(message instanceof RetrieveUrl) {
             task = (RetrieveUrl) message;
+            final Timer.Context context = responses.time();
 
-            LOG.info("Starting download for task ID {}", task.getId());
+            //LOG.info("Starting download for task ID {}", task.getId());
 
             final HttpRetrieveResponse httpRetrieveResponse = downloadTask(task);
             if(httpRetrieveResponse.getHttpResponseCode() == -1) {
@@ -102,6 +112,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
 
                 sender.tell(doneDownload, getSelf());
             }
+            context.stop();
 
             return;
         }
