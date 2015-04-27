@@ -459,14 +459,16 @@ public class Publisher {
 		// Query construction
 		BasicDBObject findQuery;
 		if (null == startTimeStamp) {
-			findQuery = new BasicDBObject("state", "SUCCESS");
+		//	findQuery = new BasicDBObject("state", "SUCCESS");
+            findQuery = new BasicDBObject();
+
 		} else {
 			LOG.error("Retrieving SourceDocumentProcessingStatistics gt than timestamp "
 					+ startTimeStamp);
 
 			findQuery = new BasicDBObject();
             findQuery.put("updatedAt",new BasicDBObject("$gt",startTimeStamp.toDate()));
-            findQuery.put("state", "SUCCESS");
+            // findQuery.put("state", "SUCCESS"); -- COMMENTED BY PAUL
 
 		}
 
