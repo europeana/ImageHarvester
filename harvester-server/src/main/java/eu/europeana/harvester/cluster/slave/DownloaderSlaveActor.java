@@ -80,6 +80,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
     private final MetricRegistry metrics;
     private Timer responses ;
 
+
     public DownloaderSlaveActor(final ChannelFactory channelFactory, final HashedWheelTimer hashedWheelTimer,
                                 final HttpRetrieveResponseFactory httpRetrieveResponseFactory, final ResponseType responseType,
                                 final String pathToSave, final ExecutorService executorServiceAkka, MetricRegistry metrics) {
@@ -92,6 +93,8 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         this.pathToSave = pathToSave;
         this.executorServiceAkka = executorServiceAkka;
         this.metrics = metrics;
+
+
         responses = metrics.timer(name(DownloaderSlaveActor.class, "Download responses"));
     }
 
@@ -181,7 +184,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         if(httpRetrieveResponse.getHttpResponseCode() == -1) {
             final DoneDownload doneDownload =
                     createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.ERROR);
-            LOG.info("Done download for task ID {} with error", doneDownload.getTaskID());
+            //LOG.info("Done download for task ID {} with error", doneDownload.getTaskID());
 
             future.cancel(true);
             sender.tell(doneDownload, getSelf());
@@ -192,7 +195,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         final DoneDownload doneDownload =
                 createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.SUCCESS);
 
-        LOG.info("Done download for task ID {} with success", doneDownload.getTaskID());
+        //LOG.info("Done download for task ID {} with success", doneDownload.getTaskID());
 
         future.cancel(true);
         sender.tell(doneDownload, getSelf());

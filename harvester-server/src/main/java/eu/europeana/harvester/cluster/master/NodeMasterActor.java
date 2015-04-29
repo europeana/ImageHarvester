@@ -20,6 +20,7 @@ import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timeout;
 import org.jboss.netty.util.TimerTask;
+import scala.Option;
 
 import java.io.File;
 import java.util.*;
@@ -109,6 +110,8 @@ public class NodeMasterActor extends UntypedActor {
 
     private Meter retrieve, doneDl, doneProc;
 
+    private HashMap<ActorRef, Long> actorWatcher;
+
     public NodeMasterActor(final ActorRef masterSender, final  ActorRef nodeSupervisor,
                            final ChannelFactory channelFactory, final NodeMasterConfig nodeMasterConfig,
                            final MediaStorageClient mediaStorageClient, final HashedWheelTimer hashedWheelTimer, final MetricRegistry metrics ) {
@@ -125,6 +128,7 @@ public class NodeMasterActor extends UntypedActor {
 
         this.sentRequest = false;
         this.metrics = metrics;
+        this.actorWatcher = new HashMap<ActorRef, Long>();
     }
 
     @Override
@@ -138,6 +142,8 @@ public class NodeMasterActor extends UntypedActor {
         // Slaves for download
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
         final ExecutorService service = Executors.newCachedThreadPool();
+
+
 
         for(int i = 0; i < nodeMasterConfig.getNrOfDownloaderSlaves(); i++) {
             final ActorRef newActor = getContext().system().actorOf(Props.create(DownloaderSlaveActor.class,
@@ -157,7 +163,7 @@ public class NodeMasterActor extends UntypedActor {
                         .withSupervisorStrategy(strategy)
                         .withDispatcher("processer-dispatcher")
                         .props(Props.create(ProcesserSlaveActor.class, nodeMasterConfig.getResponseType(),
-                                mediaStorageClient, nodeMasterConfig.getSource(), nodeMasterConfig.getColorMapPath())),
+                                mediaStorageClient, nodeMasterConfig.getSource(), nodeMasterConfig.getColorMapPath(), metrics)),
                 "processerRouter");
 
         // Slaves for pinging
@@ -171,6 +177,32 @@ public class NodeMasterActor extends UntypedActor {
         sendMessage();
 
         monitor();
+    }
+
+
+
+    @Override
+    public void preRestart(Throwable reason, Option<Object> message) throws Exception {
+        super.preRestart(reason, message);
+        LOG.info("NodeMasterActor preRestart");
+
+        getContext().system().stop(processerRouter);
+        getContext().system().stop(pingerRouter);
+        getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+                    TimeUnit.MINUTES), getSelf(), new CheckDownloaders(), getContext().system().dispatcher(), getSelf());
+
+    }
+
+    @Override
+    public void postRestart(Throwable reason) throws Exception {
+        super.postRestart(reason);
+        LOG.info("NodeMasterActor postRestart");
+        requestTasks();
+        sendMessage();
+
+        monitor();
+
+
     }
 
     @Override
@@ -190,6 +222,7 @@ public class NodeMasterActor extends UntypedActor {
             final DoneDownload doneDownload = (DoneDownload) message;
             final String jobId = doneDownload.getJobId();
             downloaderActors.put(getSender(), ActorState.READY);
+            actorWatcher.remove(getSender());
 
             if(!jobsToStop.contains(jobId)) {
                 masterReceiver.tell(new DownloadConfirmation(doneDownload.getTaskID(), doneDownload.getIpAddress()), getSelf());
@@ -215,7 +248,7 @@ public class NodeMasterActor extends UntypedActor {
 
             if(!jobsToStop.contains(jobId)) {
                 masterReceiver.tell(message, getSelf());
-                LOG.info("Slave sending Doneprocessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
+                //LOG.info("Slave sending Doneprocessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
             }
 
             doneProc.mark();
@@ -260,6 +293,30 @@ public class NodeMasterActor extends UntypedActor {
 
             hashedWheelTimer.stop();
             context().system().stop(getSelf());
+
+            return;
+        }
+
+        if (message instanceof CheckDownloaders) {
+
+            LOG.info("Checking for stalled downloader actors");
+
+            for ( Map.Entry<ActorRef,Long> entry: actorWatcher.entrySet()) {
+                long now = System.currentTimeMillis();
+                Long since = entry.getValue();
+                if ( now-since > 1800000l) { // more than 30 minutes, to be moved into a config param
+                    // should I restart the actor too ??
+                    ActorRef deadActor = entry.getKey();
+                    downloaderActors.put(deadActor, ActorState.READY);
+                    actorWatcher.remove(deadActor);
+                    LOG.info("Stalled actor {} Removed",deadActor.toString());
+
+                }
+
+            }
+
+            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+                    TimeUnit.MINUTES), getSelf(), new CheckDownloaders(), getContext().system().dispatcher(), getSelf());
 
             return;
         }
@@ -311,6 +368,7 @@ public class NodeMasterActor extends UntypedActor {
                             if(message != null) {
                                 actorRef.tell(message, getSelf());
                                 downloaderActors.put(actorRef, ActorState.BUSY);
+                                actorWatcher.put(actorRef, new Long(System.currentTimeMillis()));
                                 readyActor = true;
                                 break;
                             }

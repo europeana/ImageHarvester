@@ -1,6 +1,9 @@
 package eu.europeana.harvester.cluster.master;
 
-import akka.actor.*;
+import akka.actor.ActorRef;
+import akka.actor.Props;
+import akka.actor.Terminated;
+import akka.actor.UntypedActor;
 import akka.cluster.Cluster;
 import akka.cluster.ClusterEvent;
 import akka.event.Logging;
@@ -62,6 +65,8 @@ public class NodeSupervisor extends UntypedActor {
 
     private final MetricRegistry metrics;
 
+
+
     public NodeSupervisor(final Slave slave, final ActorRef masterSender, final ChannelFactory channelFactory,
                           final NodeMasterConfig nodeMasterConfig, final MediaStorageClient mediaStorageClient, MetricRegistry metrics) {
         LOG.info("NodeSupervisor constructor");
@@ -73,6 +78,8 @@ public class NodeSupervisor extends UntypedActor {
         this.mediaStorageClient = mediaStorageClient;
         this.missedHeartbeats = 0;
         this.metrics = metrics;
+
+
     }
 
     @Override

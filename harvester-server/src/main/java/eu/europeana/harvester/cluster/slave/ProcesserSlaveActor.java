@@ -181,7 +181,7 @@ public class ProcesserSlaveActor extends UntypedActor {
         }
 
         //deleteFile();
-        LOG.info("Done processing for task ID {} ", doneProcessing.getTaskID());
+        //LOG.info("Done processing for task ID {} ", doneProcessing.getTaskID());
         getSender().tell(doneProcessing, getSelf());
     }
 

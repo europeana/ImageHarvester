@@ -133,6 +133,14 @@ public class Slave {
 
     public void restart() {
         system.shutdown();
+        //sleep 10 minutes
+        try {
+            Thread.sleep(600000l);
+        } catch ( InterruptedException e) {
+            LOG.error(e.getMessage());
+        }
+
+        LOG.info("trying to restart the actor system.");
 
         this.init(this);
         this.start();
