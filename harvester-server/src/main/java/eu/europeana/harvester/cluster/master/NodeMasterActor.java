@@ -329,9 +329,9 @@ public class NodeMasterActor extends UntypedActor {
     private void requestTasks() {
         final TimerTask timerTask = new TimerTask() {
             public void run(final Timeout timeout) throws Exception {
-                LOG.info("Request tasks.");
+                //LOG.info("Request tasks.");
                 if(!sentRequest && masterSender != null && messages.size() < nodeMasterConfig.getTaskNrLimit()) {
-                    LOG.info("Sent request.");
+                    LOG.info("Sent request for tasks");
 
                     masterSender.tell(new RequestTasks(), nodeSupervisor);
                     sentRequest = true;

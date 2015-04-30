@@ -7,12 +7,18 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
-import eu.europeana.harvester.cluster.domain.*;
+import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
+import eu.europeana.harvester.cluster.domain.DefaultLimits;
+import eu.europeana.harvester.cluster.domain.IPExceptions;
+import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.domain.messages.Clean;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
-import eu.europeana.harvester.db.*;
+import eu.europeana.harvester.db.MachineResourceReferenceDao;
+import eu.europeana.harvester.db.ProcessingJobDao;
+import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
+import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import org.joda.time.Duration;
@@ -357,8 +363,8 @@ public class JobLoaderMasterActor extends UntypedActor {
         final String ipAddress = job.getIpAddress();
         final Long speedLimitPerLink = getSpeed(ipAddress);
 
-        final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100),
-                speedLimitPerLink, speedLimitPerLink,  Duration.ZERO, 0l, true, task.getTaskType(),
+        final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100l),
+                speedLimitPerLink, speedLimitPerLink,  Duration.millis(1800000l), 0l, true, task.getTaskType(),
                 defaultLimits.getConnectionTimeoutInMillis(), defaultLimits.getMaxNrOfRedirects());
 
         final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), httpRetrieveConfig,

@@ -86,6 +86,7 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
         ProcessingJobTaskDocumentReference documentReference = null;
         final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
 
+
         final Future<Object> future = Patterns.ask(accountantActor, new GetConcreteTask(msg.getTaskID()), timeout);
         try {
             documentReference = (ProcessingJobTaskDocumentReference) Await.result(future, timeout.duration());

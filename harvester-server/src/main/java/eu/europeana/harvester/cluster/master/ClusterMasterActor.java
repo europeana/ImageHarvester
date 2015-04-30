@@ -10,6 +10,8 @@ import akka.pattern.Patterns;
 import akka.remote.AssociatedEvent;
 import akka.remote.DisassociatedEvent;
 import akka.util.Timeout;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.domain.*;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.domain.messages.Clean;
@@ -132,6 +134,9 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private final HashMap<String, Boolean> ipsWithJobs = new HashMap<>();
 
+    private final MetricRegistry metrics;
+
+    private Meter getJobs;
 
 
     private final HashMap< Integer , RequestHolder> jobRequests = new HashMap<>();
@@ -144,7 +149,8 @@ public class ClusterMasterActor extends UntypedActor {
                               final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
                               final LinkCheckLimitsDao linkCheckLimitsDao,
                               final DefaultLimits defaultLimits,
-                              final Integer cleanupInterval) {
+                              final Integer cleanupInterval,
+                              final MetricRegistry metrics) {
         LOG.info("ClusterMasterActor constructor");
 
         this.ipExceptions = ipExceptions;
@@ -164,6 +170,8 @@ public class ClusterMasterActor extends UntypedActor {
         this.actorsPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<ActorRef>>());
         this.tasksPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<String>>());
         this.tasksPerTime = Collections.synchronizedMap(new HashMap<String, DateTime>());
+        this.metrics = metrics;
+
     }
 
     @Override
@@ -186,6 +194,9 @@ public class ClusterMasterActor extends UntypedActor {
 
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,
                 TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
+
+        getJobs = metrics.meter("Request for jobs");
+
     }
 
     @Override
@@ -211,7 +222,11 @@ public class ClusterMasterActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if(message instanceof RequestTasks) {
+
+
             handleRequest(getSender());
+
+            getJobs.mark();
 
             return;
         }
@@ -369,7 +384,10 @@ public class ClusterMasterActor extends UntypedActor {
         try {
             // Each server is a different case. We treat them different.
 
-            for (final String IP : ipsWithJobs.keySet()) {
+            List<String> IPs = new ArrayList(ipsWithJobs.keySet());
+            Collections.shuffle(IPs);
+
+            for (final String IP : IPs) {
 
                 final Long start = System.currentTimeMillis();
                 final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
@@ -388,7 +406,6 @@ public class ClusterMasterActor extends UntypedActor {
                     continue;
                 }
 
-                //LOG.info("Got {} tasks for IP {} ", tasksFromIP.size(), IP);
 
                 Boolean success = true;
 
@@ -399,7 +416,6 @@ public class ClusterMasterActor extends UntypedActor {
 
                 if ( tasksToSend.size() >= maxToSend ) break;
 
-                //LOG.info("Started {} downloads for IP {} in {} seconds", tasksToSend.size(), IP, (System.currentTimeMillis() - start) / 1000.0);
 
             }
         } catch (Exception e) {
@@ -442,7 +458,6 @@ public class ClusterMasterActor extends UntypedActor {
                 }
 
                 tasksToSend.add(retrieveUrl);
-                //LOG.info("Start one download, added retrieve URL {} in {} seconds", retrieveUrl.getUrl(),(System.currentTimeMillis() - start) / 1000.0);
 
                 return true;
 

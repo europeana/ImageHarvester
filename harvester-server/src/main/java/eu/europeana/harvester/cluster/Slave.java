@@ -4,8 +4,8 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.routing.FromConfig;
-import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
@@ -43,7 +43,13 @@ public class Slave {
 
     public void init(Slave slave) {
 
-        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
+//        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
+//                .convertRatesTo(TimeUnit.SECONDS)
+//                .convertDurationsTo(TimeUnit.MILLISECONDS)
+//                .build();
+
+        Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
+                .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .build();
@@ -116,6 +122,9 @@ public class Slave {
             LOG.error("Error: connection failed to media-storage");
             System.exit(-1);
         }
+
+
+
 
         system = ActorSystem.create("ClusterSystem", config);
 

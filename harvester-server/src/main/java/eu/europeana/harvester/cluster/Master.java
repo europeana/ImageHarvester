@@ -3,6 +3,8 @@ package eu.europeana.harvester.cluster;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.DB;
@@ -30,11 +32,9 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-//import com.rabbitmq.client.Consumer;
-//import com.rabbitmq.client.QueueingConsumer;
-//import eu.europeana.servicebus.client.ESBClient;
-//import eu.europeana.servicebus.client.rabbitmq.RabbitMQClientAsync;
+
 
 class Master {
     private static Logger LOG = LogManager.getLogger(Master.class.getName());
@@ -46,12 +46,22 @@ class Master {
     private ActorRef clusterMaster;
 
     private ActorRef pingMaster;
+    private static final MetricRegistry metrics = new MetricRegistry();
+
 
     public Master(String[] args) {
         this.args = args;
     }
 
     public void init() throws MalformedURLException {
+
+        Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
+                .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .build();
+
+        reporter.start(60, TimeUnit.SECONDS);
         String configFilePath;
 
         if(args.length == 0) {
@@ -135,11 +145,11 @@ class Master {
         final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao =
                 new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
 
-        final String ebHost = config.getString("eventbus.host");
-        final String ebUsername = config.getString("eventbus.username");
-        final String ebPassword = config.getString("eventbus.password");
-        final String ebIncomingQueue = config.getString("eventbus.incomingQueue");
-        final String ebOutgoingQueue = config.getString("eventbus.outgoingQueue");
+//        final String ebHost = config.getString("eventbus.host");
+//        final String ebUsername = config.getString("eventbus.username");
+//        final String ebPassword = config.getString("eventbus.password");
+//        final String ebIncomingQueue = config.getString("eventbus.incomingQueue");
+//        final String ebOutgoingQueue = config.getString("eventbus.outgoingQueue");
 
 //        ESBClient esbClientTemp = null;
 //        try {
@@ -161,7 +171,7 @@ class Master {
                 clusterMasterConfig, ipExceptions, processingJobDao, machineResourceReferenceDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
                 sourceDocumentReferenceMetaInfoDao, linkCheckLimitsDao, defaultLimits,
-                cleanupInterval), "clusterMaster");
+                cleanupInterval, metrics ), "clusterMaster");
 
 //        pingMaster = system.actorOf(Props.create(PingMasterActor.class, pingMasterConfig, router,
 //                machineResourceReferenceDao, machineResourceReferenceStatDao), "pingMaster");
