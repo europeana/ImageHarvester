@@ -24,8 +24,8 @@
         <repository>
             <releases>
                 <enabled>false</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>warn</checksumPolicy>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
             </releases>
             <snapshots>
                 <enabled>false</enabled>
