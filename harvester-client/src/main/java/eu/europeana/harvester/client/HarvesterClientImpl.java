@@ -184,7 +184,7 @@ public class HarvesterClientImpl implements HarvesterClient {
                 recordIdsByState.put(processingState, recordIds);
                 sourceDocumentReferenceIdsByState.put(processingState, sourceDocIds);
             }
-        }
+        } 
 
         return new ProcessingJobStats(recordIdsByState, sourceDocumentReferenceIdsByState);
     }
