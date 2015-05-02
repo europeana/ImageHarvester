@@ -68,6 +68,13 @@ public class AccountantTaskPerIPActor extends UntypedActor {
                 return;
             }
 
+            if (message instanceof GetOverLoadedIPs) {
+                final int threshold = ((GetOverLoadedIPs) message).getThreshold();
+                getSender().tell( getIPsWithTooManyTasks(threshold), ActorRef.noSender());
+                return;
+
+            }
+
             if (message instanceof Monitor) {
                 monitor();
                 return;
@@ -172,6 +179,32 @@ public class AccountantTaskPerIPActor extends UntypedActor {
         //LOG.info("Number of loaded tasks: {}", allTasks.size());
     }
 
+
+
+    private ArrayList<String> getIPsWithTooManyTasks( int threshold ) {
+
+        ArrayList<String> IPs = new ArrayList<>();
+
+        for (final Map.Entry<String, List<String>> task : tasksPerIP.entrySet()) {
+            int ready = 0;
+
+            for (final String taskID : task.getValue()) {
+
+                final TaskState taskState = getTaskState(taskID);
+
+                if (taskState.equals(TaskState.READY))
+                    ready++;
+            }
+
+            if (ready > threshold ) {
+                IPs.add(task.getKey());
+            }
+
+
+        }
+        LOG.info("Found {} IPs that are overloaded", IPs.size());
+        return IPs;
+    }
 
 
 

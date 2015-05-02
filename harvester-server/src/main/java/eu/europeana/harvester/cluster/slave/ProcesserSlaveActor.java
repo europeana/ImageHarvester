@@ -81,7 +81,7 @@ public class ProcesserSlaveActor extends UntypedActor {
         this.source = source;
         this.colorMapPath = colorMapPath;
         this.metrics = metrics;
-        responses = metrics.timer(name(ProcesserSlaveActor.class, "Processing responses"));
+        responses = metrics.timer(name("ProcesserSlave", "Processing responses"));
 
         LOG.info("ProcesserSlaveActor constructor");
     }

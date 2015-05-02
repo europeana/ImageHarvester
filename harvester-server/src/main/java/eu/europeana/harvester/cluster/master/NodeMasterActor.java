@@ -145,6 +145,7 @@ public class NodeMasterActor extends UntypedActor {
 
 
 
+
         for(int i = 0; i < nodeMasterConfig.getNrOfDownloaderSlaves(); i++) {
             final ActorRef newActor = getContext().system().actorOf(Props.create(DownloaderSlaveActor.class,
                     channelFactory, hashedWheelTimer, httpRetrieveResponseFactory, nodeMasterConfig.getResponseType(),

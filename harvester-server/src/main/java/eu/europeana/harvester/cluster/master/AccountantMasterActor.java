@@ -152,6 +152,11 @@ public class AccountantMasterActor extends UntypedActor {
                 return;
 
             }
+
+            if ( message instanceof GetOverLoadedIPs) {
+                accountantTasksPerIPActor.forward(message,getContext());
+                return;
+            }
         } catch(Exception e) {
             //e.printStackTrace();
             LOG.error("Accountant master actor: {}", e.getMessage());

@@ -7,6 +7,8 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
@@ -27,6 +29,8 @@ import scala.concurrent.Future;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 public class JobLoaderMasterActor extends UntypedActor {
 
@@ -94,6 +98,10 @@ public class JobLoaderMasterActor extends UntypedActor {
      */
     private final IPExceptions ipExceptions;
 
+    private final MetricRegistry metrics;
+
+    private Timer loadJobs;
+
     public JobLoaderMasterActor(final ActorRef receiverActor, final ClusterMasterConfig clusterMasterConfig,
                                 final ActorRef accountantActor, final Map<Address, HashSet<ActorRef>> actorsPerAddress,
                                 final ProcessingJobDao processingJobDao,
@@ -102,7 +110,7 @@ public class JobLoaderMasterActor extends UntypedActor {
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
                                 final DefaultLimits defaultLimits,
                                 //final HashMap<String, MachineResourceReference> machineResourceReferences,
-                                final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions) {
+                                final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions, final MetricRegistry metrics ) {
         LOG.info("JobLoaderMasterActor constructor");
 
         this.receiverActor = receiverActor;
@@ -116,6 +124,8 @@ public class JobLoaderMasterActor extends UntypedActor {
         this.defaultLimits = defaultLimits;
         this.ipsWithJobs = ipsWithJobs;
         this.ipExceptions = ipExceptions;
+        this.metrics = metrics;
+        loadJobs = metrics.timer(name("JobLoaderMaster", "Send jobs"));
 
         checkForAbandonedJobs();
         getIPDistribution();
@@ -125,6 +135,7 @@ public class JobLoaderMasterActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         if(message instanceof LoadJobs) {
 
+            final Timer.Context context = loadJobs.time();
 
             try {
 
@@ -133,6 +144,7 @@ public class JobLoaderMasterActor extends UntypedActor {
             } catch(Exception e) {
                 LOG.error("Error in LoadJobs: "+e.getMessage());
             }
+            context.stop();
 
             return;
         }
@@ -182,14 +194,25 @@ public class JobLoaderMasterActor extends UntypedActor {
         final int taskSize = getAllTasks();
 
         if (taskSize<clusterMasterConfig.getMaxTasksInMemory() ) {
+            //don't load for IPs that are overloaded
+            ArrayList<String> noLoadIPs = getOverLoadedIPList(Math.round(clusterMasterConfig.getMaxTasksInMemory()/2));
+            HashMap < String, Integer > tempDistribution = new HashMap<>(ipDistribution);
+            if ( noLoadIPs != null ) {
+                for (String ip : noLoadIPs ) {
+                    if (tempDistribution.containsKey(ip))
+                        tempDistribution.remove(ip);
+                }
+            }
+
             LOG.info("========== Looking for new jobs from MongoDB ==========");
             Long start = System.currentTimeMillis();
-            LOG.info("#IPs with tasks: {}", ipDistribution.size());
+            LOG.info("#IPs with tasks: temp {}, all: {}", tempDistribution.size(), ipDistribution.size());
+
             final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
 
             final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
             final List<ProcessingJob> all =
-                    processingJobDao.getDiffusedJobsWithState(JobState.READY, page, ipDistribution, ipsWithJobs);
+                    processingJobDao.getDiffusedJobsWithState(JobState.READY, page, tempDistribution, ipsWithJobs);
             LOG.info("Done with loading jobs in {} seconds. Creating tasks from {} jobs.",
                     (System.currentTimeMillis() - start) / 1000.0, all.size());
             start = System.currentTimeMillis();
@@ -246,10 +269,23 @@ public class JobLoaderMasterActor extends UntypedActor {
         try {
             tasks = (int) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("Error: {}", e);
+            LOG.error("getAllTasks Error: {}", e);
         }
 
         return tasks;
+    }
+
+    private ArrayList<String> getOverLoadedIPList( int threshold){
+        final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
+        final Future<Object> future = Patterns.ask(accountantActor, new GetOverLoadedIPs(threshold), timeout);
+        ArrayList<String> ips = null;
+        try {
+            ips = (ArrayList<String>) Await.result(future, timeout.duration());
+        } catch (Exception e) {
+            LOG.error("OverloadedIPs Error: {}", e);
+        }
+
+        return ips;
     }
 
     /**
@@ -364,7 +400,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         final Long speedLimitPerLink = getSpeed(ipAddress);
 
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100l),
-                speedLimitPerLink, speedLimitPerLink,  Duration.millis(1800000l), 0l, true, task.getTaskType(),
+                speedLimitPerLink, speedLimitPerLink,  Duration.millis(600000l), 0l, true, task.getTaskType(),
                 defaultLimits.getConnectionTimeoutInMillis(), defaultLimits.getMaxNrOfRedirects());
 
         final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), httpRetrieveConfig,

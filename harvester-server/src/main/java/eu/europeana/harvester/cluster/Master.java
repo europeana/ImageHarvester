@@ -3,8 +3,11 @@ package eu.europeana.harvester.cluster;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.DB;
@@ -29,11 +32,11 @@ import org.apache.logging.log4j.Logger;
 import org.joda.time.Duration;
 
 import java.io.File;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 
 
 class Master {
@@ -55,13 +58,7 @@ class Master {
 
     public void init() throws MalformedURLException {
 
-        Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
-                .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .build();
 
-        reporter.start(60, TimeUnit.SECONDS);
         String configFilePath;
 
         if(args.length == 0) {
@@ -92,6 +89,24 @@ class Master {
                 new PingMasterConfig(config.getInt("ping.timePeriod"), config.getInt("ping.nrOfPings"),
                         Duration.millis(config.getInt("akka.cluster.receiveTimeoutInterval")),
                         config.getInt("ping.timeoutInterval"), WriteConcern.NONE);
+
+        Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
+                .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .build();
+
+        reporter.start(60, TimeUnit.SECONDS);
+
+        Graphite graphite = new Graphite(new InetSocketAddress(config.getString("metrics.graphiteServer"),
+                config.getInt("metrics.graphitePort")));
+        GraphiteReporter reporter2 = GraphiteReporter.forRegistry(metrics)
+                .prefixedWith(config.getString("metrics.masterID"))
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.ALL)
+                .build(graphite);
+        reporter2.start(1, TimeUnit.MINUTES);
 
         system = ActorSystem.create("ClusterSystem", config);
 

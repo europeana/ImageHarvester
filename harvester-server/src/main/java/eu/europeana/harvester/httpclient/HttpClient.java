@@ -106,6 +106,8 @@ public class HttpClient implements Callable<HttpRetrieveResponse> {
 
         final URL newURL = httpRetrieveResponse.getUrl();
 
+        LOG.info("Time termination limit = {}", httpRetrieveConfig.getTerminationThresholdTimeLimit());
+
         final ChannelPipelineFactory pipelineFactory =
                 new ConstrainedPipelineFactory(
                         httpRetrieveConfig.getLimitsCheckInterval(),

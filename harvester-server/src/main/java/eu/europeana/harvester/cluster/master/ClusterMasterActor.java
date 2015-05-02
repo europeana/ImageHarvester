@@ -1,34 +1,44 @@
 package eu.europeana.harvester.cluster.master;
 
-import akka.actor.*;
+import akka.actor.ActorRef;
+import akka.actor.Address;
+import akka.actor.Props;
+import akka.actor.UntypedActor;
 import akka.cluster.Cluster;
 import akka.cluster.ClusterEvent;
-import akka.cluster.ClusterEvent.*;
+import akka.cluster.ClusterEvent.MemberEvent;
+import akka.cluster.ClusterEvent.MemberRemoved;
+import akka.cluster.ClusterEvent.MemberUp;
+import akka.cluster.ClusterEvent.UnreachableMember;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.remote.AssociatedEvent;
 import akka.remote.DisassociatedEvent;
 import akka.util.Timeout;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import eu.europeana.harvester.cluster.domain.*;
+import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
+import eu.europeana.harvester.cluster.domain.DefaultLimits;
+import eu.europeana.harvester.cluster.domain.IPExceptions;
+import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.domain.messages.Clean;
 import eu.europeana.harvester.cluster.domain.messages.Monitor;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.db.*;
-import eu.europeana.harvester.domain.*;
-//import eu.europeana.servicebus.client.ESBClient;
+import eu.europeana.harvester.domain.NotImplementedException;
 import org.joda.time.DateTime;
 import scala.Option;
 import scala.concurrent.Await;
-import scala.concurrent.duration.Duration;
 import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
 
-import java.lang.Exception;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
+
+import static com.codahale.metrics.MetricRegistry.name;
+
+//import eu.europeana.servicebus.client.ESBClient;
 
 public class ClusterMasterActor extends UntypedActor {
 
@@ -136,7 +146,7 @@ public class ClusterMasterActor extends UntypedActor {
 
     private final MetricRegistry metrics;
 
-    private Meter getJobs;
+    private com.codahale.metrics.Timer getJobs;
 
 
     private final HashMap< Integer , RequestHolder> jobRequests = new HashMap<>();
@@ -180,13 +190,13 @@ public class ClusterMasterActor extends UntypedActor {
 
         receiverActor = getContext().system().actorOf(Props.create(ReceiverMasterActor.class, clusterMasterConfig,
                 accountantActor, actorsPerAddress, tasksPerAddress, tasksPerTime, processingJobDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao
+                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao,metrics
         ), "receiver");
 
         jobLoaderActor = getContext().system().actorOf(Props.create(JobLoaderMasterActor.class, receiverActor,
                 clusterMasterConfig, accountantActor, actorsPerAddress, processingJobDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
-                defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
+                defaultLimits, ipsWithJobs, ipExceptions,metrics), "jobLoader");
 
         final Cluster cluster = Cluster.get(getContext().system());
         cluster.subscribe(getSelf(), ClusterEvent.initialStateAsEvents(),
@@ -195,7 +205,7 @@ public class ClusterMasterActor extends UntypedActor {
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,
                 TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
 
-        getJobs = metrics.meter("Request for jobs");
+        getJobs = metrics.timer(name("ClusterMaster", "Send jobs"));
 
     }
 
@@ -223,10 +233,9 @@ public class ClusterMasterActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         if(message instanceof RequestTasks) {
 
-
+            final com.codahale.metrics.Timer.Context context = getJobs.time();
             handleRequest(getSender());
-
-            getJobs.mark();
+            context.stop();
 
             return;
         }

@@ -4,8 +4,11 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.routing.FromConfig;
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
@@ -22,6 +25,7 @@ import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 
 import java.io.File;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -48,13 +52,7 @@ public class Slave {
 //                .convertDurationsTo(TimeUnit.MILLISECONDS)
 //                .build();
 
-        Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
-                .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .build();
 
-        reporter.start(60, TimeUnit.SECONDS);
 
 
         String configFilePath;
@@ -122,6 +120,25 @@ public class Slave {
             LOG.error("Error: connection failed to media-storage");
             System.exit(-1);
         }
+
+        Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
+                .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .build();
+
+        reporter.start(60, TimeUnit.SECONDS);
+
+        //Graphite graphite = new Graphite(new InetSocketAddress("1eye.busymachines.com", 2003));
+        Graphite graphite = new Graphite(new InetSocketAddress(config.getString("metrics.graphiteServer"),
+                config.getInt("metrics.graphitePort")));
+        GraphiteReporter reporter2 = GraphiteReporter.forRegistry(metrics)
+                .prefixedWith(config.getString("metrics.slaveID"))
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.ALL)
+                .build(graphite);
+        reporter2.start(1, TimeUnit.MINUTES);
 
 
 

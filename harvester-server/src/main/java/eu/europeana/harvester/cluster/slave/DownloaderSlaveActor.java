@@ -24,6 +24,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
@@ -95,7 +97,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         this.metrics = metrics;
 
 
-        responses = metrics.timer(name(DownloaderSlaveActor.class, "Download responses"));
+        responses = metrics.timer(name("DownloaderSlave", "Download responses"));
     }
 
     @Override
@@ -109,12 +111,15 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
             //LOG.info("Starting download for task ID {}", task.getId());
 
             final HttpRetrieveResponse httpRetrieveResponse = downloadTask(task);
-            if(httpRetrieveResponse.getHttpResponseCode() == -1) {
-                final DoneDownload doneDownload =
-                        createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.ERROR);
+            DoneDownload doneDownload;
+            if(httpRetrieveResponse.getHttpResponseCode() == -1)
+                doneDownload = createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.ERROR);
+            else
+                doneDownload = createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.SUCCESS);
 
-                sender.tell(doneDownload, getSelf());
-            }
+
+            sender.tell(doneDownload, getSelf());
+
             context.stop();
 
             return;
@@ -147,16 +152,28 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
                 return httpRetrieveResponse;
             }
 
+            //LOG.info("Starting download for task ID {} with timeout : {}", task.getId(), task.getHttpRetrieveConfig().getTerminationThresholdTimeLimit());
+
             final HttpClient httpClient = new HttpClient(channelFactory, hashedWheelTimer,
                     task.getHttpRetrieveConfig(), task.getHeaders(), httpRetrieveResponse, url);
-            httpClient.setMaster(this);
+            //httpClient.setMaster(this);
             if(httpRetrieveResponse.getHttpResponseCode() == -1) {
                 return httpRetrieveResponse;
             }
 
             future = executorServiceAkka.submit(httpClient);
 
-            // blocks until we get the response
+            // blocks until we get the response within the requested timeout - begin test
+            try{
+                httpRetrieveResponse = (HttpRetrieveResponse)future.get(600000, TimeUnit.MILLISECONDS);//let it run for 10 minutes max for now
+            }catch(TimeoutException e){
+                LOG.info("No response after one minute");
+                future.cancel(true);
+            }
+
+            future.cancel(true);
+
+
             //httpRetrieveResponse = httpClient.call();
         } catch (Exception e) {
             LOG.error(e.getMessage());
@@ -184,7 +201,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         if(httpRetrieveResponse.getHttpResponseCode() == -1) {
             final DoneDownload doneDownload =
                     createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.ERROR);
-            //LOG.info("Done download for task ID {} with error", doneDownload.getTaskID());
+            LOG.info("Done download for task ID {} with error", doneDownload.getTaskID());
 
             future.cancel(true);
             sender.tell(doneDownload, getSelf());
@@ -195,7 +212,7 @@ public class DownloaderSlaveActor extends UntypedActor implements CallbackInterf
         final DoneDownload doneDownload =
                 createDoneDownloadMessage(httpRetrieveResponse, ProcessingState.SUCCESS);
 
-        //LOG.info("Done download for task ID {} with success", doneDownload.getTaskID());
+        LOG.info("Done download for task ID {} with success", doneDownload.getTaskID());
 
         future.cancel(true);
         sender.tell(doneDownload, getSelf());

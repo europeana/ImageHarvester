@@ -6,6 +6,8 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
@@ -89,6 +91,9 @@ public class ReceiverMasterActor extends UntypedActor {
     private Integer error = 0;
     int counter = 0;
 
+    private final MetricRegistry metrics;
+    private Meter downloads,processed;
+
     public ReceiverMasterActor(final ClusterMasterConfig clusterMasterConfig,
                                final ActorRef accountantActor,
                                final Map<Address, HashSet<ActorRef>> actorsPerAddress,
@@ -97,7 +102,8 @@ public class ReceiverMasterActor extends UntypedActor {
                                final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final SourceDocumentReferenceDao sourceDocumentReferenceDao,
-                               final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao ){
+                               final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
+                               final MetricRegistry metrics){
         LOG.info("ReceiverMasterActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
@@ -109,6 +115,9 @@ public class ReceiverMasterActor extends UntypedActor {
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
+        this.metrics = metrics;
+        downloads = metrics.meter("ReceiverMaster - Downloaded");
+        processed = metrics.meter("ReceiverMaster - Processed");
     }
 
 
@@ -154,6 +163,7 @@ public class ReceiverMasterActor extends UntypedActor {
         }
         if(message instanceof DownloadConfirmation) {
             accountantActor.tell(new ModifyState(((DownloadConfirmation) message).getTaskID(), TaskState.PROCESSING), getSelf());
+            downloads.mark();
 
             return;
         }
@@ -165,7 +175,7 @@ public class ReceiverMasterActor extends UntypedActor {
             markDone(doneProcessing);
 
             removeTask(address, doneProcessing);
-
+            processed.mark();
             return;
         }
     }
