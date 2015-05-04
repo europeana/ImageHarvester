@@ -1,0 +1,26 @@
+[
+  {
+    "europeana_id": "/92004/BibliographicResource_2000059204353",
+    "TYPE": ["TEXT"]
+  },
+  {
+    "europeana_id": "/92004/BibliographicResource_2000059214900",
+    "TYPE": ["TEXT"]
+  },
+  {
+    "europeana_id": "/09403/deposit_d_nb_de_cgi_bin_dokserv_id_3624021_prov_M_dok_var_1_dok_ext_htm",
+    "TYPE": ["TEXT"]
+  },
+  {
+    "europeana_id": "/2023831/kng_item_item_jsf_id_105436",
+    "TYPE": ["IMAGE"]
+  },
+  {
+    "europeana_id": "/2023601/oai_eu_dismarc_PRE_71728191126911959",
+    "TYPE": ["AUDIO"]
+  },
+  {
+    "europeana_id": "/2021601/media_139792",
+    "TYPE": ["VIDEO"]
+  }
+]

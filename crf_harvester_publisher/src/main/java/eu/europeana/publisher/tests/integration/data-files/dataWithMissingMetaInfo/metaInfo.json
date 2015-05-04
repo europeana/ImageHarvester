@@ -1,0 +1,64 @@
+[
+  {
+    "_id" : "902b31943b4e66f5578539bfa60f2b82",
+    "className" : "eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo",
+    "textMetaInfo" : {
+      "mimeType" : "text/xml",
+      "fileSize" : 130107,
+      "isSearchable" : false
+    }
+  },
+
+  {
+    "_id" : "cc6103bee8aa27bfa11b851a2377a015",
+    "className" : "eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo",
+    "imageMetaInfo" : {
+      "width" : 582,
+      "height" : 800,
+      "mimeType" : "image/jpeg",
+      "fileFormat" : "JPEG",
+      "colorSpace" : "sRGB",
+      "fileSize" : 183084,
+      "colorPalette" : [
+        "#000000",
+        "#C0C0C0",
+        "#2F4F4F",
+        "#A9A9A9",
+        "#D2B48C",
+        "#696969"
+      ],
+      "orientation" : "PORTRAIT"
+    }
+  },
+
+  {
+    "_id" : "764fff8f4654274f9cff28280d7e0008",
+    "className" : "eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo",
+    "audioMetaInfo" : {
+      "sampleRate" : 44100,
+      "bitRate" : 320000,
+      "duration" : 29048,
+      "mimeType" : "audio/mpeg",
+      "fileFormat" : "mp3",
+      "fileSize" : 1162970,
+      "channels" : 2,
+      "bitDepth" : 16
+    }
+  },
+
+  {
+    "_id" : "2d74ba5b07344f9587b5c67693fcb3a5",
+    "className" : "eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo",
+    "videoMetaInfo" : {
+      "width" : 352,
+      "height" : 288,
+      "duration" : 94666,
+      "mimeType" : "video/mpeg",
+      "frameRate" : 25.0000000000000000,
+      "fileSize" : 16155078,
+      "codec" : "mpeg1video",
+      "resolution" : "352x288",
+      "bitRate" : 1.152e+06
+    }
+  }
+]

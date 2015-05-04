@@ -142,8 +142,11 @@ public class Publisher {
 				}
 			}
 
+			System.out.println(lastSuccesfulPublishBeforeMax);
+			System.out.println(lastSuccesfulPublish);
+
             // Advance with 1 minute if it's exactly the same (very unlikely).
-            if (lastSuccesfulPublishBeforeMax.isEqual(lastSuccesfulPublish)) {
+            if (null != lastSuccesfulPublishBeforeMax && lastSuccesfulPublishBeforeMax.isEqual(lastSuccesfulPublish)) {
                 lastSuccesfulPublish = lastSuccesfulPublish.plusMinutes(30);
             }
 
@@ -286,11 +289,6 @@ public class Publisher {
 						break;
 					}
 
-					if (false == hasMedia) {
-						LOG.error("Has Media is false for record: " + ID + " with metainfo: " + metaInfo.getId());
-						continue;
-					}
-
 					// Creates the wrapping object for the new properties
 					final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(
 							retrievedDocsPerID.get(ID).getRecordId(),
@@ -396,19 +394,14 @@ public class Publisher {
 					}
 
 					final long uptimeInSecs = (System.currentTimeMillis() - publisherStarteAt) / 1000;
-					final long processingRate = publisherRecordsProcessed
-							/ uptimeInSecs;
-					final long publishingRate = publisherRecordsPublished
-							/ uptimeInSecs;
+					final long processingRate = 0 == uptimeInSecs ? 0 : publisherRecordsProcessed / uptimeInSecs;
+					final long publishingRate = 0 == uptimeInSecs ? 0 : publisherRecordsPublished / uptimeInSecs;
 
-					long lastBatchDurationInSecs = (System
-							.currentTimeMillis() - startTimeRetrieveMetaInfoDocs) / 1000;
+					long lastBatchDurationInSecs = (System.currentTimeMillis() - startTimeRetrieveMetaInfoDocs) / 1000;
                     if (lastBatchDurationInSecs == 0) lastBatchDurationInSecs = 1;
 
-					final long lastBatchProcessingRate = solrCandidateDocuments
-							.size() / lastBatchDurationInSecs;
-					final long lastBatchPublishingRate = solrDocsToUpdate
-							.size() / lastBatchDurationInSecs;
+					final long lastBatchProcessingRate = solrCandidateDocuments.size() / lastBatchDurationInSecs;
+					final long lastBatchPublishingRate = solrDocsToUpdate.size() / lastBatchDurationInSecs;
 
 					LOG.error("Global stats : Total number of processed documents: "
 							+ publisherRecordsProcessed
