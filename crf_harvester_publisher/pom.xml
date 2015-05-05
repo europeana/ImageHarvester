@@ -19,7 +19,9 @@
                 <version>2.12.4</version>
                 <configuration>
                     <skipTests>true</skipTests>
-                    <excludedGroups>eu.europeana.publisher.tests.integration.IntegrationTest</excludedGroups>
+                    <includes>
+                        <include> **/*Tests.java </include>
+                    </includes>
                 </configuration>
             </plugin>
             <plugin>
@@ -61,28 +63,16 @@
                     <downloadSources>true</downloadSources>
                 </configuration>
             </plugin>
-            <plugin>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.18.1</version>
-                <configuration>
-                    <includes>
-                        <include>**/*.java</include>
-                    </includes>
-                    <groups>eu.europeana.publisher.tests.integration.IntegrationTest</groups>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>harvester-persistence</artifactId>
@@ -117,8 +107,10 @@
             <artifactId>json-simple</artifactId>
             <version>1.1</version>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.9</version>
+        </dependency>
     </dependencies>
-
-
-
 </project>

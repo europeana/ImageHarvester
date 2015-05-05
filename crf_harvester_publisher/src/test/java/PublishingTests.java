@@ -1,16 +1,13 @@
-package eu.europeana.publisher.tests.integration;
-
 import com.mongodb.*;
 import com.mongodb.util.JSON;
 import com.typesafe.config.*;
 import eu.europeana.publisher.domain.PublisherConfig;
-import eu.europeana.publisher.logic.CommonTagExtractor;
 import eu.europeana.publisher.logic.MediaTypeEncoding;
 import eu.europeana.publisher.logic.Publisher;
-import eu.europeana.publisher.tests.integration.inverseLogic.CommonPropertyExtractor;
-import eu.europeana.publisher.tests.integration.inverseLogic.ImagePropertyExtractor;
-import eu.europeana.publisher.tests.integration.inverseLogic.SoundPropertyExtractor;
-import eu.europeana.publisher.tests.integration.inverseLogic.VideoPropertyExtractor;
+import inverseLogic.CommonPropertyExtractor;
+import inverseLogic.ImagePropertyExtractor;
+import inverseLogic.SoundPropertyExtractor;
+import inverseLogic.VideoPropertyExtractor;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -25,11 +22,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import javax.lang.model.type.ArrayType;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -48,7 +43,7 @@ import static org.junit.Assert.*;
 public class PublishingTests {
     private PublisherConfig publisherConfig;
 
-    private static String PATH_PREFIX = "./src/main/java/eu/europeana/publisher/tests/integration/";
+    private static String PATH_PREFIX = "./src/test/java/";
 
     @After
     public void tearDown() {

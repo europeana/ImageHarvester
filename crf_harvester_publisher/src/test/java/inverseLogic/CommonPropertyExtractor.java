@@ -1,4 +1,4 @@
-package eu.europeana.publisher.tests.integration.inverseLogic;
+package inverseLogic;
 
 import eu.europeana.publisher.logic.MediaTypeEncoding;
 import eu.europeana.publisher.logic.TagEncoding;
