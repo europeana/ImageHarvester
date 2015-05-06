@@ -79,7 +79,6 @@ public class PublisherMain {
         }
 
         final String solrURL = config.getString("solr.url");
-
         final Integer batch = config.getInt("config.batch");
 
         final List<? extends Config> sourceMongoConfigList = config.getConfigList("sourceMongo");
@@ -136,12 +135,13 @@ public class PublisherMain {
             //*/
         }
 
-        for (final Thread thread: threads) {
+        threads.forEach((Thread thread) -> thread.start());
+        threads.forEach((Thread thread) -> {
             try {
                 thread.join();
             } catch (InterruptedException e) {
                 LOG.error("Join failed for thread " + thread.getId(), e);
             }
-        }
+        });
     }
 }

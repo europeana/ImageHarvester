@@ -154,7 +154,7 @@ public class PublisherMetrics  {
     }
 
     public void stopLoopBatchTimer() {
-        stopLoopBatchTimer();
+        stopTimer(loopBatchTimer);
     }
 
     public <T> void registerGauge(final String gaugeName, final Gauge<T> gauge) {

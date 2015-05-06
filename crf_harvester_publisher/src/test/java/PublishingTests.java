@@ -234,21 +234,16 @@ public class PublishingTests {
         final String targetDBName = targetMongoConfig.getString("dbName");
         final String targetDBUsername = targetMongoConfig.getString("username");
         final String targetDBPassword = targetMongoConfig.getString("password");
+        final String graphiteMasterId = config.getString("metrics.masterID");
+        final String graphiteServer   = config.getString("metrics.graphiteServer");
+        final Integer graphitePort    = config.getInt("metrics.graphitePort");
 
-        return new PublisherConfig(graphiteMasterId, graphiteServer, graphitePort, sourceHost,
-                sourcePort,
-                sourceDBName,
-                sourceDBUsername,
-                sourceDBPassword,
-                targetHost,
-                targetPort,
-                targetDBName,
-                targetDBUsername,
-                targetDBPassword,
-                startTimestamp,
-                startTimestampFile,
-                solrURL,
-                batch);
+        return new PublisherConfig(sourceHost, sourcePort, sourceDBName, sourceDBUsername, sourceDBPassword,
+                                   targetHost, targetPort, targetDBName, targetDBUsername, targetDBPassword,
+                                   startTimestamp, startTimestampFile,
+                                   solrURL, batch,
+                                   graphiteMasterId, graphiteServer, graphitePort
+                                  );
     }
 
     private void runPublisher(final PublisherConfig publisherConfig) {

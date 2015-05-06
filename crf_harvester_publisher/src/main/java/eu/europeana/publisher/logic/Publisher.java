@@ -31,33 +31,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.codahale.metrics.MetricRegistry.name;
-
 /**
  * It's responsible for the whole publishing process. It's the engine of the
  * publisher module.
  */
 public class Publisher {
-
 	private static final Logger LOG = LogManager.getLogger(Publisher.class.getName());
 
 	private final PublisherConfig config;
-
 	private DB sourceDB;
-
 	private Integer LIMIT;
-
 	final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDaoFromSource;
-
 	final WebResourceMetaInfoDAO webResourceMetaInfoDAO;
-
 	final SOLRWriter solrWriter;
-
-	long publisherRecordsProcessed = 0;
-
-	long publisherRecordsPublished = 0;
-
-	private final PublisherMetrics publisherMetrics;
 
 	public Publisher(PublisherConfig config) throws UnknownHostException {
 		this.config = config;
@@ -116,7 +102,7 @@ public class Publisher {
 				.convertDurationsTo(TimeUnit.MILLISECONDS)
 				.build();
 
-		reporter.start(60, TimeUnit.SECONDS);
+		reporter.start(1, TimeUnit.MINUTES);
 
 		Graphite graphite = new Graphite(new InetSocketAddress(config.getGraphiteServer(),
 				                         				       config.getGraphitePort()
@@ -128,7 +114,7 @@ public class Publisher {
 				.convertDurationsTo(TimeUnit.MILLISECONDS)
 				.filter(MetricFilter.ALL)
 				.build(graphite);
-		reporter2.start(1, TimeUnit.MINUTES);
+		reporter2.start(30, TimeUnit.SECONDS);
 	}
 
 	public void start() throws IOException, SolrServerException {
@@ -151,7 +137,6 @@ public class Publisher {
 		List<SourceDocumentReferenceMetaInfo> metaInfos;
 		List<CRFSolrDocument> solrCandidateDocuments = new ArrayList<>();
         DateTime lastSuccesfulPublish = config.getStartTimestamp();
-
 
 		do {
 			publisherMetrics.startLoopBatchTimer();
