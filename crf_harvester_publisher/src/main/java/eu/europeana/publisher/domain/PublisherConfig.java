@@ -3,6 +3,11 @@ package eu.europeana.publisher.domain;
 import org.joda.time.DateTime;
 
 public class PublisherConfig {
+    private final String graphiteMasterId;
+
+    private final String graphiteServer;
+
+    private final Integer graphitePort;
 
     /**
      * Source MongoDB host.
@@ -73,11 +78,15 @@ public class PublisherConfig {
      */
     private final Integer batch;
 
-    public PublisherConfig(final String sourceHost, final Integer sourcePort, final String sourceDBName,
+    public PublisherConfig( final String sourceHost, final Integer sourcePort, final String sourceDBName,
                            final String sourceDBUsername, final String sourceDBPassword, final String targetHost,
                            final Integer targetPort, final String targetDBName, final String targetDBUsername,
-                           final String targetDBPassword, final DateTime startTimestamp,String startTimestampFile,
-                           final String solrURL, final Integer batch) {
+                           final String targetDBPassword, final DateTime startTimestamp, String startTimestampFile,
+                           final String solrURL, final Integer batch,
+                           final String graphiteMasterId, final String graphiteServer, final Integer graphitePort) {
+        this.graphiteMasterId = graphiteMasterId;
+        this.graphiteServer = graphiteServer;
+        this.graphitePort = graphitePort;
         this.sourceHost = sourceHost;
         this.sourcePort = sourcePort;
         this.sourceDBName = sourceDBName;
@@ -173,4 +182,15 @@ public class PublisherConfig {
     }
 
 
+    public String getGraphiteMasterId() {
+        return graphiteMasterId;
+    }
+
+    public String getGraphiteServer() {
+        return graphiteServer;
+    }
+
+    public Integer getGraphitePort() {
+        return graphitePort;
+    }
 }

@@ -235,7 +235,7 @@ public class PublishingTests {
         final String targetDBUsername = targetMongoConfig.getString("username");
         final String targetDBPassword = targetMongoConfig.getString("password");
 
-        return new PublisherConfig(sourceHost,
+        return new PublisherConfig(graphiteMasterId, graphiteServer, graphitePort, sourceHost,
                 sourcePort,
                 sourceDBName,
                 sourceDBUsername,

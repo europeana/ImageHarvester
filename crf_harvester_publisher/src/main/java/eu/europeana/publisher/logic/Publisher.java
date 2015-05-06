@@ -1,5 +1,8 @@
 package eu.europeana.publisher.logic;
 
+import com.codahale.metrics.*;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.*;
@@ -17,16 +20,18 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static com.codahale.metrics.MetricRegistry.name;
 
 /**
  * It's responsible for the whole publishing process. It's the engine of the
@@ -34,8 +39,7 @@ import java.util.Map;
  */
 public class Publisher {
 
-	private static final Logger LOG = LogManager.getLogger(Publisher.class
-			.getName());
+	private static final Logger LOG = LogManager.getLogger(Publisher.class.getName());
 
 	private final PublisherConfig config;
 
@@ -49,12 +53,11 @@ public class Publisher {
 
 	final SOLRWriter solrWriter;
 
-	final long publisherStarteAt = System.currentTimeMillis();
-
 	long publisherRecordsProcessed = 0;
 
 	long publisherRecordsPublished = 0;
-    DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
+
+	private final PublisherMetrics publisherMetrics;
 
 	public Publisher(PublisherConfig config) throws UnknownHostException {
 		this.config = config;
@@ -105,29 +108,59 @@ public class Publisher {
 		solrWriter = new SOLRWriter(config.getSolrURL());
 
 		LIMIT = config.getBatch();
+
+		publisherMetrics = new PublisherMetrics();
+		Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.metricRegistry)
+				.outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
+				.convertRatesTo(TimeUnit.SECONDS)
+				.convertDurationsTo(TimeUnit.MILLISECONDS)
+				.build();
+
+		reporter.start(60, TimeUnit.SECONDS);
+
+		Graphite graphite = new Graphite(new InetSocketAddress(config.getGraphiteServer(),
+				                         				       config.getGraphitePort()
+															  )
+									    );
+		GraphiteReporter reporter2 = GraphiteReporter.forRegistry(PublisherMetrics.metricRegistry)
+				.prefixedWith(config.getGraphiteMasterId())
+				.convertRatesTo(TimeUnit.SECONDS)
+				.convertDurationsTo(TimeUnit.MILLISECONDS)
+				.filter(MetricFilter.ALL)
+				.build(graphite);
+		reporter2.start(1, TimeUnit.MINUTES);
+	}
+
+	public void start() throws IOException, SolrServerException {
+		try {
+			publisherMetrics.startTotalTimer();
+			startPublisher();
+			publisherMetrics.stopTotalTimer();
+		}
+		finally {
+			publisherMetrics.getTimerContexts().forEach((Timer.Context context) -> context.close());
+		}
 	}
 
 	/**
 	 * The starting point of the publisher.
 	 */
-	public void start() throws SolrServerException, IOException {
-
+	private void startPublisher() throws SolrServerException, IOException {
 		Boolean done = false;
 		HashMap<String, RetrievedDoc> retrievedDocsPerID;
 		List<SourceDocumentReferenceMetaInfo> metaInfos;
 		List<CRFSolrDocument> solrCandidateDocuments = new ArrayList<>();
         DateTime lastSuccesfulPublish = config.getStartTimestamp();
 
+
 		do {
+			publisherMetrics.startLoopBatchTimer();
+
 			solrCandidateDocuments.clear();
+
 			// Retrieves the docs
-			final long startTimeRetrieveDocs = System.currentTimeMillis();
 			retrievedDocsPerID = retrieveStatisticsDocumentIdsThatMatch(lastSuccesfulPublish);
-			final long endTimeRetrieveDocs = System.currentTimeMillis();
-			LOG.error("Retrieved: " + retrievedDocsPerID.size() + " docs"
-					+ " and it took "
-					+ (endTimeRetrieveDocs - startTimeRetrieveDocs) / 1000
-					+ " seconds");
+
 
 			// Find the latest updatedAt (so we know where to continue from if
 			// the batch update fails)
@@ -142,9 +175,6 @@ public class Publisher {
 				}
 			}
 
-			System.out.println(lastSuccesfulPublishBeforeMax);
-			System.out.println(lastSuccesfulPublish);
-
             // Advance with 1 minute if it's exactly the same (very unlikely).
             if (null != lastSuccesfulPublishBeforeMax && lastSuccesfulPublishBeforeMax.isEqual(lastSuccesfulPublish)) {
                 lastSuccesfulPublish = lastSuccesfulPublish.plusMinutes(30);
@@ -155,78 +185,53 @@ public class Publisher {
 			} else {
 
 				// Retrieves the corresponding metaInformation objects
-				final List<String> list = new ArrayList<>(
-						retrievedDocsPerID.keySet());
-				final long startTimeRetrieveMetaInfoDocs = System
-						.currentTimeMillis();
-				metaInfos = sourceDocumentReferenceMetaInfoDaoFromSource
-						.read(list);
-				final long endTimeRetrieveMetaInfoDocs = System
-						.currentTimeMillis();
-				LOG.error("Retrieved meta info docs: "
-						+ metaInfos.size()
-						+ " docs"
-						+ " and it took "
-						+ (endTimeRetrieveMetaInfoDocs - startTimeRetrieveMetaInfoDocs)
-						/ 1000 + " seconds");
+				final List<String> list = new ArrayList<>(retrievedDocsPerID.keySet());
+
+				publisherMetrics.startMongoGetMetaInfoTimer();
+				metaInfos = sourceDocumentReferenceMetaInfoDaoFromSource.read(list);
+				publisherMetrics.stopMongoGetMetaInfoTimer();
+
+				publisherMetrics.logNumberOfMetaInfoDocumentsRetrived(metaInfos.size());
 
 				// Iterates over the meta info objects.
 				for (SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
 					final String ID = metaInfo.getId();
-					final Integer mediaTypeCode = CommonTagExtractor
-							.getMediaTypeCode(metaInfo);
+					final Integer mediaTypeCode = CommonTagExtractor.getMediaTypeCode(metaInfo);
 					Integer mimeTypeCode = null;
 
-					if (null != metaInfo.getAudioMetaInfo()
-							&& null != metaInfo.getAudioMetaInfo()
-									.getMimeType()) {
-						mimeTypeCode = CommonTagExtractor
-								.getMimeTypeCode(metaInfo.getAudioMetaInfo()
-										.getMimeType());
+					if (null == metaInfo.getAudioMetaInfo() && null == metaInfo.getImageMetaInfo() &&
+						null == metaInfo.getVideoMetaInfo() && null == metaInfo.getTextMetaInfo()) {
+						publisherMetrics.incTotalNumberOfDocumentsWithoutMetaInfo();
+						LOG.error("Record : " + ID + " with metaInfo id: " + metaInfo.getId() + " has no metainfo");
+						continue;
 					}
 
-					if (null != metaInfo.getVideoMetaInfo()
-							&& null != metaInfo.getVideoMetaInfo()
-									.getMimeType()) {
-						mimeTypeCode = CommonTagExtractor
-								.getMimeTypeCode(metaInfo.getVideoMetaInfo()
-										.getMimeType());
+					if (null != metaInfo.getAudioMetaInfo() && null != metaInfo.getAudioMetaInfo().getMimeType()) {
+						mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getAudioMetaInfo().getMimeType());
 					}
-
-					if (null != metaInfo.getImageMetaInfo()
-							&& null != metaInfo.getImageMetaInfo()
-									.getMimeType()) {
-						mimeTypeCode = CommonTagExtractor
-								.getMimeTypeCode(metaInfo.getImageMetaInfo()
-										.getMimeType());
+					else if (null != metaInfo.getVideoMetaInfo() && null != metaInfo.getVideoMetaInfo().getMimeType()) {
+						mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getVideoMetaInfo().getMimeType());
 					}
-
-					if (null != metaInfo.getTextMetaInfo()
-							&& null != metaInfo.getTextMetaInfo().getMimeType()) {
-						mimeTypeCode = CommonTagExtractor
-								.getMimeTypeCode(metaInfo.getTextMetaInfo()
-										.getMimeType());
+					else if (null != metaInfo.getImageMetaInfo() && null != metaInfo.getImageMetaInfo().getMimeType()) {
+						mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getImageMetaInfo().getMimeType());
+					}
+					else if (null != metaInfo.getTextMetaInfo() && null != metaInfo.getTextMetaInfo().getMimeType()) {
+						mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getTextMetaInfo().getMimeType());
 					}
 
 					if (null == mimeTypeCode) {
 						LOG.error("Mime-Type null for document id: " + ID);
-					} else if (mimeTypeCode == CommonTagExtractor
-							.getMimeTypeCode("text/html")) {
-						LOG.error("Skipping record with mimetype text/html. ID: "
-								+ ID);
-						continue;
-					}
-
-					if (null == metaInfo.getAudioMetaInfo() && null == metaInfo.getImageMetaInfo()
-						&& null == metaInfo.getVideoMetaInfo() && null == metaInfo.getTextMetaInfo()) {
-						LOG.error("Record : " + ID + " with metaInfo id: " + metaInfo.getId() + " has no metainfo");
+						publisherMetrics.incTotalNumberOfInvalidMimetypes();
+					} else if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
+						LOG.error("Skipping record with mimetype text/html. ID: " + ID);
+						publisherMetrics.incTotalNumberOfInvalidMimetypes();
 						continue;
 					}
 
 					// The new properties
 					Boolean isFulltext = false;
 					Boolean hasThumbnails = false;
-					Boolean hasMedia = false;
+					Boolean hasMedia = true;
 					List<Integer> filterTags = new ArrayList<>();
 					List<Integer> facetTags = new ArrayList<>();
 
@@ -236,66 +241,47 @@ public class Publisher {
 					case 0:
 						LOG.error ("RecordID " + ID + " with metainfo id: " + metaInfo.getId() + " has mediaTypeCode 0 skipping.");
 						continue;
+
 					case 1:
-						final ImageMetaInfo imageMetaInfo = metaInfo
-								.getImageMetaInfo();
-						filterTags = ImageTagExtractor
-								.getFilterTags(imageMetaInfo);
-						facetTags = ImageTagExtractor
-								.getFacetTags(imageMetaInfo);
-						hasMedia = true;
+						final ImageMetaInfo imageMetaInfo = metaInfo.getImageMetaInfo();
+						filterTags = ImageTagExtractor.getFilterTags(imageMetaInfo);
+						facetTags = ImageTagExtractor.getFacetTags(imageMetaInfo);
 						hasThumbnails = isImageWithThumbnail(imageMetaInfo);
 
 						if (hasThumbnails) {
 							hasMedia = false;
 						}
 
-						// System.out.println(retrievedDocsPerID.get(ID).getRecordId());
-						// System.out.println(imageMetaInfo.getColorSpace());
-						// System.out.println(imageMetaInfo.getFileFormat());
-						// System.out.println(imageMetaInfo.getFileSize());
-						// System.out.println(imageMetaInfo.getWidth());
-						// System.out.println(imageMetaInfo.getHeight());
-						// System.out.println(imageMetaInfo.getMimeType());
-						// System.out.println(imageMetaInfo.getOrientation());
-						// System.out.println(imageMetaInfo.getColorPalette().length);
 						break;
+
 					case 2:
-						final AudioMetaInfo audioMetaInfo = metaInfo
-								.getAudioMetaInfo();
-
-						filterTags = SoundTagExtractor
-								.getFilterTags(audioMetaInfo);
-						facetTags = SoundTagExtractor
-								.getFacetTags(audioMetaInfo);
-
-						hasMedia = true;
+						final AudioMetaInfo audioMetaInfo = metaInfo.getAudioMetaInfo();
+						filterTags = SoundTagExtractor.getFilterTags(audioMetaInfo);
+						facetTags = SoundTagExtractor.getFacetTags(audioMetaInfo);
 						break;
+
 					case 3:
-						final VideoMetaInfo videoMetaInfo = metaInfo
-								.getVideoMetaInfo();
-						filterTags = VideoTagExtractor
-								.getFilterTags(videoMetaInfo);
-						facetTags = VideoTagExtractor
-								.getFacetTags(videoMetaInfo);
-
-						hasMedia = true;
+						final VideoMetaInfo videoMetaInfo = metaInfo.getVideoMetaInfo();
+						filterTags = VideoTagExtractor.getFilterTags(videoMetaInfo);
+						facetTags = VideoTagExtractor.getFacetTags(videoMetaInfo);
 						break;
-					case 4:
-						final TextMetaInfo textMetaInfo = metaInfo
-								.getTextMetaInfo();
-						isFulltext = textMetaInfo.getIsSearchable();
 
+					case 4:
+						final TextMetaInfo textMetaInfo = metaInfo.getTextMetaInfo();
+						isFulltext = textMetaInfo.getIsSearchable();
 						break;
 					}
 
 					// Creates the wrapping object for the new properties
-					final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(
-							retrievedDocsPerID.get(ID).getRecordId(),
-							isFulltext, hasThumbnails, hasMedia, filterTags,
-							facetTags);
-					if (!CRFSolrDocument.getRecordId().toLowerCase()
-							.startsWith("/9200365/"))
+					final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(retrievedDocsPerID.get(ID).getRecordId(),
+																				isFulltext,
+							                                                    hasThumbnails,
+							                                                    hasMedia,
+																				filterTags,
+																			    facetTags
+																			   );
+
+					if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith("/9200365/"))
 						solrCandidateDocuments.add(CRFSolrDocument);
 					else
 						LOG.error("Skipping records that starts with /9200365/");
@@ -303,17 +289,17 @@ public class Publisher {
 
 				// Check which candidate documents have an existing SOLR
 				// document
-				publisherRecordsProcessed += solrCandidateDocuments.size();
+				publisherMetrics.logNumberOfDocumentsProcessed(solrCandidateDocuments.size());
 
 				final List<String> candidateDocumentIds = new ArrayList<String>();
 				for (CRFSolrDocument doc : solrCandidateDocuments) {
 					candidateDocumentIds.add(doc.getRecordId());
 				}
 
-				final long startTimeCheckSolrExistence = System
-						.currentTimeMillis();
-				final Map<String, Boolean> documentIdToExistence = solrWriter
-						.documentExists(candidateDocumentIds);
+				publisherMetrics.startSolrReadIdsTimer();
+				final Map<String, Boolean> documentIdToExistence = solrWriter.documentExists(candidateDocumentIds);
+				publisherMetrics.stopSolrReadIdsTimer();
+
 				int documentThatExist = 0;
 				for (String id : documentIdToExistence.keySet()) {
 					if (documentIdToExistence.get(id) == true) {
@@ -321,27 +307,15 @@ public class Publisher {
 					}
 				}
 
-
-				final long endTimeCheckSolrExistence = System
-						.currentTimeMillis();
-				LOG.error("Checked Solr document existence : "
-						+ documentThatExist
-						+ " in SOLR"
-						+ " out of  "
-						+ documentIdToExistence.keySet().size()
-						+ " in total and took"
-						+ (endTimeCheckSolrExistence - startTimeCheckSolrExistence)
-						/ 1000 + " seconds");
+				publisherMetrics.logNumberOfDocumentsThatExistInSolr(documentThatExist);
 
 				// Generate the MongoDB documents that will be written in
 				// MongoDB : only the ones that have a corresponding SOLR
 				// document qualify
-				final List<WebResourceMetaInfo> webResourceMetaInfosToUpdate = new ArrayList<>();
+				final List<WebResourceMetaInfo> webResourceMetaInfosToUpdate = new ArrayList<>(documentThatExist);
 				for (SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
-					final String recordId = retrievedDocsPerID.get(
-							metaInfo.getId()).getRecordId();
-					if ((documentIdToExistence.containsKey(recordId) == true)
-							&& (documentIdToExistence.get(recordId) == true)) {
+					final String recordId = retrievedDocsPerID.get(metaInfo.getId()).getRecordId();
+					if (documentIdToExistence.getOrDefault(recordId, false)) {
 						final WebResourceMetaInfo webResourceMetaInfo = new WebResourceMetaInfo(
 								metaInfo.getId(), metaInfo.getImageMetaInfo(),
 								metaInfo.getAudioMetaInfo(),
@@ -350,48 +324,32 @@ public class Publisher {
 						webResourceMetaInfosToUpdate.add(webResourceMetaInfo);
 					}
 				}
-				if (solrCandidateDocuments != null
-						&& solrCandidateDocuments.size() > 0) {
+
+				if (!solrCandidateDocuments.isEmpty()) {
 					// Filter the SOLR documents that will be written in SOLR :
 					// only the ones that have a coresponding SOLR document
 					// qualify
-					final List<CRFSolrDocument> solrDocsToUpdate = new ArrayList<>();
+					final List<CRFSolrDocument> solrDocsToUpdate = new ArrayList<>(documentThatExist);
 					for (CRFSolrDocument doc : solrCandidateDocuments) {
-						if ((documentIdToExistence.containsKey(doc
-								.getRecordId()) == true)
-								&& (documentIdToExistence
-										.get(doc.getRecordId()) == true)) {
+						 if (documentIdToExistence.getOrDefault(doc, false)) {
 							solrDocsToUpdate.add(doc);
 						}
 					}
 
-					publisherRecordsPublished += solrDocsToUpdate.size();
+					publisherMetrics.logNumberOfDocumentsPublished(solrDocsToUpdate.size());
 
 					// Writes the properties to the SOLR.
-					final long startTimeSolrWrite = System.currentTimeMillis();
-					final boolean successSolrUpdate = solrWriter
-							.updateDocuments(solrDocsToUpdate);
-					final long endTimeSolrWrite = System.currentTimeMillis();
-					LOG.error("Updating: " + solrDocsToUpdate.size()
-							+ " SOLR docs." + " and it took "
-							+ (endTimeSolrWrite - startTimeSolrWrite) / 1000
-							+ " seconds");
+					publisherMetrics.startSolrUpdateTimer();
+					final boolean successSolrUpdate = solrWriter.updateDocuments(solrDocsToUpdate);
+					publisherMetrics.stopSolrUpdateTimer();
 
 					// Writes the meta info to a separate MongoDB instance.
 					if (successSolrUpdate) {
-						final long startTimeMongoWrite = System
-								.currentTimeMillis();
-						webResourceMetaInfoDAO.create(
-								webResourceMetaInfosToUpdate,
-								WriteConcern.ACKNOWLEDGED);
-						final long endTimeMongoWrite = System
-								.currentTimeMillis();
-						LOG.error("Write: "
-								+ webResourceMetaInfosToUpdate.size()
-								+ " meta infos" + " and it took "
-								+ (endTimeMongoWrite - startTimeMongoWrite)
-								/ 1000 + " seconds");
+						publisherMetrics.startMongoWriteTimer();
+						webResourceMetaInfoDAO.create(webResourceMetaInfosToUpdate, WriteConcern.ACKNOWLEDGED);
+						publisherMetrics.stopMongoWriteTimer();
 					}
+					/*
 
 					final long uptimeInSecs = (System.currentTimeMillis() - publisherStarteAt) / 1000;
 					final long processingRate = 0 == uptimeInSecs ? 0 : publisherRecordsProcessed / uptimeInSecs;
@@ -417,23 +375,24 @@ public class Publisher {
 							+ lastBatchPublishingRate + " / s |  "
 							+ "Last succesful timestamp is : "
 							+ lastSuccesfulPublish);
+					*/
 
 					if (config.getStartTimestampFile() != null) {
-						final Path path = Paths.get(config
-								.getStartTimestampFile());
+						final Path path = Paths.get(config.getStartTimestampFile());
 						Files.deleteIfExists(path);
-						Files.write(path, lastSuccesfulPublish.toString()
-								.getBytes());
-						LOG.error("Writing last succesfull timestamp "
-								+ lastSuccesfulPublish.toString() + " to file "
-								+ config.getStartTimestampFile());
+						Files.write(path, lastSuccesfulPublish.toString().getBytes());
+						LOG.error("Writing last succesfull timestamp " + lastSuccesfulPublish.toString() + " to file "
+								  + config.getStartTimestampFile()
+						         );
 					}
+
 				} else {
 					LOG.error("No records found in Solr");
 				}
 
 			}
 
+			publisherMetrics.stopLoopBatchTimer();
 		} while (!done);
 	}
 
@@ -444,6 +403,8 @@ public class Publisher {
 	 */
 	private HashMap<String, RetrievedDoc> retrieveStatisticsDocumentIdsThatMatch(
 			final DateTime startTimeStamp) {
+		publisherMetrics.startMongoGetDocStatTimer();
+
 		final HashMap<String, RetrievedDoc> IDsWithType = new HashMap<>();
 
 		final DBCollection sourceDocumentProcessingStatisticsCollection = sourceDB
@@ -514,6 +475,7 @@ public class Publisher {
 			IDsWithType.put(sourceDocumentReferenceId, retrievedDoc);
 		}
 
+		publisherMetrics.stopMongoGetDocStatTimer();
 		return IDsWithType;
 	}
 
