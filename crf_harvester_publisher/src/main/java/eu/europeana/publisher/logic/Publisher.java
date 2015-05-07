@@ -44,6 +44,7 @@ public class Publisher {
 	private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDaoFromSource;
 	private final WebResourceMetaInfoDAO webResourceMetaInfoDAO;
 	private final SOLRWriter solrWriter;
+
 	private final PublisherMetrics publisherMetrics;
 
 	public Publisher(PublisherConfig config) throws UnknownHostException {
@@ -88,8 +89,6 @@ public class Publisher {
 
 		publisherMetrics = new PublisherMetrics();
 
-
-
 		Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.metricRegistry)
 				.outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
 				.convertRatesTo(TimeUnit.SECONDS)
@@ -102,7 +101,10 @@ public class Publisher {
 			return;
 		}
 
-		Graphite graphite = new Graphite(new InetSocketAddress(config.getGraphiteServer(), config.getGraphitePort()));
+		Graphite graphite = new Graphite(new InetSocketAddress(config.getGraphiteServer(),
+				                         				       config.getGraphitePort()
+															  )
+									    );
 		GraphiteReporter reporter2 = GraphiteReporter.forRegistry(PublisherMetrics.metricRegistry)
 				.prefixedWith(config.getGraphiteMasterId())
 				.convertRatesTo(TimeUnit.SECONDS)
@@ -134,6 +136,7 @@ public class Publisher {
 		List<SourceDocumentReferenceMetaInfo> metaInfos;
 		List<CRFSolrDocument> solrCandidateDocuments = new ArrayList<>();
         DateTime lastSuccesfulPublish = config.getStartTimestamp();
+
 
 		do {
 			publisherMetrics.startLoopBatchTimer();
