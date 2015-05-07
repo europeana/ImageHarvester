@@ -39,22 +39,22 @@ public class Publisher {
 	private static final Logger LOG = LogManager.getLogger(Publisher.class.getName());
 
 	private final PublisherConfig config;
-	private DB sourceDB;
-	private Integer LIMIT;
-	final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDaoFromSource;
-	final WebResourceMetaInfoDAO webResourceMetaInfoDAO;
-	final SOLRWriter solrWriter;
+	private final DB sourceDB;
+	private final Integer LIMIT;
+	private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDaoFromSource;
+	private final WebResourceMetaInfoDAO webResourceMetaInfoDAO;
+	private final SOLRWriter solrWriter;
+	private final PublisherMetrics publisherMetrics;
 
 	public Publisher(PublisherConfig config) throws UnknownHostException {
 		this.config = config;
-		final Mongo sourceMongo = new Mongo(config.getSourceHost(),
-				config.getSourcePort());
+		final Mongo sourceMongo = new Mongo(config.getSourceHost(), config.getSourcePort());
 
 		if (!config.getSourceDBUsername().equals("")) {
-			sourceDB = sourceMongo.getDB("admin");
-			final Boolean auth = sourceDB.authenticate(config
-					.getSourceDBUsername(), config.getSourceDBPassword()
-					.toCharArray());
+			final DB adminDB = sourceMongo.getDB("admin");
+			final Boolean auth = adminDB.authenticate(config.getSourceDBUsername(),
+					                                  config.getSourceDBPassword().toCharArray()
+												     );
 			if (!auth) {
 				LOG.error("Mongo source auth error");
 				System.exit(-1);
@@ -63,58 +63,53 @@ public class Publisher {
 
 		sourceDB = sourceMongo.getDB(config.getSourceDBName());
 
-		final Morphia sourceMorphia = new Morphia();
-		final Datastore sourceDatastore = sourceMorphia.createDatastore(
-				sourceMongo, config.getSourceDBName());
+		final Datastore sourceDatastore = new Morphia().createDatastore(sourceMongo, config.getSourceDBName());
 
-		sourceDocumentReferenceMetaInfoDaoFromSource = new SourceDocumentReferenceMetaInfoDaoImpl(
-				sourceDatastore);
+		sourceDocumentReferenceMetaInfoDaoFromSource = new SourceDocumentReferenceMetaInfoDaoImpl(sourceDatastore);
 
-		DB targetDB;
-		final Mongo targetMongo = new Mongo(config.getTargetHost(),
-				config.getTargetPort());
+		final Mongo targetMongo = new Mongo(config.getTargetHost(), config.getTargetPort());
 
 		if (!config.getTargetDBUsername().equals("")) {
-			targetDB = targetMongo.getDB("admin");
-			final Boolean auth = targetDB.authenticate(config
-					.getTargetDBUsername(), config.getTargetDBPassword()
-					.toCharArray());
+			final DB adminDB = targetMongo.getDB("admin");
+			final Boolean auth = adminDB.authenticate(config.getTargetDBUsername(),
+					                                  config.getTargetDBPassword().toCharArray()
+			                                         );
 			if (!auth) {
 				LOG.error("Mongo target auth error");
 				System.exit(-1);
 			}
 		}
 
-		final Morphia targetMorphia = new Morphia();
-		final Datastore targetDatastore = targetMorphia.createDatastore(
-				targetMongo, config.getTargetDBName());
+		final Datastore targetDatastore = new Morphia().createDatastore(targetMongo, config.getTargetDBName());
 
 		webResourceMetaInfoDAO = new WebResourceMetaInfoDAOImpl(targetDatastore);
-
 		solrWriter = new SOLRWriter(config.getSolrURL());
-
 		LIMIT = config.getBatch();
 
 		publisherMetrics = new PublisherMetrics();
+
+
+
 		Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.metricRegistry)
 				.outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
 				.convertRatesTo(TimeUnit.SECONDS)
 				.convertDurationsTo(TimeUnit.MILLISECONDS)
 				.build();
 
-		reporter.start(1, TimeUnit.MINUTES);
+		reporter.start(20, TimeUnit.SECONDS);
 
-		Graphite graphite = new Graphite(new InetSocketAddress(config.getGraphiteServer(),
-				                         				       config.getGraphitePort()
-															  )
-									    );
+		if (null == config.getGraphiteServer() || config.getGraphiteServer().trim().isEmpty()) {
+			return;
+		}
+
+		Graphite graphite = new Graphite(new InetSocketAddress(config.getGraphiteServer(), config.getGraphitePort()));
 		GraphiteReporter reporter2 = GraphiteReporter.forRegistry(PublisherMetrics.metricRegistry)
 				.prefixedWith(config.getGraphiteMasterId())
 				.convertRatesTo(TimeUnit.SECONDS)
 				.convertDurationsTo(TimeUnit.MILLISECONDS)
 				.filter(MetricFilter.ALL)
 				.build(graphite);
-		reporter2.start(30, TimeUnit.SECONDS);
+		reporter2.start(20, TimeUnit.SECONDS);
 	}
 
 	public void start() throws IOException, SolrServerException {
@@ -124,7 +119,9 @@ public class Publisher {
 			publisherMetrics.stopTotalTimer();
 		}
 		finally {
-			publisherMetrics.getTimerContexts().forEach((Timer.Context context) -> context.close());
+			for (final Timer.Context context: publisherMetrics.getTimerContexts()) {
+				context.close();
+			}
 		}
 	}
 
@@ -178,6 +175,7 @@ public class Publisher {
 
 				publisherMetrics.logNumberOfMetaInfoDocumentsRetrived(metaInfos.size());
 
+				publisherMetrics.startFakeTagsTimer();
 				// Iterates over the meta info objects.
 				for (SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
 					final String ID = metaInfo.getId();
@@ -271,6 +269,7 @@ public class Publisher {
 					else
 						LOG.error("Skipping records that starts with /9200365/");
 				}
+				publisherMetrics.stopFakeTagsTimer();
 
 				// Check which candidate documents have an existing SOLR
 				// document
@@ -300,7 +299,8 @@ public class Publisher {
 				final List<WebResourceMetaInfo> webResourceMetaInfosToUpdate = new ArrayList<>(documentThatExist);
 				for (SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
 					final String recordId = retrievedDocsPerID.get(metaInfo.getId()).getRecordId();
-					if (documentIdToExistence.getOrDefault(recordId, false)) {
+					final Boolean value = documentIdToExistence.get(recordId);
+					if (null != value && true == value) {
 						final WebResourceMetaInfo webResourceMetaInfo = new WebResourceMetaInfo(
 								metaInfo.getId(), metaInfo.getImageMetaInfo(),
 								metaInfo.getAudioMetaInfo(),
@@ -316,7 +316,8 @@ public class Publisher {
 					// qualify
 					final List<CRFSolrDocument> solrDocsToUpdate = new ArrayList<>(documentThatExist);
 					for (CRFSolrDocument doc : solrCandidateDocuments) {
-						 if (documentIdToExistence.getOrDefault(doc, false)) {
+						final Boolean value = documentIdToExistence.get(doc.getRecordId());
+						 if (null != value && true == value) {
 							solrDocsToUpdate.add(doc);
 						}
 					}
@@ -334,33 +335,6 @@ public class Publisher {
 						webResourceMetaInfoDAO.create(webResourceMetaInfosToUpdate, WriteConcern.ACKNOWLEDGED);
 						publisherMetrics.stopMongoWriteTimer();
 					}
-					/*
-
-					final long uptimeInSecs = (System.currentTimeMillis() - publisherStarteAt) / 1000;
-					final long processingRate = 0 == uptimeInSecs ? 0 : publisherRecordsProcessed / uptimeInSecs;
-					final long publishingRate = 0 == uptimeInSecs ? 0 : publisherRecordsPublished / uptimeInSecs;
-
-					long lastBatchDurationInSecs = (System.currentTimeMillis() - startTimeRetrieveMetaInfoDocs) / 1000;
-                    if (lastBatchDurationInSecs == 0) lastBatchDurationInSecs = 1;
-
-					final long lastBatchProcessingRate = solrCandidateDocuments.size() / lastBatchDurationInSecs;
-					final long lastBatchPublishingRate = solrDocsToUpdate.size() / lastBatchDurationInSecs;
-
-					LOG.error("Global stats : Total number of processed documents: "
-							+ publisherRecordsProcessed
-							+ " | Total number of published records: "
-							+ publisherRecordsPublished);
-					LOG.error("Global stats : uptime : " + uptimeInSecs + " s"
-							+ " | process rate " + processingRate + " / s |  "
-							+ " | publish rate " + publishingRate + " / s ");
-					LOG.error("Last batch stats : " + " duration : "
-							+ lastBatchDurationInSecs + " s"
-							+ " | process rate " + lastBatchProcessingRate
-							+ " / s |  " + " | publish rate "
-							+ lastBatchPublishingRate + " / s |  "
-							+ "Last succesful timestamp is : "
-							+ lastSuccesfulPublish);
-					*/
 
 					if (config.getStartTimestampFile() != null) {
 						final Path path = Paths.get(config.getStartTimestampFile());
@@ -374,9 +348,7 @@ public class Publisher {
 				} else {
 					LOG.error("No records found in Solr");
 				}
-
 			}
-
 			publisherMetrics.stopLoopBatchTimer();
 		} while (!done);
 	}
@@ -386,14 +358,12 @@ public class Publisher {
 	 *
 	 * @return the needed information from the retrieved documents.
 	 */
-	private HashMap<String, RetrievedDoc> retrieveStatisticsDocumentIdsThatMatch(
-			final DateTime startTimeStamp) {
+	private HashMap<String, RetrievedDoc> retrieveStatisticsDocumentIdsThatMatch(final DateTime startTimeStamp) {
 		publisherMetrics.startMongoGetDocStatTimer();
 
 		final HashMap<String, RetrievedDoc> IDsWithType = new HashMap<>();
 
-		final DBCollection sourceDocumentProcessingStatisticsCollection = sourceDB
-				.getCollection("SourceDocumentProcessingStatistics");
+		final DBCollection sourceDocumentProcessingStatisticsCollection = sourceDB.getCollection("SourceDocumentProcessingStatistics");
 
 		// Query construction
 		BasicDBObject findQuery;
@@ -402,8 +372,7 @@ public class Publisher {
             findQuery = new BasicDBObject();
 
 		} else {
-			LOG.error("Retrieving SourceDocumentProcessingStatistics gt than timestamp "
-					+ startTimeStamp);
+			LOG.error("Retrieving SourceDocumentProcessingStatistics gt than timestamp " + startTimeStamp);
 
 			findQuery = new BasicDBObject();
             findQuery.put("updatedAt",new BasicDBObject("$gt",startTimeStamp.toDate()));
@@ -435,15 +404,11 @@ public class Publisher {
                 + sourceDocumentProcessingStatisticsCursor.size());
 
 		while (sourceDocumentProcessingStatisticsCursor.hasNext()) {
-			final BasicDBObject item = (BasicDBObject) sourceDocumentProcessingStatisticsCursor
-					.next();
+			final BasicDBObject item = (BasicDBObject) sourceDocumentProcessingStatisticsCursor.next();
 			final DateTime updatedAt = new DateTime(item.getDate("updatedAt"));
-			final String sourceDocumentReferenceId = item
-					.getString("sourceDocumentReferenceId");
-			final BasicDBObject referenceOwnerTemp = (BasicDBObject) item
-					.get("referenceOwner");
+			final String sourceDocumentReferenceId = item.getString("sourceDocumentReferenceId");
+			final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
 			final String recordId = referenceOwnerTemp.getString("recordId");
-
 			final String temp = item.getString("httpResponseContentType");
 			String type = "";
 			if (temp != null) {
@@ -455,8 +420,7 @@ public class Publisher {
 				type = type.substring(0, type.indexOf(","));
 			}
 
-			final RetrievedDoc retrievedDoc = new RetrievedDoc(type, recordId,
-					updatedAt);
+			final RetrievedDoc retrievedDoc = new RetrievedDoc(type, recordId, updatedAt);
 			IDsWithType.put(sourceDocumentReferenceId, retrievedDoc);
 		}
 

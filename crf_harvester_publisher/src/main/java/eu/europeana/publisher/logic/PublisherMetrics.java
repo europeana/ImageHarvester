@@ -26,6 +26,7 @@ public class PublisherMetrics  {
     private final Timer  solrUpdateTimer;
     private final Timer  loopBatchTimer;
     private final Timer  totalTimer;
+    private final Timer fakeTagsTimer;
     private final Map<Timer, Timer.Context> timerContexts;
 
 
@@ -38,6 +39,7 @@ public class PublisherMetrics  {
     private final Counter totalNumberOfDocumentsProcessed;
     private final Counter totalNumberOfMetaInfoDocumentsRetrived;
     private final Counter totalNumberOfDocumentsThatExistInSolr;
+
     /**
      * Meters
      */
@@ -60,6 +62,7 @@ public class PublisherMetrics  {
         solrCheckIdsTimer       = metricRegistry.timer(name(PublisherMetrics.class, "Solr get ids for documents"));
         solrUpdateTimer         = metricRegistry.timer(name(PublisherMetrics.class, "Solr write metadata"));
         loopBatchTimer          = metricRegistry.timer(name(PublisherMetrics.class, "Loop Batch Processing"));
+        fakeTagsTimer           = metricRegistry.timer(name(PublisherMetrics.class, "Fake Tags Generator"));
 
         totalNumberOfDocumentsPublished = metricRegistry.counter(name(PublisherMetrics.class, "Total Number of Documents Published"));
         totalNumberOfDocumentsProcessed = metricRegistry.counter(name(PublisherMetrics.class, "Total Number of Documents Processed"));
@@ -91,6 +94,11 @@ public class PublisherMetrics  {
 
     public void incTotalNumberOfInvalidMimetypes() {
         totalNumberOfInvalidMimetypes.inc();
+    }
+
+    public void logNumberOfDocumentsThatExistInSolr(int inc) {
+        totalNumberOfDocumentsThatExistInSolr.inc(inc);
+        numberOfDocumentsThatExistInSolr.mark(inc);
     }
 
     public void incTotalNumberOfDocumentsWithoutMetaInfo() {
@@ -157,6 +165,14 @@ public class PublisherMetrics  {
         stopTimer(loopBatchTimer);
     }
 
+    public void startFakeTagsTimer() {
+        startTimer(fakeTagsTimer);
+    }
+
+    public void stopFakeTagsTimer() {
+        stopTimer(fakeTagsTimer);
+    }
+
     public <T> void registerGauge(final String gaugeName, final Gauge<T> gauge) {
         metricRegistry.register(name(PublisherMetrics.class, gaugeName), gauge);
     }
@@ -170,11 +186,5 @@ public class PublisherMetrics  {
         if (timerContexts.containsKey(timer)) {
             timerContexts.remove(timer).stop();
         }
-    }
-
-
-    public void logNumberOfDocumentsThatExistInSolr(int inc) {
-        totalNumberOfDocumentsThatExistInSolr.inc(inc);
-        numberOfDocumentsThatExistInSolr.mark(inc);
     }
 }

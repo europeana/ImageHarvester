@@ -123,25 +123,29 @@ public class PublisherMain {
                     targetDBPassword, startTimestamp,startTimestampFile, solrURL, batch,
                     graphiteMasterId, graphiteServer, graphitePort);
 
-            threads.add(new Thread(() -> {
-                final Publisher publisher;
-                try {
-                    publisher = new Publisher(publisherConfig);
-                    publisher.start();
-                } catch (Exception e) {
-                    LOG.error("Exception was thrown", e);
+            threads.add(new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final Publisher publisher;
+                    try {
+                        publisher = new Publisher(publisherConfig);
+                        publisher.start();
+                    } catch (Exception e) {
+                        LOG.error("Exception was thrown", e);
+                    }
                 }
             }));
             //*/
         }
 
-        threads.forEach((Thread thread) -> thread.start());
-        threads.forEach((Thread thread) -> {
+        for (final Thread thread: threads) thread.start();
+
+        for (final Thread thread: threads) {
             try {
                 thread.join();
             } catch (InterruptedException e) {
                 LOG.error("Join failed for thread " + thread.getId(), e);
             }
-        });
+        }
     }
 }

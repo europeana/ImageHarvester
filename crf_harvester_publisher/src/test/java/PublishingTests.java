@@ -47,8 +47,8 @@ public class PublishingTests {
 
     @After
     public void tearDown() {
-       cleanMongoDatabase();
-       cleanSolrDatabase();
+     cleanMongoDatabase();
+     cleanSolrDatabase();
     }
 
     private Mongo connectToDB(final String host, final Integer port, final String userName, final String password) {
@@ -466,19 +466,19 @@ public class PublishingTests {
         runPublisher(publisherConfig);
 
         final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceHost(),
-                publisherConfig.getSourcePort(),
-                publisherConfig.getSourceDBUsername(),
-                publisherConfig.getSourceDBPassword()
-        ).getDB(publisherConfig.getSourceDBName())
-                .getCollection("SourceDocumentReferenceMetaInfo");
+                                                          publisherConfig.getSourcePort(),
+                                                          publisherConfig.getSourceDBUsername(),
+                                                          publisherConfig.getSourceDBPassword()
+                                                         ).getDB(publisherConfig.getSourceDBName())
+                                                          .getCollection("SourceDocumentReferenceMetaInfo");
 
 
         final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetHost(),
-                publisherConfig.getTargetPort(),
-                publisherConfig.getTargetDBUsername(),
-                publisherConfig.getTargetDBPassword()
-        ).getDB(publisherConfig.getTargetDBName())
-                .getCollection("WebResourceMetaInfo");
+                                                          publisherConfig.getTargetPort(),
+                                                          publisherConfig.getTargetDBUsername(),
+                                                          publisherConfig.getTargetDBPassword()
+                                                         ).getDB(publisherConfig.getTargetDBName())
+                                                          .getCollection("WebResourceMetaInfo");
 
         final BasicDBObject keys = new BasicDBObject();
         keys.put("className", 0);
@@ -510,7 +510,6 @@ public class PublishingTests {
                     return;
                 }
 
-                System.out.println(recordId);
                 for (final Object facetTag : facetTags) {
                     final Map.Entry<String, Object> queryParam = getFacetTagValue((Integer)facetTag);
 
@@ -529,19 +528,15 @@ public class PublishingTests {
                             findQuery.put(queryParam.getKey(), queryParam.getValue());
                         }
 
-                        System.out.println(findQuery.toString());
                         assertTrue("Unkown facet tag: " + facetTag + " for recordId " + recordId,
                                     sourceMetaInfoDB.find(findQuery).size() == 1
                                   );
                     }
-
                 }
             }
-
         } catch (SolrServerException e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
         }
-
     }
 
     private Map.Entry<String, Object> getFacetTagValue(final Integer facetTag) {
