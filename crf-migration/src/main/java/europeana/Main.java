@@ -1,7 +1,7 @@
-package eu.europeana;
+package europeana;
 
-import eu.europeana.domain.MigrationMongoConfig;
-import eu.europeana.logic.Migrator;
+import crf_migration.europeana.domain.MigrationMongoConfig;
+import crf_migration.europeana.logic.Migrator;
 
 import java.io.FileInputStream;
 import java.io.IOException;

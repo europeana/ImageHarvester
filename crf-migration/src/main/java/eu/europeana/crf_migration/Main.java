@@ -1,4 +1,4 @@
-package eu.europeana;
+package eu.europeana.crf_migration;
 
 import crf_migration.europeana.domain.MigrationMongoConfig;
 import crf_migration.europeana.logic.Migrator;
