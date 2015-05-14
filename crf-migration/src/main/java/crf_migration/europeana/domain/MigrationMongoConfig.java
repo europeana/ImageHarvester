@@ -1,4 +1,4 @@
-package eu.europeana.domain;
+package crf_migration.europeana.domain;
 
 public class MigrationMongoConfig {
 
