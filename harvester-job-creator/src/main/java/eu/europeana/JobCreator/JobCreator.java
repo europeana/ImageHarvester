@@ -72,7 +72,7 @@ public class JobCreator {
                                           List<String> edmHasViewUrls,
                                           String edmIsShownByUrl,
                                           String edmIsShownAtUrl,
-                                          JobCreatorOption options) throws UnknownHostException, MalformedURLException {
+                                          ProcessingJobCreationOptions options) throws UnknownHostException, MalformedURLException {
 
 
         if (null == collectionId || null == providerId || null == recordId) {
@@ -80,6 +80,10 @@ public class JobCreator {
         }
 
         final List<ProcessingJob> jobs = new ArrayList<>();
+        final DocumentReferenceTaskType taskType = ProcessingJobCreationOptions.FORCE_UNCONDITIONAL_DOWNLOAD.equals(options) ?
+                                                   DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD :
+                                                   DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD;
+
         service = Executors.newSingleThreadExecutor();
 
         if (null != edmObjectUrl) {
@@ -88,7 +92,7 @@ public class JobCreator {
                                edmObjectUrl,
                                null,
                                new ProcessingJobSubTaskType[] {ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL},
-                               DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD
+                               taskType
                               )
                     );
         }
@@ -101,7 +105,7 @@ public class JobCreator {
                                    url,
                                    URLSourceType.HASVIEW,
                                    new ProcessingJobSubTaskType[] {ProcessingJobSubTaskType.META_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL, ProcessingJobSubTaskType.COLOR_EXTRACTION},
-                                   DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD
+                                   taskType
                                   )
                         );
             }
@@ -113,7 +117,7 @@ public class JobCreator {
                                edmIsShownByUrl,
                                URLSourceType.ISSHOWNBY,
                                new ProcessingJobSubTaskType[] {ProcessingJobSubTaskType.META_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL, ProcessingJobSubTaskType.COLOR_EXTRACTION},
-                               DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD
+                               taskType
                               )
                     );
         }
