@@ -1,7 +1,6 @@
-package eu.europeana.logic;
+package crf_migration.europeana.logic;
 
 import com.mongodb.*;
-import eu.europeana.domain.MigrationMongoConfig;
 
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -15,7 +14,7 @@ public class Migrator {
     private final Map<String, BasicDBObject> aggregations = new HashMap<String, BasicDBObject>();
     private final Map<String, BasicDBObject> webResources = new HashMap<String, BasicDBObject>();
 
-    public Migrator(MigrationMongoConfig config) throws UnknownHostException {
+    public Migrator(crf_migration.europeana.domain.MigrationMongoConfig config) throws UnknownHostException {
         final Mongo mongo = new Mongo(config.getHost(), config.getPort());
         db = mongo.getDB(config.getDbName());
     }

@@ -1,4 +1,4 @@
-package eu.europeana.domain;
+package europeana.domain;
 
 public class MigrationMongoConfig {
 

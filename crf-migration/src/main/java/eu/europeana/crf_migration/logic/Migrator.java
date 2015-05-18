@@ -1,7 +1,7 @@
-package eu.europeana.logic;
+package eu.europeana.crf_migration.logic;
 
 import com.mongodb.*;
-import eu.europeana.domain.MigrationMongoConfig;
+import crf_migration.europeana.domain.MigrationMongoConfig;
 
 import java.net.UnknownHostException;
 import java.util.HashMap;
