@@ -26,7 +26,6 @@ start() {
   if [ -f "$LOGFILE" ]; then
      su -c "rm -f $LOGFILE"
   fi
-  echo $SCRIPT
 
   cd $EUROPEANA_PUBLISHER
   local CMD="$SCRIPT > \"$LOGFILE\" & echo \$!"
@@ -35,23 +34,26 @@ start() {
 }
 
 stop() {
-  if  !kill -0 $(cat "$PIDFILE"); then
-    echo 'publisher not running' >&2
-    return 1
+  if [ -f "$PIDFILE" ] && ps -p $(cat "$PIDFILE") > /dev/null ;  then
+        echo 'Stopping publisher ... ' >& 2
+        (kill -15 $(cat "$PIDFILE")) &> /dev/null
+        rm -rf "$PIDFILE"
+        echo 'Stopped service ...'
+  else
+        echo "Publisher not working ... " >& 2
+        return 1
   fi
-  echo 'Stopping publisher...' >&2
-  kill -15 $(cat "$PIDFILE") && rm -f "$PIDFILE"
-  echo 'Service stopped' >&2
 }
 
 uninstall() {
-  echo -n "Are you really sure you want to uninstall harvester slave? That cannot be undone. [yes|No] "
+  echo -n "Are you really sure you want to uninstall europeana publisher ? This cannot be undone. [yes|No] "
   local SURE
   read SURE
   if [ "$SURE" = "yes" ]; then
     stop
     rm -f "$PIDFILE"
-    echo "Notice: log file will not be removed: /var/log/publisher*.log" >&2
+    rm -rfv "$EUROPEANA_PUBLISHER"
+    echo "Notice: log file(s) will not be removed: /var/log/publisher*.log" >&2
     rm -fv "$0"
   fi
 }
