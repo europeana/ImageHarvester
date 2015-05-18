@@ -8,8 +8,6 @@ import eu.europeana.harvester.db.MorphiaDataStore;
 import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.joda.time.DateTime;
-import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.BufferedWriter;
 import java.io.File;
