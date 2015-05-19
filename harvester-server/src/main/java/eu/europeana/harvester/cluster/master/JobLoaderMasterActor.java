@@ -102,6 +102,8 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     private Timer loadJobs;
 
+    private long markLoad =0;
+
     public JobLoaderMasterActor(final ActorRef receiverActor, final ClusterMasterConfig clusterMasterConfig,
                                 final ActorRef accountantActor, final Map<Address, HashSet<ActorRef>> actorsPerAddress,
                                 final ProcessingJobDao processingJobDao,
@@ -135,16 +137,21 @@ public class JobLoaderMasterActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         if(message instanceof LoadJobs) {
 
-            final Timer.Context context = loadJobs.time();
 
-            try {
 
-                checkForNewJobs();
+            if ( markLoad == 0 || System.currentTimeMillis() - markLoad > 300000l ) {
+                markLoad = System.currentTimeMillis();
+                final Timer.Context context = loadJobs.time();
+                try {
 
-            } catch(Exception e) {
-                LOG.error("Error in LoadJobs: "+e.getMessage());
-            }
-            context.stop();
+                    checkForNewJobs();
+
+                } catch (Exception e) {
+                    LOG.error("Error in LoadJobs: " + e.getMessage());
+                }
+                context.stop();
+            } else
+                LOG.info("Trying to load jobs too soon");
 
             return;
         }
@@ -195,7 +202,7 @@ public class JobLoaderMasterActor extends UntypedActor {
 
         if (taskSize<clusterMasterConfig.getMaxTasksInMemory() ) {
             //don't load for IPs that are overloaded
-            ArrayList<String> noLoadIPs = getOverLoadedIPList(Math.round(clusterMasterConfig.getMaxTasksInMemory()/2));
+            ArrayList<String> noLoadIPs = getOverLoadedIPList(1000);
             HashMap < String, Integer > tempDistribution = new HashMap<>(ipDistribution);
             if ( noLoadIPs != null ) {
                 for (String ip : noLoadIPs ) {
@@ -204,11 +211,13 @@ public class JobLoaderMasterActor extends UntypedActor {
                 }
             }
 
+
+
             LOG.info("========== Looking for new jobs from MongoDB ==========");
             Long start = System.currentTimeMillis();
             LOG.info("#IPs with tasks: temp {}, all: {}", tempDistribution.size(), ipDistribution.size());
+            final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(20, TimeUnit.SECONDS));
 
-            final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
 
             final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
             final List<ProcessingJob> all =
@@ -239,21 +248,21 @@ public class JobLoaderMasterActor extends UntypedActor {
             for (final ProcessingJob job : all) {
                 try {
 
-                    final Future<Object> future = Patterns.ask(accountantActor, new IsJobLoaded(job.getId()), timeout);
-                    Boolean isLoaded = false;
-                    try {
-                        isLoaded = (Boolean) Await.result(future, timeout.duration());
-                    } catch (Exception e) {
-                        LOG.error("Error in loadNewJobs->IsJobLoaded: {}", e);
-                    }
-                    if (!isLoaded) {
+//                    final Future<Object> future = Patterns.ask(accountantActor, new IsJobLoaded(job.getId()), timeout);
+//                    Boolean isLoaded = false;
+//                    try {
+//                        isLoaded = (Boolean) Await.result(future, timeout.duration());
+//                    } catch (Exception e) {
+//                        LOG.error("Error in loadNewJobs->IsJobLoaded: {}", e);
+//                    }
+//                    if (!isLoaded) {
                         i++;
                         if (i >= 500) {
                             LOG.info("Done with another 500 jobs out of {}", all.size());
                             i = 0;
                         }
                         addJob(job, resources);
-                    }
+//                    }
                 } catch (Exception e) {
                     LOG.error("JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());
                 }
@@ -276,7 +285,7 @@ public class JobLoaderMasterActor extends UntypedActor {
     }
 
     private ArrayList<String> getOverLoadedIPList( int threshold){
-        final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
+        final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(30, TimeUnit.SECONDS));
         final Future<Object> future = Patterns.ask(accountantActor, new GetOverLoadedIPs(threshold), timeout);
         ArrayList<String> ips = null;
         try {
@@ -377,6 +386,9 @@ public class JobLoaderMasterActor extends UntypedActor {
                 taskIDs.add(ID);
             }
         }
+
+        if (tasks.size() > 10 )
+            LOG.info("Loaded {} tasks for jobID {} on IP {}",tasks.size(),job.getId(), job.getIpAddress());
 
         accountantActor.tell(new AddTasksToJob(job.getId(), taskIDs), getSelf());
     }
@@ -492,6 +504,16 @@ public class JobLoaderMasterActor extends UntypedActor {
                 processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
             }
         } while (all.size() != 0);
+
+        do {
+            all = processingJobDao.getJobsWithState(JobState.LOADED, page);
+
+            for (final ProcessingJob job : all) {
+                final ProcessingJob newProcessingJob = job.withState(JobState.READY);
+                processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
+            }
+        } while (all.size() != 0);
+
         LOG.info("======== Done with abandoned jobs ========");
     }
 

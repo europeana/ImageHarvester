@@ -355,16 +355,6 @@ public class ClusterMasterActor extends UntypedActor {
             percentage = 0.0;
         }
 
-
-
-        LOG.info("Percentage of IPs which has loaded requests: {}% load when it's below: {}",
-                percentage, defaultLimits.getMinTasksPerIPPercentage());
-        if(percentage < defaultLimits.getMinTasksPerIPPercentage()) {
-            //accountantActor.tell(new CleanIPs(), getSelf());
-            jobLoaderActor.tell(new LoadJobs(), ActorRef.noSender());
-        }
-
-
         LOG.info("Request tasks from: {}", sender);
 
         final Long start = System.currentTimeMillis();
@@ -382,6 +372,13 @@ public class ClusterMasterActor extends UntypedActor {
 
         LOG.info("Done with processing the request from: {} in {} seconds. Sent: {}",
                 getSender(), (System.currentTimeMillis() - start) / 1000.0, bagOfTasks.getTasks().size());
+
+        LOG.info("Percentage of IPs which has loaded requests: {}% load when it's below: {}",
+                percentage, defaultLimits.getMinTasksPerIPPercentage());
+        if(percentage < defaultLimits.getMinTasksPerIPPercentage()) {
+            //accountantActor.tell(new CleanIPs(), getSelf());
+            jobLoaderActor.tell(new LoadJobs(), ActorRef.noSender());
+        }
     }
 
     /**

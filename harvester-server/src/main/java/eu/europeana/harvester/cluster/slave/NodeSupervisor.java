@@ -1,4 +1,4 @@
-package eu.europeana.harvester.cluster.master;
+package eu.europeana.harvester.cluster.slave;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
@@ -14,7 +14,6 @@ import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.Slave;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
-import eu.europeana.harvester.cluster.slave.NodeMasterActor;
 import eu.europeana.harvester.db.MediaStorageClient;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
@@ -63,6 +62,7 @@ public class NodeSupervisor extends UntypedActor {
      * If 3 consecutive messages are missed than the slave is restarted.
      */
     private Integer missedHeartbeats;
+    private int memberups;
 
     private final MetricRegistry metrics;
 
@@ -79,6 +79,8 @@ public class NodeSupervisor extends UntypedActor {
         this.mediaStorageClient = mediaStorageClient;
         this.missedHeartbeats = 0;
         this.metrics = metrics;
+
+        this.memberups = 0;
 
 
     }
@@ -97,6 +99,7 @@ public class NodeSupervisor extends UntypedActor {
                 ClusterEvent.MemberEvent.class, ClusterEvent.UnreachableMember.class, AssociatedEvent.class);
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(3,
                 TimeUnit.MINUTES), getSelf(), new SendHearbeat(), getContext().system().dispatcher(), getSelf());
+
     }
 
     @Override
@@ -123,6 +126,9 @@ public class NodeSupervisor extends UntypedActor {
             return;
         }
         if (message instanceof SendHearbeat) {
+            // for safety, send a job request
+            nodeMaster.tell( new RequestTasks(), getSelf());
+
             if(missedHeartbeats >= 3) {
                 LOG.error("Slave doesn't responded to the heartbeat 3 consecutive times. It will be restarted.");
                 missedHeartbeats = 0;
@@ -147,9 +153,29 @@ public class NodeSupervisor extends UntypedActor {
         if (message instanceof DisassociatedEvent) {
             final DisassociatedEvent disassociatedEvent = (DisassociatedEvent) message;
             LOG.info("Member disassociated: {}", disassociatedEvent.remoteAddress());
+            try {
+                Thread.sleep(300000);
+
+            } catch ( InterruptedException e) {
+                LOG.info("Interrupted");
+            }
 
             slave.restart();
             return;
+        }
+
+        if (message instanceof AssociatedEvent) {
+            //nodeMaster.tell( new RequestTasks(), getSelf());
+            LOG.info("Associated and requesting tasks");
+        }
+
+        if (message instanceof ClusterEvent.MemberUp) {
+            ClusterEvent.MemberUp mUp = (ClusterEvent.MemberUp) message;
+            LOG.info("Member is Up: {}", mUp.member());
+            memberups++;
+            if ( memberups == 2 )
+                nodeMaster.tell( new RequestTasks(), getSelf());
+
         }
         // Anything else
         nodeMaster.tell(message, getSender());

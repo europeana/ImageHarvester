@@ -14,7 +14,7 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
-import eu.europeana.harvester.cluster.master.NodeSupervisor;
+import eu.europeana.harvester.cluster.slave.NodeSupervisor;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.mongo.MediaStorageClientImpl;
 import eu.europeana.harvester.domain.MediaStorageClientConfig;
