@@ -29,9 +29,13 @@ public class CleanerMain {
             targetDBPassword = config.getString("clean.password");
         }
 
+        final int batch = config.getInt("config.batch");
+
         final MongoConfig cleanerConfig =
-                new MongoConfig("", 0, "", "", "",
-                        targetHost, targetPort, targetDBName, targetDBUsername, targetDBPassword);
+                new MongoConfig("", 0, "", "", "", batch,
+                                targetHost, targetPort, targetDBName, targetDBUsername, targetDBPassword,
+                                null, null, null
+                               );
 
         final Cleaner cleaner = new Cleaner(cleanerConfig);
         cleaner.clean();
