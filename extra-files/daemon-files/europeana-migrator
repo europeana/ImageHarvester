@@ -8,29 +8,30 @@
 #                    and should be placed in /etc/init.d
 ### END INIT INFO
 
-[ -f /etc/default/europeana-publisher ] && . /etc/default/europeana-publisher
 
-EUROPEANA_PUBLISHER=${EUROPEANA_PUBLISHER:=/opt/publisher}
-SCRIPT="java -server -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -XX:+UseParallelGC -Xms1g -Xmx4g -Xss1M -Dlog4j.configurationFile=$EUROPEANA_PUBLISHER/extra-files/log4j2.xml -cp $EUROPEANA_PUBLISHER/publisher.jar eu.europeana.publisher.PublisherMain $EUROPEANA_PUBLISHER/extra-files/publishing.conf"
+
+[ -f /etc/default/europeana-migrator ] && . /etc/default/europeana-migrator
+
+EUROPEANA_MIGRATOR=${EUROPEANA_MIGRATOR:=/opt/migrator}
+SCRIPT="java -server -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -XX:+UseParallelGC -Xms1g -Xmx4g -Xss1M -Dlog4j.configurationFile=$EUROPEANA_MIGRATOR/extra-files/log4j2.xml -cp $EUROPEANA_MIGRATOR/migrator.jar eu.europeana.crfmigration.MigratorMain"
 RUNAS=root
 
-PIDFILE=/var/run/publisher.pid
-
+PIDFILE=/var/run/migrator.pid
 
 start() {
   if [ -f '$PIDFILE' ] && kill -0 $(cat $PIDFILE); then
     echo 'Service already running' >&2
     return 1
   fi
-  
-  echo 'Starting publisher...' >&2
-  LOGFILE=/var/log/publisher_$(date +%u).log
+
+  echo 'Starting migrator...' >&2
+  LOGFILE=/var/log/migrator_$(date +%u).log
   echo 'logfile created: '  $LOGFILE
   if [ -f "$LOGFILE" ]; then
      su -c "rm -f $LOGFILE"
   fi
 
-  cd $EUROPEANA_PUBLISHER
+  cd $EUROPEANA_MIGRATOR
   local CMD="$SCRIPT > \"$LOGFILE\" & echo \$!"
   su -c "$CMD" $RUNAS > "$PIDFILE"
   echo 'Service started' >&2
@@ -38,25 +39,25 @@ start() {
 
 stop() {
   if [ -f "$PIDFILE" ] && ps -p $(cat "$PIDFILE") > /dev/null ;  then
-        echo 'Stopping publisher ... ' >& 2
+        echo 'Stopping migrator ... ' >& 2
         (kill -15 $(cat "$PIDFILE")) &> /dev/null
         rm -rf "$PIDFILE"
         echo 'Stopped service ...'
   else
-        echo "Publisher not working ... " >& 2
+        echo "Migrator not working ... " >& 2
         return 1
   fi
 }
 
 uninstall() {
-  echo -n "Are you really sure you want to uninstall europeana publisher ? This cannot be undone. [yes|No] "
+  echo -n "Are you really sure you want to uninstall europeana migrator ? This cannot be undone. [yes|No] "
   local SURE
   read SURE
   if [ "$SURE" = "yes" ]; then
     stop
     rm -f "$PIDFILE"
-    rm -rfv "$EUROPEANA_PUBLISHER"
-    echo "Notice: log file(s) will not be removed: /var/log/publisher*.log" >&2
+    rm -rfv "$EUROPEANA_MIGRATOR"
+    echo "Notice: log file(s) will not be removed: /var/log/migrator*.log" >&2
     rm -fv "$0"
   fi
 }
