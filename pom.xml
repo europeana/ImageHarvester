@@ -7,6 +7,9 @@
     <groupId>eu.europeana</groupId>
     <artifactId>harvester</artifactId>
     <version>0.1-SNAPSHOT</version>
+    <modules>
+        <module>JobCreator</module>
+    </modules>
 
     <!-- Jar/Pom TODO -->
     <packaging>pom</packaging>

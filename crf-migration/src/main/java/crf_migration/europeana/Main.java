@@ -1,4 +1,4 @@
-package europeana;
+package crf_migration.europeana;
 
 import crf_migration.europeana.domain.MigrationMongoConfig;
 import crf_migration.europeana.logic.Migrator;
@@ -11,7 +11,7 @@ import java.util.Properties;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        final String configFilePath = "./src/main/resources/migration.conf";
+        final String configFilePath = "./crf_migration/src/main/resources/migration.conf";
 
         final Properties prop = new Properties();
         final InputStream input = new FileInputStream(configFilePath);

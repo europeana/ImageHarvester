@@ -1,4 +1,4 @@
-package europeana.logic;
+package eu.europeana.crf_migration.logic;
 
 import com.mongodb.*;
 import crf_migration.europeana.domain.MigrationMongoConfig;

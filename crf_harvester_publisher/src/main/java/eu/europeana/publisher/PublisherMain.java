@@ -1,6 +1,5 @@
 package eu.europeana.publisher;
 
-import com.google.common.io.Files;
 import com.typesafe.config.*;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logic.Publisher;
@@ -10,12 +9,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.joda.time.DateTime;
-import scala.Char;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -80,7 +79,6 @@ public class PublisherMain {
         }
 
         final String solrURL = config.getString("solr.url");
-
         final Integer batch = config.getInt("config.batch");
 
         final List<? extends Config> sourceMongoConfigList = config.getConfigList("sourceMongo");
@@ -96,10 +94,15 @@ public class PublisherMain {
             System.exit(-1);
         }
 
+        final String graphiteMasterId = config.getString("metrics.masterID");
+        final String graphiteServer   = config.getString("metrics.graphiteServer");
+        final Integer graphitePort    = config.getInt("metrics.graphitePort");
+
         final Iterator<? extends Config> sourceMongoIter = sourceMongoConfigList.iterator();
         final Iterator<? extends Config> targetMongoIter = targetMongoConfigList.iterator();
+        final List<Thread> threads = new ArrayList<>();
 
-        while (sourceMongoIter.hasNext() && targetMongoIter.hasNext()) {
+        while(sourceMongoIter.hasNext() && targetMongoIter.hasNext()) {
             final Config sourceMongoConfig = sourceMongoIter.next();
             final Config targetMongoConfig = targetMongoIter.next();
 
@@ -115,13 +118,34 @@ public class PublisherMain {
             final String targetDBUsername = targetMongoConfig.getString("username");
             final String targetDBPassword = targetMongoConfig.getString("password");
 
-            final PublisherConfig publisherConfig = new PublisherConfig(sourceHost, sourcePort, sourceDBName,
+            final PublisherConfig publisherConfig = new PublisherConfig( sourceHost, sourcePort, sourceDBName,
                     sourceDBUsername, sourceDBPassword, targetHost, targetPort, targetDBName, targetDBUsername,
-                    targetDBPassword, startTimestamp,startTimestampFile, solrURL, batch);
+                    targetDBPassword, startTimestamp,startTimestampFile, solrURL, batch,
+                    graphiteMasterId, graphiteServer, graphitePort);
 
-            final Publisher publisher = new Publisher(publisherConfig);
-            publisher.start();
+            threads.add(new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final Publisher publisher;
+                    try {
+                        publisher = new Publisher(publisherConfig);
+                        publisher.start();
+                    } catch (Exception e) {
+                        LOG.error("Exception was thrown", e);
+                    }
+                }
+            }));
             //*/
+        }
+
+        for (final Thread thread: threads) thread.start();
+
+        for (final Thread thread: threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                LOG.error("Join failed for thread " + thread.getId(), e);
+            }
         }
     }
 }

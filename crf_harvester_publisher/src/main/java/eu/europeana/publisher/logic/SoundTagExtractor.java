@@ -2,7 +2,6 @@ package eu.europeana.publisher.logic;
 
 import eu.europeana.harvester.domain.AudioMetaInfo;
 
-import javax.print.attribute.standard.Media;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -32,14 +31,15 @@ public class SoundTagExtractor {
         if(duration == null) {
             return 0;
         }
-        final Long temp = duration/60000;
-        if(temp <= 0.5) {
+        final Double temp = duration/60000.0;
+        if(temp.compareTo(0.5) < 0) {
+
             return 1;
         }
-        if(temp <= 3) {
+        if(temp.compareTo(3.0) < 0) {
             return 2;
         }
-        if(temp <= 6) {
+        if(temp.compareTo(6.0) < 0) {
             return 3;
         }
 
@@ -53,7 +53,7 @@ public class SoundTagExtractor {
      */
     public static List<Integer> getFilterTags(final AudioMetaInfo audioMetaInfo) {
         final List<Integer> filterTags = new ArrayList<>();
-        final Integer mediaTypeCode = MediaTypeEncoding.SOUND.getEncodedValue();
+        final Integer mediaTypeCode = MediaTypeEncoding.AUDIO.getEncodedValue();
 
         if (null == audioMetaInfo.getMimeType() || null == audioMetaInfo.getDuration() ||
             null == audioMetaInfo.getBitDepth() || null == audioMetaInfo.getSampleRate() ||
@@ -109,7 +109,7 @@ public class SoundTagExtractor {
         }
 
         final List<Integer> facetTags = new ArrayList<>();
-        final Integer mediaTypeCode = MediaTypeEncoding.SOUND.getEncodedValue();
+        final Integer mediaTypeCode = MediaTypeEncoding.AUDIO.getEncodedValue();
 
         Integer facetTag;
 
