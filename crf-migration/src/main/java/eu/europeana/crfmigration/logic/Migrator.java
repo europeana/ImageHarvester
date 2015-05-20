@@ -82,7 +82,7 @@ public class Migrator {
                                               .convertDurationsTo(TimeUnit.MILLISECONDS)
                                               .build();
 
-        reporter.start(10, TimeUnit.SECONDS);
+        reporter.start(1, TimeUnit.MINUTES);
 
         if (null == config.getGraphiteServer() || config.getGraphiteServer().trim().isEmpty()) {
             return;
@@ -98,7 +98,7 @@ public class Migrator {
                                                      .convertDurationsTo(TimeUnit.MILLISECONDS)
                                                      .filter(MetricFilter.ALL)
                                                      .build(graphite);
-        reporter2.start(10, TimeUnit.SECONDS);
+        reporter2.start(30, TimeUnit.SECONDS);
     }
 
     public void migrate() {
@@ -160,7 +160,7 @@ public class Migrator {
                         LOG.info(e);
                     }
                     records.clear();
-                    LOG.info("Done with loading another " + batch + " records.");
+                    LOG.error("Done with loading another " + batch + " records.");
                 }
             } catch(Exception e) {
                 LOG.error ("Error reading record after reacord: #" + i + "\n");
@@ -309,13 +309,13 @@ public class Migrator {
 
     private void saveSourceDocumentReferences(final List<SourceDocumentReference> sourceDocumentReferences) {
         try{
-            LOG.error ("start saving sourceDocumentReferences");
+            LOG.info ("start saving sourceDocumentReferences");
             metrics.startSaveSourceDocumentReferencesTimer();
             harvesterClient.createOrModifySourceDocumentReference(sourceDocumentReferences);
         }
         finally {
             metrics.stopSaveSourceDocumentReferencesTimer();
-            LOG.error ("saving sourceDocumentReferences is done");
+            LOG.info ("saving sourceDocumentReferences is done");
         }
     }
 

@@ -10,7 +10,7 @@
 
 
 
-[ -f /etc/default/europeana-migrator ] && . /etc/default/europeana-migrator
+[ -R /etc/default/europeana-migrator ] && . /etc/default/europeana-migrator
 
 EUROPEANA_MIGRATOR=${EUROPEANA_MIGRATOR:=/opt/migrator}
 SCRIPT="java -server -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -XX:+UseParallelGC -Xms1g -Xmx4g -Xss1M -Dlog4j.configurationFile=$EUROPEANA_MIGRATOR/extra-files/log4j2.xml -cp $EUROPEANA_MIGRATOR/migrator.jar eu.europeana.crfmigration.MigratorMain"
@@ -25,14 +25,15 @@ start() {
   fi
 
   echo 'Starting migrator...' >&2
-  LOGFILE=/var/log/migrator_$(date +%u).log
+  DATE=`echo $(date +%D) | sed -e "s/\//-/g"`
+  LOGFILE="/var/log/migrator_$DATE.log"
   echo 'logfile created: '  $LOGFILE
   if [ -f "$LOGFILE" ]; then
      su -c "rm -f $LOGFILE"
   fi
 
   cd $EUROPEANA_MIGRATOR
-  local CMD="$SCRIPT > \"$LOGFILE\" & echo \$!"
+  local CMD="$SCRIPT &> \"$LOGFILE\" & echo \$!"
   su -c "$CMD" $RUNAS > "$PIDFILE"
   echo 'Service started' >&2
 }
@@ -42,7 +43,7 @@ stop() {
         echo 'Stopping migrator ... ' >& 2
         (kill -15 $(cat "$PIDFILE")) &> /dev/null
         rm -rf "$PIDFILE"
-        echo 'Stopped service ...'
+        echo 'Stopped migrator ...'
   else
         echo "Migrator not working ... " >& 2
         return 1
