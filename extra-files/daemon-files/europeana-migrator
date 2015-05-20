@@ -8,8 +8,6 @@
 #                    and should be placed in /etc/init.d
 ### END INIT INFO
 
-
-
 [ -R /etc/default/europeana-migrator ] && . /etc/default/europeana-migrator
 
 EUROPEANA_MIGRATOR=${EUROPEANA_MIGRATOR:=/opt/migrator}
