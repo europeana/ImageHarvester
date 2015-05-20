@@ -160,7 +160,7 @@ public class Migrator {
                         LOG.info(e);
                     }
                     records.clear();
-                    LOG.error("Done with loading another " + batch + " records.");
+                    LOG.info("Done with loading another " + batch + " records.");
                 }
             } catch(Exception e) {
                 LOG.error ("Error reading record after reacord: #" + i + "\n");

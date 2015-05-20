@@ -100,6 +100,7 @@
             <version>3.1.2</version>
         </dependency>
 
+<<<<<<< HEAD
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
@@ -111,6 +112,8 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.6.1</version>
         </dependency>
+=======
+>>>>>>> d2714fdcf953f6729c3162de47b529b48c9f9bc1
     </dependencies>
 
 </project>
