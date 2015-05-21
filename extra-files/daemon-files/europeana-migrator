@@ -1,0 +1,80 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          europeana-publisher
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Short-Description: Starts the daemon service
+# Description:       This file is used to start the daemon
+#                    and should be placed in /etc/init.d
+### END INIT INFO
+
+[ -R /etc/default/europeana-migrator ] && . /etc/default/europeana-migrator
+
+EUROPEANA_MIGRATOR=${EUROPEANA_MIGRATOR:=/opt/migrator}
+SCRIPT="java -server -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -XX:+UseParallelGC -Xms1g -Xmx4g -Xss1M -Dlog4j.configurationFile=$EUROPEANA_MIGRATOR/extra-files/log4j2.xml -cp $EUROPEANA_MIGRATOR/migrator.jar eu.europeana.crfmigration.MigratorMain"
+RUNAS=root
+
+PIDFILE=/var/run/migrator.pid
+
+start() {
+  if [ -f '$PIDFILE' ] && kill -0 $(cat $PIDFILE); then
+    echo 'Service already running' >&2
+    return 1
+  fi
+
+  echo 'Starting migrator...' >&2
+  DATE=`echo $(date +%D) | sed -e "s/\//-/g"`
+  LOGFILE="/var/log/migrator_$DATE.log"
+  echo 'logfile created: '  $LOGFILE
+  if [ -f "$LOGFILE" ]; then
+     su -c "rm -f $LOGFILE"
+  fi
+
+  cd $EUROPEANA_MIGRATOR
+  local CMD="$SCRIPT &> \"$LOGFILE\" & echo \$!"
+  su -c "$CMD" $RUNAS > "$PIDFILE"
+  echo 'Service started' >&2
+}
+
+stop() {
+  if [ -f "$PIDFILE" ] && ps -p $(cat "$PIDFILE") > /dev/null ;  then
+        echo 'Stopping migrator ... ' >& 2
+        (kill -15 $(cat "$PIDFILE")) &> /dev/null
+        rm -rf "$PIDFILE"
+        echo 'Stopped migrator ...'
+  else
+        echo "Migrator not working ... " >& 2
+        return 1
+  fi
+}
+
+uninstall() {
+  echo -n "Are you really sure you want to uninstall europeana migrator ? This cannot be undone. [yes|No] "
+  local SURE
+  read SURE
+  if [ "$SURE" = "yes" ]; then
+    stop
+    rm -f "$PIDFILE"
+    rm -rfv "$EUROPEANA_MIGRATOR"
+    echo "Notice: log file(s) will not be removed: /var/log/migrator*.log" >&2
+    rm -fv "$0"
+  fi
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  uninstall)
+    uninstall
+    ;;
+  restart)
+    stop
+    start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|uninstall}"
+esac

@@ -16,7 +16,11 @@ import java.util.concurrent.*;
  * Created by salexandru on 18.05.2015.
  */
 public class JobCreator {
-    private ExecutorService service;
+    private List<SourceDocumentReference> sourceDocumentReferences;
+
+    public JobCreator() {
+        sourceDocumentReferences = new ArrayList<>();
+    }
 
     /**
      * Gets the ip address of a source document.
@@ -36,6 +40,7 @@ public class JobCreator {
         final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, urlSourceType, url,
                                                                                             null, null, 0L, null, true
                                                                                            );
+        sourceDocumentReferences.add(sourceDocumentReference);
 
         final List<ProcessingJobSubTask> subTasks = new ArrayList<>();
 
@@ -65,6 +70,10 @@ public class JobCreator {
         return new ProcessingJob(1, new Date(), owner, Arrays.asList(jobTaskDocumentReference), JobState.READY, getIPAddress(url));
     }
 
+    public List<SourceDocumentReference> getSourceDocumentReferences() {
+        return sourceDocumentReferences;
+    }
+
     public List<ProcessingJob> createJobs(String collectionId,
                                           String providerId,
                                           String recordId,
@@ -79,18 +88,19 @@ public class JobCreator {
             throw new NullPointerException("collectionId, providerId and recordId cannot be null!");
         }
 
+        sourceDocumentReferences.clear();
+        sourceDocumentReferences = new ArrayList<SourceDocumentReference>();
+
         final List<ProcessingJob> jobs = new ArrayList<>();
         final DocumentReferenceTaskType taskType = ProcessingJobCreationOptions.FORCE_UNCONDITIONAL_DOWNLOAD.equals(options) ?
                                                    DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD :
                                                    DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD;
 
-        service = Executors.newSingleThreadExecutor();
-
         if (null != edmObjectUrl) {
             final ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId);
             jobs.add(createJob(owner,
                                edmObjectUrl,
-                               null,
+                               URLSourceType.ISSHOWNBY,
                                new ProcessingJobSubTaskType[] {ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL},
                                taskType
                               )
@@ -133,7 +143,6 @@ public class JobCreator {
                     );
         }
 
-        service.shutdown();
         return jobs;
     }
 }

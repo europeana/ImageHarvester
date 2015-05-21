@@ -7,6 +7,9 @@
 # Description:       This file is used to start the daemon
 #                    and should be placed in /etc/init.d
 ### END INIT INFO
+
+[ -R /etc/default/europeana-publisher ] && . /etc/default/europeana-publisher
+
 EUROPEANA_PUBLISHER=${EUROPEANA_PUBLISHER:=/opt/publisher}
 SCRIPT="java -server -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -XX:+UseParallelGC -Xms1g -Xmx4g -Xss1M -Dlog4j.configurationFile=$EUROPEANA_PUBLISHER/extra-files/log4j2.xml -cp $EUROPEANA_PUBLISHER/publisher.jar eu.europeana.publisher.PublisherMain $EUROPEANA_PUBLISHER/extra-files/publishing.conf"
 RUNAS=root
@@ -21,7 +24,8 @@ start() {
   fi
   
   echo 'Starting publisher...' >&2
-  LOGFILE=/var/log/publisher_$(date +%u).log
+  DATE=`echo $(date +%D) | sed -e "s/\//-/g"`
+  LOGFILE="/var/log/migrator_$DATE.log"
   echo 'logfile created: '  $LOGFILE
   if [ -f "$LOGFILE" ]; then
      su -c "rm -f $LOGFILE"
