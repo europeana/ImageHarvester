@@ -9,6 +9,10 @@ public enum JobState {
      */
     READY,
     /**
+     * Loaded by the master
+     */
+    LOADED,
+    /**
      * Started job.
      */
     RUNNING,
