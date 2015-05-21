@@ -1,0 +1,338 @@
+[
+  {
+    "_id" : "5143b4372cdc789350cadbbc",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Bildarchiv Foto Marburg"
+      ]
+    },
+    "edmIsShownAt" : "http://www.bildindex.de/dokumente/html/obj99158369",
+    "edmObject" : "http://www.bildindex.de/bilder/it00383b14b.jpg",
+    "edmProvider" : {
+      "def" : [
+        "Athena"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "5143b4372cdc789350cadbbe"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "5143b4372cdc789350cadbbf"
+      }
+    ],
+    "about" : "/aggregation/provider/08501/76E2D9FB46167A5BC98A9E6B5908CCE0A50C73F7"
+  },
+  {
+    "_id" : "53cc5b4ee4b01950d8b1b233",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Ghent University Library"
+      ]
+    },
+    "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000085058",
+    "edmObject" : "http://bks1.books.google.be/books?vid=GENT900000085058&printsec=titlepage&img=1&zoom=1",
+    "edmProvider" : {
+      "en" : [
+        "The European Library"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "aggregatedCHO" : "/item/04202/BibliographicResource_2000068281795",
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5b4ee4b01950d8b1b22f"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5b4ee4b01950d8b1b231"
+      }
+    ],
+    "edmPreviewNoDistribute" : false,
+    "about" : "/aggregation/provider/04202/BibliographicResource_2000068281795"
+  },
+  {
+    "_id" : "53cc5ec6e4b01950d8b58801",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Ghent University Library"
+      ]
+    },
+    "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000028217",
+    "edmObject" : "http://bks1.books.google.be/books?vid=GENT900000028217&printsec=titlepage&img=1&zoom=1",
+    "edmProvider" : {
+      "en" : [
+        "The European Library"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "aggregatedCHO" : "/item/04202/BibliographicResource_2000068285023",
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5ec6e4b01950d8b587ff"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5ec6e4b01950d8b58800"
+      }
+    ],
+    "edmPreviewNoDistribute" : false,
+    "about" : "/aggregation/provider/04202/BibliographicResource_2000068285023"
+  },
+  {
+    "_id" : "53cc5f32e4b01950d8b5f277",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Ghent University Library"
+      ]
+    },
+    "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000061304",
+    "edmObject" : "http://bks1.books.google.be/books?vid=GENT900000061304&printsec=titlepage&img=1&zoom=1",
+    "edmProvider" : {
+      "en" : [
+        "The European Library"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "aggregatedCHO" : "/item/04202/BibliographicResource_2000068285812",
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5f32e4b01950d8b5f275"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5f32e4b01950d8b5f276"
+      }
+    ],
+    "edmPreviewNoDistribute" : false,
+    "about" : "/aggregation/provider/04202/BibliographicResource_2000068285812"
+  },
+  {
+    "_id" : "53cc6d5ee4b01950d8c7818e",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Ghent University Library"
+      ]
+    },
+    "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000197349",
+    "edmObject" : "http://bks1.books.google.be/books?vid=GENT900000197349&printsec=titlepage&img=1&zoom=1",
+    "edmProvider" : {
+      "en" : [
+        "The European Library"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "aggregatedCHO" : "/item/04202/BibliographicResource_2000068300982",
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc6d5ee4b01950d8c7818c"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc6d5ee4b01950d8c7818d"
+      }
+    ],
+    "edmPreviewNoDistribute" : false,
+    "about" : "/aggregation/provider/04202/BibliographicResource_2000068300982"
+  },
+  {
+    "_id" : "53cc726de4b01950d8d03f1d",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Ghent University Library"
+      ]
+    },
+    "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000054842",
+    "edmObject" : "http://bks1.books.google.be/books?vid=GENT900000054842&printsec=titlepage&img=1&zoom=1",
+    "edmProvider" : {
+      "en" : [
+        "The European Library"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "aggregatedCHO" : "/item/04202/BibliographicResource_2000068307607",
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc726de4b01950d8d03f1b"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc726de4b01950d8d03f1c"
+      }
+    ],
+    "edmPreviewNoDistribute" : false,
+    "about" : "/aggregation/provider/04202/BibliographicResource_2000068307607"
+  },
+  {
+    "_id" : "53cc73a9e4b01950d8d22bde",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Ghent University Library"
+      ]
+    },
+    "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000134622",
+    "edmObject" : "http://bks1.books.google.be/books?vid=GENT900000134622&printsec=titlepage&img=1&zoom=1",
+    "edmProvider" : {
+      "en" : [
+        "The European Library"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "aggregatedCHO" : "/item/04202/BibliographicResource_2000068309772",
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc73a9e4b01950d8d22bdc"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc73a9e4b01950d8d22bdd"
+      }
+    ],
+    "edmPreviewNoDistribute" : false,
+    "about" : "/aggregation/provider/04202/BibliographicResource_2000068309772"
+  },
+  {
+    "_id" : "5143b4372cdc789350cadbe9",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Bildarchiv Foto Marburg"
+      ]
+    },
+    "edmIsShownAt" : "http://www.bildindex.de/dokumente/html/obj99158369",
+    "edmObject" : "http://www.bildindex.de/bilder/it00382g14b.jpg",
+    "edmProvider" : {
+      "def" : [
+        "Athena"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "5143b4372cdc789350cadbeb"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "5143b4372cdc789350cadbec"
+      }
+    ],
+    "about" : "/aggregation/provider/08501/F9792608BEF01F930F6CA5D9272B948C5CBA5DF7"
+  },
+  {
+    "_id" : "53cc5b33e4b01950d8b198dd",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Ghent University Library"
+      ]
+    },
+    "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000181096",
+    "edmObject" : "http://bks1.books.google.be/books?vid=GENT900000181096&printsec=titlepage&img=1&zoom=1",
+    "edmProvider" : {
+      "en" : [
+        "The European Library"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "aggregatedCHO" : "/item/04202/BibliographicResource_2000068281758",
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5b33e4b01950d8b198db"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5b33e4b01950d8b198dc"
+      }
+    ],
+    "edmPreviewNoDistribute" : false,
+    "about" : "/aggregation/provider/04202/BibliographicResource_2000068281758"
+  },
+  {
+    "_id" : "53cc5b39e4b01950d8b19f2c",
+    "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
+    "edmDataProvider" : {
+      "def" : [
+        "Ghent University Library"
+      ]
+    },
+    "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000153563",
+    "edmObject" : "http://bks1.books.google.be/books?vid=GENT900000153563&printsec=titlepage&img=1&zoom=1",
+    "edmProvider" : {
+      "en" : [
+        "The European Library"
+      ]
+    },
+    "edmRights" : {
+      "def" : [
+        "http://www.europeana.eu/rights/rr-f/"
+      ]
+    },
+    "aggregatedCHO" : "/item/04202/BibliographicResource_2000068281514",
+    "webResources" : [
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5b39e4b01950d8b19f2a"
+      },
+      {
+        "$ref" : "WebResource",
+        "$id" : "53cc5b39e4b01950d8b19f2b"
+      }
+    ],
+    "edmPreviewNoDistribute" : false,
+    "about" : "/aggregation/provider/04202/BibliographicResource_2000068281514"
+  }
+]

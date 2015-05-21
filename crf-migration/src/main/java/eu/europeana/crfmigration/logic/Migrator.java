@@ -206,16 +206,14 @@ public class Migrator {
                                                             null :
                                                             Arrays.asList(hasViews.toArray(new String[hasViews.size()]));
 
-                sourceDocumentReferences.addAll(createSourceDocumentReferences(referenceOwner, edmObject, edmHasViews,
-                                                                               edmIsShownBy, edmIsShownAt
-                                                                              )
-                                               );
-
                 try {
                     jobs.addAll(jobCreator.createJobs(referenceOwner.getCollectionId(), referenceOwner.getProviderId(),
-                                                      referenceOwner.getRecordId(), edmObject, edmHasViews,
-                                                      edmIsShownBy, edmIsShownAt, null));
+                                                      referenceOwner.getRecordId(),
+                                                      edmObject, edmHasViews, edmIsShownBy, edmIsShownAt, null
+                                                     )
+                               );
 
+                    sourceDocumentReferences.addAll(jobCreator.getSourceDocumentReferences());
                 } catch (MalformedURLException | UnknownHostException e) {
                     LOG.error(e);
                     metrics.incInvalidUrl();
@@ -234,43 +232,6 @@ public class Migrator {
 
         saveSourceDocumentReferences(sourceDocumentReferences);
         saveProcessingJobs(jobs);
-    }
-
-    private List<SourceDocumentReference> createSourceDocumentReferences (ReferenceOwner referenceOwner, String edmObject,
-                                                                          List<String> edmHasViews, String edmIsShownBy,
-                                                                          String edmIsShownAt
-                                                                         ) {
-        final List<SourceDocumentReference> references = new ArrayList<>();
-
-        if (null != edmObject) {
-            references.add(new SourceDocumentReference(referenceOwner, URLSourceType.ISSHOWNBY, edmObject,
-                                                       null, null, 0L, null, true
-                                                     )
-                          );
-        }
-
-        if (null != edmHasViews) {
-            for (final String url: edmHasViews) {
-                references.add(new SourceDocumentReference(referenceOwner, URLSourceType.HASVIEW, url,
-                                                           null, null, 0L, null, true)
-                              );
-            }
-
-        }
-
-        if (null != edmIsShownBy) {
-            references.add(new SourceDocumentReference(referenceOwner, URLSourceType.ISSHOWNBY, edmIsShownBy,
-                                                       null, null, 0L, null, true
-                                                      )
-                          );
-
-        }
-
-        if (null != edmIsShownAt) {
-            references.add(new SourceDocumentReference(referenceOwner, null, edmIsShownAt, null, null, 0L, null, true));
-
-        }
-        return references;
     }
 
     private ReferenceOwner getReferenceOwner(final Map.Entry pairs) {
