@@ -1,0 +1,564 @@
+[
+{
+  "_id" : "5143b4522cdc789350cae8a2",
+  "className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+  "about" : "/08501/76E2D9FB46167A5BC98A9E6B5908CCE0A50C73F7",
+  "timestampCreated" : "2014-06-04T08:49:09.302Z",
+  "timestampUpdated" : "2014-07-20T00:14:07.019Z",
+  "title" : [
+    "San Pietro in Vaticano; Peterskirche"
+  ],
+  "type" : "IMAGE",
+  "europeanaCompleteness" : 8,
+  "optOut" : false,
+  "concepts" : [
+    {
+      "$ref" : "Concept",
+      "$id" : "511e5cbb2cdc9bccb5d03dbf"
+    },
+    {
+      "$ref" : "Concept",
+      "$id" : "511e5cda2cdc0253812ef832"
+    }
+  ],
+  "aggregations" : [
+    {
+      "$ref" : "Aggregation",
+      "$id" : "5143b4372cdc789350cadbbc"
+    }
+  ],
+  "providedCHOs" : [
+    {
+      "$ref" : "ProvidedCHO",
+      "$id" : "5143b4372cdc789350cadbc0"
+    }
+  ],
+  "europeanaAggregation" : {
+    "$ref" : "EuropeanaAggregation",
+    "$id" : "5143b4372cdc789350cadbbd"
+  },
+  "proxies" : [
+    {
+      "$ref" : "Proxy",
+      "$id" : "5143b4372cdc789350cadbba"
+    },
+    {
+      "$ref" : "Proxy",
+      "$id" : "5143b4372cdc789350cadbbb"
+    }
+  ],
+  "europeanaCollectionName" : [
+    "08501_Ag_EU_ATHENA_FotoMarburg"
+  ]
+}
+
+,
+{
+"_id" : "53cc5b4fe4b01950d8b1b307",
+"className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+"about" : "/04202/BibliographicResource_2000068281795",
+"title" : [
+"Ivsti Lipsi Monita et exempla politica. Libri duo, qui virtvtes et vitia principum spectant"
+],
+"year" : [
+"1625"
+],
+"language" : [
+"mul"
+],
+"timestampCreated" : "2014-06-04T08:49:09.302Z",
+"timestampUpdated" : "2014-07-21T00:14:07.019Z",
+"europeanaCompleteness" : 9,
+"optOut" : false,
+"places" : [
+{
+"$ref" : "Place",
+"$id" : "511e951e2cdc124838a34b6a"
+},
+{
+"$ref" : "Place",
+"$id" : "511e5cd12cdc9bccb5d0a086"
+}
+],
+"aggregations" : [
+{
+"$ref" : "Aggregation",
+"$id" : "53cc5b4ee4b01950d8b1b233"
+}
+],
+"providedCHOs" : [
+{
+"$ref" : "ProvidedCHO",
+"$id" : "53cc5b4ee4b01950d8b1b22b"
+}
+],
+"europeanaAggregation" : {
+"$ref" : "EuropeanaAggregation",
+"$id" : "53cc5b4ee4b01950d8b1b237"
+},
+"proxies" : [
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5b4ee4b01950d8b1b22c"
+},
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5b4fe4b01950d8b1b26c"
+}
+],
+"europeanaCollectionName" : [
+"04202_L_BE_UniLibGent_googlebooks"
+]
+}
+
+,
+{
+"_id" : "53cc5ec6e4b01950d8b58855",
+"className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+"about" : "/04202/BibliographicResource_2000068285023",
+"title" : [
+"La maîtresse comédie-vaudeville en deux actes"
+],
+"year" : [
+"1829"
+],
+"language" : [
+"mul"
+],
+"timestampCreated" : "2014-06-04T08:51:48.415Z",
+"timestampUpdated" : "2014-06-25T00:28:54.245Z",
+"europeanaCompleteness" : 7,
+"optOut" : false,
+"places" : [
+{
+"$ref" : "Place",
+"$id" : "511e5ce02cdc9bccb5d0d996"
+},
+{
+"$ref" : "Place",
+"$id" : "511e5cd12cdc9bccb5d0a086"
+}
+],
+"aggregations" : [
+{
+"$ref" : "Aggregation",
+"$id" : "53cc5ec6e4b01950d8b58801"
+}
+],
+"providedCHOs" : [
+{
+"$ref" : "ProvidedCHO",
+"$id" : "53cc5ec6e4b01950d8b587fd"
+}
+],
+"europeanaAggregation" : {
+"$ref" : "EuropeanaAggregation",
+"$id" : "53cc5ec6e4b01950d8b58803"
+},
+"proxies" : [
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5ec6e4b01950d8b587fe"
+},
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5ec6e4b01950d8b58826"
+}
+],
+"europeanaCollectionName" : [
+"04202_L_BE_UniLibGent_googlebooks"
+]
+}
+
+,
+{
+"_id" : "53cc5f32e4b01950d8b5f2db",
+"className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+"about" : "/04202/BibliographicResource_2000068285812",
+"title" : [
+"Ecole dramatique de l'homme; suite des jeux de la petite Thalie. Age viril, depuis vingt ans jusqu'a cinquante"
+],
+"year" : [
+"1770"
+],
+"language" : [
+"mul"
+],
+"timestampCreated" : "2014-06-04T08:52:05.445Z",
+"timestampUpdated" : "2014-06-23T00:30:42.156Z",
+"europeanaCompleteness" : 8,
+"optOut" : false,
+"places" : [
+{
+"$ref" : "Place",
+"$id" : "511e6d1c2cdcc0409da7983f"
+},
+{
+"$ref" : "Place",
+"$id" : "511e5ca12cdc9bccb5cfe505"
+}
+],
+"aggregations" : [
+{
+"$ref" : "Aggregation",
+"$id" : "53cc5f32e4b01950d8b5f277"
+}
+],
+"providedCHOs" : [
+{
+"$ref" : "ProvidedCHO",
+"$id" : "53cc5f32e4b01950d8b5f273"
+}
+],
+"europeanaAggregation" : {
+"$ref" : "EuropeanaAggregation",
+"$id" : "53cc5f32e4b01950d8b5f279"
+},
+"proxies" : [
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5f32e4b01950d8b5f274"
+},
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5f32e4b01950d8b5f27a"
+}
+],
+"europeanaCollectionName" : [
+"04202_L_BE_UniLibGent_googlebooks"
+]
+}
+
+,
+{
+"_id" : "53cc6d5ee4b01950d8c781d5",
+"className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+"about" : "/04202/BibliographicResource_2000068300982",
+"title" : [
+"Truer-dichten over het jammerlijck om-brenghen des edelen ende wijdt-beroemden helds Johan van Oldenbarnevelt heer van Berckel, Rodenrijs, . Den alder-kloeksten advocaat patriot totten bloede toe"
+],
+"year" : [
+"1620"
+],
+"language" : [
+"mul"
+],
+"timestampCreated" : "2014-06-04T08:58:31.061Z",
+"timestampUpdated" : "2014-08-30T01:31:10.001Z",
+"europeanaCompleteness" : 10,
+"optOut" : false,
+"places" : [
+{
+"$ref" : "Place",
+"$id" : "511e951e2cdc124838a34b6a"
+},
+{
+"$ref" : "Place",
+"$id" : "511e5cd12cdc9bccb5d0a086"
+}
+],
+"aggregations" : [
+{
+"$ref" : "Aggregation",
+"$id" : "53cc6d5ee4b01950d8c7818e"
+}
+],
+"providedCHOs" : [
+{
+"$ref" : "ProvidedCHO",
+"$id" : "53cc6d5ee4b01950d8c7818a"
+}
+],
+"europeanaAggregation" : {
+"$ref" : "EuropeanaAggregation",
+"$id" : "53cc6d5ee4b01950d8c78190"
+},
+"proxies" : [
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc6d5ee4b01950d8c7818b"
+},
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc6d5ee4b01950d8c78191"
+}
+],
+"europeanaCollectionName" : [
+"04202_L_BE_UniLibGent_googlebooks"
+]
+}
+
+,
+{
+"_id" : "53cc726de4b01950d8d04038",
+"className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+"about" : "/04202/BibliographicResource_2000068307607",
+"title" : [
+"Traité pratique sur la filature de laine peignée, cardée paignée et cardée"
+],
+"year" : [
+"1861"
+],
+"language" : [
+"mul"
+],
+"timestampCreated" : "2014-06-04T09:01:26.136Z",
+"timestampUpdated" : "2014-08-29T01:52:45.394Z",
+"europeanaCompleteness" : 7,
+"optOut" : false,
+"places" : [
+{
+"$ref" : "Place",
+"$id" : "511e5cac2cdc9bccb5d00904"
+},
+{
+"$ref" : "Place",
+"$id" : "511e5c9b2cdc9bccb5cfd1ef"
+}
+],
+"aggregations" : [
+{
+"$ref" : "Aggregation",
+"$id" : "53cc726de4b01950d8d03f1d"
+}
+],
+"providedCHOs" : [
+{
+"$ref" : "ProvidedCHO",
+"$id" : "53cc726de4b01950d8d03f19"
+}
+],
+"europeanaAggregation" : {
+"$ref" : "EuropeanaAggregation",
+"$id" : "53cc726de4b01950d8d03f1f"
+},
+"proxies" : [
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc726de4b01950d8d03f1a"
+},
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc726de4b01950d8d03f88"
+}
+],
+"europeanaCollectionName" : [
+"04202_L_BE_UniLibGent_googlebooks"
+]
+}
+
+,
+{
+"_id" : "53cc73aee4b01950d8d22cc6",
+"className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+"about" : "/04202/BibliographicResource_2000068309772",
+"title" : [
+"Vite de piu eccellenti pittori scultori e architetti"
+],
+"year" : [],
+"language" : [
+"mul"
+],
+"timestampCreated" : "2014-06-04T09:02:18.894Z",
+"timestampUpdated" : "2014-09-11T01:58:01.147Z",
+"europeanaCompleteness" : 9,
+"optOut" : false,
+"agents" : [
+{
+"$ref" : "Agent",
+"$id" : "5121199b2cdc07f5d4bb67af"
+}
+],
+"aggregations" : [
+{
+"$ref" : "Aggregation",
+"$id" : "53cc73a9e4b01950d8d22bde"
+}
+],
+"providedCHOs" : [
+{
+"$ref" : "ProvidedCHO",
+"$id" : "53cc73a9e4b01950d8d22bda"
+}
+],
+"europeanaAggregation" : {
+"$ref" : "EuropeanaAggregation",
+"$id" : "53cc73a9e4b01950d8d22bdf"
+},
+"proxies" : [
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc73a9e4b01950d8d22bdb"
+},
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc73a9e4b01950d8d22bf5"
+}
+],
+"europeanaCollectionName" : [
+"04202_L_BE_UniLibGent_googlebooks"
+]
+}
+
+,
+{
+"_id" : "5143b4522cdc789350cae8a7",
+"className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+"about" : "/08501/F9792608BEF01F930F6CA5D9272B948C5CBA5DF7",
+"timestampCreated" : "2014-06-04T09:02:18.894Z",
+"timestampUpdated" : "2014-09-22T01:58:01.147Z",
+"title" : [
+"San Pietro in Vaticano; Peterskirche"
+],
+"type" : "IMAGE",
+"europeanaCompleteness" : 8,
+"optOut" : false,
+"concepts" : [
+{
+"$ref" : "Concept",
+"$id" : "511e5cbb2cdc9bccb5d03dbf"
+},
+{
+"$ref" : "Concept",
+"$id" : "511e5cda2cdc0253812ef832"
+}
+],
+"aggregations" : [
+{
+"$ref" : "Aggregation",
+"$id" : "5143b4372cdc789350cadbe9"
+}
+],
+"providedCHOs" : [
+{
+"$ref" : "ProvidedCHO",
+"$id" : "5143b4372cdc789350cadbed"
+}
+],
+"europeanaAggregation" : {
+"$ref" : "EuropeanaAggregation",
+"$id" : "5143b4372cdc789350cadbea"
+},
+"proxies" : [
+{
+"$ref" : "Proxy",
+"$id" : "5143b4372cdc789350cadbe7"
+},
+{
+"$ref" : "Proxy",
+"$id" : "5143b4372cdc789350cadbe8"
+}
+],
+"europeanaCollectionName" : [
+"08501_Ag_EU_ATHENA_FotoMarburg"
+]
+}
+
+,
+{
+"_id" : "53cc5b35e4b01950d8b19999",
+"className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+"about" : "/04202/BibliographicResource_2000068281758",
+"title" : [
+"De scheiding van België in derzelver gevolgen getoetst"
+],
+"year" : [
+"1830"
+],
+"language" : [
+"mul"
+],
+"timestampCreated" : "2014-06-04T08:49:08.877Z",
+"timestampUpdated" : "2014-12-31T00:13:39.694Z",
+"europeanaCompleteness" : 8,
+"optOut" : false,
+"places" : [
+{
+"$ref" : "Place",
+"$id" : "511e6d1c2cdcc0409da7983f"
+},
+{
+"$ref" : "Place",
+"$id" : "511e5ca12cdc9bccb5cfe505"
+}
+],
+"aggregations" : [
+{
+"$ref" : "Aggregation",
+"$id" : "53cc5b33e4b01950d8b198dd"
+}
+],
+"providedCHOs" : [
+{
+"$ref" : "ProvidedCHO",
+"$id" : "53cc5b33e4b01950d8b198d9"
+}
+],
+"europeanaAggregation" : {
+"$ref" : "EuropeanaAggregation",
+"$id" : "53cc5b33e4b01950d8b198e0"
+},
+"proxies" : [
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5b33e4b01950d8b198da"
+},
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5b33e4b01950d8b19936"
+}
+],
+"europeanaCollectionName" : [
+"04202_L_BE_UniLibGent_googlebooks"
+]
+}
+
+,
+{
+"_id" : "53cc5b39e4b01950d8b19fc7",
+"className" : "eu.europeana.corelib.solr.bean.impl.FullBeanImpl",
+"about" : "/04202/BibliographicResource_2000068281514",
+"title" : [
+"Bly-lieden op de uitcomste van de Predicanten, die om de vercondinghe des evangeliums ghevanghen waeren"
+],
+"year" : [
+"1621"
+],
+"language" : [
+"mul"
+],
+"timestampCreated" : "2014-06-04T08:49:05.400Z",
+"timestampUpdated" : "2014-12-31T00:13:45.547Z",
+"europeanaCompleteness" : 7,
+"optOut" : false,
+"aggregations" : [
+{
+"$ref" : "Aggregation",
+"$id" : "53cc5b39e4b01950d8b19f2c"
+}
+],
+"providedCHOs" : [
+{
+"$ref" : "ProvidedCHO",
+"$id" : "53cc5b39e4b01950d8b19f28"
+}
+],
+"europeanaAggregation" : {
+"$ref" : "EuropeanaAggregation",
+"$id" : "53cc5b39e4b01950d8b19f2d"
+},
+"proxies" : [
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5b39e4b01950d8b19f29"
+},
+{
+"$ref" : "PhysicalThing",
+"$id" : "53cc5b39e4b01950d8b19f2e"
+}
+],
+"europeanaCollectionName" : [
+"04202_L_BE_UniLibGent_googlebooks"
+]
+}
+]

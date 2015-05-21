@@ -55,10 +55,19 @@ public class MigratorMain {
         final String targetDBUsername = config.getString("targetMongo.username");
         final String targetDBPassword = config.getString("targetMongo.password");
 
+        final String graphiteMasterId = config.getString("metrics.masterID");
+        final String graphiteServer   = config.getString("metrics.graphiteServer");
+        final Integer graphitePort    = config.getInt("metrics.graphitePort");
+
+        final int batch = config.getInt("config.batch");
+
 
         final MongoConfig migrationConfig =
                 new MongoConfig(sourceHost, sourcePort, sourceDBName, sourceDBUsername, sourceDBPassword,
-                        targetHost, targetPort, targetDBName, targetDBUsername, targetDBPassword);
+                                batch,
+                                targetHost, targetPort, targetDBName, targetDBUsername, targetDBPassword,
+                                graphiteServer, graphitePort, graphiteMasterId
+                              );
 
         final Migrator migrator = new Migrator(migrationConfig, d);
         migrator.migrate();

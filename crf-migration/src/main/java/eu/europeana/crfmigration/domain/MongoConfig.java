@@ -53,20 +53,33 @@ public class MongoConfig {
      */
     private final String targetDBPassword;
 
+
+    private final String graphiteServer;
+    private final String graphiteMasterId;
+    private final int graphitePort;
+
+    private final int batch;
+
     public MongoConfig(String sourceHost, Integer sourcePort, String sourceDBName,
                        String sourceDBUsername, String sourceDBPassword,
+                       int batch,
                        String targetHost, Integer targetPort, String targetDBName,
-                       String targetDBUsername, String targetDBPassword) {
+                       String targetDBUsername, String targetDBPassword,
+                       String graphiteServer, Integer graphitePort, String graphiteMasterId) {
         this.sourceHost = sourceHost;
         this.sourcePort = sourcePort;
         this.sourceDBName = sourceDBName;
         this.sourceDBUsername = sourceDBUsername;
         this.sourceDBPassword = sourceDBPassword;
+        this.batch = batch;
         this.targetHost = targetHost;
         this.targetPort = targetPort;
         this.targetDBName = targetDBName;
         this.targetDBUsername = targetDBUsername;
         this.targetDBPassword = targetDBPassword;
+        this.graphiteServer = graphiteServer;
+        this.graphitePort   = graphitePort;
+        this.graphiteMasterId = graphiteMasterId;
     }
 
     public String getSourceHost() {
@@ -107,5 +120,21 @@ public class MongoConfig {
 
     public String getTargetDBPassword() {
         return targetDBPassword;
+    }
+
+    public String getGraphiteServer () {
+        return graphiteServer;
+    }
+
+    public int getGraphitePort () {
+        return graphitePort;
+    }
+
+    public String getGraphiteMasterId () {
+        return graphiteMasterId;
+    }
+
+    public int getBatch () {
+        return batch;
     }
 }
