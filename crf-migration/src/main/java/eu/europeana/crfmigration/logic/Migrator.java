@@ -7,6 +7,7 @@ import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.mongodb.*;
 import eu.europeana.JobCreator.JobCreator;
+import eu.europeana.JobCreator.domain.ProcessingJobTuple;
 import eu.europeana.crfmigration.domain.MongoConfig;
 import eu.europeana.harvester.client.HarvesterClientConfig;
 import eu.europeana.harvester.client.HarvesterClientImpl;
@@ -33,7 +34,6 @@ public class Migrator {
 
     private final Date dateFilter;
 
-    private final JobCreator jobCreator = new JobCreator();
     private final MigratorMetrics metrics = new MigratorMetrics();
 
     private final int batch;
@@ -207,13 +207,16 @@ public class Migrator {
                                                             Arrays.asList(hasViews.toArray(new String[hasViews.size()]));
 
                 try {
-                    jobs.addAll(jobCreator.createJobs(referenceOwner.getCollectionId(), referenceOwner.getProviderId(),
-                                                      referenceOwner.getRecordId(),
-                                                      edmObject, edmHasViews, edmIsShownBy, edmIsShownAt, null
-                                                     )
-                               );
 
-                    sourceDocumentReferences.addAll(jobCreator.getSourceDocumentReferences());
+                    final List<ProcessingJobTuple> jobTuples = JobCreator.createJobs(referenceOwner.getCollectionId(), referenceOwner.getProviderId(),
+                            referenceOwner.getRecordId(),
+                            edmObject, edmHasViews, edmIsShownBy, edmIsShownAt);
+
+                    for (final ProcessingJobTuple jobTuple : jobTuples) {
+                        jobs.add(jobTuple.getProcessingJob());
+                        sourceDocumentReferences.add(jobTuple.getSourceDocumentReference());
+                    }
+
                 } catch (MalformedURLException | UnknownHostException e) {
                     LOG.error(e);
                     metrics.incInvalidUrl();
