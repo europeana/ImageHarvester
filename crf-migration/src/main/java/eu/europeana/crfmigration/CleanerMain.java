@@ -24,18 +24,15 @@ public class CleanerMain {
         String targetDBUsername = "";
         String targetDBPassword = "";
 
-        if(config.hasPath("clean.username")) {
+        if (config.hasPath("clean.username")) {
             targetDBUsername = config.getString("clean.username");
             targetDBPassword = config.getString("clean.password");
         }
 
-        final int batch = config.getInt("config.batch");
-
         final MongoConfig cleanerConfig =
-                new MongoConfig("", 0, "", "", "", batch,
-                                targetHost, targetPort, targetDBName, targetDBUsername, targetDBPassword,
-                                null, null, null
-                               );
+                new MongoConfig(
+                        targetHost, targetPort, targetDBName, targetDBUsername, targetDBPassword
+                );
 
         final Cleaner cleaner = new Cleaner(cleanerConfig);
         cleaner.clean();

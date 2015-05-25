@@ -2,7 +2,6 @@ package eu.europeana.crfmigration.logic;
 
 import com.mongodb.*;
 import eu.europeana.crfmigration.domain.MongoConfig;
-import eu.europeana.harvester.domain.JobState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,12 +17,12 @@ public class Cleaner {
     private DB db;
 
     public Cleaner(MongoConfig config) throws IOException {
-        final Mongo mongo = new Mongo(config.getTargetHost(), config.getTargetPort());
+        final Mongo mongo = new Mongo(config.getHost(), config.getPort());
 
-        if(!config.getTargetDBUsername().equals("")) {
+        if (!config.getdBUsername().equals("")) {
             db = mongo.getDB("admin");
-            final Boolean auth = db.authenticate(config.getTargetDBUsername(),
-                    config.getTargetDBPassword().toCharArray());
+            final Boolean auth = db.authenticate(config.getdBUsername(),
+                    config.getdBPassword().toCharArray());
             if (!auth) {
                 LOG.error("Mongo auth error");
                 System.exit(-1);
@@ -32,7 +31,7 @@ public class Cleaner {
             }
         }
 
-        db = mongo.getDB(config.getTargetDBName());
+        db = mongo.getDB(config.getdBName());
     }
 
     /**
@@ -72,12 +71,12 @@ public class Cleaner {
 
                 i++;
                 if (i > 100000) {
-                    i=0;
+                    i = 0;
                     LOG.info("Done with another 100k processingJobs.");
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 jobCursor = processingJob.find(query).sort(sortOrder);
-                jobCursor.skip(i-1);
+                jobCursor.skip(i - 1);
             }
         }
         LOG.info("Done with another 100k ProcessingJob.");

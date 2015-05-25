@@ -3,138 +3,56 @@ package eu.europeana.crfmigration.domain;
 public class MongoConfig {
 
     /**
-     * Source MongoDB host.
+     * MongoDB host.
      */
-    private final String sourceHost;
+    private final String host;
 
     /**
-     * Source MongoDB port.
+     * MongoDB port.
      */
-    private final Integer sourcePort;
+    private final Integer port;
 
     /**
-     * The source DB name where the thumbnails will be stored.
+     * The DB name.
      */
-    private final String sourceDBName;
+    private final String dBName;
 
     /**
-     * The username of the source DB if it is encrypted
+     * The username of the  DB if it is secured.
      */
-    private final String sourceDBUsername;
+    private final String dBUsername;
 
     /**
-     * The password of the source DB if it is encrypted
+     * The password of the DB if it is secured.
      */
-    private final String sourceDBPassword;
+    private final String dBPassword;
 
 
-    /**
-     * Target MongoDB host.
-     */
-    private final String targetHost;
-
-    /**
-     * Target MongoDB port.
-     */
-    private final Integer targetPort;
-
-    /**
-     * The target DB name where the thumbnails will be stored.
-     */
-    private final String targetDBName;
-
-    /**
-     * The username of the target DB if it is encrypted
-     */
-    private final String targetDBUsername;
-
-    /**
-     * The password of the target DB if it is encrypted
-     */
-    private final String targetDBPassword;
-
-
-    private final String graphiteServer;
-    private final String graphiteMasterId;
-    private final int graphitePort;
-
-    private final int batch;
-
-    public MongoConfig(String sourceHost, Integer sourcePort, String sourceDBName,
-                       String sourceDBUsername, String sourceDBPassword,
-                       int batch,
-                       String targetHost, Integer targetPort, String targetDBName,
-                       String targetDBUsername, String targetDBPassword,
-                       String graphiteServer, Integer graphitePort, String graphiteMasterId) {
-        this.sourceHost = sourceHost;
-        this.sourcePort = sourcePort;
-        this.sourceDBName = sourceDBName;
-        this.sourceDBUsername = sourceDBUsername;
-        this.sourceDBPassword = sourceDBPassword;
-        this.batch = batch;
-        this.targetHost = targetHost;
-        this.targetPort = targetPort;
-        this.targetDBName = targetDBName;
-        this.targetDBUsername = targetDBUsername;
-        this.targetDBPassword = targetDBPassword;
-        this.graphiteServer = graphiteServer;
-        this.graphitePort   = graphitePort;
-        this.graphiteMasterId = graphiteMasterId;
+    public MongoConfig(String host, Integer port, String dBName, String dBUsername, String dBPassword) {
+        this.host = host;
+        this.port = port;
+        this.dBName = dBName;
+        this.dBUsername = dBUsername;
+        this.dBPassword = dBPassword;
     }
 
-    public String getSourceHost() {
-        return sourceHost;
+    public String getHost() {
+        return host;
     }
 
-    public Integer getSourcePort() {
-        return sourcePort;
+    public Integer getPort() {
+        return port;
     }
 
-    public String getSourceDBName() {
-        return sourceDBName;
+    public String getdBName() {
+        return dBName;
     }
 
-    public String getTargetHost() {
-        return targetHost;
+    public String getdBUsername() {
+        return dBUsername;
     }
 
-    public Integer getTargetPort() {
-        return targetPort;
-    }
-
-    public String getTargetDBName() {
-        return targetDBName;
-    }
-
-    public String getSourceDBUsername() {
-        return sourceDBUsername;
-    }
-
-    public String getSourceDBPassword() {
-        return sourceDBPassword;
-    }
-
-    public String getTargetDBUsername() {
-        return targetDBUsername;
-    }
-
-    public String getTargetDBPassword() {
-        return targetDBPassword;
-    }
-
-    public String getGraphiteServer () {
-        return graphiteServer;
-    }
-
-    public int getGraphitePort () {
-        return graphitePort;
-    }
-
-    public String getGraphiteMasterId () {
-        return graphiteMasterId;
-    }
-
-    public int getBatch () {
-        return batch;
+    public String getdBPassword() {
+        return dBPassword;
     }
 }

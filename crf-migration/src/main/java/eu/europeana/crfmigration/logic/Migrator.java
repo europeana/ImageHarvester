@@ -1,26 +1,24 @@
 package eu.europeana.crfmigration.logic;
 
-import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.Timer;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
-import com.mongodb.*;
+import com.mongodb.DBCursor;
 import eu.europeana.JobCreator.JobCreator;
 import eu.europeana.JobCreator.domain.ProcessingJobTuple;
-import eu.europeana.crfmigration.domain.MongoConfig;
-import eu.europeana.harvester.client.HarvesterClientConfig;
-import eu.europeana.harvester.client.HarvesterClientImpl;
-import eu.europeana.harvester.db.MorphiaDataStore;
-import eu.europeana.harvester.domain.*;
+import eu.europeana.crfmigration.dao.MigratorEuropeanaDao;
+import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
+import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
+import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.harvester.domain.SourceDocumentReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.maven.shared.utils.StringUtils;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Creates the processing jobs and the source documents needed by them.
@@ -28,86 +26,29 @@ import java.util.concurrent.*;
 public class Migrator {
 
     private static final Logger LOG = LogManager.getLogger(Migrator.class.getName());
+    private final MigratorMetrics metrics;
 
-    private DB db;
-    private final HarvesterClientImpl harvesterClient;
+    private final MigratorEuropeanaDao migratorEuropeanaDao;
+    private final MigratorHarvesterDao migratorHarvesterDao;
 
     private final Date dateFilter;
 
-    private final MigratorMetrics metrics = new MigratorMetrics();
-
     private final int batch;
 
-    public Migrator(MongoConfig config, Date dateFilter) throws IOException {
-        final Mongo mongo = new Mongo(config.getSourceHost(), config.getSourcePort());
-
+    public Migrator(final MigratorEuropeanaDao migratorEuropeanaDao, final MigratorHarvesterDao migratorHarvesterDao, final MigratorMetrics metrics, final Date dateFilter, final int batch) throws IOException {
+        this.migratorEuropeanaDao = migratorEuropeanaDao;
+        this.migratorHarvesterDao = migratorHarvesterDao;
+        this.metrics = metrics;
         this.dateFilter = dateFilter;
-
-        this.batch = config.getBatch();
-
-        if (StringUtils.isNotEmpty(config.getSourceDBUsername()) && StringUtils.isNotEmpty(config.getSourceDBPassword())) {
-            db = mongo.getDB("admin");
-            final Boolean auth = db.authenticate(config.getSourceDBUsername(),
-                                                 config.getSourceDBPassword().toCharArray());
-            if (!auth) {
-                LOG.error("Mongo source auth error");
-                System.exit(-1);
-            }
-        }
-
-        db = mongo.getDB(config.getSourceDBName());
-        final MorphiaDataStore datastore =
-                new MorphiaDataStore(config.getTargetHost(), config.getTargetPort(),config.getTargetDBName());
-
-
-        if (StringUtils.isNotEmpty(config.getTargetDBUsername())  &&
-            StringUtils.isNotEmpty(config.getTargetDBPassword())) {
-
-            final Boolean auth = datastore.getMongo().getDB("admin").authenticate(config.getTargetDBUsername(),
-                                                                                  config.getTargetDBPassword()
-                                                                                        .toCharArray());
-
-
-            if (!auth) {
-                LOG.error("Mongo target auth error");
-                System.exit(-1);
-            }
-        }
-
-        harvesterClient = new HarvesterClientImpl(datastore, new HarvesterClientConfig(WriteConcern.SAFE));
-
-        Slf4jReporter reporter = Slf4jReporter.forRegistry(MigratorMetrics.metricRegistry)
-                                              .outputTo(org.slf4j.LoggerFactory.getLogger(LOG.getName()))
-                                              .convertRatesTo(TimeUnit.SECONDS)
-                                              .convertDurationsTo(TimeUnit.MILLISECONDS)
-                                              .build();
-
-        reporter.start(1, TimeUnit.MINUTES);
-
-        if (null == config.getGraphiteServer() || config.getGraphiteServer().trim().isEmpty()) {
-            return;
-        }
-
-        Graphite graphite = new Graphite(new InetSocketAddress(config.getGraphiteServer(),
-                                                               config.getGraphitePort()
-        )
-        );
-        GraphiteReporter reporter2 = GraphiteReporter.forRegistry(MigratorMetrics.metricRegistry)
-                                                     .prefixedWith(config.getGraphiteMasterId())
-                                                     .convertRatesTo(TimeUnit.SECONDS)
-                                                     .convertDurationsTo(TimeUnit.MILLISECONDS)
-                                                     .filter(MetricFilter.ALL)
-                                                     .build(graphite);
-        reporter2.start(30, TimeUnit.SECONDS);
+        this.batch = batch;
     }
 
     public void migrate() {
         try {
             metrics.startTotalMigrationTimer();
             starMigration();
-        }
-        finally {
-            for (final Timer.Context context: metrics.getAllTimeContexts()) {
+        } finally {
+            for (final Timer.Context context : metrics.getAllTimeContexts()) {
                 context.stop();
             }
         }
@@ -115,185 +56,72 @@ public class Migrator {
 
     private void starMigration() {
         LOG.info("start migration");
-        final DBCollection recordCollection = db.getCollection("record");
-         DBObject filterByTimestampQuery = new BasicDBObject();
-        final BasicDBObject recordFields = new BasicDBObject();
+        DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
 
-        if (null != dateFilter) {
-            filterByTimestampQuery = QueryBuilder.start().put("timestampUpdated").greaterThanEquals(dateFilter).get();
-            LOG.info("Query: " + filterByTimestampQuery);
-        }
-
-        recordFields.put("about", 1);
-        recordFields.put("", 1);
-        recordFields.put("timestampUpdated", 1);
-        recordFields.put("europeanaCollectionName", 1);
-        recordFields.put("_id", 0);
-        final BasicDBObject sortOrder = new BasicDBObject();
-        sortOrder.put("$natural", 1);
-
-        int i = 0;
-
-        DBCursor recordCursor = recordCollection.find(filterByTimestampQuery, recordFields).sort(sortOrder);
-        recordCursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
-        final Map<String, String> records = new HashMap<>();
+        int positionInRecordCollection = 0;
         metrics.logBatchSize(batch);
+
         while (recordCursor.hasNext()) {
             try {
-                final BasicDBObject item = (BasicDBObject) recordCursor.next();
-                final String about = (String) item.get("about");
-                final BasicDBList collNames = (BasicDBList) item.get("europeanaCollectionName");
-                final String collectionId = (String) collNames.get(0);
-                records.put(about, collectionId);
-
-                i++;
-                if (i > batch) {
-                    i = 0;
-                    metrics.logBatchDocumentProcessing(i);
-
-                    try {
-                        metrics.startSourceDocumentReferencesTimer();
-                        retrieveSourceDocumentReferences(records);
-                        metrics.stopSourceDocumentReferencesTimer();
-                    } catch(Exception e) {
-                        metrics.incBatchProcessingError();
-                        LOG.info(e);
-                    }
-                    records.clear();
-                    LOG.info("Done with loading another " + batch + " records.");
-                }
-            } catch(Exception e) {
-                LOG.error ("Error reading record after reacord: #" + i + "\n");
-                metrics.incErrorReadingRecord();
-
-                recordCursor = recordCollection.find(filterByTimestampQuery, recordFields).sort(sortOrder);
-                recordCursor.skip(i-1);
-            }
-        }
-
-        metrics.startSourceDocumentReferencesTimer();
-        retrieveSourceDocumentReferences(records);
-        metrics.stopSourceDocumentReferencesTimer();
-
-        LOG.info("Done");
-    }
-
-
-
-    private void retrieveSourceDocumentReferences(final Map<String, String> records) {
-        LOG.info ("creating jobs");
-        final List<ProcessingJob> jobs = new ArrayList<>();
-        final List<SourceDocumentReference> sourceDocumentReferences = new ArrayList<>();
-        for (final Map.Entry<String, String> record: records.entrySet()) {
-            try {
-                final ReferenceOwner referenceOwner = getReferenceOwner(record);
-
-                final DBObject aggregation = getAggregation("/aggregation/provider" + record.getKey());
-
-                if (null == aggregation) {
-                    LOG.error("Missing aggregation: /aggregation/provider" + record.getKey() + " at record: " + record.getKey() + "\n");
-                    metrics.incEmptyAggregations();
-                    continue;
-                }
-
-                final String edmObject = (String) aggregation.get("edmObject");
-                final BasicDBList hasViews = (BasicDBList) aggregation.get("hasView");
-                final String edmIsShownBy = (String) aggregation.get("edmIsShownBy");
-                final String edmIsShownAt = (String) aggregation.get("edmIsShownAt");
-
-
-                final List<String> edmHasViews = null == hasViews ?
-                                                            null :
-                                                            Arrays.asList(hasViews.toArray(new String[hasViews.size()]));
+                final Map<String, String> recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, batch);
+                positionInRecordCollection = positionInRecordCollection + recordsRetrievedInBatch.size();
+                metrics.logBatchDocumentProcessing(recordsRetrievedInBatch.size());
 
                 try {
-
-                    final List<ProcessingJobTuple> jobTuples = JobCreator.createJobs(referenceOwner.getCollectionId(), referenceOwner.getProviderId(),
-                            referenceOwner.getRecordId(),
-                            edmObject, edmHasViews, edmIsShownBy, edmIsShownAt);
-
-                    for (final ProcessingJobTuple jobTuple : jobTuples) {
-                        jobs.add(jobTuple.getProcessingJob());
-                        sourceDocumentReferences.add(jobTuple.getSourceDocumentReference());
-                    }
-
-                } catch (MalformedURLException | UnknownHostException e) {
-                    LOG.error(e);
-                    metrics.incInvalidUrl();
+                    metrics.startSourceDocumentReferencesTimer();
+                    migrateRecordsInSingleBatch(recordsRetrievedInBatch);
+                    metrics.stopSourceDocumentReferencesTimer();
+                } catch (Exception e) {
+                    metrics.incBatchProcessingError();
+                    LOG.info(e);
                 }
-            }
-            catch (Exception e) {
-                LOG.error ("Exception caught during record processing: " + e.getMessage(), e);
-                metrics.incProcessingError();
+
+            } catch (Exception e) {
+                LOG.error("Error reading record after reacord: #" + positionInRecordCollection + "\n");
+                metrics.incErrorReadingRecord();
+
+                recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
+                recordCursor.skip(positionInRecordCollection - 1);
+
             }
         }
+        LOG.info("finished migration");
+    }
 
+    private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch) {
+        // Retrieve records and convert to jobs
+        final List<EuropeanaEDMObject> edmObjectsOfRecords = migratorEuropeanaDao.retrieveSourceDocumentReferences(recordsInBatch);
+        final List<ProcessingJobTuple> processingJobTuples = convertEDMObjectToJobs(edmObjectsOfRecords);
+        final List<ProcessingJob> processingJobs = ProcessingJobTuple.processingJobsFromList(processingJobTuples);
+        final List<SourceDocumentReference> sourceDocumentReferences = ProcessingJobTuple.sourceDocumentReferencesFromList(processingJobTuples);
+
+        // Save them
+        metrics.logNumberOfProcessingJobsPerBatch(processingJobs.size());
         metrics.logNumberOfSourceDocumentReferencesPerBatch(sourceDocumentReferences.size());
-        metrics.logNumberOfProcessingJobsPerBatch(jobs.size());
 
-        LOG.info("done creating jobs");
+        migratorHarvesterDao.saveSourceDocumentReferences(sourceDocumentReferences);
+        migratorHarvesterDao.saveProcessingJobs(processingJobs);
 
-        saveSourceDocumentReferences(sourceDocumentReferences);
-        saveProcessingJobs(jobs);
     }
 
-    private ReferenceOwner getReferenceOwner(final Map.Entry pairs) {
-        final String about = (String) pairs.getKey();
-        final String collectionId = (String) pairs.getValue();
-
-        final String[] temp = about.split("/");
-        final String providerId = temp[1];
-        final String recordId = about;
-
-        return new ReferenceOwner(providerId, collectionId, recordId);
-    }
-
-    private DBObject getAggregation(String aggregationAbout) {
-        try {
-            metrics.startGetAggregationTimer();
-
-            final DBCollection aggregationCollection = db.getCollection("Aggregation");
-
-            final BasicDBObject whereQueryAggregation = new BasicDBObject();
-            whereQueryAggregation.put("about", aggregationAbout);
-
-            final BasicDBObject aggregationFields = new BasicDBObject();
-            aggregationFields.put("edmObject", 1);
-            aggregationFields.put("edmIsShownBy", 1);
-            aggregationFields.put("edmIsShownAt", 1);
-            aggregationFields.put("hasView", 1);
-            aggregationFields.put("_id", 0);
-
-            return aggregationCollection.findOne(whereQueryAggregation, aggregationFields);
-        }
-        finally {
-            metrics.stopGetAggregationTimer();
-        }
-    }
-
-    private void saveSourceDocumentReferences(final List<SourceDocumentReference> sourceDocumentReferences) {
-        try{
-            LOG.info ("start saving sourceDocumentReferences");
-            metrics.startSaveSourceDocumentReferencesTimer();
-            harvesterClient.createOrModifySourceDocumentReference(sourceDocumentReferences);
-        }
-        finally {
-            metrics.stopSaveSourceDocumentReferencesTimer();
-            LOG.info ("saving sourceDocumentReferences is done");
-        }
-    }
-
-    private void saveProcessingJobs(final List<ProcessingJob> jobs) {
-        LOG.info ("saving created jobs");
-        try {
-            metrics.startSaveProcessingJobsTimer();
-            for (final ProcessingJob processingJob : jobs) {
-                harvesterClient.createProcessingJob(processingJob);
+    private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects) {
+        final List<ProcessingJobTuple> results = new ArrayList();
+        for (final EuropeanaEDMObject edmObject : edmObjects) {
+            try {
+                results.addAll(
+                        JobCreator.createJobs(edmObject.getReferenceOwner().getCollectionId(),
+                                edmObject.getReferenceOwner().getProviderId(),
+                                edmObject.getReferenceOwner().getRecordId(),
+                                edmObject.getEdmObject(), edmObject.getEdmHasViews(), edmObject.getEdmIsShownBy(), edmObject.getEdmIsShownAt()));
+            } catch (UnknownHostException e1) {
+                LOG.error("Exception caught during record processing: " + e1.getMessage(), e1);
+                metrics.incInvalidUrl();
+            } catch (MalformedURLException e1) {
+                LOG.error("Exception caught during record processing: " + e1.getMessage(), e1);
+                metrics.incInvalidUrl();
             }
         }
-        finally {
-            metrics.stopSaveProcessingJobsTimer();
-            LOG.info ("done saving jobs");
-        }
+        return results;
     }
+
 }
