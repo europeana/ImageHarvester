@@ -23,9 +23,9 @@ import java.util.Map;
 /**
  * Creates the processing jobs and the source documents needed by them.
  */
-public class Migrator {
+public class MigrationManager {
 
-    private static final Logger LOG = LogManager.getLogger(Migrator.class.getName());
+    private static final Logger LOG = LogManager.getLogger(MigrationManager.class.getName());
     private final MigratorMetrics metrics;
 
     private final MigratorEuropeanaDao migratorEuropeanaDao;
@@ -35,7 +35,7 @@ public class Migrator {
 
     private final int batch;
 
-    public Migrator(final MigratorEuropeanaDao migratorEuropeanaDao, final MigratorHarvesterDao migratorHarvesterDao, final MigratorMetrics metrics, final Date dateFilter, final int batch) throws IOException {
+    public MigrationManager(final MigratorEuropeanaDao migratorEuropeanaDao, final MigratorHarvesterDao migratorHarvesterDao, final MigratorMetrics metrics, final Date dateFilter, final int batch) throws IOException {
         this.migratorEuropeanaDao = migratorEuropeanaDao;
         this.migratorHarvesterDao = migratorHarvesterDao;
         this.metrics = metrics;

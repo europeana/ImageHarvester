@@ -13,11 +13,8 @@ import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.GraphiteReporterConfig;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import eu.europeana.crfmigration.domain.MongoConfig;
-import eu.europeana.crfmigration.logic.Migrator;
+import eu.europeana.crfmigration.logic.MigrationManager;
 import eu.europeana.crfmigration.logic.MigratorMetrics;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,26 +22,21 @@ import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-public class MigratorMain {
-    private static final Logger LOG = LogManager.getLogger(Migrator.class.getName());
+import org.apache.logging.log4j.LogManager;
 
-    public static void main(String[] args) throws IOException {
-        LOG.info("Starting Migrator ");
-        Date d = null;
 
-        if (1 == args.length) {
-            try {
-                d = ISODateTimeFormat.dateTime().parseDateTime(args[0]).toDate();
-            } catch (Exception e) {
-                LOG.error("The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ ", e);
-                System.exit(-1);
-            }
-        } else if (args.length > 1) {
-            System.out.println("Too many arguments. Please provide only one !");
-            System.exit(-1);
-        }
+public class Migrator {
+    private static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(MigrationManager.class.getName());
+    private final Date dateFilter;
 
-        LOG.info("Date to filter: " + d);
+    public Migrator(Date dateFilter) {
+        this.dateFilter = dateFilter;
+    }
+
+    public void start() throws IOException {
+        LOG.info("Migrator starting ");
+
+        LOG.info("Date to filter: " + dateFilter);
 
         final String configFilePath = "./extra-files/config-files/migration.conf";
         final File configFile = new File(configFilePath);
@@ -107,12 +99,16 @@ public class MigratorMain {
         final MigratorHarvesterDao migratorHarvesterDao = new MigratorHarvesterDao(metrics, migrationConfig.getTargetMongoConfig());
 
         // Prepare the migrator & start it
-        final Migrator migrator = new Migrator(migratorEuropeanaDao,
+        final MigrationManager migrationManager = new MigrationManager(migratorEuropeanaDao,
                 migratorHarvesterDao,
                 metrics,
-                d,
+                dateFilter,
                 migrationConfig.getBatch());
-        migrator.migrate();
-        //*/
+        migrationManager.migrate();
+    }
+
+    public void stop() {
+        LOG.info("Migrator stopped ");
+        System.exit(0);
     }
 }

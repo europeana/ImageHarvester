@@ -12,7 +12,7 @@ import java.io.IOException;
  */
 public class Cleaner {
 
-    private static final Logger LOG = LogManager.getLogger(Migrator.class.getName());
+    private static final Logger LOG = LogManager.getLogger(MigrationManager.class.getName());
 
     private DB db;
 
