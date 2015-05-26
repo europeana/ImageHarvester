@@ -14,9 +14,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by nutz on 21.05.2015.
- */
+
 public class ProcessorHelperProcess {
 
     private final List<MediaFile> thumbnails = new ArrayList<>();
@@ -88,8 +86,10 @@ public class ProcessorHelperProcess {
                 thumbnails.clear();
             }
             deleteFile(doneDownload, path);
+            error = "";
         } catch (Exception e) {
-            LOG.info("Error in startProcessing : {}",e.getMessage());
+            LOG.info("Error in helper startProcessing : {}",e.getMessage());
+            error = "Error in processing";
         }
 
         if (error.length() != 0 && doneProcessing != null) {

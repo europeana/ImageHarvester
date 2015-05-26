@@ -135,6 +135,8 @@ public class NodeMasterActor extends UntypedActor {
         retrieve = metrics.meter("RetrieveURL");
         doneDl = metrics.meter("DoneDownload");
         doneProc = metrics.meter("DoneProcessing");
+        lastRequest = 0l;
+        sentRequest = false;
 
 
         final int maxNrOfRetries = nodeMasterConfig.getNrOfRetries();
@@ -176,6 +178,7 @@ public class NodeMasterActor extends UntypedActor {
         LOG.info("NodeMasterActor postRestart");
 
         sentRequest = false;
+        lastRequest = 0l;
 
         self().tell(new RequestTasks(), ActorRef.noSender());
 
@@ -200,9 +203,13 @@ public class NodeMasterActor extends UntypedActor {
 
                 for ( int i=0;i<maxSlaves;i++){
 
-                    final Object msg = messages.poll();
+                    Object msg = null;
 
-                    if(message != null) {
+                    if (!messages.isEmpty())
+                        msg = messages.poll();
+
+
+                    if(msg != null) {
 
                         ActorRef newActor = getContext().system().actorOf(Props.create(ProcessorActor.class,
                                 channelFactory, hashedWheelTimer, httpRetrieveResponseFactory, nodeMasterConfig.getResponseType(),
@@ -227,9 +234,12 @@ public class NodeMasterActor extends UntypedActor {
         if(message instanceof RequestTasks ) {
             //allways request tasks if the message is coming from the supervisor
             if ( getSender().equals(nodeSupervisor)) {
-                if ( masterSender!= null && messages.size() < nodeMasterConfig.getTaskNrLimit() )
-                    masterSender.tell(new RequestTasks(), nodeSupervisor );
-                    sentRequest = false;
+                if ( masterSender!= null && messages.size() < nodeMasterConfig.getTaskNrLimit() ) {
+                    masterSender.tell(new RequestTasks(), nodeSupervisor);
+                    sentRequest = true;
+                    lastRequest = System.currentTimeMillis();
+                    LOG.info("requesting tasks from nodesupervisor");
+                }
             }
             else if(!sentRequest && masterSender != null && messages.size() < nodeMasterConfig.getTaskNrLimit()) {
                 LOG.info("Sent request for tasks");
@@ -237,17 +247,22 @@ public class NodeMasterActor extends UntypedActor {
                 masterSender.tell(new RequestTasks(), nodeSupervisor);
                 sentRequest = true;
                 lastRequest = System.currentTimeMillis();
-            } else {
-                LOG.info("No request: " + messages.size() + " " + sentRequest + " task limits: "+
-                    nodeMasterConfig.getTaskNrLimit()+" master ID"+masterSender.toString());
-                if(sentRequest && lastRequest != null) {
+            }
+            else  {
                     final Long currentTime = System.currentTimeMillis();
-                    final Long diff = (currentTime - lastRequest) / 1000;
-                    if(diff > 30) {
-                        sentRequest = false;
-                        self().tell(new RequestTasks(), ActorRef.noSender());
+                    final int diff = Math.round ( ((currentTime - lastRequest)/1000) );
+                    if(diff > 10 && messages.size() < nodeMasterConfig.getTaskNrLimit() ) {
+                        sentRequest = true;
+                        //self().tell(new RequestTasks(), ActorRef.noSender());
+                        masterSender.tell(new RequestTasks(), nodeSupervisor);
+                        lastRequest = System.currentTimeMillis();
+                        LOG.info("Requesting tasks time difference");
+                    } else {
+                        LOG.info("No request: " + messages.size() + " " + sentRequest + " task limits: "+
+                                nodeMasterConfig.getTaskNrLimit()+" time diff : " +diff);
+
                     }
-                }
+
             }
 
         }
@@ -342,8 +357,11 @@ public class NodeMasterActor extends UntypedActor {
             LOG.info("Actor {} terminated, building another one",t.getActor());
 
             if (actors.size()<maxSlaves){
-                final Object msg = messages.poll();
-                if(message != null) {
+                Object msg = null;
+                if (!messages.isEmpty())
+                    msg = messages.poll();
+
+                if(msg != null) {
                     ActorRef newActor = getContext().system().actorOf(Props.create(ProcessorActor.class,
                             channelFactory, hashedWheelTimer, httpRetrieveResponseFactory, nodeMasterConfig.getResponseType(),
                             nodeMasterConfig.getPathToSave(), service,  mediaStorageClient,
