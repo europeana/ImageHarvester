@@ -12,11 +12,11 @@ import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 public class SlaveProcessor {
 
@@ -37,75 +37,27 @@ public class SlaveProcessor {
     public ProcessingResultTuple process(final ProcessingJobTaskDocumentReference task, String originalFilePath, String originalFileUrl, byte[] originalFileContent,
                                          ResponseType responseType, String processingProcessId) throws Exception {
 
-        ProcessingJobSubTask metaExtractionProcessingTask = null;
-        ProcessingJobSubTask colorExtractionProcessingTask = null;
-        List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks = new ArrayList();
+        // (1) Locate tasks
+        final ProcessingJobSubTask metaExtractionProcessingTask = locateMetaInfoExtractionProcessingTask(task);
+        final ProcessingJobSubTask colorExtractionProcessingTask = locateColorExtractionProcessingTask(task);
+        final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks = locateThumbnailExtractionProcessingTask(task);
 
-        MediaMetaInfoTuple mediaMetaInfoTuple = null;
-        final Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = new HashMap<ProcessingJobSubTask, MediaFile>();
-        ImageMetaInfo imageColorMetaInfo = null;
+        // (2) Execute tasks
+        final MediaMetaInfoTuple mediaMetaInfoTuple = (metaExtractionProcessingTask != null) ? extractMetaInfo(originalFilePath, originalFileUrl, responseType, metaExtractionProcessingTask) : null;
+        final ImageMetaInfo imageColorMetaInfo = (colorExtractionProcessingTask != null) ? extractColor(originalFilePath) : null;
+        final Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent, processingProcessId, thumbnailGenerationProcessingTasks);
 
-        // Step 1 : Pickup the sub tasks from the configuration.
-        for (final ProcessingJobSubTask subTask : task.getProcessingTasks()) {
-            switch (subTask.getTaskType()) {
-                case META_EXTRACTION:
-                    if (metaExtractionProcessingTask == null) {
-                        metaExtractionProcessingTask = subTask;
-                    } else {
-                        throw new IllegalArgumentException("Cannot process configuration for url : " + originalFileUrl + ". The configuration contains more than one meta extraction subtask. Should be exactly one.");
-                    }
-                    break;
-                case COLOR_EXTRACTION:
-                    if (colorExtractionProcessingTask == null) {
-                        colorExtractionProcessingTask = subTask;
-                    } else {
-                        throw new IllegalArgumentException("Cannot process configuration for url : " + originalFileUrl + ". The configuration contains more than one colour extraction subtask. Should be exactly one.");
-                    }
-                    break;
-                case GENERATE_THUMBNAIL:
-                    thumbnailGenerationProcessingTasks.add(subTask);
-                    break;
-                default:
-                    LOG.error("Configuration for url " + originalFileUrl + " has an unknown sub task type " + subTask);
-                    break;
+
+        // (3) Post task execution
+
+        // (3.1) Insert the color palette in all the thumbnail meta infos if there is a color palette.
+        if (imageColorMetaInfo != null) {
+            for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
+                generatedThumbnails.put(thumbnailEntry.getKey(), thumbnailEntry.getValue().withColorPalette(imageColorMetaInfo.getColorPalette()));
             }
         }
 
-
-        // Step 2 : Execute the tasks
-
-        // Extract meta info
-        if (metaExtractionProcessingTask != null) {
-            if (responseType.equals(ResponseType.NO_STORAGE)) {
-                throw new IllegalArgumentException("Configuration for url " + originalFileUrl + " for sub task " + metaExtractionProcessingTask.getConfig() + "Cannot execute meta info extraction because the media file is not stored.");
-            }
-            mediaMetaInfoTuple = metaInfoExtractor.extract(originalFilePath);
-        }
-
-        // Generate thumbnails
-        for (ProcessingJobSubTask thumbnailGenerationTask : thumbnailGenerationProcessingTasks) {
-            if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
-                final GenericSubTaskConfiguration config = thumbnailGenerationTask.getConfig();
-                generatedThumbnails.put(thumbnailGenerationTask, thumbnailGenerator.createMediaFileWithThumbnail(config.getThumbnailConfig().getHeight(),
-                        config.getThumbnailConfig().getWidth(), processingProcessId, originalFileUrl,
-                        originalFileContent, originalFilePath));
-            }
-        }
-
-        // Extra color palette
-        if (colorExtractionProcessingTask != null) {
-            if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
-                imageColorMetaInfo = colorExtractor.colorExtraction(originalFilePath);
-
-                // Insert the color pallete in all the thumbnail meta infos
-                for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
-                    generatedThumbnails.put(thumbnailEntry.getKey(), thumbnailEntry.getValue().withColorPalette(imageColorMetaInfo.getColorPalette()));
-                }
-            }
-        }
-
-        // Step 3 : Execute the end of processing operations
-
+        // (3.2) Persist result & cleanup
         for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
             mediaStorageClient.createOrModify(thumbnailEntry.getValue());
             deleteFile(originalFilePath);
@@ -113,6 +65,73 @@ public class SlaveProcessor {
 
         LOG.info("Done processing for url ", originalFileUrl);
         return new ProcessingResultTuple(mediaMetaInfoTuple, generatedThumbnails.values(), imageColorMetaInfo);
+    }
+
+    private final List<ProcessingJobSubTask> locateThumbnailExtractionProcessingTask(final ProcessingJobTaskDocumentReference task) {
+        List<ProcessingJobSubTask> results = new ArrayList();
+        for (final ProcessingJobSubTask subTask : task.getProcessingTasks()) {
+            if (subTask.getTaskType() == ProcessingJobSubTaskType.META_EXTRACTION) {
+                results.add(subTask);
+            }
+        }
+        return results;
+    }
+
+
+    private final ProcessingJobSubTask locateColorExtractionProcessingTask(final ProcessingJobTaskDocumentReference task) {
+        ProcessingJobSubTask result = null;
+        for (final ProcessingJobSubTask subTask : task.getProcessingTasks()) {
+            if (subTask.getTaskType() == ProcessingJobSubTaskType.COLOR_EXTRACTION) {
+                if (result == null) {
+                    result = subTask;
+                } else {
+                    throw new IllegalArgumentException("Cannot process configuration for document : " + task.getSourceDocumentReferenceID() + ". The configuration contains more than one color extraction subtask. Should be exactly one.");
+                }
+            }
+        }
+        return result;
+    }
+
+
+    private final ProcessingJobSubTask locateMetaInfoExtractionProcessingTask(final ProcessingJobTaskDocumentReference task) {
+        ProcessingJobSubTask result = null;
+        for (final ProcessingJobSubTask subTask : task.getProcessingTasks()) {
+            if (subTask.getTaskType() == ProcessingJobSubTaskType.META_EXTRACTION) {
+                if (result == null) {
+                    result = subTask;
+                } else {
+                    throw new IllegalArgumentException("Cannot process configuration for document : " + task.getSourceDocumentReferenceID() + ". The configuration contains more than one meta extraction subtask. Should be exactly one.");
+                }
+            }
+        }
+        return result;
+    }
+
+    private final ImageMetaInfo extractColor(String originalFilePath) throws IOException, InterruptedException {
+        if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
+            return colorExtractor.colorExtraction(originalFilePath);
+        }
+        return null;
+    }
+
+    private final MediaMetaInfoTuple extractMetaInfo(final String originalFilePath, final String originalFileUrl, final ResponseType responseType, final ProcessingJobSubTask metaExtractionProcessingTask) throws Exception {
+        if (responseType.equals(ResponseType.NO_STORAGE)) {
+            throw new IllegalArgumentException("Configuration for url " + originalFileUrl + " for sub task " + metaExtractionProcessingTask.getConfig() + "Cannot execute meta info extraction because the media file is not stored.");
+        }
+        return metaInfoExtractor.extract(originalFilePath);
+    }
+
+    private final Map<ProcessingJobSubTask, MediaFile> generateThumbnails(final String originalFilePath, final String originalFileUrl, final byte[] originalFileContent, final String processingProcessId, final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks) throws Exception {
+        final Map<ProcessingJobSubTask, MediaFile> results = new HashMap<ProcessingJobSubTask, MediaFile>();
+        for (final ProcessingJobSubTask thumbnailGenerationTask : thumbnailGenerationProcessingTasks) {
+            if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
+                final GenericSubTaskConfiguration config = thumbnailGenerationTask.getConfig();
+                results.put(thumbnailGenerationTask, thumbnailGenerator.createMediaFileWithThumbnail(config.getThumbnailConfig().getHeight(),
+                        config.getThumbnailConfig().getWidth(), processingProcessId, originalFileUrl,
+                        originalFileContent, originalFilePath));
+            }
+        }
+        return results;
     }
 
     /**
@@ -124,3 +143,6 @@ public class SlaveProcessor {
     }
 
 }
+
+
+
