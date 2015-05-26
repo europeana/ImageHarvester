@@ -18,7 +18,7 @@ public class ImageMagicValidator {
                 throw new Exception("ImageMagic version is installed on the system but has the wrong version. Expected version " + expectedImageMagicVersion + ". Current version : " + output);
             }
         } catch (IOException e) {
-            throw new Exception("ImageMagic is not installed in the system. Please instal expected version : " + expectedImageMagicVersion+" or higher.");
+            throw new Exception("ImageMagic is not installed in the system. Please install expected version : " + expectedImageMagicVersion+" or higher.");
         }
 
     }
