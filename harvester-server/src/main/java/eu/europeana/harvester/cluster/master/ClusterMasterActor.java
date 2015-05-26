@@ -26,12 +26,12 @@ import eu.europeana.harvester.cluster.domain.messages.Clean;
 import eu.europeana.harvester.cluster.domain.messages.Monitor;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.db.*;
-import eu.europeana.harvester.domain.NotImplementedException;
 import org.joda.time.DateTime;
 import scala.Option;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -115,11 +115,6 @@ public class ClusterMasterActor extends UntypedActor {
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
     /**
-     * LinkCheckLimits DAO object which lets us to read and store data to and from the database.
-     */
-    private final LinkCheckLimitsDao linkCheckLimitsDao;
-
-    /**
      * Contains default download limits.
      */
     private final DefaultLimits defaultLimits;
@@ -157,7 +152,6 @@ public class ClusterMasterActor extends UntypedActor {
                               final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                               final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                               final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
-                              final LinkCheckLimitsDao linkCheckLimitsDao,
                               final DefaultLimits defaultLimits,
                               final Integer cleanupInterval,
                               final MetricRegistry metrics) {
@@ -170,7 +164,6 @@ public class ClusterMasterActor extends UntypedActor {
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
-        this.linkCheckLimitsDao = linkCheckLimitsDao;
         this.defaultLimits = defaultLimits;
         //this.esbClient = esbClient;
         this.cleanupInterval = cleanupInterval;

@@ -15,6 +15,7 @@ import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.slave.NodeSupervisor;
+import eu.europeana.harvester.cluster.slave.validator.ImageMagicValidator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.mongo.MediaStorageClientImpl;
 import eu.europeana.harvester.domain.MediaStorageClientConfig;
@@ -45,7 +46,8 @@ public class Slave {
         this.args = args;
     }
 
-    public void init(Slave slave) {
+    public void init(Slave slave) throws Exception {
+        allRequirementsAreMetOrThrowException();
 
 //        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
 //                .convertRatesTo(TimeUnit.SECONDS)
@@ -157,7 +159,7 @@ public class Slave {
 
     }
 
-    public void restart() {
+    public void restart() throws Exception {
         system.shutdown();
         //sleep 10 minutes
         try {
@@ -176,9 +178,15 @@ public class Slave {
         return system;
     }
 
-    public static void main(String[] args) {
+    public static void allRequirementsAreMetOrThrowException() throws Exception {
+        new ImageMagicValidator("ImageMagick 6.9.0").doNothingOrThrowException();
+        LOG.info("ImageMagic version 6.9.0 installed in the system. External dependency OK. Continuing");
+    }
+
+    public static void main(String[] args) throws Exception {
         final Slave slave = new Slave(args);
         slave.init(slave);
         slave.start();
     }
+
 }
