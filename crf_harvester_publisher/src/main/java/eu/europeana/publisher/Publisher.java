@@ -88,7 +88,6 @@ public class Publisher {
                     }
                 }
             }));
-            //*/
         }
 
         for (final Thread thread : threads) thread.start();
