@@ -15,4 +15,8 @@ public enum ProcessingJobPriority {
     private ProcessingJobPriority(int priority) {
         this.priority = priority;
     }
+
+    public int getPriority() {
+        return priority;
+    }
 }

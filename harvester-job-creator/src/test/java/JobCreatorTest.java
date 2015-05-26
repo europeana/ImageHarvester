@@ -1,8 +1,8 @@
 import eu.europeana.JobCreator.JobCreator;
-import eu.europeana.JobCreator.ProcessingJobCreationOptions;
+import eu.europeana.JobCreator.domain.ProcessingJobCreationOptions;
+import eu.europeana.JobCreator.domain.ProcessingJobTuple;
 import eu.europeana.harvester.domain.*;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -13,9 +13,6 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 
-/**
- * Created by salexandru on 18.05.2015.
- */
 public class JobCreatorTest {
     private JobCreator jobCreator;
     private final static String collectionId = "2023831_AG-EU_LinkedHeritage_Rybinsk";
@@ -27,21 +24,21 @@ public class JobCreatorTest {
         jobCreator = new JobCreator();
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testAllArgsNull() throws MalformedURLException, UnknownHostException {
         jobCreator.createJobs(null, null, null, null ,null, null, null, null);
     }
 
     @Test
     public void testEdmObj_ValidUrl() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJob> jobs =
+        final List<ProcessingJobTuple> jobs =
         jobCreator.createJobs(collectionId, providerId, recordId, "http://www.google.com",
-                              null, null, null, null);
+                              null, null, null);
 
         assertEquals(1, jobs.size());
-        assertEquals(1, jobs.get(0).getTasks().size());
+        assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        final ProcessingJob job = jobs.get(0);
+        final ProcessingJob job = jobs.get(0).getProcessingJob();
         final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
 
         assertEquals (JobState.READY, job.getState());
@@ -71,14 +68,14 @@ public class JobCreatorTest {
 
     @Test
     public void testEdmObj_ValidUrl_UnconditionDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJob> jobs =
+        final List<ProcessingJobTuple> jobs =
                 jobCreator.createJobs(collectionId, providerId, recordId, "http://www.google.com",
-                                      null, null, null, ProcessingJobCreationOptions.FORCE_UNCONDITIONAL_DOWNLOAD);
+                                      null, null, null, new ProcessingJobCreationOptions(true));
 
         assertEquals(1, jobs.size());
-        assertEquals(1, jobs.get(0).getTasks().size());
+        assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        final ProcessingJob job = jobs.get(0);
+        final ProcessingJob job = jobs.get(0).getProcessingJob();
         final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
 
         assertEquals (JobState.READY, job.getState());
@@ -116,17 +113,17 @@ public class JobCreatorTest {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
 
-        final List<ProcessingJob> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, ProcessingJobCreationOptions.FORCE_CONDITIONAL_DOWNLOAD);
+        final List<ProcessingJobTuple> jobs =
+                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(true));
 
         assertEquals(urls.size(), jobs.size());
 
-        for (final ProcessingJob job: jobs) {
-            assertEquals(1, job.getTasks().size());
+        for (final ProcessingJobTuple job: jobs) {
+            assertEquals(1, job.getProcessingJob().getTasks().size());
 
-            final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
+            final ProcessingJobTaskDocumentReference jobReference = job.getProcessingJob().getTasks().get(0);
 
-            assertEquals(JobState.READY, job.getState());
+            assertEquals(JobState.READY, job.getProcessingJob().getState());
             assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
             assertEquals(4, jobReference.getProcessingTasks().size());
 
@@ -162,17 +159,17 @@ public class JobCreatorTest {
         urls.add("http://www.google.com");
         urls.add("http://www.facebook.com");
 
-        final List<ProcessingJob> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, ProcessingJobCreationOptions.FORCE_UNCONDITIONAL_DOWNLOAD);
+        final List<ProcessingJobTuple> jobs =
+                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(true));
 
         assertEquals(urls.size(), jobs.size());
 
-        for (final ProcessingJob job: jobs) {
-            assertEquals(1, job.getTasks().size());
+        for (final ProcessingJobTuple job: jobs) {
+            assertEquals(1, job.getProcessingJob().getTasks().size());
 
-            final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
+            final ProcessingJobTaskDocumentReference jobReference = job.getProcessingJob().getTasks().get(0);
 
-            assertEquals(JobState.READY, job.getState());
+            assertEquals(JobState.READY, job.getProcessingJob().getState());
             assertEquals(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, jobReference.getTaskType());
             assertEquals(4, jobReference.getProcessingTasks().size());
 
@@ -214,17 +211,17 @@ public class JobCreatorTest {
         urls.add("http://www.skype.com");
 
 
-        final List<ProcessingJob> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, null);
+        final List<ProcessingJobTuple> jobs =
+                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(false));
 
         assertEquals(urls.size(), jobs.size());
 
-        for (final ProcessingJob job: jobs) {
-            assertEquals(1, job.getTasks().size());
+        for (final ProcessingJobTuple job: jobs) {
+            assertEquals(1, job.getProcessingJob().getTasks().size());
 
-            final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
+            final ProcessingJobTaskDocumentReference jobReference = job.getProcessingJob().getTasks().get(0);
 
-            assertEquals(JobState.READY, job.getState());
+            assertEquals(JobState.READY, job.getProcessingJob().getState());
             assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
             assertEquals(4, jobReference.getProcessingTasks().size());
 
@@ -259,17 +256,17 @@ public class JobCreatorTest {
         final List<String> urls = new ArrayList<>();
         urls.add(UUID.randomUUID().toString());
 
-        final List<ProcessingJob> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, null);
+        final List<ProcessingJobTuple> jobs =
+                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(false));
 
         assertEquals(urls.size(), jobs.size());
 
-        for (final ProcessingJob job: jobs) {
-            assertEquals(1, job.getTasks().size());
+        for (final ProcessingJobTuple job: jobs) {
+            assertEquals(1, job.getProcessingJob().getTasks().size());
 
-            final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
+            final ProcessingJobTaskDocumentReference jobReference = job.getProcessingJob().getTasks().get(0);
 
-            assertEquals(JobState.READY, job.getState());
+            assertEquals(JobState.READY, job.getProcessingJob().getState());
             assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
             assertEquals(4, jobReference.getProcessingTasks().size());
 
@@ -313,17 +310,17 @@ public class JobCreatorTest {
         urls.add("http://www.skype.com");
         urls.add(UUID.randomUUID().toString());
 
-        final List<ProcessingJob> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, null);
+        final List<ProcessingJobTuple> jobs =
+                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(false));
 
         assertEquals(urls.size(), jobs.size());
 
-        for (final ProcessingJob job: jobs) {
-            assertEquals(1, job.getTasks().size());
+        for (final ProcessingJobTuple job: jobs) {
+            assertEquals(1, job.getProcessingJob().getTasks().size());
 
-            final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
+            final ProcessingJobTaskDocumentReference jobReference = job.getProcessingJob().getTasks().get(0);
 
-            assertEquals(JobState.READY, job.getState());
+            assertEquals(JobState.READY, job.getProcessingJob().getState());
             assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
             assertEquals(4, jobReference.getProcessingTasks().size());
 
@@ -355,13 +352,13 @@ public class JobCreatorTest {
 
     @Test
     public void testEdmIsShownBy_ValidUrl() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJob> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, null, "http://www.google.com", null, null);
+        final List<ProcessingJobTuple> jobs =
+                jobCreator.createJobs(collectionId, providerId, recordId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(false));
 
         assertEquals(1, jobs.size());
-        assertEquals(1, jobs.get(0).getTasks().size());
+        assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        final ProcessingJob job = jobs.get(0);
+        final ProcessingJob job = jobs.get(0).getProcessingJob();
         final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
 
         assertEquals(JobState.READY, job.getState());
@@ -395,13 +392,13 @@ public class JobCreatorTest {
 
     @Test
     public void testEdmIsShownBy_ValidUrl_UnconditionalDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJob> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, null, "http://www.google.com", null, ProcessingJobCreationOptions.FORCE_UNCONDITIONAL_DOWNLOAD);
+        final List<ProcessingJobTuple> jobs =
+                jobCreator.createJobs(collectionId, providerId, recordId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(true));
 
         assertEquals(1, jobs.size());
-        assertEquals(1, jobs.get(0).getTasks().size());
+        assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        final ProcessingJob job = jobs.get(0);
+        final ProcessingJob job = jobs.get(0).getProcessingJob();
         final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
 
         assertEquals (JobState.READY, job.getState());
@@ -435,13 +432,13 @@ public class JobCreatorTest {
 
     @Test
     public void testEdmIsShownBy_ValidUrl_NoneOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJob> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, null, "http://www.google.com", null, ProcessingJobCreationOptions.NONE);
+        final List<ProcessingJobTuple> jobs =
+                jobCreator.createJobs(collectionId, providerId, recordId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(false));
 
         assertEquals(1, jobs.size());
-        assertEquals(1, jobs.get(0).getTasks().size());
+        assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        final ProcessingJob job = jobs.get(0);
+        final ProcessingJob job = jobs.get(0).getProcessingJob();
         final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
 
         assertEquals (JobState.READY, job.getState());
@@ -480,13 +477,13 @@ public class JobCreatorTest {
 
     @Test
     public void testEdmIsShownAt_ValidUrl() throws MalformedURLException, UnknownHostException  {
-        final List<ProcessingJob> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, null, null, "http://www.google.com", null);
+        final List<ProcessingJobTuple> jobs =
+                jobCreator.createJobs(collectionId, providerId, recordId, null, null, null, "http://www.google.com", new ProcessingJobCreationOptions(false));
 
         assertEquals(1, jobs.size());
-        assertEquals(1, jobs.get(0).getTasks().size());
+        assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        final ProcessingJob job = jobs.get(0);
+        final ProcessingJob job = jobs.get(0).getProcessingJob();
         final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
 
         assertEquals(JobState.READY, job.getState());
