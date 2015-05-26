@@ -11,10 +11,13 @@ import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
+import eu.europeana.harvester.cluster.slave.processing.ProcessingResultTuple;
+import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
+import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
+import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
+import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
-import eu.europeana.harvester.domain.ProcessingState;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.harvester.httpclient.response.ResponseState;
@@ -119,12 +122,8 @@ public class ProcessorActor extends UntypedActor {
      */
     private final String colorMapPath;
 
-    /**
-     * A list of created thumbnails.
-     */
 
-
-
+    private final SlaveProcessor slaveProcessor;
 
 
     private final CircuitBreaker breaker;
@@ -146,6 +145,7 @@ public class ProcessorActor extends UntypedActor {
         //this.executorServiceAkka = Executors.newSingleThreadExecutor();
         this.metrics = metrics;
 
+        this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(colorMapPath), new ThumbnailGenerator(colorMapPath), new ColorExtractor(colorMapPath), mediaStorageClient, LOG);
 
         responses = metrics.timer(name("ProcessorSlave", "Download responses"));
         dresponses = metrics.timer(name("ProcessorSlave", "Process responses"));
@@ -237,13 +237,19 @@ public class ProcessorActor extends UntypedActor {
             final ProcessingJobTaskDocumentReference tsk = doneDownload.getDocumentReferenceTask();
 
 
-            ProcessorHelperProcess processor = new ProcessorHelperProcess(LOG);
             DoneProcessing doneProcessing;
 
             try {
-                doneProcessing = processor.startProcessing(tsk, doneDownload, path, colorMapPath, mediaStorageClient, responseType, source);
+                final ProcessingResultTuple processingResult = slaveProcessor.process(tsk,  path, doneDownload.getUrl(),doneDownload.getHttpRetrieveResponse().getContent(), responseType, source);
+
+                doneProcessing = new DoneProcessing(doneDownload,
+                        processingResult.getMediaMetaInfoTuple().getImageMetaInfo(),
+                        processingResult.getMediaMetaInfoTuple().getAudioMetaInfo(),
+                        processingResult.getMediaMetaInfoTuple().getVideoMetaInfo(),
+                        processingResult.getMediaMetaInfoTuple().getTextMetaInfo());
+
             } catch (Exception e) {
-                LOG.error("Exception in startProcessing {}", e.getMessage());
+                LOG.error("Exception while processing {}", e.getMessage());
                 doneProcessing = new DoneProcessing(doneDownload, null, null, null, null);
             }
 

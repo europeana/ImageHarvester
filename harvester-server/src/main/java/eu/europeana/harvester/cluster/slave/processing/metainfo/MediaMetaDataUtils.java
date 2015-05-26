@@ -1,7 +1,8 @@
-package eu.europeana.harvester.utils;
+package eu.europeana.harvester.cluster.slave.processing.metainfo;
 
 import eu.europeana.harvester.cluster.domain.ContentType;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.utils.LocalMediaChecker;
 import gr.ntua.image.mediachecker.AudioInfo;
 import gr.ntua.image.mediachecker.ImageInfo;
 import gr.ntua.image.mediachecker.MediaChecker;
@@ -10,9 +11,6 @@ import org.im4java.core.IM4JavaException;
 
 import java.io.IOException;
 
-/**
- * Created by paul on 04/03/15.
- */
 public class MediaMetaDataUtils {
 
     /**
@@ -37,43 +35,13 @@ public class MediaMetaDataUtils {
                     type.equals("application/rtf") || type.equals("application/epub")) && !type.contains("html")) {
                 return ContentType.TEXT;
             }
+            return ContentType.UNKNOWN;
         } catch (IOException e) {
+            return ContentType.UNKNOWN;
             // IT's OK to eat the exception here.
         }
-
-        return ContentType.UNKNOWN;
     }
 
-
-    /**
-     * Extracts the colormap from an image.
-     *
-     * @return partial metainfo, contains only the colormap
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public static final ImageMetaInfo colorExtraction(final String path, final String colorMapPath) throws IOException, InterruptedException {
-        boolean success = true;
-        int retry = 3;
-        do {
-            try {
-                if (MediaChecker.getMimeType(path).startsWith("image")) {
-                    final ImageMetaInfo imageMetaInfo = MediaMetaDataUtils.extractImageMetadata(path,colorMapPath);
-                    return new ImageMetaInfo(null, null, null, null, null, null, imageMetaInfo.getColorPalette(), null);
-                }
-            } catch (Exception e) {
-                if (retry > 0) {
-                    success = false;
-                    Thread.sleep(1000);
-                    retry = -1;
-                } else {
-                    success = true;
-                }
-            }
-        } while (!success);
-
-        return null;
-    }
 
 
     /**

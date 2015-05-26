@@ -183,7 +183,7 @@ public class MediaFile {
         return size;
     }
 
-    public MediaFile withMetaInfo(String[] colorPalette) {
+    public MediaFile withColorPalette(String[] colorPalette) {
         final Map<String, String> newMetaData = new HashMap<>();
         int i = 0;
         for(String color : colorPalette) {
