@@ -151,12 +151,9 @@ class Master {
 
         final ProcessingJobDao processingJobDao = new ProcessingJobDaoImpl(datastore);
         final MachineResourceReferenceDao machineResourceReferenceDao = new MachineResourceReferenceDaoImpl(datastore);
-        final MachineResourceReferenceStatDao machineResourceReferenceStatDao =
-                new MachineResourceReferenceStatDaoImpl(datastore);
         final SourceDocumentReferenceDao sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
         final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao =
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore);
-        final LinkCheckLimitsDao linkCheckLimitsDao = new LinkCheckLimitsDaoImpl(datastore);
         final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao =
                 new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
 
@@ -185,7 +182,7 @@ class Master {
         clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class,
                 clusterMasterConfig, ipExceptions, processingJobDao, machineResourceReferenceDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
-                sourceDocumentReferenceMetaInfoDao, linkCheckLimitsDao, defaultLimits,
+                sourceDocumentReferenceMetaInfoDao, defaultLimits,
                 cleanupInterval, metrics ), "clusterMaster");
 
 //        pingMaster = system.actorOf(Props.create(PingMasterActor.class, pingMasterConfig, router,
