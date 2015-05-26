@@ -2,6 +2,8 @@ package eu.europeana.harvester.client;
 
 import eu.europeana.harvester.domain.*;
 
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.util.List;
 
 /**
@@ -10,22 +12,10 @@ import java.util.List;
 interface HarvesterClient {
 
     /**
-     * Writes to the database a linkCheckLimits object if it does not exists otherwise updates it.
-     * @param linkCheckLimits contains different limits for link check tasks
-     */
-    public void createOrModifyLinkCheckLimits(final LinkCheckLimits linkCheckLimits);
-
-    /**
-     * Writes to the database a processingLimits object if it does not exists otherwise updates it.
-     * @param processingLimits contains some basic information about a server (e.g.: ip, limits, ...)
-     */
-    public void createOrModifyProcessingLimits(final MachineResourceReference processingLimits);
-
-    /**
      * Writes to the database a list if sourceDocumentReference objects if they does not exists otherwise updates them.
      * @param sourceDocumentReference contains basic information about a source document
      */
-    public void createOrModifySourceDocumentReference(final List<SourceDocumentReference> sourceDocumentReference);
+    public void createOrModifySourceDocumentReference(final List<SourceDocumentReference> sourceDocumentReference) throws MalformedURLException, UnknownHostException;
 
     /**
      * Sends to the master a new processing job.
@@ -72,7 +62,7 @@ interface HarvesterClient {
 
     public SourceDocumentReferenceMetaInfo  retrieveMetaInfoByUrl(String url);
 
-    public void setActive(String recordID, Boolean active);
+    public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException;
 
     public void updateSourceDocumentProcesssingStatisticsForUrl(String url);
 

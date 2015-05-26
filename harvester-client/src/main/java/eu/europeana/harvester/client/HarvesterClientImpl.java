@@ -10,7 +10,12 @@ import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.*;
 
 /**
@@ -47,11 +52,6 @@ public class HarvesterClientImpl implements HarvesterClient {
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
     /**
-     * DAO for CRUD with link_check_limit collection
-     */
-    private final LinkCheckLimitsDao linkCheckLimitsDao;
-
-    /**
      * An object which contains different special configurations for Harvester
      * Client.
      */
@@ -63,42 +63,32 @@ public class HarvesterClientImpl implements HarvesterClient {
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore.getDatastore()),
                 new SourceDocumentReferenceDaoImpl(datastore.getDatastore()),
                 new SourceDocumentReferenceMetaInfoDaoImpl(datastore.getDatastore()),
-                new LinkCheckLimitsDaoImpl(datastore.getDatastore()), harvesterClientConfig);
+                harvesterClientConfig);
     }
 
     public HarvesterClientImpl(ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
             SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
             SourceDocumentReferenceDao sourceDocumentReferenceDao,
-            SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao, LinkCheckLimitsDao linkCheckLimitsDao, HarvesterClientConfig harvesterClientConfig) {
+            SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao, HarvesterClientConfig harvesterClientConfig) {
 
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
-        this.linkCheckLimitsDao = linkCheckLimitsDao;
         this.harvesterClientConfig = harvesterClientConfig;
     }
 
     @Override
-    public void createOrModifyLinkCheckLimits(LinkCheckLimits linkCheckLimits) {
-        LOG.info("Create or modify link check limits");
-
-        linkCheckLimitsDao.createOrModify(linkCheckLimits, harvesterClientConfig.getWriteConcern());
-    }
-
-    @Override
-    public void createOrModifyProcessingLimits(MachineResourceReference machineResourceReference) {
-        LOG.info("Create or modify processing limits");
-
-        machineResourceReferenceDao.createOrModify(machineResourceReference, harvesterClientConfig.getWriteConcern());
-    }
-
-    @Override
-    public void createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) {
+    public void createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException {
         LOG.info("Create or modify SourceDocumentReferences");
 
         for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
+            // Persist the IP reference.
+            final InetAddress address = InetAddress.getByName(new URL(sourceDocumentReference.getUrl()).getHost());
+            machineResourceReferenceDao.createOrModify(new MachineResourceReference(address.getHostAddress()), harvesterClientConfig.getWriteConcern());
+
+            // Persist the document reference.
             sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, harvesterClientConfig.getWriteConcern());
         }
     }
@@ -201,7 +191,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public void setActive(String recordID, Boolean active) {
+    public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException {
         final List<SourceDocumentReference> sourceDocumentReferenceList
                 = sourceDocumentReferenceDao.findByRecordID(recordID);
         final List<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatisticsList
