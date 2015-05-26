@@ -1,11 +1,10 @@
-package eu.europeana.publisher.logic;
+package eu.europeana.publisher.logic.extractor;
 
 import eu.europeana.harvester.domain.ImageMetaInfo;
 import eu.europeana.harvester.domain.ImageOrientation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.swing.text.html.HTML;
 import java.util.*;
 
 /**

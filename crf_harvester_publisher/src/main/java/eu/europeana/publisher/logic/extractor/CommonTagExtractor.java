@@ -1,4 +1,4 @@
-package eu.europeana.publisher.logic;
+package eu.europeana.publisher.logic.extractor;
 
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import org.apache.logging.log4j.LogManager;

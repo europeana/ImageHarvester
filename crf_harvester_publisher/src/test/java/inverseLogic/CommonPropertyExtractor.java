@@ -1,7 +1,7 @@
 package inverseLogic;
 
-import eu.europeana.publisher.logic.MediaTypeEncoding;
-import eu.europeana.publisher.logic.TagEncoding;
+import eu.europeana.publisher.logic.extractor.MediaTypeEncoding;
+import eu.europeana.publisher.logic.extractor.TagEncoding;
 
 import java.util.HashMap;
 import java.util.Map;

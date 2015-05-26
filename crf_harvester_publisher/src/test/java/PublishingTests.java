@@ -2,8 +2,8 @@ import com.mongodb.*;
 import com.mongodb.util.JSON;
 import com.typesafe.config.*;
 import eu.europeana.publisher.domain.PublisherConfig;
-import eu.europeana.publisher.logic.MediaTypeEncoding;
-import eu.europeana.publisher.logic.Publisher;
+import eu.europeana.publisher.logic.extractor.MediaTypeEncoding;
+import eu.europeana.publisher.logic.PublisherManager;
 import inverseLogic.CommonPropertyExtractor;
 import inverseLogic.ImagePropertyExtractor;
 import inverseLogic.SoundPropertyExtractor;
@@ -248,7 +248,7 @@ public class PublishingTests {
 
     private void runPublisher(final PublisherConfig publisherConfig) {
         try {
-            new Publisher(publisherConfig).start();
+            new PublisherManager(publisherConfig).start();
         } catch (SolrServerException e) {
             fail("SolrServerException: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()) + "\n");
         } catch (IOException e) {

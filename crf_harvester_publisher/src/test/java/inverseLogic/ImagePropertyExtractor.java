@@ -1,6 +1,6 @@
 package inverseLogic;
 
-import eu.europeana.publisher.logic.TagEncoding;
+import eu.europeana.publisher.logic.extractor.TagEncoding;
 
 import java.util.HashMap;
 import java.util.Map;

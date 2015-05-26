@@ -1,4 +1,4 @@
-package eu.europeana.publisher.logic;
+package eu.europeana.publisher.logic.extractor;
 
 public enum TagEncoding {
     TAG_TYPE(28, 3),

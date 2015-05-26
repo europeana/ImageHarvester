@@ -11,9 +11,14 @@ import eu.europeana.harvester.db.WebResourceMetaInfoDAO;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDAOImpl;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.publisher.dao.SOLRWriter;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.RetrievedDoc;
+import eu.europeana.publisher.logic.extractor.CommonTagExtractor;
+import eu.europeana.publisher.logic.extractor.ImageTagExtractor;
+import eu.europeana.publisher.logic.extractor.SoundTagExtractor;
+import eu.europeana.publisher.logic.extractor.VideoTagExtractor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -35,8 +40,8 @@ import java.util.concurrent.TimeUnit;
  * It's responsible for the whole publishing process. It's the engine of the
  * publisher module.
  */
-public class Publisher {
-	private static final Logger LOG = LogManager.getLogger(Publisher.class.getName());
+public class PublisherManager {
+	private static final Logger LOG = LogManager.getLogger(PublisherManager.class.getName());
 
 	private final PublisherConfig config;
 	private final DB sourceDB;
@@ -47,7 +52,7 @@ public class Publisher {
 
 	private final PublisherMetrics publisherMetrics;
 
-	public Publisher(PublisherConfig config) throws UnknownHostException {
+	public PublisherManager(PublisherConfig config) throws UnknownHostException {
 		this.config = config;
 		final Mongo sourceMongo = new Mongo(config.getSourceHost(), config.getSourcePort());
 

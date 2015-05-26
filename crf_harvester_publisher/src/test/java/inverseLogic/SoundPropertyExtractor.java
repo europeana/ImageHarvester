@@ -1,6 +1,6 @@
 package inverseLogic;
 
-import eu.europeana.publisher.logic.TagEncoding;
+import eu.europeana.publisher.logic.extractor.TagEncoding;
 
 public class SoundPropertyExtractor {
     //public static final Integer mask = (1 << 25) - 1;

@@ -1,4 +1,4 @@
-package eu.europeana.publisher.logic;
+package eu.europeana.publisher.dao;
 
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import org.apache.commons.lang3.StringUtils;
@@ -8,7 +8,6 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
-import org.apache.solr.client.solrj.impl.ConcurrentUpdateSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
