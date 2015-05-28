@@ -42,6 +42,8 @@ public class SlaveProcessor {
         final ProcessingJobSubTask colorExtractionProcessingTask = locateColorExtractionProcessingTask(task);
         final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks = locateThumbnailExtractionProcessingTask(task);
 
+        System.out.println("metaExtractionProcessingTask is: " + metaExtractionProcessingTask);
+
         // (2) Execute tasks
         final MediaMetaInfoTuple mediaMetaInfoTuple = (metaExtractionProcessingTask != null) ? extractMetaInfo(originalFilePath, originalFileUrl, responseType, metaExtractionProcessingTask) : null;
         final ImageMetaInfo imageColorMetaInfo = (colorExtractionProcessingTask != null) ? extractColor(originalFilePath) : null;
