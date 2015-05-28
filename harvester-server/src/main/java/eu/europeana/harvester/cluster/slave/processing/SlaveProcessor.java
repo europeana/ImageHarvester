@@ -70,7 +70,7 @@ public class SlaveProcessor {
     private final List<ProcessingJobSubTask> locateThumbnailExtractionProcessingTask(final ProcessingJobTaskDocumentReference task) {
         List<ProcessingJobSubTask> results = new ArrayList();
         for (final ProcessingJobSubTask subTask : task.getProcessingTasks()) {
-            if (subTask.getTaskType() == ProcessingJobSubTaskType.META_EXTRACTION) {
+            if (subTask.getTaskType() == ProcessingJobSubTaskType.GENERATE_THUMBNAIL) {
                 results.add(subTask);
             }
         }
