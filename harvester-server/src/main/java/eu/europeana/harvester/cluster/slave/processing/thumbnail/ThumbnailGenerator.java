@@ -1,7 +1,6 @@
 package eu.europeana.harvester.cluster.slave.processing.thumbnail;
 
 import eu.europeana.harvester.domain.MediaFile;
-import eu.europeana.harvester.domain.ThumbnailConfig;
 import eu.europeana.harvester.domain.ThumbnailType;
 import gr.ntua.image.mediachecker.ImageInfo;
 import gr.ntua.image.mediachecker.MediaChecker;
