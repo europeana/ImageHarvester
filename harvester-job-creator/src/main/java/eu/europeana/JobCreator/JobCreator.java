@@ -75,7 +75,6 @@ public class JobCreator {
         final ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId);
 
         if (null != edmObjectUrl) {
-            System.out.println ("I'm ins object url");
             results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner, options));
         }
 
