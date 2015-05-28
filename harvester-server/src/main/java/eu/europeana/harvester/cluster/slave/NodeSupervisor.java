@@ -14,7 +14,14 @@ import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.Slave;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
+import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
+import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkChecker;
+import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
+import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
+import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
+import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
+import org.apache.logging.log4j.LogManager;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
 
@@ -66,6 +73,9 @@ public class NodeSupervisor extends UntypedActor {
 
     private final MetricRegistry metrics;
 
+    private final SlaveDownloader slaveDownloader;
+    private final SlaveLinkChecker slaveLinkChecker;
+    private final SlaveProcessor slaveProcessor;
 
 
     public NodeSupervisor(final Slave slave, final ActorRef masterSender, final ChannelFactory channelFactory,
@@ -82,7 +92,9 @@ public class NodeSupervisor extends UntypedActor {
 
         this.memberups = 0;
 
-
+        this.slaveDownloader = new SlaveDownloader(LogManager.getLogger(SlaveDownloader.class.getName()));
+        this.slaveLinkChecker = new SlaveLinkChecker(LogManager.getLogger(SlaveLinkChecker.class.getName()));
+        this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(nodeMasterConfig.getColorMapPath()), new ThumbnailGenerator(nodeMasterConfig.getColorMapPath()), new ColorExtractor(nodeMasterConfig.getColorMapPath()), mediaStorageClient, LOG);
     }
 
     @Override
@@ -90,7 +102,7 @@ public class NodeSupervisor extends UntypedActor {
         LOG.info("NodeSupervisor preStart");
 
         nodeMaster = context().system().actorOf(Props.create(NodeMasterActor.class,
-                masterSender, getSelf(), channelFactory, nodeMasterConfig, mediaStorageClient, hashedWheelTimer, metrics),
+                masterSender, getSelf(), channelFactory, nodeMasterConfig, slaveDownloader,slaveLinkChecker,slaveProcessor, hashedWheelTimer, metrics),
                 "nodeMaster");
         context().watch(nodeMaster);
 

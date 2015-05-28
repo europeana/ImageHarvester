@@ -119,9 +119,10 @@ public class DoneProcessing implements Serializable {
      */
     private final String log;
 
+
     public DoneProcessing(final DoneDownload doneDownload, final ImageMetaInfo imageMetaInfo,
                           final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo,
-                          final TextMetaInfo textMetaInfo) {
+                          final TextMetaInfo textMetaInfo,final String log) {
         this.taskType = doneDownload.getDocumentReferenceTask().getTaskType();
         final HttpRetrieveResponse httpRetrieveResponse = doneDownload.getHttpRetrieveResponse();
 
@@ -144,7 +145,13 @@ public class DoneProcessing implements Serializable {
         this.videoMetaInfo = videoMetaInfo;
         this.textMetaInfo = textMetaInfo;
         this.processingState = doneDownload.getProcessingState();
-        this.log = httpRetrieveResponse.getLog();
+        this.log = log;
+    }
+
+    public DoneProcessing(final DoneDownload doneDownload, final ImageMetaInfo imageMetaInfo,
+                          final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo,
+                          final TextMetaInfo textMetaInfo) {
+        this(doneDownload,imageMetaInfo,audioMetaInfo,videoMetaInfo,textMetaInfo,doneDownload.getHttpRetrieveResponse().getLog());
     }
 
     public DoneProcessing(final String taskID, final String url, String referenceId, final String jobId,

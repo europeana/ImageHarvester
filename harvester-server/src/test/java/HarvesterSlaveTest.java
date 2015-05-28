@@ -3,7 +3,7 @@ import categories.UnitTest;
 import com.google.common.io.Files;
 import eu.europeana.harvester.cluster.domain.ContentType;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
-import eu.europeana.harvester.cluster.slave.ProcessorHelperDownload;
+import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
@@ -12,8 +12,10 @@ import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenera
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
-
-import org.imgscalr.Scalr;
+import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
+import eu.europeana.harvester.httpclient.response.ResponseType;
+import gr.ntua.image.mediachecker.MediaChecker;
+import org.apache.logging.log4j.LogManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -23,24 +25,15 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.UUID;
 
-import gr.ntua.image.mediachecker.MediaChecker;
-
-import javax.imageio.ImageIO;
-
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by salexandru on 25.05.2015.
@@ -52,8 +45,6 @@ import static org.mockito.Mockito.*;
 public class HarvesterSlaveTest {
     private static String PATH_PREFIX = Paths.get("src/test/resources/").toAbsolutePath().toString() + "/" ;
     private static String PATH_COLORMAP = PATH_PREFIX + "colormap.png";
-
-    private ProcessorHelperDownload downloader;
 
     @Mock
     private LoggingAdapter LOG;
@@ -70,10 +61,14 @@ public class HarvesterSlaveTest {
     @Mock
     private ProcessingJobSubTask metaInfoTupleSubTask;
 
+    private SlaveDownloader downloader;
+
+    HttpRetrieveResponseFactory httpRetrieveResponseFactory;
 
     @Before
     public void setUp() {
-        downloader = new ProcessorHelperDownload(LOG);
+        downloader = new SlaveDownloader(LogManager.getLogger(this.getClass().getName()));
+        httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
         when(retrieveUrlTask.getHttpRetrieveConfig()).thenReturn(httpRetrieveConfig);
         when(metaInfoTupleTask.getProcessingTasks()).thenReturn(Arrays.asList(metaInfoTupleSubTask));
         when(metaInfoTupleTask.getTaskType()).thenReturn(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
@@ -89,21 +84,23 @@ public class HarvesterSlaveTest {
     }
 
     @Test
-    public void test_LinkChecking_ValidUrl() throws MalformedURLException {
+    public void test_LinkChecking_ValidUrl() throws Exception {
         final String url = "http://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
 
         when(retrieveUrlTask.getHttpRetrieveConfig().getTaskType()).thenReturn(DocumentReferenceTaskType.CHECK_LINK);
         when(retrieveUrlTask.getUrl()).thenReturn(url);
         when(retrieveUrlTask.getReferenceId()).thenReturn("simplyIgnore");
 
-        final HttpRetrieveResponse response = downloader.downloadTask(retrieveUrlTask, "ignore");
+        final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, PATH_PREFIX+"1");
+
+        downloader.downloadAndStoreInHttpRetrieveResponse(response,retrieveUrlTask);
 
         assertEquals( (Integer)HttpURLConnection.HTTP_OK, response.getHttpResponseCode());
         assertEquals(new URL(url), response.getUrl());
     }
 
     @Test
-    public void test_LinkChecking_InvalidUrl() throws MalformedURLException {
+    public void test_LinkChecking_InvalidUrl() throws Exception {
         final String url = UUID.randomUUID().toString();
 
 
@@ -111,14 +108,16 @@ public class HarvesterSlaveTest {
         when(retrieveUrlTask.getUrl()).thenReturn(url);
         when(retrieveUrlTask.getReferenceId()).thenReturn("simplyIgnore");
 
-        final HttpRetrieveResponse response = downloader.downloadTask(retrieveUrlTask, "ignore");
+        final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, PATH_PREFIX+"1");
+
+        downloader.downloadAndStoreInHttpRetrieveResponse(response,retrieveUrlTask);
 
         assertEquals((Integer) (-1), response.getHttpResponseCode());
     }
 
 
     @Test
-    public void test_UnconditionalDownload_ImgUrl() throws IOException {
+    public void test_UnconditionalDownload_ImgUrl() throws Exception {
         final String fileName = "image1.jpeg";
         final String url = "http://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
 
@@ -126,7 +125,10 @@ public class HarvesterSlaveTest {
         when(retrieveUrlTask.getUrl()).thenReturn(url);
         when(retrieveUrlTask.getReferenceId()).thenReturn(fileName);
 
-        final HttpRetrieveResponse response = downloader.downloadTask(retrieveUrlTask, PATH_PREFIX + "downloaded");
+        final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, PATH_PREFIX+"1");
+
+        downloader.downloadAndStoreInHttpRetrieveResponse(response,retrieveUrlTask);
+
         final byte[] originalFileData = Files.toByteArray(new File(PATH_PREFIX + fileName));
 
         assertEquals ((Integer) HttpURLConnection.HTTP_OK, response.getHttpResponseCode());
@@ -137,7 +139,7 @@ public class HarvesterSlaveTest {
     }
 
     @Test
-    public void test_ConditionalDownload_DownloadImage_ImageDoesNotExist() throws IOException {
+    public void test_ConditionalDownload_DownloadImage_ImageDoesNotExist() throws Exception {
         final String fileName = "image2.jpeg";
         final String url = "http://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image2.jpeg";
 
@@ -146,7 +148,8 @@ public class HarvesterSlaveTest {
         when(retrieveUrlTask.getUrl()).thenReturn(url);
         when(retrieveUrlTask.getReferenceId()).thenReturn(fileName);
 
-        final HttpRetrieveResponse response = downloader.downloadTask(retrieveUrlTask, PATH_PREFIX + "downloaded");
+        final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, PATH_PREFIX+"downloaded");
+        downloader.downloadAndStoreInHttpRetrieveResponse(response,retrieveUrlTask);
 
         assertEquals((Integer) HttpURLConnection.HTTP_OK, response.getHttpResponseCode());
     }

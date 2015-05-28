@@ -54,7 +54,7 @@ public class SlaveDownloaderTest {
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
 
-        slaveDownloader.downloadAndStoreInHttpRetrievResponse(response, task);
+        slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
         assertEquals(ResponseState.FINISHED_TIME_LIMIT, response.getState());
 
@@ -83,7 +83,7 @@ public class SlaveDownloaderTest {
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
 
-        slaveDownloader.downloadAndStoreInHttpRetrievResponse(response, task);
+        slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
         assertEquals(ResponseState.FINISHED_TIME_LIMIT, response.getState());
 
@@ -104,7 +104,7 @@ public class SlaveDownloaderTest {
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
 
-        slaveDownloader.downloadAndStoreInHttpRetrievResponse(response, task);
+        slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
         assertEquals(ResponseState.COMPLETED, response.getState());
 
@@ -128,7 +128,7 @@ public class SlaveDownloaderTest {
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
 
-        slaveDownloader.downloadAndStoreInHttpRetrievResponse(response, task);
+        slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
         assertEquals(ResponseState.ERROR, response.getState());
         assertEquals(404, response.getHttpResponseCode().intValue());
@@ -152,7 +152,7 @@ public class SlaveDownloaderTest {
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
 
-        slaveDownloader.downloadAndStoreInHttpRetrievResponse(response, task);
+        slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
         assertEquals(ResponseState.COMPLETED, response.getState());
 
@@ -177,7 +177,7 @@ public class SlaveDownloaderTest {
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
 
-        slaveDownloader.downloadAndStoreInHttpRetrievResponse(response, task);
+        slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
         assertEquals(ResponseState.COMPLETED, response.getState());
 

@@ -3,12 +3,13 @@ package eu.europeana.harvester.cluster.slave;
 import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.routing.SmallestMailboxPool;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
-import eu.europeana.harvester.db.MediaStorageClient;
+import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
+import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkChecker;
+import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
@@ -83,11 +84,6 @@ public class NodeMasterActor extends UntypedActor {
      */
     private final Set<String> jobsToStop;
 
-    /**
-     * This client is used to save the thumbnails in Mongo.
-     */
-    private final MediaStorageClient mediaStorageClient;
-
     private Boolean sentRequest;
 
     private final MetricRegistry metrics;
@@ -106,16 +102,24 @@ public class NodeMasterActor extends UntypedActor {
     final ExecutorService service = Executors.newCachedThreadPool();
 
 
+    private final SlaveProcessor slaveProcessor;
+
+    private final SlaveDownloader slaveDownloader;
+
+    private final SlaveLinkChecker slaveLinkChecker;
+
     public NodeMasterActor(final ActorRef masterSender, final  ActorRef nodeSupervisor,
                            final ChannelFactory channelFactory, final NodeMasterConfig nodeMasterConfig,
-                           final MediaStorageClient mediaStorageClient, final HashedWheelTimer hashedWheelTimer, final MetricRegistry metrics ) {
+                           final SlaveDownloader slaveDownloader,
+                           final SlaveLinkChecker slaveLinkChecker,
+                           final SlaveProcessor slaveProcessor,
+                           final HashedWheelTimer hashedWheelTimer, final MetricRegistry metrics ) {
         LOG.info("NodeMasterActor constructor");
 
         this.masterSender = masterSender;
         this.nodeSupervisor = nodeSupervisor;
         this.channelFactory = channelFactory;
         this.nodeMasterConfig = nodeMasterConfig;
-        this.mediaStorageClient = mediaStorageClient;
 
         this.hashedWheelTimer = hashedWheelTimer;
         this.jobsToStop = new HashSet<>();
@@ -124,6 +128,10 @@ public class NodeMasterActor extends UntypedActor {
         this.firstTime = true;
         this.metrics = metrics;
         this.maxSlaves = nodeMasterConfig.getNrOfDownloaderSlaves();
+
+        this.slaveProcessor = slaveProcessor;
+        this.slaveDownloader = slaveDownloader;
+        this.slaveLinkChecker = slaveLinkChecker;
 
 
     }
@@ -204,10 +212,9 @@ public class NodeMasterActor extends UntypedActor {
 
                     if(msg != null) {
 
-                        ActorRef newActor = getContext().system().actorOf(Props.create(ProcessorActor.class,
-                                channelFactory, hashedWheelTimer, httpRetrieveResponseFactory, nodeMasterConfig.getResponseType(),
-                                nodeMasterConfig.getPathToSave(), service,  mediaStorageClient,
-                                nodeMasterConfig.getSource(), nodeMasterConfig.getColorMapPath(),metrics ));
+                            ActorRef newActor = getContext().system().actorOf(Props.create(ProcessorActor.class,
+                                httpRetrieveResponseFactory,slaveDownloader,slaveLinkChecker,slaveProcessor,
+                                nodeMasterConfig.getSource(), metrics ));
                         actors.add(newActor);
 
                         context().watch(newActor);
@@ -356,9 +363,8 @@ public class NodeMasterActor extends UntypedActor {
 
                 if(msg != null) {
                     ActorRef newActor = getContext().system().actorOf(Props.create(ProcessorActor.class,
-                            channelFactory, hashedWheelTimer, httpRetrieveResponseFactory, nodeMasterConfig.getResponseType(),
-                            nodeMasterConfig.getPathToSave(), service,  mediaStorageClient,
-                            nodeMasterConfig.getSource(), nodeMasterConfig.getColorMapPath(),metrics ));
+                            httpRetrieveResponseFactory,slaveDownloader,slaveLinkChecker,slaveProcessor,
+                            nodeMasterConfig.getSource(), metrics ));
                     actors.add(newActor);
                     context().watch(newActor);
                     LOG.info("Built Actor {}, starting it",newActor);
@@ -372,9 +378,6 @@ public class NodeMasterActor extends UntypedActor {
         }
 
     }
-
-
-
 
     private void deleteFile(String fileName) {
         final String path = nodeMasterConfig.getPathToSave() + "/" + fileName;

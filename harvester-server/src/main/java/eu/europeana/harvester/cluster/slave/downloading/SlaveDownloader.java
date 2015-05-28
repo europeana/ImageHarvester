@@ -22,7 +22,7 @@ public class SlaveDownloader {
         this.LOG = LOG;
     }
 
-    public void downloadAndStoreInHttpRetrievResponse(final HttpRetrieveResponse httpRetrieveResponse, final RetrieveUrl task) {
+    public void downloadAndStoreInHttpRetrieveResponse(final HttpRetrieveResponse httpRetrieveResponse, final RetrieveUrl task) {
 
         if ((task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) &&
         (task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD)) {
