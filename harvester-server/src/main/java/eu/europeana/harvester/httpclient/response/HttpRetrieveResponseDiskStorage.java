@@ -31,7 +31,7 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
     }
 
     @Override
-    public void init() {
+    public void init() throws IOException {
         contentSizeInBytes = 0l;
         try {
             final File file = new File(absolutePath);
@@ -44,6 +44,7 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
             setState(ResponseState.ERROR);
             setException(e);
             LOG.error(e.getMessage());
+            throw e;
         }
     }
 
@@ -85,7 +86,7 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
 
     @Override
     synchronized public void close() throws IOException {
-        fo.close();
+       fo.close();
     }
 
 }

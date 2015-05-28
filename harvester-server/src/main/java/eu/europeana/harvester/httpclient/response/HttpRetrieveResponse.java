@@ -17,7 +17,7 @@ public interface HttpRetrieveResponse extends Serializable {
 
     public void setUrl(URL url);
 
-    public void init();
+    public void init() throws IOException;
 
     public String getAbsolutePath();
 

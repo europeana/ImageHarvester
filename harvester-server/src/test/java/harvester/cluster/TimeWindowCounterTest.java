@@ -4,17 +4,28 @@ import eu.europeana.harvester.cluster.slave.downloading.TimeWindowCounter;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-/**
- * Created by paul on 28/05/15.
- */
 public class TimeWindowCounterTest {
 
     @Test
-    public void canRun() throws InterruptedException {
+    public void canComputeTheCountsPerSecondsCorrectlyInTheFirstTimeWindow() throws InterruptedException {
         final TimeWindowCounter counter = new TimeWindowCounter();
         counter.start();
-        counter.incrementCount(1000);
-        Thread.sleep(1000);
-        assertEquals(counter.countsPerSecond(),1000);
+        counter.incrementCount(10000);
+        Thread.sleep(2000);
+        assertEquals(5000,counter.currentTimeWindowRate());
     }
+
+
+    @Test
+    public void canComputeTheCountsPerSecondsCorrectlyInTheSecondTimeWindow() throws InterruptedException {
+        final TimeWindowCounter counter = new TimeWindowCounter(2,100000);
+        counter.start();
+        counter.incrementCount(3000);
+        Thread.sleep(2000);
+        counter.incrementCount(3000);
+        Thread.sleep(1000);
+        assertEquals(2000,counter.currentTimeWindowRate());
+    }
+
+
 }

@@ -1,6 +1,7 @@
 package eu.europeana.harvester.cluster.slave.downloading;
 
-import akka.event.LoggingAdapter;
+import eu.europeana.harvester.utils.NetUtils;
+import org.apache.logging.log4j.Logger;
 import com.ning.http.client.*;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
@@ -14,9 +15,9 @@ import java.util.concurrent.TimeUnit;
 
 public class SlaveDownloader {
 
-    private final LoggingAdapter LOG;
+    private org.apache.logging.log4j.Logger LOG;
 
-    public SlaveDownloader(final LoggingAdapter LOG) {
+    public SlaveDownloader(final Logger LOG) {
         this.LOG = LOG;
     }
 
@@ -44,7 +45,10 @@ public class SlaveDownloader {
             @Override
             public STATE onStatusReceived(HttpResponseStatus status) throws Exception {
                 final long connectionSetupDurationInMillis = System.currentTimeMillis() - connectionSetupStartTimestamp;
+                httpRetrieveResponse.setSocketConnectToDownloadStartDurationInMilliSecs(connectionSetupDurationInMillis);
                 httpRetrieveResponse.setCheckingDurationInMilliSecs(connectionSetupDurationInMillis);
+
+                httpRetrieveResponse.setSourceIp(NetUtils.ipOfUrl(task.getUrl()));
 
                 if (connectionSetupDurationInMillis > task.getHttpRetrieveConfig().getConnectionTimeoutInMillis()) {
                     /* Initial connection setup time longer than threshold. */
@@ -111,10 +115,10 @@ public class SlaveDownloader {
                     return STATE.ABORT;
                 }
 
-                if (timeWindowCounter.countsPerSecond() < task.getHttpRetrieveConfig().getTerminationThresholdReadPerSecondInBytes()) {
+                if ((timeWindowCounter.previousTimeWindowRate() != -1) && (timeWindowCounter.previousTimeWindowRate() < task.getHttpRetrieveConfig().getTerminationThresholdReadPerSecondInBytes())) {
                         /* Abort early if download is throttled by the sender. */
                     httpRetrieveResponse.setState(ResponseState.FINISHED_RATE_LIMIT);
-                    httpRetrieveResponse.setLog("Download aborted as it was throttled by the sender to " + timeWindowCounter.countsPerSecond() + " bytes during the last " + timeWindowCounter.getTimeWindowSizeInSeconds() + ". This was greater than the minimum configured  " + task.getHttpRetrieveConfig().getTerminationThresholdReadPerSecondInBytes() + "  bytes / sec");
+                    httpRetrieveResponse.setLog("Download aborted as it was throttled by the sender to " + timeWindowCounter.currentTimeWindowRate() + " bytes during the last " + timeWindowCounter.getTimeWindowSizeInSeconds() + ". This was greater than the minimum configured  " + task.getHttpRetrieveConfig().getTerminationThresholdReadPerSecondInBytes() + "  bytes / sec");
                     return STATE.ABORT;
                 }
 
@@ -126,7 +130,6 @@ public class SlaveDownloader {
 
             @Override
             public Integer onCompleted() throws Exception {
-                LOG.debug("Finished download");
                 httpRetrieveResponse.setState(ResponseState.COMPLETED);
                 httpRetrieveResponse.setRetrievalDurationInMilliSecs(System.currentTimeMillis() - connectionSetupStartTimestamp);
                 try {
@@ -139,6 +142,7 @@ public class SlaveDownloader {
 
             @Override
             public void onThrowable(Throwable e) {
+                httpRetrieveResponse.setState(ResponseState.ERROR);
 
                 // Check if the tim threshold limit was exceeded & save that information.
                 final long downloadDurationInMillis = System.currentTimeMillis() - connectionSetupStartTimestamp;
@@ -181,7 +185,7 @@ public class SlaveDownloader {
             LOG.error("Failed to close the response, caused by : " + e1.getMessage());
         }
 
-        if (asyncHttpClient != null) asyncHttpClient.close();
+       // if (asyncHttpClient != null && !asyncHttpClient.isClosed()) asyncHttpClient.close();
     }
 
 }
