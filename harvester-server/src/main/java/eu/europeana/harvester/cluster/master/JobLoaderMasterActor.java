@@ -403,7 +403,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         final Long speedLimitPerLink = getSpeed(ipAddress);
 
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100l),
-                speedLimitPerLink, speedLimitPerLink,  Duration.millis(600000l), 0l, true, task.getTaskType(),
+                speedLimitPerLink, speedLimitPerLink,  Duration.millis(600000l),5000l /* 5 KB / sec */, 0l, true, task.getTaskType(),
                 defaultLimits.getConnectionTimeoutInMillis(), defaultLimits.getMaxNrOfRedirects());
 
         final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), httpRetrieveConfig,

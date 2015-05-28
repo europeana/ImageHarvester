@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.shared.utils.StringUtils;
 
+import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class MigratorHarvesterDao {
     }
 
 
-    public void saveSourceDocumentReferences(final List<SourceDocumentReference> sourceDocumentReferences) {
+    public void saveSourceDocumentReferences(final List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException {
         try{
             LOG.info ("start saving sourceDocumentReferences");
             metrics.startSaveSourceDocumentReferencesTimer();

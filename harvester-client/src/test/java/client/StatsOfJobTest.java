@@ -67,7 +67,6 @@ public class StatsOfJobTest extends TestCase {
         final SourceDocumentReferenceDao sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
         final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao =
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore);
-        final LinkCheckLimitsDao linkCheckLimitsDao = new LinkCheckLimitsDaoImpl(datastore);
         final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao =
                 new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
 
@@ -75,7 +74,7 @@ public class StatsOfJobTest extends TestCase {
 
         harvesterClient = new HarvesterClientImpl(processingJobDao,
                 machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
-                sourceDocumentReferenceMetaInfoDao, linkCheckLimitsDao, harvesterClientConfig);
+                sourceDocumentReferenceMetaInfoDao, harvesterClientConfig);
     }
 
     public void testStatsOfJob() throws Exception {

@@ -97,8 +97,7 @@ public class LinkCheck_50k {
             processingJobs.add(processingJob);
             harvesterClient.createOrModifySourceDocumentReference(sourceDocumentReferences);
 
-            final LinkCheckLimits linkCheckLimits = new LinkCheckLimits("1", 100*1024l, 100*1024l, 1000l, 500*1024l);
-            harvesterClient.createOrModifyLinkCheckLimits(linkCheckLimits);
+        //            harvesterClient.createOrModifyLinkCheckLimits(linkCheckLimits);
         } catch (FileNotFoundException e) {
             LOG.error(e.getMessage());
         } catch (IOException e) {
