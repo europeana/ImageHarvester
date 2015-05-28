@@ -36,6 +36,12 @@ public class HttpRetrieveConfig implements Serializable {
      */
     private final Long terminationThresholdSizeLimitInBytes;
 
+
+    /**
+     * The threshold for the download rate after which the retrieval is terminated.
+     */
+    private final Long terminationThresholdReadPerSecondInBytes;
+
     /**
      * Whether to handle chunks or not. Always true.
      */
@@ -58,7 +64,9 @@ public class HttpRetrieveConfig implements Serializable {
 
     public HttpRetrieveConfig(final Duration limitsCheckInterval, final Long bandwidthLimitWriteInBytesPerSec,
                               final Long bandwidthLimitReadInBytesPerSec, final Duration terminationThresholdTimeLimit,
-                              final Long terminationThresholdSizeLimitInBytes, final Boolean handleChunks,
+                              final Long terminationThresholdSizeLimitInBytes,
+                              final Long terminationThresholdReadPerSecondInBytes,
+                              final Boolean handleChunks,
                               final DocumentReferenceTaskType taskType, final Integer connectionTimeoutInMillis,
                               final Integer maxNrOfRedirects) {
         this.limitsCheckInterval = limitsCheckInterval;
@@ -66,6 +74,7 @@ public class HttpRetrieveConfig implements Serializable {
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
         this.terminationThresholdTimeLimit = terminationThresholdTimeLimit;
         this.terminationThresholdSizeLimitInBytes = terminationThresholdSizeLimitInBytes;
+        this.terminationThresholdReadPerSecondInBytes = terminationThresholdReadPerSecondInBytes;
         this.handleChunks = handleChunks;
         this.taskType = taskType;
         this.connectionTimeoutInMillis = connectionTimeoutInMillis;
@@ -73,7 +82,9 @@ public class HttpRetrieveConfig implements Serializable {
     }
 
     public HttpRetrieveConfig(final Duration limitsCheckInterval, final Long bandwidthLimitWriteInBytesPerSec,
-                              final Long bandwidthLimitReadInBytesPerSec, final DocumentReferenceTaskType taskType,
+                              final Long bandwidthLimitReadInBytesPerSec,
+                              final Long terminationThresholdReadPerSecondInBytes,
+                              final DocumentReferenceTaskType taskType,
                               final Integer connectionTimeoutInMillis, final Integer maxNrOfRedirects) {
         this.limitsCheckInterval = limitsCheckInterval;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
@@ -82,6 +93,7 @@ public class HttpRetrieveConfig implements Serializable {
         this.maxNrOfRedirects = maxNrOfRedirects;
         this.terminationThresholdTimeLimit = Duration.ZERO; /* no time limit */
         this.terminationThresholdSizeLimitInBytes = 0l; /* no content size limit */
+        this.terminationThresholdReadPerSecondInBytes = terminationThresholdReadPerSecondInBytes;
         this.handleChunks = true;
         this.connectionTimeoutInMillis = connectionTimeoutInMillis;
     }
@@ -92,10 +104,11 @@ public class HttpRetrieveConfig implements Serializable {
         this.bandwidthLimitReadInBytesPerSec = 0l; /* no bandwidth read limit */
         this.terminationThresholdTimeLimit = Duration.ZERO; /* no time limit */
         this.terminationThresholdSizeLimitInBytes = 0l; /* no content size limit */
+        this.terminationThresholdReadPerSecondInBytes = 5*1000l;
         this.handleChunks = true;
         this.taskType = null;
         this.connectionTimeoutInMillis = 60000; /* one minute connection timeout limit*/
-        this.maxNrOfRedirects = 0;
+        this.maxNrOfRedirects = 10;
     }
 
     public Duration getLimitsCheckInterval() {
@@ -138,6 +151,10 @@ public class HttpRetrieveConfig implements Serializable {
 
     public Integer getConnectionTimeoutInMillis() {
         return connectionTimeoutInMillis;
+    }
+
+    public Long getTerminationThresholdReadPerSecondInBytes() {
+        return terminationThresholdReadPerSecondInBytes;
     }
 
     public Integer getMaxNrOfRedirects() {

@@ -89,8 +89,6 @@ public class ProcessorHelperDownload {
         httpRetrieveResponse.setState(ResponseState.PROCESSING);
         final long firstPackageArriveTime = System.currentTimeMillis();
 
-
-
         try {
 
             AsyncHttpClientConfig cfg = new AsyncHttpClientConfig.Builder()//
