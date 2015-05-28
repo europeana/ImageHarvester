@@ -1,4 +1,5 @@
 import akka.event.LoggingAdapter;
+import categories.UnitTest;
 import com.google.common.io.Files;
 import eu.europeana.harvester.cluster.domain.ContentType;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
@@ -17,6 +18,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -44,6 +46,7 @@ import static org.mockito.Mockito.*;
  * Created by salexandru on 25.05.2015.
  */
 @RunWith (MockitoJUnitRunner.class)
+@Category (UnitTest.class)
 public class HarvesterSlaveTest {
     private static String PATH_PREFIX = Paths.get("src/test/resources/").toAbsolutePath().toString() + "/" ;
     private static String PATH_COLORMAP = PATH_PREFIX + "colormap.png";
