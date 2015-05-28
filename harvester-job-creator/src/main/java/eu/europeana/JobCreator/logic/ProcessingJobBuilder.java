@@ -42,6 +42,7 @@ public class ProcessingJobBuilder {
                 null, null, null, null, true);
 
         final List<ProcessingJobSubTask> subTasks = new ArrayList();
+        System.out.println("generate colourExtractio and thumbnail genration");
         subTasks.addAll(SubTaskBuilder.colourExtraction());
         subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
 

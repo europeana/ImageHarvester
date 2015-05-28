@@ -45,6 +45,8 @@ import static org.mockito.Mockito.*;
 /**
  * Created by salexandru on 25.05.2015.
  */
+
+@Ignore
 @RunWith (MockitoJUnitRunner.class)
 @Category (UnitTest.class)
 public class HarvesterSlaveTest {
