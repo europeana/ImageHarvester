@@ -9,6 +9,7 @@ import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -31,8 +32,8 @@ public class SlaveDownloader {
         final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(new AsyncHttpClientConfig.Builder()
                 .setMaxRedirects(task.getHttpRetrieveConfig().getMaxNrOfRedirects())
                 .setFollowRedirect(true)
+                .setConnectTimeout(100000)
                 .setAcceptAnyCertificate(true)
-                .setConnectTimeout(task.getHttpRetrieveConfig().getConnectionTimeoutInMillis())
                 .setMaxRequestRetry(3)
                 .build());
         httpRetrieveResponse.setState(ResponseState.PROCESSING);
@@ -44,10 +45,12 @@ public class SlaveDownloader {
 
             @Override
             public STATE onStatusReceived(HttpResponseStatus status) throws Exception {
+
                 final long connectionSetupDurationInMillis = System.currentTimeMillis() - connectionSetupStartTimestamp;
                 httpRetrieveResponse.setSocketConnectToDownloadStartDurationInMilliSecs(connectionSetupDurationInMillis);
                 httpRetrieveResponse.setCheckingDurationInMilliSecs(connectionSetupDurationInMillis);
 
+                httpRetrieveResponse.setUrl(new URL(task.getUrl()));
                 httpRetrieveResponse.setSourceIp(NetUtils.ipOfUrl(task.getUrl()));
 
                 if (connectionSetupDurationInMillis > task.getHttpRetrieveConfig().getConnectionTimeoutInMillis()) {
@@ -57,6 +60,13 @@ public class SlaveDownloader {
                     return STATE.ABORT;
                 }
 
+
+                if (connectionSetupDurationInMillis > task.getHttpRetrieveConfig().getTerminationThresholdReadPerSecondInBytes()) {
+                    /* Initial connection setup time longer than threshold. */
+                    httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
+                    httpRetrieveResponse.setLog("Download aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured total download duration threshold" + task.getHttpRetrieveConfig().getTerminationThresholdTimeLimit() + " ms");
+                    return STATE.ABORT;
+                }
                     /* We don't care what kind of status code it has at this moment as we will decide what to
                      * do on it only after the response headers have been received.
                      */
@@ -67,6 +77,7 @@ public class SlaveDownloader {
 
             @Override
             public STATE onHeadersReceived(HttpResponseHeaders downloadResponseHeaders) throws Exception {
+
                 final long downloadDurationInMillis = System.currentTimeMillis() - connectionSetupStartTimestamp;
                 httpRetrieveResponse.setRetrievalDurationInMilliSecs(downloadDurationInMillis);
 
@@ -130,7 +141,9 @@ public class SlaveDownloader {
 
             @Override
             public Integer onCompleted() throws Exception {
-                httpRetrieveResponse.setState(ResponseState.COMPLETED);
+
+                // Mark it as completed only when the previous state was processing. Otherwise it finished with a non-error state that must be kept.
+                if (httpRetrieveResponse.getState() == ResponseState.PROCESSING) httpRetrieveResponse.setState(ResponseState.COMPLETED);
                 httpRetrieveResponse.setRetrievalDurationInMilliSecs(System.currentTimeMillis() - connectionSetupStartTimestamp);
                 try {
                     httpRetrieveResponse.close();
@@ -142,6 +155,7 @@ public class SlaveDownloader {
 
             @Override
             public void onThrowable(Throwable e) {
+
                 httpRetrieveResponse.setState(ResponseState.ERROR);
 
                 // Check if the tim threshold limit was exceeded & save that information.
@@ -166,8 +180,7 @@ public class SlaveDownloader {
         });
 
         try {
-
-            Integer r = downloadListener.get(task.getHttpRetrieveConfig().getTerminationThresholdTimeLimit().getStandardSeconds(), TimeUnit.SECONDS);
+            Integer r = downloadListener.get(1, TimeUnit.DAYS /* This timout should never be reached. There are other timeouts used internally that will expire much quicker. */);
             LOG.debug("Download finished with status {}", r);
 
         } catch (Exception e) {

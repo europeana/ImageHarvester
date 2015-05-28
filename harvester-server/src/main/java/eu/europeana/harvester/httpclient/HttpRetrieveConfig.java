@@ -84,14 +84,15 @@ public class HttpRetrieveConfig implements Serializable {
     public HttpRetrieveConfig(final Duration limitsCheckInterval, final Long bandwidthLimitWriteInBytesPerSec,
                               final Long bandwidthLimitReadInBytesPerSec,
                               final Long terminationThresholdReadPerSecondInBytes,
+                              final Duration terminationThresholdTimeLimit,
                               final DocumentReferenceTaskType taskType,
                               final Integer connectionTimeoutInMillis, final Integer maxNrOfRedirects) {
         this.limitsCheckInterval = limitsCheckInterval;
         this.bandwidthLimitWriteInBytesPerSec = bandwidthLimitWriteInBytesPerSec;
         this.bandwidthLimitReadInBytesPerSec = bandwidthLimitReadInBytesPerSec;
+        this.terminationThresholdTimeLimit = terminationThresholdTimeLimit;
         this.taskType = taskType;
         this.maxNrOfRedirects = maxNrOfRedirects;
-        this.terminationThresholdTimeLimit = Duration.standardMinutes(30);
         this.terminationThresholdSizeLimitInBytes = 0l; /* no content size limit */
         this.terminationThresholdReadPerSecondInBytes = terminationThresholdReadPerSecondInBytes;
         this.handleChunks = true;
@@ -107,7 +108,7 @@ public class HttpRetrieveConfig implements Serializable {
         this.terminationThresholdReadPerSecondInBytes = 5*1000l;
         this.handleChunks = true;
         this.taskType = null;
-        this.connectionTimeoutInMillis = 60000; /* one minute connection timeout limit*/
+        this.connectionTimeoutInMillis = 10000; /* 10 seconds connection timeout limit*/
         this.maxNrOfRedirects = 10;
     }
 
