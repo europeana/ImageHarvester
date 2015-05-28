@@ -1,23 +1,19 @@
-import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.google.common.io.Files;
 import eu.europeana.harvester.cluster.domain.ContentType;
-import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
-import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.slave.ProcessorHelperDownload;
-import eu.europeana.harvester.cluster.slave.ProcessorHelperProcess;
+import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
+import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
+import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
+import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTuple;
+import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 
-import eu.europeana.harvester.httpclient.response.ResponseType;
-import eu.europeana.harvester.utils.FileUtils;
-import eu.europeana.harvester.utils.MediaMetaDataUtils;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.pdfbox.util.ImageIOUtil;
+import org.imgscalr.Scalr;
 import org.junit.After;
-import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,18 +21,21 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
+
+import gr.ntua.image.mediachecker.MediaChecker;
+
+import javax.imageio.ImageIO;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -46,8 +45,8 @@ import static org.mockito.Mockito.*;
  */
 @RunWith (MockitoJUnitRunner.class)
 public class HarvesterSlaveTest {
-    private static String PATH_PREFIX = Paths.get("./src/test/resources/").toAbsolutePath().toString();
-    private static String PATH_COLORMAP = Paths.get("./colormap.png").toAbsolutePath().toString();
+    private static String PATH_PREFIX = Paths.get("src/test/resources/").toAbsolutePath().toString() + "/" ;
+    private static String PATH_COLORMAP = PATH_PREFIX + "colormap.png";
 
     private ProcessorHelperDownload downloader;
 
@@ -61,18 +60,18 @@ public class HarvesterSlaveTest {
     private RetrieveUrl retrieveUrlTask;
 
     @Mock
-    private ProcessingJobTaskDocumentReference processingTask;
+    private ProcessingJobTaskDocumentReference metaInfoTupleTask;
 
     @Mock
-    private ProcessingJobSubTask processingSubTask;
+    private ProcessingJobSubTask metaInfoTupleSubTask;
 
 
     @Before
     public void setUp() {
         downloader = new ProcessorHelperDownload(LOG);
         when(retrieveUrlTask.getHttpRetrieveConfig()).thenReturn(httpRetrieveConfig);
-        when(processingTask.getProcessingTasks()).thenReturn(Arrays.asList(processingSubTask));
-        when(processingTask.getTaskType()).thenReturn(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
+        when(metaInfoTupleTask.getProcessingTasks()).thenReturn(Arrays.asList(metaInfoTupleSubTask));
+        when(metaInfoTupleTask.getTaskType()).thenReturn(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
     }
 
     @After
@@ -133,12 +132,12 @@ public class HarvesterSlaveTest {
     }
 
     @Test
-    public void test_ConditionalDownload_ImgUrl() throws IOException {
+    public void test_ConditionalDownload_DownloadImage_ImageDoesNotExist() throws IOException {
         final String fileName = "image2.jpeg";
         final String url = "http://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image2.jpeg";
 
         when(retrieveUrlTask.getHttpRetrieveConfig().getTaskType()).thenReturn(DocumentReferenceTaskType
-                                                                                       .UNCONDITIONAL_DOWNLOAD);
+                                                                                       .CONDITIONAL_DOWNLOAD);
         when(retrieveUrlTask.getUrl()).thenReturn(url);
         when(retrieveUrlTask.getReferenceId()).thenReturn(fileName);
 
@@ -149,34 +148,42 @@ public class HarvesterSlaveTest {
 
     @Test
     @Ignore
+    public void test_ConditionalDownload_DoNotDownloadImage_ImageExists() throws Exception {
+
+    }
+
+    @Test
+    @Ignore
+    public void test_ConditionalDownload_ReDownloadImage_ImageModified() throws Exception {
+
+    }
+
+
+    @Test
     public void test_ContentTypeDetection_ImgJpeg() {
         assertEquals(ContentType.IMAGE, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "image1.jpeg"));
         assertEquals (ContentType.IMAGE, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "image2.jpeg"));
     }
 
     @Test
-    @Ignore
     public void test_ContentTypeDetection_TextPdf() {
         assertEquals (ContentType.TEXT, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "text1.pdf"));
         assertEquals (ContentType.TEXT, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "text2.pdf"));
     }
 
     @Test
-    @Ignore
     public void test_ContentTypeDetection_AudioMp3() {
         assertEquals (ContentType.AUDIO, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "audio1.mp3"));
         assertEquals (ContentType.AUDIO, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "audio2.mp3"));
     }
 
     @Test
-    @Ignore
     public void test_ContentTypeDetection_VideoMpg() {
         assertEquals (ContentType.VIDEO, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "video1.mpg"));
         assertEquals (ContentType.VIDEO, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "video2.mpg"));
     }
 
     @Test
-    @Ignore
     public void test_ContentTypeDetection_Unknown() {
         assertEquals(ContentType.UNKNOWN, MediaMetaDataUtils.classifyUrl("http://www.google.com"));
     }
@@ -184,172 +191,355 @@ public class HarvesterSlaveTest {
     @Test
     public void test_MetadataExtraction_Img1() throws Exception {
         final String fileName = "image1.jpeg";
-        final HttpRetrieveResponse response = mock(HttpRetrieveResponse.class);
 
-        when(response.getAbsolutePath()).thenReturn("");
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + fileName);
+        final ImageMetaInfo metaInfo = metaInfoTuple.getImageMetaInfo();
 
-        final DoneDownload doneDownload = new DoneDownload("", "", "", "",
-                                                           ProcessingState.SUCCESS,
-                                                           response,
-                                                           processingTask,
-                                                           ""
-                                                           );
-
-        when(processingSubTask.getTaskType()).thenReturn(ProcessingJobSubTaskType.META_EXTRACTION);
-
-        final ImageMetaInfo metaInfo = processor.startProcessing(processingTask,
-                                                                 doneDownload,
-                                                                 PATH_PREFIX + fileName,
-                                                                 PATH_COLORMAP,
-                                                                 null,
-                                                                 ResponseType.DISK_STORAGE,
-                                                                 null
-                                                                ).getImageMetaInfo();
-
-        assertNotNull ("Image meta info must not be null!", metaInfo);
+        assertNotNull("Image meta info must not be null!", metaInfo);
+        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
         assertEquals("image/jpeg", metaInfo.getMimeType());
         assertEquals((Long) 1399538L, metaInfo.getFileSize());
         assertEquals((Integer) 2500, metaInfo.getWidth());
         assertEquals((Integer) 1737, metaInfo.getHeight());
-        assertTrue("RGB".equalsIgnoreCase(metaInfo.getColorSpace()));
-        assertEquals  ("image/jpeg", metaInfo.getFileFormat());
+        assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + fileName, PATH_COLORMAP).getPalette(),
+                          metaInfo.getColorPalette());
+        assertTrue("sRGB".equalsIgnoreCase(metaInfo.getColorSpace()));
+        assertTrue("JPEG".equalsIgnoreCase(metaInfo.getFileFormat()));
     }
 
     @Test
-    @Ignore
     public void test_MetadataExtraction_Img2() throws Exception {
         final String fileName = "image2.jpeg";
-        final HttpRetrieveResponse response = mock(HttpRetrieveResponse.class);
 
-        when(response.getAbsolutePath()).thenReturn("");
-        final DoneDownload doneDownload = new DoneDownload("", "", "", "",
-                                                           ProcessingState.SUCCESS,
-                                                           response,
-                                                           processingTask,
-                                                           ""
-        );
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + fileName);
+        final ImageMetaInfo metaInfo = metaInfoTuple.getImageMetaInfo();
 
-        when(processingSubTask.getTaskType()).thenReturn(ProcessingJobSubTaskType.META_EXTRACTION);
-
-        final ImageMetaInfo metaInfo = processor.startProcessing(processingTask,
-                                                                 doneDownload,
-                                                                 PATH_PREFIX + fileName,
-                                                                 PATH_COLORMAP,
-                                                                 null,
-                                                                 ResponseType.DISK_STORAGE,
-                                                                 null
-                                                                ).getImageMetaInfo();
-
-        assertNotNull (metaInfo);
+        assertNotNull("Image meta info must not be null!", metaInfo);
+        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
         assertEquals("image/jpeg", metaInfo.getMimeType());
         assertEquals((Long) 1249616L, metaInfo.getFileSize());
         assertEquals((Integer) 2500, metaInfo.getWidth());
         assertEquals((Integer) 1702, metaInfo.getHeight());
-        assertTrue("RGB".equalsIgnoreCase(metaInfo.getColorSpace()));
-        assertEquals  ("image/jpeg", metaInfo.getFileFormat());
+        assertTrue("sRGB".equalsIgnoreCase(metaInfo.getColorSpace()));
+        assertTrue("JPEG".equalsIgnoreCase(metaInfo.getFileFormat()));
+        assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + fileName, PATH_COLORMAP).getPalette(),
+                          metaInfo.getColorPalette());
     }
 
     @Test
-    @Ignore
     public void test_MetaDataExtraction_Audio1() throws Exception {
         final String fileName = "audio1.mp3";
-        final HttpRetrieveResponse response = mock(HttpRetrieveResponse.class);
 
-        when(response.getAbsolutePath()).thenReturn("");
-        final DoneDownload doneDownload = new DoneDownload("", "", "", "",
-                                                           ProcessingState.SUCCESS,
-                                                           response,
-                                                           processingTask,
-                                                           ""
-        );
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + fileName);
+        final AudioMetaInfo metaInfo = metaInfoTuple.getAudioMetaInfo();
 
-        when(processingSubTask.getTaskType()).thenReturn(ProcessingJobSubTaskType.META_EXTRACTION);
-
-        final AudioMetaInfo metaInfo = processor.startProcessing(processingTask,
-                                                                 doneDownload,
-                                                                 PATH_PREFIX + fileName,
-                                                                 PATH_COLORMAP,
-                                                                 null,
-                                                                 ResponseType.DISK_STORAGE,
-                                                                 null
-                                                                ).getAudioMetaInfo();
+        assertNotNull("Audio meta info must not be null!", metaInfo);
+        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
+        assertEquals("audio/mpeg", metaInfo.getMimeType());
+        assertEquals((Long) 1388197L, metaInfo.getFileSize());
+        assertEquals((Long) 198313L, metaInfo.getDuration());
+        assertEquals((Integer)56000, metaInfo.getBitRate());
+        assertEquals((Integer)22050, metaInfo.getSampleRate());
+        assertEquals((Integer) 1, metaInfo.getChannels());
+        assertEquals((Integer) 16, metaInfo.getBitDepth());
+        assertTrue("MP3".equalsIgnoreCase(metaInfo.getFileFormat()));
     }
 
     @Test
-    @Ignore
     public void test_MetaDataExtraction_Audio2() throws Exception {
         final String fileName = "audio2.mp3";
-        final HttpRetrieveResponse response = mock(HttpRetrieveResponse.class);
 
-        when(response.getAbsolutePath()).thenReturn("");
-        final DoneDownload doneDownload = new DoneDownload("", "", "", "",
-                                                           ProcessingState.SUCCESS,
-                                                           response,
-                                                           processingTask,
-                                                           ""
-        );
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + fileName);
+        final AudioMetaInfo metaInfo = metaInfoTuple.getAudioMetaInfo();
 
-        when(processingSubTask.getTaskType()).thenReturn(ProcessingJobSubTaskType.META_EXTRACTION);
-
-        final AudioMetaInfo metaInfo = processor.startProcessing(processingTask,
-                                                                 doneDownload,
-                                                                 PATH_PREFIX + fileName,
-                                                                 PATH_COLORMAP,
-                                                                 null,
-                                                                 ResponseType.DISK_STORAGE,
-                                                                 null
-                                                                ).getAudioMetaInfo();
+        assertNotNull("Audio meta info must not be null!", metaInfo);
+        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
+        assertEquals("audio/mpeg", metaInfo.getMimeType());
+        assertEquals((Long) 1234779L, metaInfo.getFileSize());
+        assertEquals((Long) 176397L,  metaInfo.getDuration());
+        assertEquals((Integer)56000, metaInfo.getBitRate());
+        assertEquals((Integer)22050, metaInfo.getSampleRate());
+        assertEquals((Integer) 1, metaInfo.getChannels());
+        assertEquals((Integer) 16, metaInfo.getBitDepth());
+        assertTrue("MP3".equalsIgnoreCase(metaInfo.getFileFormat()));
     }
 
     @Test
-    @Ignore
     public void test_MetaDataExtraction_Video1() throws Exception {
         final String fileName = "video1.mpg";
-        final HttpRetrieveResponse response = mock(HttpRetrieveResponse.class);
 
-        when(response.getAbsolutePath()).thenReturn("");
-        final DoneDownload doneDownload = new DoneDownload("", "", "", "",
-                                                           ProcessingState.SUCCESS,
-                                                           response,
-                                                           processingTask,
-                                                           ""
-        );
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + fileName);
+        final VideoMetaInfo metaInfo = metaInfoTuple.getVideoMetaInfo();
 
-        when(processingSubTask.getTaskType()).thenReturn(ProcessingJobSubTaskType.META_EXTRACTION);
+        assertNotNull("Video meta info must not be null!", metaInfo);
+        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
+        assertEquals((Long) 7662202L, metaInfo.getFileSize());
+        assertEquals((Integer) 1150000, metaInfo.getBitRate());
+        assertEquals((Integer) 288, metaInfo.getHeight());
+        assertEquals((Integer) 352, metaInfo.getWidth());
+        assertEquals("video/mpeg", metaInfo.getMimeType());
+        assertEquals ("352x288", metaInfo.getResolution());
+        assertEquals((Double) 25.0, metaInfo.getFrameRate());
+        assertEquals("mpeg1video", metaInfo.getCodec());
+        assertEquals((Long) 44745L, metaInfo.getDuration());
+    }
 
-        final VideoMetaInfo metaInfo = processor.startProcessing(processingTask,
-                                                                 doneDownload,
-                                                                 PATH_PREFIX + fileName,
-                                                                 PATH_COLORMAP,
-                                                                 null,
-                                                                 ResponseType.DISK_STORAGE,
-                                                                 null
-                                                                ).getVideoMetaInfo();
+    @Test
+    public void test_MetaDataExtraction_Video2() throws Exception {
+        final String fileName = "video2.mpg";
+
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + fileName);
+        final VideoMetaInfo metaInfo = metaInfoTuple.getVideoMetaInfo();
+
+        assertNotNull("Video meta info must not be null!", metaInfo);
+        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
+        assertEquals((Long) 9151124L, metaInfo.getFileSize());
+        assertEquals((Integer) 1152000, metaInfo.getBitRate());
+        assertEquals((Integer) 288, metaInfo.getHeight());
+        assertEquals((Integer) 352, metaInfo.getWidth());
+        assertEquals("video/mpeg", metaInfo.getMimeType());
+        assertEquals ("352x288", metaInfo.getResolution());
+        assertEquals ((Double)25.0, metaInfo.getFrameRate());
+        assertEquals("mpeg1video", metaInfo.getCodec());
+        assertEquals((Long) 53628L, metaInfo.getDuration());
+    }
+
+    @Test
+    public void test_MetaDataExtraction_Text1() throws Exception {
+        final String fileName = "text1.pdf";
+
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX +
+                                                                                                           fileName);
+        final TextMetaInfo metaInfo = metaInfoTuple.getTextMetaInfo();
+
+        assertNotNull("Text meta info must not be null!", metaInfo);
+        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
+        assertNotNull(metaInfo);
+        assertEquals((Long)7904453L, metaInfo.getFileSize());
+        assertTrue(metaInfo.getIsSearchable());
+        assertEquals((Integer) (-1), metaInfo.getResolution());
+    }
+
+    @Test
+    public void test_MetaDataExtraction_Text2() throws Exception {
+        final String fileName = "text2.pdf";
+
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + fileName);
+        final TextMetaInfo metaInfo = metaInfoTuple.getTextMetaInfo();
+
+        assertNotNull("Text meta info must not be null!", metaInfo);
+        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
+        assertEquals((Long)13566851L, metaInfo.getFileSize());
+        assertFalse(metaInfo.getIsSearchable());
+        assertEquals ( (Integer)(-1), metaInfo.getResolution());
+    }
+
+    @Test
+    public void test_ColorPaletteExtraction_Image1() throws Exception {
+        final String fileName = "image1.jpeg";
+
+
+        final ImageMetaInfo metaInfo = new ColorExtractor(PATH_COLORMAP).colorExtraction(PATH_PREFIX + fileName);
+
+        assertNotNull("Image meta info must not be null!", metaInfo);
+        assertNull(metaInfo.getMimeType());
+        assertNull(metaInfo.getFileSize());
+        assertNull(metaInfo.getWidth());
+        assertNull(metaInfo.getHeight());
+        assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + fileName, PATH_COLORMAP).getPalette(),
+                          metaInfo.getColorPalette());
+        assertNull(metaInfo.getColorSpace());
+        assertNull(metaInfo.getFileFormat());
+    }
+
+    @Test
+    public void test_ColorPaletteExtraction_Image2() throws Exception {
+        final String fileName = "image2.jpeg";
+
+
+        final ImageMetaInfo metaInfo = new ColorExtractor(PATH_COLORMAP).colorExtraction(PATH_PREFIX + fileName);
+
+        assertNotNull("Image meta info must not be null!", metaInfo);
+        assertNull(metaInfo.getMimeType());
+        assertNull(metaInfo.getFileSize());
+        assertNull(metaInfo.getWidth());
+        assertNull(metaInfo.getHeight());
+        assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + fileName, PATH_COLORMAP).getPalette(),
+                          metaInfo.getColorPalette());
+        assertNull(metaInfo.getColorSpace());
+        assertNull(metaInfo.getFileFormat());
+    }
+
+    @Test
+    public void test_ThumbnailGeneration_Image1_Small() throws Exception {
+        final String fileName = "image1.jpeg";
+
+        final Integer width = ThumbnailType.SMALL.getWidth();
+        final Integer height = ThumbnailType.SMALL.getHeight();
+
+        final File file = new File(PATH_PREFIX + fileName);
+        final MediaFile thumbnail = new ThumbnailGenerator(PATH_COLORMAP).createMediaFileWithThumbnail(height, width,
+                                                                                                       "",
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName,
+                                                                                                       Files.toByteArray(file),
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName);
+
+        assertEquals("image/jpeg", thumbnail.getContentType());
+        assertEquals("", thumbnail.getSource());
+        assertEquals(width, thumbnail.getSize());
+        assertEquals(PATH_PREFIX + fileName, thumbnail.getOriginalUrl());
+        assertEquals(fileName, thumbnail.getName());
+
+      //  Files.write(thumbnail.getContent(), new File(PATH_PREFIX + "image1_thumbnail_small.jpeg"));
+    }
+
+    @Test
+    public void test_ThumbnailGeneration_Image1_Medium() throws Exception {
+        final String fileName = "image1.jpeg";
+
+        final Integer width = ThumbnailType.MEDIUM.getWidth();
+        final Integer height = ThumbnailType.MEDIUM.getHeight();
+
+        final File file = new File(PATH_PREFIX + fileName);
+        final MediaFile thumbnail = new ThumbnailGenerator(PATH_COLORMAP).createMediaFileWithThumbnail(height, width,
+                                                                                                       "",
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName,
+                                                                                                       Files.toByteArray(file),
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName);
+
+        assertEquals("image/jpeg", thumbnail.getContentType());
+        assertEquals("", thumbnail.getSource());
+        assertEquals(width, thumbnail.getSize());
+        assertEquals(PATH_PREFIX + fileName, thumbnail.getOriginalUrl());
+        assertEquals(fileName, thumbnail.getName());
+
+      //  Files.write(thumbnail.getContent(), new File(PATH_PREFIX + "image1_thumbnail_medium.jpeg"));
+    }
+
+    @Test
+    public void test_ThumbnailGeneration_Image1_Large() throws Exception {
+        final String fileName = "image1.jpeg";
+
+        final Integer width = ThumbnailType.LARGE.getWidth();
+        final Integer height = ThumbnailType.LARGE.getHeight();
+
+        final File file = new File(PATH_PREFIX + fileName);
+        final MediaFile thumbnail = new ThumbnailGenerator(PATH_COLORMAP).createMediaFileWithThumbnail(height, width,
+                                                                                                       "",
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName,
+                                                                                                       Files.toByteArray(file),
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName);
+
+        assertEquals("image/jpeg", thumbnail.getContentType());
+        assertEquals("", thumbnail.getSource());
+        assertEquals(width, thumbnail.getSize());
+        assertEquals(PATH_PREFIX + fileName, thumbnail.getOriginalUrl());
+        assertEquals(fileName, thumbnail.getName());
+
+        //Files.write(thumbnail.getContent(), new File(PATH_PREFIX + "image1_thumbnail_large.jpeg"));
+
+    }
+
+    @Test
+    public void test_ThumbnailGeneration_Image2_Small() throws Exception {
+        final String fileName = "image2.jpeg";
+
+        final Integer width = ThumbnailType.SMALL.getWidth();
+        final Integer height = ThumbnailType.SMALL.getHeight();
+
+        final File file = new File(PATH_PREFIX + fileName);
+        final MediaFile thumbnail = new ThumbnailGenerator(PATH_COLORMAP).createMediaFileWithThumbnail(height, width,
+                                                                                                       "",
+                                                                                                       PATH_PREFIX + fileName,
+                                                                                                       Files.toByteArray(file),
+                                                                                                       PATH_PREFIX + fileName);
+
+        assertEquals("image/jpeg", thumbnail.getContentType());
+        assertEquals("", thumbnail.getSource());
+        assertEquals(width, thumbnail.getSize());
+        assertEquals(PATH_PREFIX + fileName, thumbnail.getOriginalUrl());
+        assertEquals(fileName, thumbnail.getName());
+
+       // Files.write(thumbnail.getContent(), new File(PATH_PREFIX + "image2_thumbnail_small.jpeg"));
+    }
+
+    @Test
+    public void test_ThumbnailGeneration_Image2_Medium() throws Exception {
+        final String fileName = "image2.jpeg";
+
+        final Integer width = ThumbnailType.MEDIUM.getWidth();
+        final Integer height = ThumbnailType.MEDIUM.getHeight();
+
+        final File file = new File(PATH_PREFIX + fileName);
+        final MediaFile thumbnail = new ThumbnailGenerator(PATH_COLORMAP).createMediaFileWithThumbnail(height, width,
+                                                                                                       "",
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName,
+                                                                                                       Files.toByteArray(file),
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName);
+
+        assertEquals("image/jpeg", thumbnail.getContentType());
+        assertEquals("", thumbnail.getSource());
+        assertEquals(width, thumbnail.getSize());
+        assertEquals(PATH_PREFIX + fileName, thumbnail.getOriginalUrl());
+        assertEquals(fileName, thumbnail.getName());
+
+       // Files.write(thumbnail.getContent(), new File(PATH_PREFIX + "image2_thumbnail_medium.jpeg"));
+    }
+
+    @Test
+    public void test_ThumbnailGeneration_Image2_Large() throws Exception {
+        final String fileName = "image2.jpeg";
+
+        final Integer width = ThumbnailType.LARGE.getWidth();
+        final Integer height = ThumbnailType.LARGE.getHeight();
+
+        final File file = new File(PATH_PREFIX + fileName);
+        final MediaFile thumbnail = new ThumbnailGenerator(PATH_COLORMAP).createMediaFileWithThumbnail(height, width,
+                                                                                                       "",
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName,
+                                                                                                       Files.toByteArray(file),
+                                                                                                       PATH_PREFIX +
+                                                                                                               fileName);
+
+        assertEquals("image/jpeg", thumbnail.getContentType());
+        assertEquals("", thumbnail.getSource());
+        assertEquals(width, thumbnail.getSize());
+        assertEquals(PATH_PREFIX + fileName, thumbnail.getOriginalUrl());
+        assertEquals(fileName, thumbnail.getName());
+
+       // Files.write(thumbnail.getContent(), new File(PATH_PREFIX + "image2_thumbnail_large.jpeg"));
+
     }
 
     @Test
     @Ignore
-    public void test_MetaDataExtraction_Video2() throws Exception {
-        final String fileName = "video2.mpg";
-        final HttpRetrieveResponse response = mock(HttpRetrieveResponse.class);
+    public void test_DeleteDownloadedFile_ProcessingSuccess() throws Exception {
 
-        when(response.getAbsolutePath()).thenReturn("");
-        final DoneDownload doneDownload = new DoneDownload("", "", "", "",
-                                                           ProcessingState.SUCCESS,
-                                                           response,
-                                                           processingTask,
-                                                           ""
-        );
-
-        when(processingSubTask.getTaskType()).thenReturn(ProcessingJobSubTaskType.META_EXTRACTION);
-
-        final VideoMetaInfo metaInfo = processor.startProcessing(processingTask,
-                                                                 doneDownload,
-                                                                 PATH_PREFIX + fileName,
-                                                                 PATH_COLORMAP,
-                                                                 null,
-                                                                 ResponseType.DISK_STORAGE,
-                                                                 null
-                                                                ).getVideoMetaInfo();
     }
+
 }
