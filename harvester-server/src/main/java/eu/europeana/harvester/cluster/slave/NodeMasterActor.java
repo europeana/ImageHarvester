@@ -144,13 +144,6 @@ public class NodeMasterActor extends UntypedActor {
                 new OneForOneStrategy(maxNrOfRetries, scala.concurrent.duration.Duration.create(1, TimeUnit.MINUTES),
                         Collections.<Class<? extends Throwable>>singletonList(Exception.class));
 
-        // Slaves for pinging
-        pingerRouter = getContext().actorOf(
-                new SmallestMailboxPool(nodeMasterConfig.getNrOfPingerSlaves())
-                        .withSupervisorStrategy(strategy)
-                        .props(Props.create(PingerSlaveActor.class)),
-                "pingerRouter");
-
         //requestTasks();
         //sendMessage();
 
