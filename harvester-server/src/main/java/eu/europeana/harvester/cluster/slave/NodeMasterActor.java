@@ -212,9 +212,9 @@ public class NodeMasterActor extends UntypedActor {
 
                     if(msg != null) {
 
-                            ActorRef newActor = getContext().system().actorOf(Props.create(ProcessorActor.class,
-                                httpRetrieveResponseFactory,slaveDownloader,slaveLinkChecker,slaveProcessor,
-                                nodeMasterConfig.getSource(), metrics ));
+                        ActorRef newActor = RetrieveAndProcessActor.createActor(getContext(),
+                                httpRetrieveResponseFactory, slaveDownloader, slaveLinkChecker, slaveProcessor,
+                                 metrics);
                         actors.add(newActor);
 
                         context().watch(newActor);
@@ -362,9 +362,9 @@ public class NodeMasterActor extends UntypedActor {
                     msg = messages.poll();
 
                 if(msg != null) {
-                    ActorRef newActor = getContext().system().actorOf(Props.create(ProcessorActor.class,
-                            httpRetrieveResponseFactory,slaveDownloader,slaveLinkChecker,slaveProcessor,
-                            nodeMasterConfig.getSource(), metrics ));
+                    ActorRef newActor = RetrieveAndProcessActor.createActor(getContext(),
+                            httpRetrieveResponseFactory, slaveDownloader, slaveLinkChecker, slaveProcessor,
+                            metrics);
                     actors.add(newActor);
                     context().watch(newActor);
                     LOG.info("Built Actor {}, starting it",newActor);

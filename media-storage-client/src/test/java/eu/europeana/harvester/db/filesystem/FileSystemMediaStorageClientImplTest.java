@@ -3,13 +3,13 @@ package eu.europeana.harvester.db.filesystem;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.MediaFile;
 import org.joda.time.DateTime;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 public class FileSystemMediaStorageClientImplTest {
 

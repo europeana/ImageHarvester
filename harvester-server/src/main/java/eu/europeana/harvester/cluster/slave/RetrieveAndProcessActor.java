@@ -1,8 +1,6 @@
 package eu.europeana.harvester.cluster.slave;
 
-import akka.actor.ActorRef;
-import akka.actor.PoisonPill;
-import akka.actor.UntypedActor;
+import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.CircuitBreaker;
@@ -11,6 +9,7 @@ import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
+import eu.europeana.harvester.cluster.domain.messages.RetrieveUrlWithProcessingConfig;
 import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
 import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkChecker;
 import eu.europeana.harvester.cluster.slave.processing.ProcessingResultTuple;
@@ -31,7 +30,18 @@ import static com.codahale.metrics.MetricRegistry.name;
 /**
  * This type of actors checks for a link or downloads a document.
  */
-public class ProcessorActor extends UntypedActor {
+public class RetrieveAndProcessActor extends UntypedActor {
+
+    public static final ActorRef createActor(final UntypedActorContext context,
+                                             final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
+                                             final SlaveDownloader slaveDownloader,
+                                             final SlaveLinkChecker slaveLinkChecker,
+                                             final SlaveProcessor slaveProcessor,
+                                             MetricRegistry metrics) {
+        return context.system().actorOf(Props.create(RetrieveAndProcessActor.class,
+                httpRetrieveResponseFactory, slaveDownloader, slaveLinkChecker, slaveProcessor,
+                metrics));
+    }
 
     private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
 
@@ -50,16 +60,11 @@ public class ProcessorActor extends UntypedActor {
      */
     private RetrieveUrl task;
 
+    private RetrieveUrlWithProcessingConfig taskWithProcessingConfig;
+
     private final MetricRegistry metrics;
     private final Timer responses, dresponses;
 
-    /**
-     * If the response type is disk storage then the absolute path on disk where
-     * the content of the download will be saved.
-     */
-    private String path;
-
-    private final String source;
 
     private final SlaveProcessor slaveProcessor;
 
@@ -67,14 +72,13 @@ public class ProcessorActor extends UntypedActor {
 
     private final SlaveLinkChecker slaveLinkChecker;
 
-    public ProcessorActor(final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
-                          final SlaveDownloader slaveDownloader,
-                          final SlaveLinkChecker slaveLinkChecker,
-                          final SlaveProcessor slaveProcessor,
-                          String source, MetricRegistry metrics) {
+    public RetrieveAndProcessActor(final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
+                                   final SlaveDownloader slaveDownloader,
+                                   final SlaveLinkChecker slaveLinkChecker,
+                                   final SlaveProcessor slaveProcessor,
+                                   MetricRegistry metrics) {
 
         this.httpRetrieveResponseFactory = httpRetrieveResponseFactory;
-        this.source = source;
         this.metrics = metrics;
         this.slaveProcessor = slaveProcessor;
         this.slaveDownloader = slaveDownloader;
@@ -95,9 +99,9 @@ public class ProcessorActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         sender = getSender();
 
-        if (message instanceof RetrieveUrl) {
-            task = (RetrieveUrl) message;
-
+        if (message instanceof RetrieveUrlWithProcessingConfig) {
+            taskWithProcessingConfig = (RetrieveUrlWithProcessingConfig) message;
+            task = taskWithProcessingConfig.getRetrieveUrl();
             final CircuitBreaker breaker = new CircuitBreaker(
                     getContext().dispatcher(), getContext().system().scheduler(),
                     5, Duration.create(computeMaximumRetrievalAndProcessingDurationInMinutes(task), TimeUnit.MINUTES), Duration.create(1, TimeUnit.MINUTES))
@@ -127,10 +131,13 @@ public class ProcessorActor extends UntypedActor {
         HttpRetrieveResponse response = null;
 
         // Step 1 : Execute retrieval (download OR link checking) + send confirmation when it's done
+        System.out.println("Starting retrieval of "+ task.getUrl());
+
         try {
             response = executeRetrieval(task);
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == ResponseState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
                     response, task.getDocumentReferenceTask(), task.getIpAddress());
+            LOG.error("Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(),taskWithProcessingConfig.getDownloadPath());
 
         } catch (Exception e) {
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), ProcessingState.ERROR,
@@ -181,6 +188,7 @@ public class ProcessorActor extends UntypedActor {
 
     /**
      * Executes the retrieval phase.
+     *
      * @param task
      * @return
      * @throws Exception
@@ -189,15 +197,20 @@ public class ProcessorActor extends UntypedActor {
         HttpRetrieveResponse response = null;
         switch (task.getDocumentReferenceTask().getTaskType()) {
             case CHECK_LINK:
-                response = httpRetrieveResponseFactory.create(ResponseType.NO_STORAGE, null);
+                response = httpRetrieveResponseFactory.create(ResponseType.NO_STORAGE, taskWithProcessingConfig.getDownloadPath());
                 slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
                 break;
             case UNCONDITIONAL_DOWNLOAD:
-                response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, path);
-                slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
+                try {
+                    response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, taskWithProcessingConfig.getDownloadPath());
+                    slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
+                } catch (Exception e) {
+                    LOG.error("The slave downloader for task type UNCONDITIONAL_DOWNLOAD for path {} has thrown an exception while processing {}",taskWithProcessingConfig.getDownloadPath(), e);
+                    throw e;
+                }
                 break;
             case CONDITIONAL_DOWNLOAD:
-                response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, path);
+                response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, taskWithProcessingConfig.getDownloadPath());
                 slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
                 break;
             default:
@@ -208,30 +221,32 @@ public class ProcessorActor extends UntypedActor {
 
     private ResponseType responseTypeFromTaskType(final DocumentReferenceTaskType taskType) {
         switch (taskType) {
-            case CHECK_LINK :
+            case CHECK_LINK:
                 return ResponseType.NO_STORAGE;
             case UNCONDITIONAL_DOWNLOAD:
                 return ResponseType.DISK_STORAGE;
             case CONDITIONAL_DOWNLOAD:
                 return ResponseType.DISK_STORAGE;
-            default :
-                throw new IllegalArgumentException("Cannot convert task type to response type. Unknown task type "+taskType.name());
+            default:
+                throw new IllegalArgumentException("Cannot convert task type to response type. Unknown task type " + taskType.name());
         }
     }
 
     /**
      * Executes the processing phase.
+     *
      * @param response
      * @param task
      * @return
      * @throws Exception
      */
     private final ProcessingResultTuple executeProcessing(final HttpRetrieveResponse response, final RetrieveUrl task) throws Exception {
-        return slaveProcessor.process(task.getDocumentReferenceTask(), path, response.getUrl().toURI().toASCIIString(), response.getContent(),responseTypeFromTaskType(task.getDocumentReferenceTask().getTaskType()) , source);
+        return slaveProcessor.process(task.getDocumentReferenceTask(), taskWithProcessingConfig.getDownloadPath(), response.getUrl().toURI().toASCIIString(), response.getContent(), responseTypeFromTaskType(task.getDocumentReferenceTask().getTaskType()),
+                taskWithProcessingConfig.getProcessingSource());
     }
 
     private long computeMaximumRetrievalAndProcessingDurationInMinutes(RetrieveUrl retrieveUrl) {
-        return retrieveUrl.getHttpRetrieveConfig().getTerminationThresholdTimeLimit().getStandardMinutes()+10;
+        return retrieveUrl.getHttpRetrieveConfig().getTerminationThresholdTimeLimit().getStandardMinutes() + 10;
     }
 
 }
