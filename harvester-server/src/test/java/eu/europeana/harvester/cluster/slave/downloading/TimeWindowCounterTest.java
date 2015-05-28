@@ -1,4 +1,4 @@
-package harvester.cluster;
+package eu.europeana.harvester.cluster.slave.downloading;
 
 import eu.europeana.harvester.cluster.slave.downloading.TimeWindowCounter;
 import org.junit.Test;

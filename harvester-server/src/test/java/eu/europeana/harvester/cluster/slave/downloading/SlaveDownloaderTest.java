@@ -1,7 +1,6 @@
-package harvester.cluster;
+package eu.europeana.harvester.cluster.slave.downloading;
 
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
-import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingJobSubTask;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
