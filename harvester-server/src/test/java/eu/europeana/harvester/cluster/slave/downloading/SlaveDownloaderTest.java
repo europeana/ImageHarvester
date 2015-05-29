@@ -10,10 +10,12 @@ import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.logging.log4j.LogManager;
+import org.junit.Before;
 import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -24,11 +26,15 @@ public class SlaveDownloaderTest {
 
     private static org.apache.logging.log4j.Logger LOG = LogManager.getLogger(SlaveDownloaderTest.class.getName());
     private static String PATH_PREFIX = Paths.get("harvester-server/src/test/resources/downloader").toAbsolutePath().toString() + "/";
-    private static final String pathOnDisk = PATH_PREFIX + "current_image1.jpeg";
-    private static final String text1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
+    private static final String pathOnDisk = PATH_PREFIX + "original_image1.jpeg";
+    private static final String image1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
 
     final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
+    @Before
+    public void setUp() throws IOException {
+        Files.createDirectories(Paths.get(PATH_PREFIX));
+    }
 
     @After
     public void tearDown() throws Exception {
@@ -49,10 +55,18 @@ public class SlaveDownloaderTest {
         1 /* connectionTimeoutInMillis - IT SHOULD FAIL BECAUSE OF THIS */,
                 10 /* maxNrOfRedirects */
         );
-        final RetrieveUrl task = new RetrieveUrl("id-1", text1GitHubUrl, httpRetrieveConfig, "jobid-1",
-                "referenceid-1", Collections.<String, String>emptyMap(),
-                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
-                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
+        final RetrieveUrl task = new RetrieveUrl("id-1",
+                                                 image1GitHubUrl,
+                                                 httpRetrieveConfig,
+                                                 "jobid-1",
+                                                 "referenceid-1",
+                                                 Collections.<String, String>emptyMap(),
+                                                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                                                                                         "source-reference-1",
+                                                                                         Collections.<ProcessingJobSubTask>emptyList()
+                                                                                        ),
+                                                 null
+                                                );
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
@@ -78,7 +92,7 @@ public class SlaveDownloaderTest {
                 (int)Duration.standardSeconds(10).getMillis() /* connectionTimeoutInMillis */,
                 10 /* maxNrOfRedirects */
         );
-        final RetrieveUrl task = new RetrieveUrl("id-1", text1GitHubUrl, httpRetrieveConfig, "jobid-1",
+        final RetrieveUrl task = new RetrieveUrl("id-1", image1GitHubUrl, httpRetrieveConfig, "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
@@ -99,7 +113,7 @@ public class SlaveDownloaderTest {
         final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig();
-        final RetrieveUrl task = new RetrieveUrl("id-1", text1GitHubUrl, httpRetrieveConfig, "jobid-1",
+        final RetrieveUrl task = new RetrieveUrl("id-1", image1GitHubUrl, httpRetrieveConfig, "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
@@ -123,7 +137,7 @@ public class SlaveDownloaderTest {
         final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig();
-        final RetrieveUrl task = new RetrieveUrl("id-1", text1GitHubUrl+"-some-stupid-extra", httpRetrieveConfig, "jobid-1",
+        final RetrieveUrl task = new RetrieveUrl("id-1", image1GitHubUrl +"-some-stupid-extra", httpRetrieveConfig, "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
@@ -147,7 +161,7 @@ public class SlaveDownloaderTest {
         final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig();
-        final RetrieveUrl task = new RetrieveUrl("id-1", text1GitHubUrl, httpRetrieveConfig, "jobid-1",
+        final RetrieveUrl task = new RetrieveUrl("id-1", image1GitHubUrl, httpRetrieveConfig, "jobid-1",
                 "referenceid-1", Collections.<String, String>singletonMap("Content-Length", "1399538"),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
@@ -168,11 +182,11 @@ public class SlaveDownloaderTest {
 
 
     @Test
-    public void canDownloadConditionallyAndSkipDownloadWhenDifferentContentLengthResponseHeaderEntry() throws Exception {
+    public void canDownloadConditionallyAndDownloadWhenDifferentContentLengthResponseHeaderEntry() throws Exception {
         final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig();
-        final RetrieveUrl task = new RetrieveUrl("id-1", text1GitHubUrl, httpRetrieveConfig, "jobid-1",
+        final RetrieveUrl task = new RetrieveUrl("id-1", image1GitHubUrl, httpRetrieveConfig, "jobid-1",
                 "referenceid-1", Collections.<String, String>singletonMap("Content-Length", "1399537"),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);

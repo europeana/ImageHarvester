@@ -1,11 +1,9 @@
 package eu.europeana.harvester.cluster.slave.processing;
 
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.Lists;
+import akka.event.LoggingAdapter;
+import com.google.common.io.Files;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
-import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloaderTest;
-import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkChecker;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
 import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
@@ -16,86 +14,282 @@ import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.harvester.httpclient.response.ResponseType;
+import gr.ntua.image.mediachecker.MediaChecker;
 import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import  org.apache.logging.log4j.LogManager;
 import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
+import static  eu.europeana.harvester.TestUtils.*;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+@RunWith (MockitoJUnitRunner.class)
 public class SlaveProcessorTest {
 
-    private static final String PATH_COLORMAP = Paths.get("harvester-server/src/test/resources/").toAbsolutePath().toString() + "/" + "colormap.png";
+    @Mock
+    private LoggingAdapter loggingAdapter;
 
-    private static final String pathOnDisk = Paths.get("harvester-server/src/test/resources/downloader").toAbsolutePath().toString() + "/" + "current_image1.jpeg";
-    private static final String text1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
+    private MediaStorageClient mediaStorageClient;
 
-    private static final String FILESYSTEM_PATH_PREFIX = Paths.get("harvester-server/src/test/resources/filesystem").toAbsolutePath().toString() + "/";
+    private ProcessingJobTaskDocumentReference taskDocumentReference;
 
-    private static final MediaStorageClient client = new FileSystemMediaStorageClientImpl(FILESYSTEM_PATH_PREFIX);
-    final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
+    private static final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
-    private static SlaveProcessor slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP), new ThumbnailGenerator(PATH_COLORMAP), new ColorExtractor(PATH_COLORMAP), client,
-            null);
+    private  List<ProcessingJobSubTask> subTasks;
+    private SlaveProcessor slaveProcessor;
 
-    private static MetricRegistry metrics = new MetricRegistry();
-
-    @Before
-    public void setup() throws IOException {
-        FileUtils.forceMkdir(new File(FILESYSTEM_PATH_PREFIX));
-    }
+    private static final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION, null);
+    private static final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION, null);
+    private static final ProcessingJobSubTask smallThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(180, 180)));
+    private static final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(200, 200)));
+    private static final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(400, 400)));
 
     @After
-    public void teardown() throws IOException {
-        FileUtils.deleteDirectory(new File(FILESYSTEM_PATH_PREFIX));
+    public void tearDown() throws IOException {
+        FileUtils.deleteDirectory(new File(PATH_DOWNLOADED));
     }
 
+    @Before
+    public void setUp() throws IOException {
+        subTasks = new ArrayList<>();
+        FileUtils.forceMkdir(new File(PATH_DOWNLOADED));
+        mediaStorageClient = new FileSystemMediaStorageClientImpl(PATH_PREFIX);
+        slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP),
+                                            new ThumbnailGenerator(PATH_COLORMAP),
+                                            new ColorExtractor(PATH_COLORMAP),
+                                            mediaStorageClient,
+                                            loggingAdapter
+                                          );
+        taskDocumentReference = new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                                                                           "source-reference-1", subTasks);
+    }
 
-    @Test
-    public void canHandleTypicalProcessingTasks() throws Exception {
-        final SlaveDownloader slaveDownloader = new SlaveDownloader(LogManager.getLogger(SlaveDownloaderTest.class.getName()));
+    private void downloadFile (final String url, final String pathToStore) throws Exception {
+        final SlaveDownloader slaveDownloader = new SlaveDownloader(LogManager.getLogger(SlaveProcessorTest.class.getName()));
 
-        final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
+        final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathToStore);
 
-        final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(
-                Duration.millis(0),
-                0l,
-                0l,
-                5 * 1000l, /* terminationThresholdReadPerSecondInBytes */
-                Duration.standardSeconds(10) /* terminationThresholdTimeLimit */,
-                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, /* taskType */
-                (int) Duration.standardSeconds(10).getMillis() /* connectionTimeoutInMillis */,
-                10 /* maxNrOfRedirects */
-        );
-
-        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION, null);
-        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION, null);
-        final ProcessingJobSubTask smallThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(180, 180)));
-        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(200, 200)));
-        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(400, 400)));
-
-        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
-                colorExtractionSubTask,
-                metaInfoExtractionSubTask,
-                smallThumbnailExtractionSubTask,
-                mediumThumbnailExtractionSubTask,
-                largeThumbnailExtractionSubTask
-        );
-
-        final RetrieveUrl task = new RetrieveUrl("id-1", text1GitHubUrl, httpRetrieveConfig, "jobid-1",
-                "referenceid-1", Collections.<String, String>emptyMap(),
-                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
-                        "source-reference-1", subTasks), null);
+        final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(0),
+                                                                             0l,
+                                                                             0l,
+                                                                             5 * 1000l, /* terminationThresholdReadPerSecondInBytes */
+                                                                             Duration.standardSeconds(10) /* terminationThresholdTimeLimit */,
+                                                                             DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, /* taskType */
+                                                                             (int) Duration.standardSeconds(10).getMillis() /* connectionTimeoutInMillis */,
+                                                                             10 /* maxNrOfRedirects */);
+        final RetrieveUrl task = new RetrieveUrl("id-1",
+                                                 url,
+                                                 httpRetrieveConfig,
+                                                 "jobid-1",
+                                                 "referenceid-1", Collections.<String, String>emptyMap(),
+                                                 taskDocumentReference,
+                                                 null);
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
-
-        final ProcessingResultTuple result = slaveProcessor.process(task.getDocumentReferenceTask(), pathOnDisk, task.getUrl(), Files.readAllBytes(Paths.get(pathOnDisk)), ResponseType.DISK_STORAGE, null);
     }
+
+    private void checkThumbnails (final String imageName, final Collection<MediaFile> genThumbnails, final String[] colorPalette) throws IOException {
+        final byte[][] thumbnails = new byte[][] {
+             Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailSmall) : imagesInBytes.get(Image2ThumbnailSmall),
+             Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailMedium) : imagesInBytes.get(Image2ThumbnailMedium),
+             Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailLarge) : imagesInBytes.get(Image2ThumbnailLarge)
+        };
+
+        for (final MediaFile thumbnail: genThumbnails) {
+            assertEquals (GitHubUrl_PREFIX + imageName,thumbnail.getOriginalUrl());
+            assertEquals (imageName, thumbnail.getName());
+            assertTrue (IMAGE_MIMETYPE.equals(thumbnail.getContentType()));
+
+            if (!ArrayUtils.isEmpty(colorPalette)) {
+                final Map<String, String> colors = new TreeMap<>();
+                for (final Map.Entry<String, String> entry: thumbnail.getMetaData().entrySet()) {
+                    if (entry.getKey().startsWith("color")) {
+                        colors.put(entry.getKey(), entry.getValue());
+                    }
+                }
+                assertArrayEquals(colorPalette, colors.values().toArray());
+            }
+
+            int idx = 0;
+            for (final ThumbnailType type: ThumbnailType.values()) {
+                if (thumbnail.getSize() == type.getWidth()) {
+                    assertArrayEquals(thumbnails[idx], thumbnail.getContent());
+                    break;
+                }
+                ++idx;
+            }
+            if (idx == ThumbnailType.values().length) {
+                fail("No thumbnail type found for media file generated. Size: " + thumbnail.getSize());
+            }
+        }
+    }
+
+    @Test
+    public void test_AllTasks_Image() throws Exception {
+        final String fileUrl = GitHubUrl_PREFIX + Image1;
+
+
+        subTasks.add(metaInfoExtractionSubTask);
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(smallThumbnailExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        downloadFile(fileUrl, PATH_DOWNLOADED + Image1);
+
+        final ProcessingResultTuple results = slaveProcessor.process(taskDocumentReference,
+                                                                    PATH_DOWNLOADED + Image1,
+                                                                    fileUrl,
+                                                                    imagesInBytes.get(Image1),
+                                                                    ResponseType.DISK_STORAGE,
+                                                                    null);
+
+        assertNotNull(results.getMediaMetaInfoTuple());
+        assertNotNull(results.getImageColorMetaInfo());
+        assertNotNull(results.getGeneratedThumbnails());
+        assertFalse(new File(PATH_DOWNLOADED + Image1).exists());
+        assertEquals(3, results.getGeneratedThumbnails().size());
+        assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + Image1, PATH_COLORMAP).getPalette(),
+                          results.getImageColorMetaInfo().getColorPalette());
+
+        checkThumbnails(Image1, results.getGeneratedThumbnails(), results.getImageColorMetaInfo().getColorPalette());
+
+        final ImageMetaInfo metaInfo = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + Image1).getImageMetaInfo();
+        assertTrue(EqualsBuilder.reflectionEquals(metaInfo, results.getMediaMetaInfoTuple().getImageMetaInfo()));
+    }
+
+    @Test
+    public void test_Task_ColorExtraction_ThumbnailGeneration_Image() throws Exception {
+        final String fileUrl = GitHubUrl_PREFIX + Image1;
+
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(smallThumbnailExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        downloadFile(fileUrl, PATH_DOWNLOADED + Image1);
+
+        final ProcessingResultTuple results = slaveProcessor.process(taskDocumentReference,
+                                                                     PATH_DOWNLOADED + Image1,
+                                                                     fileUrl,
+                                                                     imagesInBytes.get(Image1),
+                                                                     ResponseType.DISK_STORAGE,
+                                                                     null);
+
+        assertNull(results.getMediaMetaInfoTuple());
+        assertNotNull(results.getImageColorMetaInfo());
+        assertNotNull(results.getGeneratedThumbnails());
+        assertFalse(new File(PATH_DOWNLOADED + Image1).exists());
+        assertEquals(3, results.getGeneratedThumbnails().size());
+        assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + Image1, PATH_COLORMAP).getPalette(),
+                          results.getImageColorMetaInfo().getColorPalette());
+
+        checkThumbnails(Image1, results.getGeneratedThumbnails(), results.getImageColorMetaInfo().getColorPalette());
+    }
+
+    @Test
+    public void test_AllTask_Audio() throws Exception {
+        final String fileUrl = GitHubUrl_PREFIX + Audio1;
+
+
+        subTasks.add(metaInfoExtractionSubTask);
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(smallThumbnailExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        downloadFile(fileUrl, PATH_DOWNLOADED + Audio1);
+
+        final ProcessingResultTuple results = slaveProcessor.process(taskDocumentReference, PATH_DOWNLOADED + Audio1,
+                                                                     fileUrl,
+                                                                     Files.toByteArray(new File(PATH_DOWNLOADED + Audio1)),
+                                                                     ResponseType.DISK_STORAGE,
+                                                                     null);
+
+        assertNotNull(results.getMediaMetaInfoTuple());
+        assertNull(results.getImageColorMetaInfo());
+        assertFalse(new File(PATH_DOWNLOADED + Audio1).exists());
+
+        assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
+                                                                                         .toArray()));
+
+        final AudioMetaInfo metaInfo = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + Audio1).getAudioMetaInfo();
+        assertTrue(EqualsBuilder.reflectionEquals(metaInfo, results.getMediaMetaInfoTuple().getAudioMetaInfo()));
+    }
+
+    @Test
+    public void test_AllTask_Video() throws Exception {
+        final String fileUrl = GitHubUrl_PREFIX + Video1;
+
+
+        subTasks.add(metaInfoExtractionSubTask);
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(smallThumbnailExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        downloadFile(fileUrl, PATH_DOWNLOADED + Video1);
+
+        final ProcessingResultTuple results = slaveProcessor.process(taskDocumentReference, PATH_DOWNLOADED + Video1,
+                                                                     fileUrl,
+                                                                     Files.toByteArray(new File(PATH_DOWNLOADED + Video1)),
+                                                                     ResponseType.DISK_STORAGE,
+                                                                     null);
+
+        assertNotNull(results.getMediaMetaInfoTuple());
+        assertNull(results.getImageColorMetaInfo());
+        assertFalse(new File(PATH_DOWNLOADED + Video1).exists());
+
+        assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
+                                                                                         .toArray()));
+        final VideoMetaInfo metaInfo = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + Video1).getVideoMetaInfo();
+        assertTrue(EqualsBuilder.reflectionEquals(metaInfo, results.getMediaMetaInfoTuple().getVideoMetaInfo()));
+    }
+
+    @Test
+    public void test_AllTask_Text() throws Exception {
+        final String fileUrl = GitHubUrl_PREFIX + Text1;
+
+
+        subTasks.add(metaInfoExtractionSubTask);
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(smallThumbnailExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        downloadFile(fileUrl, PATH_DOWNLOADED + Text1);
+
+        final ProcessingResultTuple results = slaveProcessor.process(taskDocumentReference, PATH_DOWNLOADED + Text1,
+                                                                     fileUrl,
+                                                                     Files.toByteArray(new File(PATH_DOWNLOADED + Text1)),
+                                                                     ResponseType.DISK_STORAGE,
+                                                                     null);
+
+        assertNotNull(results.getMediaMetaInfoTuple());
+        assertNull(results.getImageColorMetaInfo());
+        assertFalse(new File(PATH_DOWNLOADED + Text1).exists());
+
+        assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
+                                                                                         .toArray()));
+
+        final TextMetaInfo metaInfo = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + Text1).getTextMetaInfo();
+        assertTrue(EqualsBuilder.reflectionEquals(metaInfo, results.getMediaMetaInfoTuple().getTextMetaInfo()));
+    }
+
 }
