@@ -1,7 +1,6 @@
 package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
-import com.google.code.morphia.Key;
 import com.google.code.morphia.query.Query;
 import com.mongodb.*;
 import eu.europeana.harvester.db.ProcessingJobDao;
@@ -9,7 +8,10 @@ import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.Page;
 import eu.europeana.harvester.domain.ProcessingJob;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * MongoDB DAO implementation for CRUD with processing_job collection
@@ -85,7 +87,8 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
             for (DBObject result : output.results()) {
                 final String ip = (String) result.get("_id");
                 final Integer count = (Integer) result.get("total");
-                jobsPerIP.put(ip, count);
+                if(ip!=null)
+                    jobsPerIP.put(ip, count);
             }
         }
 

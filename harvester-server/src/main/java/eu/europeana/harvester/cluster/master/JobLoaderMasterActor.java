@@ -104,6 +104,8 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     private long markLoad =0;
 
+
+
     public JobLoaderMasterActor(final ActorRef receiverActor, final ClusterMasterConfig clusterMasterConfig,
                                 final ActorRef accountantActor, final Map<Address, HashSet<ActorRef>> actorsPerAddress,
                                 final ProcessingJobDao processingJobDao,
@@ -172,10 +174,17 @@ public class JobLoaderMasterActor extends UntypedActor {
     }
 
     private void getIPDistribution() {
-        this.ipDistribution = processingJobDao.getIpDistribution();
+        Page pg = new Page (0,100000);
+        List<MachineResourceReference> machines = machineResourceReferenceDao.getAllMachineResourceReferences(pg);
+        this.ipDistribution = new HashMap<>();
+
+        for ( MachineResourceReference machine : machines )
+            ipDistribution.put(machine.getIp(), 0);
+
         LOG.info("IP distribution: ");
         for(Map.Entry<String, Integer> ip : ipDistribution.entrySet()) {
             LOG.info("{}: {}", ip.getKey(), ip.getValue());
+            //machineResourceReferenceDao.createOrModify(new MachineResourceReference(ip.getKey()), WriteConcern.NORMAL);
         }
 
         LOG.info("Nr. of machines: {}", ipDistribution.size());
@@ -258,6 +267,39 @@ public class JobLoaderMasterActor extends UntypedActor {
                     LOG.error("JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());
                 }
             }
+
+            LOG.info("Checking IPs with no jobs in database");
+
+            ArrayList<String> noJobsIPs = new ArrayList<>();
+            List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0,10000));
+
+            for ( Map.Entry<String,Boolean> entry : ipsWithJobs.entrySet() ) {
+                if (!entry.getValue()) {
+                    noJobsIPs.add(entry.getKey());
+                    ipDistribution.remove(entry.getKey());
+                    LOG.info("Found IP with no loaded tasks from DB: {}, removing it from IP distribution", entry.getKey());
+                    for ( MachineResourceReference machine : ips) {
+                        if (machine.getIp()==entry.getKey()) {
+                            machineResourceReferenceDao.delete(machine.getId());
+                            ips.remove(machine);
+                        }
+                    }
+
+                }
+            }
+
+
+            for ( MachineResourceReference machine : ips) {
+                if (!ipDistribution.containsKey(machine.getIp())) {
+                    ipDistribution.put(machine.getIp(),0);
+                }
+            }
+
+            if (noJobsIPs.size()>0) {
+                LOG.info("Found {} IPs with no jobs loaded from the database, removing them if no jobs in progress", noJobsIPs.size());
+                accountantActor.tell(new CleanIPs(noJobsIPs), ActorRef.noSender());
+            }
+
         }
     }
 

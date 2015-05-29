@@ -81,7 +81,8 @@ public class AccountantTaskPerIPActor extends UntypedActor {
             }
 
             if (message instanceof CleanIPs) {
-                cleanIPs();
+                ArrayList<String> ips = ((CleanIPs) message).getIPs();
+                cleanIPs(ips);
 
                 return;
             }
@@ -101,14 +102,14 @@ public class AccountantTaskPerIPActor extends UntypedActor {
     }
 
 
-    private void cleanIPs() {
-//        for (final Map.Entry<String, List<String>> task : tasksPerIP.entrySet()) {
-//            if (!checkTaskStates(task.getValue())) {
-//                String IP = task.getKey();
-//                tasksPerIP.remove(IP);
-//                LOG.info("Removed " + IP);
-//            }
-//        }
+    private void cleanIPs(ArrayList<String> IPsToCheck) {
+        for (final Map.Entry<String, List<String>> task : tasksPerIP.entrySet()) {
+            if ( IPsToCheck.contains(task.getKey()) && !checkTaskStates(task.getValue())) {
+                String IP = task.getKey();
+                tasksPerIP.remove(IP);
+                LOG.info("Removed " + IP);
+            }
+        }
         return;
     }
 

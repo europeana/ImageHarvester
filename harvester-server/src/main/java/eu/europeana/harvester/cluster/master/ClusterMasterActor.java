@@ -388,7 +388,7 @@ public class ClusterMasterActor extends UntypedActor {
 
             for (final String IP : IPs) {
 
-                final Long start = System.currentTimeMillis();
+
                 final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
                 final Future<Object> future = Patterns.ask(accountantActor, new GetTasksFromIP(IP), timeout);
 

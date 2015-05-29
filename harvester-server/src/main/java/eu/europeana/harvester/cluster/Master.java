@@ -157,20 +157,8 @@ class Master {
         final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao =
                 new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
 
-//        final String ebHost = config.getString("eventbus.host");
-//        final String ebUsername = config.getString("eventbus.username");
-//        final String ebPassword = config.getString("eventbus.password");
-//        final String ebIncomingQueue = config.getString("eventbus.incomingQueue");
-//        final String ebOutgoingQueue = config.getString("eventbus.outgoingQueue");
 
-//        ESBClient esbClientTemp = null;
-//        try {
-//            final Consumer consumer = new QueueingConsumer(null);
-//            esbClientTemp = new RabbitMQClientAsync(ebHost, ebIncomingQueue, ebOutgoingQueue, ebUsername, ebPassword, consumer);
-//        } catch (IOException e) {
-//            LOG.error(e.getMessage());
-//        }
-//        final ESBClient esbClient = esbClientTemp;
+
 
         final Integer ipExceptionsMaxConcurrentConnectionsLimit = config.getInt("IPExceptions.maxConcurrentConnectionsLimit");
         final List<String> ips = config.getStringList("IPExceptions.ips");
