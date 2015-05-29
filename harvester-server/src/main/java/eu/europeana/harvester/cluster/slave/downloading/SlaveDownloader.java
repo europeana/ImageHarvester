@@ -180,8 +180,10 @@ public class SlaveDownloader {
 
         } catch (Exception e) {
             cleanup(httpRetrieveResponse, asyncHttpClient, e);
+
         } finally {
             cleanup(httpRetrieveResponse, asyncHttpClient, httpRetrieveResponse.getException());
+            asyncHttpClient.close();
         }
     }
 

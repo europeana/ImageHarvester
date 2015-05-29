@@ -3,6 +3,7 @@ package eu.europeana.harvester.cluster.slave;
 import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
@@ -13,7 +14,6 @@ import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.util.HashedWheelTimer;
 import scala.Option;
 
@@ -125,9 +125,18 @@ public class NodeMasterActor extends UntypedActor {
     public void preStart() throws Exception {
         LOG.info("NodeMasterActor preStart");
 
-        retrieve = metrics.meter("RetrieveURL");
+
         doneDl = metrics.meter("DoneDownload");
         doneProc = metrics.meter("DoneProcessing");
+        //gauge the number of processor actors
+        metrics.register(MetricRegistry.name("NodeMasterActor", "actors", "size"),
+                new Gauge<Integer>() {
+                    @Override
+                    public Integer getValue() {
+                        return actors.size();
+                    }
+                });
+
         lastRequest = 0l;
         sentRequest = false;
 
@@ -179,7 +188,7 @@ public class NodeMasterActor extends UntypedActor {
 
             masterReceiver = getSender();
 
-            retrieve.mark();
+
 
 
             if ( actors.size()<maxSlaves & messages.size()>maxSlaves ) {

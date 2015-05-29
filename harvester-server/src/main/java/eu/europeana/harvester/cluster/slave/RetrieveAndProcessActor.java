@@ -155,7 +155,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
         // Step 2 : Execute processing + send confirmation when it's done
         DoneProcessing doneProcessingMessage = null;
         final Timer.Context ctx2 = responses.time();
-        LOG.info("response state is {}, response log {}", response.getState(), response.getLog());
+
         if (response.getState() == ResponseState.COMPLETED && task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.CHECK_LINK) {
             ProcessingResultTuple processingResultTuple;
             try {
@@ -177,6 +177,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
         } else {
             // We can skip processing altogether.
             LOG.error("The task processing stage was skipped because the retrieval stage failed.");
+            LOG.info("response state is {}, response log {}", response.getState(), response.getLog());
             doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
                     null,
                     null,
