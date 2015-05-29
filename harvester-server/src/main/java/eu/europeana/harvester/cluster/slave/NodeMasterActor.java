@@ -11,6 +11,7 @@ import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
 import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkChecker;
 import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
+import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
@@ -27,6 +28,16 @@ import java.util.concurrent.TimeUnit;
  * This actor decides which slave execute which task.
  */
 public class NodeMasterActor extends UntypedActor {
+
+        public static ActorRef createActor(final ActorContext context, final ActorRef masterSender, final ActorRef nodeSupervisor,
+                                           final NodeMasterConfig nodeMasterConfig,
+                                           final MediaStorageClient mediaStorageClient,
+                                           final HashedWheelTimer hashedWheelTimer, final MetricRegistry metrics){
+
+        return context.system().actorOf(Props.create(NodeMasterActor.class,
+                        masterSender, nodeSupervisor, nodeMasterConfig, mediaStorageClient, hashedWheelTimer, metrics),
+                "nodeMaster");
+    }
 
     private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
 
@@ -84,22 +95,14 @@ public class NodeMasterActor extends UntypedActor {
     Long lastRequest;
     final int maxSlaves;
 
+    private MediaStorageClient mediaStorageClient;
 
     final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
     final ExecutorService service = Executors.newCachedThreadPool();
 
-
-    private final SlaveProcessor slaveProcessor;
-
-    private final SlaveDownloader slaveDownloader;
-
-    private final SlaveLinkChecker slaveLinkChecker;
-
     public NodeMasterActor(final ActorRef masterSender, final  ActorRef nodeSupervisor,
                            final NodeMasterConfig nodeMasterConfig,
-                           final SlaveDownloader slaveDownloader,
-                           final SlaveLinkChecker slaveLinkChecker,
-                           final SlaveProcessor slaveProcessor,
+                           final MediaStorageClient mediaStorageClient,
                            final HashedWheelTimer hashedWheelTimer, final MetricRegistry metrics ) {
         LOG.info("NodeMasterActor constructor");
 
@@ -111,13 +114,9 @@ public class NodeMasterActor extends UntypedActor {
         this.jobsToStop = new HashSet<>();
 
         this.sentRequest = false;
+        this.mediaStorageClient = mediaStorageClient;
         this.metrics = metrics;
         this.maxSlaves = nodeMasterConfig.getNrOfDownloaderSlaves();
-
-        this.slaveProcessor = slaveProcessor;
-        this.slaveDownloader = slaveDownloader;
-        this.slaveLinkChecker = slaveLinkChecker;
-
 
     }
 
@@ -203,8 +202,8 @@ public class NodeMasterActor extends UntypedActor {
 
                     if(msg != null) {
 
-                        ActorRef newActor = RetrieveAndProcessActor.createActor(getContext(),
-                                httpRetrieveResponseFactory, slaveDownloader, slaveLinkChecker, slaveProcessor,
+                        ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
+                                httpRetrieveResponseFactory,mediaStorageClient,nodeMasterConfig.getColorMapPath(),
                                  metrics);
                         actors.add(newActor);
 
@@ -341,8 +340,8 @@ public class NodeMasterActor extends UntypedActor {
                     msg = messages.poll();
 
                 if(msg != null) {
-                    ActorRef newActor = RetrieveAndProcessActor.createActor(getContext(),
-                            httpRetrieveResponseFactory, slaveDownloader, slaveLinkChecker, slaveProcessor,
+                    ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
+                            httpRetrieveResponseFactory,mediaStorageClient,nodeMasterConfig.getColorMapPath(),
                             metrics);
                     actors.add(newActor);
                     context().watch(newActor);

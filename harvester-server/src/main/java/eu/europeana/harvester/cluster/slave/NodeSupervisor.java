@@ -1,9 +1,6 @@
 package eu.europeana.harvester.cluster.slave;
 
-import akka.actor.ActorRef;
-import akka.actor.Props;
-import akka.actor.Terminated;
-import akka.actor.UntypedActor;
+import akka.actor.*;
 import akka.cluster.Cluster;
 import akka.cluster.ClusterEvent;
 import akka.event.Logging;
@@ -31,6 +28,13 @@ import java.util.concurrent.TimeUnit;
  * This actor sends feedback for each task and supervises the node master actor, if it failes than restarts it.
  */
 public class NodeSupervisor extends UntypedActor {
+
+        public static ActorRef createActor(final ActorSystem system,final Slave slave, final ActorRef masterSender, final ChannelFactory channelFactory,
+                                       final NodeMasterConfig nodeMasterConfig, final MediaStorageClient mediaStorageClient, MetricRegistry metrics) {
+        return system.actorOf(Props.create(NodeSupervisor.class, slave, masterSender, channelFactory, nodeMasterConfig,
+                mediaStorageClient, metrics), "nodeSupervisor");
+
+    }
 
     private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
 
@@ -73,11 +77,6 @@ public class NodeSupervisor extends UntypedActor {
 
     private final MetricRegistry metrics;
 
-    private final SlaveDownloader slaveDownloader;
-    private final SlaveLinkChecker slaveLinkChecker;
-    private final SlaveProcessor slaveProcessor;
-
-
     public NodeSupervisor(final Slave slave, final ActorRef masterSender, final ChannelFactory channelFactory,
                           final NodeMasterConfig nodeMasterConfig, final MediaStorageClient mediaStorageClient, MetricRegistry metrics) {
         LOG.info("NodeSupervisor constructor");
@@ -91,19 +90,17 @@ public class NodeSupervisor extends UntypedActor {
         this.metrics = metrics;
 
         this.memberups = 0;
-
-        this.slaveDownloader = new SlaveDownloader(LogManager.getLogger(SlaveDownloader.class.getName()));
-        this.slaveLinkChecker = new SlaveLinkChecker(LogManager.getLogger(SlaveLinkChecker.class.getName()));
-        this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(nodeMasterConfig.getColorMapPath()), new ThumbnailGenerator(nodeMasterConfig.getColorMapPath()), new ColorExtractor(nodeMasterConfig.getColorMapPath()), mediaStorageClient, LOG);
     }
 
     @Override
     public void preStart() throws Exception {
         LOG.info("NodeSupervisor preStart");
 
-        nodeMaster = context().system().actorOf(Props.create(NodeMasterActor.class,
-                masterSender, getSelf(), nodeMasterConfig, slaveDownloader,slaveLinkChecker,slaveProcessor, hashedWheelTimer, metrics),
-                "nodeMaster");
+        nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(),
+                nodeMasterConfig,
+                mediaStorageClient,
+                hashedWheelTimer, metrics);
+
         context().watch(nodeMaster);
 
         final Cluster cluster = Cluster.get(getContext().system());
@@ -116,14 +113,14 @@ public class NodeSupervisor extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-        if(message instanceof BagOfTasks) {
+        if (message instanceof BagOfTasks) {
             final BagOfTasks bagOfTasks = (BagOfTasks) message;
 
-            for(final RetrieveUrl request : bagOfTasks.getTasks()) {
+            for (final RetrieveUrl request : bagOfTasks.getTasks()) {
                 final StartedTask startedTask = new StartedTask(request.getId());
 
                 getSender().tell(startedTask, getSelf());
-                nodeMaster.tell(new RetrieveUrlWithProcessingConfig(request,nodeMasterConfig.getPathToSave()+"/"+request.getJobId(),nodeMasterConfig.getSource()), getSender());
+                nodeMaster.tell(new RetrieveUrlWithProcessingConfig(request, nodeMasterConfig.getPathToSave() + "/" + request.getJobId(), nodeMasterConfig.getSource()), getSender());
             }
 
             return;
@@ -139,9 +136,9 @@ public class NodeSupervisor extends UntypedActor {
         }
         if (message instanceof SendHearbeat) {
             // for safety, send a job request
-            nodeMaster.tell( new RequestTasks(), getSelf());
+            nodeMaster.tell(new RequestTasks(), getSelf());
 
-            if(missedHeartbeats >= 3) {
+            if (missedHeartbeats >= 3) {
                 LOG.error("Slave doesn't responded to the heartbeat 3 consecutive times. It will be restarted.");
                 missedHeartbeats = 0;
 
@@ -168,7 +165,7 @@ public class NodeSupervisor extends UntypedActor {
             try {
                 Thread.sleep(300000);
 
-            } catch ( InterruptedException e) {
+            } catch (InterruptedException e) {
                 LOG.info("Interrupted");
             }
 
@@ -185,8 +182,8 @@ public class NodeSupervisor extends UntypedActor {
             ClusterEvent.MemberUp mUp = (ClusterEvent.MemberUp) message;
             LOG.info("Member is Up: {}", mUp.member());
             memberups++;
-            if ( memberups == 2 )
-                nodeMaster.tell( new RequestTasks(), getSelf());
+            if (memberups == 2)
+                nodeMaster.tell(new RequestTasks(), getSelf());
 
         }
         // Anything else
@@ -198,9 +195,10 @@ public class NodeSupervisor extends UntypedActor {
 
         hashedWheelTimer.stop();
         hashedWheelTimer = new HashedWheelTimer();
-        nodeMaster = context().system().actorOf(Props.create(NodeMasterActor.class,
-                masterSender, getSelf(), nodeMasterConfig,
-                mediaStorageClient, hashedWheelTimer), "nodeMaster");
+        nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(),
+                nodeMasterConfig,
+                mediaStorageClient,
+                hashedWheelTimer, metrics);
         context().watch(nodeMaster);
     }
 }
