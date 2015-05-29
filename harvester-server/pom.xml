@@ -37,7 +37,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.13</version>
                 <configuration>
-                    <groups>${testcase.groups}</groups>
+                    <skipTests>true</skipTests>
                 </configuration>
             </plugin>
             <plugin>
