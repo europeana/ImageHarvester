@@ -21,10 +21,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import eu.europeana.harvester.TestUtils;
 public class SlaveLinkCheckerTest {
 
     private static org.apache.logging.log4j.Logger LOG = LogManager.getLogger(SlaveDownloaderTest.class.getName());
-    private static final String text1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
+    private static final String text1GitHubUrl = TestUtils.GitHubUrl_PREFIX + TestUtils.Image1;
 
     final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 

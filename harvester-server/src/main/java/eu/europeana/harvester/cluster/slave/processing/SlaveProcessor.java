@@ -10,9 +10,12 @@ import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenera
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.ResponseType;
+import eu.europeana.harvester.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,8 +65,8 @@ public class SlaveProcessor {
         for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
             mediaStorageClient.createOrModify(thumbnailEntry.getValue());
         }
-        deleteFile(originalFilePath);
-        
+        Files.deleteIfExists(Paths.get(originalFilePath));
+
         return new ProcessingResultTuple(mediaMetaInfoTuple, generatedThumbnails.values(), imageColorMetaInfo);
     }
 
@@ -133,12 +136,4 @@ public class SlaveProcessor {
         }
         return results;
     }
-
-    /**
-     * Deletes a file.
-     */
-    private void deleteFile(String path) {
-        new File(path).delete();
-    }
-
 }

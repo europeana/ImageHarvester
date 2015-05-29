@@ -13,8 +13,10 @@ import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
+import eu.europeana.harvester.httpclient.response.ResponseState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import gr.ntua.image.mediachecker.MediaChecker;
+import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -69,7 +71,7 @@ public class SlaveProcessorTest {
     public void setUp() throws IOException {
         subTasks = new ArrayList<>();
         FileUtils.forceMkdir(new File(PATH_DOWNLOADED));
-        mediaStorageClient = new FileSystemMediaStorageClientImpl(PATH_PREFIX);
+        mediaStorageClient = new FileSystemMediaStorageClientImpl(PATH_DOWNLOADED);
         slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP),
                                             new ThumbnailGenerator(PATH_COLORMAP),
                                             new ColorExtractor(PATH_COLORMAP),
@@ -89,7 +91,7 @@ public class SlaveProcessorTest {
                                                                              0l,
                                                                              0l,
                                                                              5 * 1000l, /* terminationThresholdReadPerSecondInBytes */
-                                                                             Duration.standardSeconds(10) /* terminationThresholdTimeLimit */,
+                                                                             Duration.standardSeconds(15) /* terminationThresholdTimeLimit */,
                                                                              DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, /* taskType */
                                                                              (int) Duration.standardSeconds(10).getMillis() /* connectionTimeoutInMillis */,
                                                                              10 /* maxNrOfRedirects */);
@@ -102,6 +104,8 @@ public class SlaveProcessorTest {
                                                  null);
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
+
+        assertEquals(ResponseState.COMPLETED, response.getState());
     }
 
     private void checkThumbnails (final String imageName, final Collection<MediaFile> genThumbnails, final String[] colorPalette) throws IOException {
@@ -264,7 +268,7 @@ public class SlaveProcessorTest {
 
     @Test
     public void test_AllTask_Text() throws Exception {
-        final String fileUrl = GitHubUrl_PREFIX + Text1;
+        final String fileUrl = GitHubUrl_PREFIX + Text2;
 
 
         subTasks.add(metaInfoExtractionSubTask);
@@ -273,22 +277,22 @@ public class SlaveProcessorTest {
         subTasks.add(mediumThumbnailExtractionSubTask);
         subTasks.add(largeThumbnailExtractionSubTask);
 
-        downloadFile(fileUrl, PATH_DOWNLOADED + Text1);
+        downloadFile(fileUrl, PATH_DOWNLOADED + Text2);
 
-        final ProcessingResultTuple results = slaveProcessor.process(taskDocumentReference, PATH_DOWNLOADED + Text1,
+        final ProcessingResultTuple results = slaveProcessor.process(taskDocumentReference, PATH_DOWNLOADED + Text2,
                                                                      fileUrl,
-                                                                     Files.toByteArray(new File(PATH_DOWNLOADED + Text1)),
+                                                                     Files.toByteArray(new File(PATH_DOWNLOADED + Text2)),
                                                                      ResponseType.DISK_STORAGE,
-                                                                     null);
+                                                                     "");
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNull(results.getImageColorMetaInfo());
-        assertFalse(new File(PATH_DOWNLOADED + Text1).exists());
+        assertFalse(new File(PATH_DOWNLOADED + Text2).exists());
 
         assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
                                                                                          .toArray()));
 
-        final TextMetaInfo metaInfo = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + Text1).getTextMetaInfo();
+        final TextMetaInfo metaInfo = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + Text2).getTextMetaInfo();
         assertTrue(EqualsBuilder.reflectionEquals(metaInfo, results.getMediaMetaInfoTuple().getTextMetaInfo()));
     }
 

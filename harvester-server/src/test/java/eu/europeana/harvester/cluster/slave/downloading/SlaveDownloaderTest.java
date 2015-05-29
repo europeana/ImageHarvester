@@ -22,18 +22,19 @@ import java.util.Collections;
 
 import static org.junit.Assert.*;
 
+import static eu.europeana.harvester.TestUtils.*;
+
 public class SlaveDownloaderTest {
 
     private static org.apache.logging.log4j.Logger LOG = LogManager.getLogger(SlaveDownloaderTest.class.getName());
-    private static String PATH_PREFIX = Paths.get("harvester-server/src/test/resources/downloader").toAbsolutePath().toString() + "/";
-    private static final String pathOnDisk = PATH_PREFIX + "original_image1.jpeg";
-    private static final String image1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
+    private static final String pathOnDisk = PATH_DOWNLOADED + "original_image1.jpeg";
+    private static final String image1GitHubUrl =  GitHubUrl_PREFIX + Image1;
 
     final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
     @Before
     public void setUp() throws IOException {
-        Files.createDirectories(Paths.get(PATH_PREFIX));
+        Files.createDirectories(Paths.get(PATH_DOWNLOADED));
     }
 
     @After

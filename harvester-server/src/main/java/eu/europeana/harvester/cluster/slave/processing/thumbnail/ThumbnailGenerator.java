@@ -1,5 +1,7 @@
 package eu.europeana.harvester.cluster.slave.processing.thumbnail;
 
+import eu.europeana.harvester.cluster.domain.ContentType;
+import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
 import eu.europeana.harvester.domain.MediaFile;
 import eu.europeana.harvester.domain.ThumbnailType;
 import gr.ntua.image.mediachecker.ImageInfo;
@@ -25,6 +27,10 @@ public class ThumbnailGenerator {
      * Creates a thumbnail of a downloaded image.
      */
     public final MediaFile createMediaFileWithThumbnail(final Integer expectedHeight,final Integer expectedWidth,final String currentProcessId,final String originalImageUrl,final byte[] originalImageContent,final String originalImagePath) throws Exception {
+        if (ContentType.IMAGE != MediaMetaDataUtils.classifyUrl(originalImagePath)) {
+            return null;
+        }
+
         final ImageInfo originalImageInfo = MediaChecker.getImageInfo(originalImagePath, colorMapPath);
         Integer thumbnailResizedToWidth = null;
         Integer thumbnailResizedToHeight = null;
