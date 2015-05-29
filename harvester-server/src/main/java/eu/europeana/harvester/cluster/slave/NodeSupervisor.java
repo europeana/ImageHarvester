@@ -102,7 +102,7 @@ public class NodeSupervisor extends UntypedActor {
         LOG.info("NodeSupervisor preStart");
 
         nodeMaster = context().system().actorOf(Props.create(NodeMasterActor.class,
-                masterSender, getSelf(), channelFactory, nodeMasterConfig, slaveDownloader,slaveLinkChecker,slaveProcessor, hashedWheelTimer, metrics),
+                masterSender, getSelf(), nodeMasterConfig, slaveDownloader,slaveLinkChecker,slaveProcessor, hashedWheelTimer, metrics),
                 "nodeMaster");
         context().watch(nodeMaster);
 
@@ -123,7 +123,7 @@ public class NodeSupervisor extends UntypedActor {
                 final StartedTask startedTask = new StartedTask(request.getId());
 
                 getSender().tell(startedTask, getSelf());
-                nodeMaster.tell(request, getSender());
+                nodeMaster.tell(new RetrieveUrlWithProcessingConfig(request,nodeMasterConfig.getPathToSave(),nodeMasterConfig.getSource()), getSender());
             }
 
             return;
@@ -199,7 +199,7 @@ public class NodeSupervisor extends UntypedActor {
         hashedWheelTimer.stop();
         hashedWheelTimer = new HashedWheelTimer();
         nodeMaster = context().system().actorOf(Props.create(NodeMasterActor.class,
-                masterSender, getSelf(), channelFactory, nodeMasterConfig,
+                masterSender, getSelf(), nodeMasterConfig,
                 mediaStorageClient, hashedWheelTimer), "nodeMaster");
         context().watch(nodeMaster);
     }

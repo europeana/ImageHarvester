@@ -31,11 +31,6 @@ public class NodeMasterActor extends UntypedActor {
     private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
 
     /**
-     * The channel factory used by netty to build the channel.
-     */
-    private final ChannelFactory channelFactory;
-
-    /**
      * The wheel timer usually shared across all clients.
      */
     private final HashedWheelTimer hashedWheelTimer;
@@ -90,8 +85,6 @@ public class NodeMasterActor extends UntypedActor {
 
     private Meter retrieve, doneDl, doneProc;
 
-    private boolean firstTime = true;
-
     private List<ActorRef> actors = new ArrayList<>() ;
 
     Long lastRequest;
@@ -109,7 +102,7 @@ public class NodeMasterActor extends UntypedActor {
     private final SlaveLinkChecker slaveLinkChecker;
 
     public NodeMasterActor(final ActorRef masterSender, final  ActorRef nodeSupervisor,
-                           final ChannelFactory channelFactory, final NodeMasterConfig nodeMasterConfig,
+                           final NodeMasterConfig nodeMasterConfig,
                            final SlaveDownloader slaveDownloader,
                            final SlaveLinkChecker slaveLinkChecker,
                            final SlaveProcessor slaveProcessor,
@@ -118,14 +111,12 @@ public class NodeMasterActor extends UntypedActor {
 
         this.masterSender = masterSender;
         this.nodeSupervisor = nodeSupervisor;
-        this.channelFactory = channelFactory;
         this.nodeMasterConfig = nodeMasterConfig;
 
         this.hashedWheelTimer = hashedWheelTimer;
         this.jobsToStop = new HashSet<>();
 
         this.sentRequest = false;
-        this.firstTime = true;
         this.metrics = metrics;
         this.maxSlaves = nodeMasterConfig.getNrOfDownloaderSlaves();
 
@@ -191,7 +182,7 @@ public class NodeMasterActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
 
-        if(message instanceof RetrieveUrl) {
+        if(message instanceof RetrieveUrlWithProcessingConfig) {
 
             messages.add(message);
 
