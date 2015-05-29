@@ -142,7 +142,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == ResponseState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
                     response, task.getDocumentReferenceTask(), task.getIpAddress());
-            LOG.error("Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(),taskWithProcessingConfig.getDownloadPath());
+            LOG.info("Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(),taskWithProcessingConfig.getDownloadPath());
 
         } catch (Exception e) {
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), ProcessingState.ERROR,
