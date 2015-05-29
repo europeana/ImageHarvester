@@ -132,9 +132,12 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
         // Step 1 : Execute retrieval (download OR link checking) + send confirmation when it's done
         System.out.println("Starting retrieval of "+ task.getUrl());
+        final Timer.Context ctx = dresponses.time();
 
         try {
+
             response = executeRetrieval(task);
+
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == ResponseState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
                     response, task.getDocumentReferenceTask(), task.getIpAddress());
             LOG.error("Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(),taskWithProcessingConfig.getDownloadPath());
@@ -147,9 +150,12 @@ public class RetrieveAndProcessActor extends UntypedActor {
         } finally {
             sender.tell(doneDownloadMessage, getSelf());
         }
+        ctx.stop();
 
         // Step 2 : Execute processing + send confirmation when it's done
         DoneProcessing doneProcessingMessage = null;
+        final Timer.Context ctx2 = responses.time();
+        LOG.info("response state is {}, response log {}", response.getState(), response.getLog());
         if (response.getState() == ResponseState.COMPLETED && task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.CHECK_LINK) {
             ProcessingResultTuple processingResultTuple;
             try {
@@ -177,6 +183,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                     null,
                     null);
         }
+        ctx2.stop();
 
         sender.tell(doneProcessingMessage, getSelf());
 

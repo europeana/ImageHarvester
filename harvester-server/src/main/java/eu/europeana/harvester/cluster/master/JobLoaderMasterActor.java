@@ -174,6 +174,7 @@ public class JobLoaderMasterActor extends UntypedActor {
     }
 
     private void getIPDistribution() {
+        LOG.info("Trying to load the IP distribution...");
         Page pg = new Page (0,100000);
         List<MachineResourceReference> machines = machineResourceReferenceDao.getAllMachineResourceReferences(pg);
         this.ipDistribution = new HashMap<>();

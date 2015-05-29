@@ -61,12 +61,7 @@ public class SlaveDownloader {
                 }
 
 
-                if (connectionSetupDurationInMillis > task.getHttpRetrieveConfig().getTerminationThresholdReadPerSecondInBytes()) {
-                    /* Initial connection setup time longer than threshold. */
-                    httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Download aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured total download duration threshold" + task.getHttpRetrieveConfig().getTerminationThresholdTimeLimit() + " ms");
-                    return STATE.ABORT;
-                }
+
                     /* We don't care what kind of status code it has at this moment as we will decide what to
                      * do on it only after the response headers have been received.
                      */
