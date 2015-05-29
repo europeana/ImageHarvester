@@ -14,6 +14,10 @@ import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
 import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkChecker;
 import eu.europeana.harvester.cluster.slave.processing.ProcessingResultTuple;
 import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
+import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
+import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
+import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
+import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
@@ -32,14 +36,13 @@ import static com.codahale.metrics.MetricRegistry.name;
  */
 public class RetrieveAndProcessActor extends UntypedActor {
 
-    public static final ActorRef createActor(final UntypedActorContext context,
+    public static final ActorRef createActor(final ActorSystem system,
                                              final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
-                                             final SlaveDownloader slaveDownloader,
-                                             final SlaveLinkChecker slaveLinkChecker,
-                                             final SlaveProcessor slaveProcessor,
+                                             final MediaStorageClient mediaStorageClient,
+                                             final String colorMapPath,
                                              MetricRegistry metrics) {
-        return context.system().actorOf(Props.create(RetrieveAndProcessActor.class,
-                httpRetrieveResponseFactory, slaveDownloader, slaveLinkChecker, slaveProcessor,
+        return system.actorOf(Props.create(RetrieveAndProcessActor.class,
+                httpRetrieveResponseFactory,colorMapPath,mediaStorageClient,
                 metrics));
     }
 
@@ -73,16 +76,15 @@ public class RetrieveAndProcessActor extends UntypedActor {
     private final SlaveLinkChecker slaveLinkChecker;
 
     public RetrieveAndProcessActor(final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
-                                   final SlaveDownloader slaveDownloader,
-                                   final SlaveLinkChecker slaveLinkChecker,
-                                   final SlaveProcessor slaveProcessor,
-                                   MetricRegistry metrics) {
+                                   final String colorMapPath,
+                                   final MediaStorageClient mediaStorageClient,
+                                   final MetricRegistry metrics) {
 
         this.httpRetrieveResponseFactory = httpRetrieveResponseFactory;
         this.metrics = metrics;
-        this.slaveProcessor = slaveProcessor;
-        this.slaveDownloader = slaveDownloader;
-        this.slaveLinkChecker = slaveLinkChecker;
+        this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(colorMapPath),new ThumbnailGenerator(colorMapPath), new ColorExtractor(colorMapPath),mediaStorageClient, LOG);
+        this.slaveDownloader = new SlaveDownloader(org.apache.logging.log4j.LogManager.getLogger(SlaveDownloader.class.getName()));
+        this.slaveLinkChecker = new SlaveLinkChecker(org.apache.logging.log4j.LogManager.getLogger(SlaveLinkChecker.class.getName()));
 
         responses = metrics.timer(name("ProcessorSlave", "Download responses"));
         dresponses = metrics.timer(name("ProcessorSlave", "Process responses"));

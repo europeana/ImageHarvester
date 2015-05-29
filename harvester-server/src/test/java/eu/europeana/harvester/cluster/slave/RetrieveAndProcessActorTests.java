@@ -2,7 +2,6 @@ package eu.europeana.harvester.cluster.slave;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.Props;
 import akka.testkit.JavaTestKit;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Lists;
@@ -10,19 +9,11 @@ import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrlWithProcessingConfig;
-import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
-import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkChecker;
-import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
-import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
-import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
-import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
-import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.commons.io.FileUtils;
 import org.joda.time.Duration;
 import org.junit.AfterClass;
@@ -32,10 +23,10 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 public class RetrieveAndProcessActorTests {
 
@@ -52,11 +43,6 @@ public class RetrieveAndProcessActorTests {
     final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
     static ActorSystem system;
-
-    private static SlaveDownloader slaveDownloader = new SlaveDownloader(org.apache.logging.log4j.LogManager.getLogger(SlaveDownloader.class.getName()));
-    private static SlaveLinkChecker slaveLinkChecker = new SlaveLinkChecker(org.apache.logging.log4j.LogManager.getLogger(SlaveLinkChecker.class.getName()));
-    private static SlaveProcessor slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP), new ThumbnailGenerator(PATH_COLORMAP), new ColorExtractor(PATH_COLORMAP), client,
-            null);
 
     private static MetricRegistry metrics = new MetricRegistry();
 
@@ -114,11 +100,8 @@ public class RetrieveAndProcessActorTests {
      * or use Within(), etc.
      */
         new JavaTestKit(system) {{
-            final Props props = Props.create(RetrieveAndProcessActor.class,
-                                    httpRetrieveResponseFactory, slaveDownloader, slaveLinkChecker, slaveProcessor,
-                                     metrics);
 
-            final ActorRef subject = system.actorOf(props);
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP,metrics);
 
             subject.tell(taskWithConfig, getRef());
 

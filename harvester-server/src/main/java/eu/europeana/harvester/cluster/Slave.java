@@ -149,8 +149,8 @@ public class Slave {
 
         final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
 
-        system.actorOf(Props.create(NodeSupervisor.class, slave, masterSender, channelFactory, nodeMasterConfig,
-                        mediaStorageClient, metrics), "nodeSupervisor");
+        NodeSupervisor.createActor(system, slave, masterSender, channelFactory, nodeMasterConfig,
+                mediaStorageClient, metrics);
 
         //system.actorOf(Props.create(MetricsListener.class), "metricsListener");
     }
