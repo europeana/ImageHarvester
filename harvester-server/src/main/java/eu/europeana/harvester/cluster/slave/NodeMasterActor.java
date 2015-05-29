@@ -58,12 +58,6 @@ public class NodeMasterActor extends UntypedActor {
     private ActorRef masterSender;
 
     /**
-     * Reference to the ping master actor.
-     * We need this to send him back statistics about the ping, error messages or any other type of message.
-     */
-    private ActorRef pingMaster;
-
-    /**
      * List of unprocessed messages.
      */
     private final Queue<Object> messages = new LinkedList<>();
@@ -157,9 +151,6 @@ public class NodeMasterActor extends UntypedActor {
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
         LOG.info("NodeMasterActor preRestart");
-
-
-        getContext().system().stop(pingerRouter);
 
 
     }
@@ -294,18 +285,6 @@ public class NodeMasterActor extends UntypedActor {
             }
 
             doneProc.mark();
-
-            return;
-        }
-        if(message instanceof StartPing) {
-            pingMaster = getSender();
-
-            pingerRouter.tell(message, getSelf());
-
-            return;
-        }
-        if(message instanceof DonePing) {
-            pingMaster.tell(message, getSelf());
 
             return;
         }
