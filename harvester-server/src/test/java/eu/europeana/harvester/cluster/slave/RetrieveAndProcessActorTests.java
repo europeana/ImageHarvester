@@ -63,6 +63,7 @@ public class RetrieveAndProcessActorTests {
     @BeforeClass
     public static void setup() throws IOException {
         FileUtils.forceMkdir(new File(FILESYSTEM_PATH_PREFIX));
+        FileUtils.forceMkdir(new File(PROCESSING_PATH_PREFIX));
         system = ActorSystem.create();
     }
 
@@ -70,12 +71,12 @@ public class RetrieveAndProcessActorTests {
     public static void teardown() throws IOException {
         system.shutdown();
         FileUtils.deleteDirectory(new File(FILESYSTEM_PATH_PREFIX));
+        FileUtils.deleteDirectory(new File(PROCESSING_PATH_PREFIX));
     }
 
     @Test
     public void canRetreievAndProcessTypicalJob() throws Exception {
 
-        final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
         final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(
                 Duration.millis(0),
                 0l,
@@ -106,7 +107,7 @@ public class RetrieveAndProcessActorTests {
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null);
 
-        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+"/"+task.getId(),"Testing actor");
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId(),"Testing actor");
     /*
      * Wrap the whole test procedure within a testkit
      * initializer if you want to receive actor replies
