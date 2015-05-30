@@ -40,7 +40,7 @@ public class MigratorEuropeanaDao {
     public final Map<String, String> retrieveRecordsIdsFromCursor(final DBCursor recordCursor,int batchSize) {
         final Map<String, String> records = new HashMap<>();
         int i = 0;
-        while (recordCursor.hasNext() || (i >= batchSize)) {
+        while (recordCursor.hasNext() && (i < batchSize)) {
             final BasicDBObject item = (BasicDBObject) recordCursor.next();
             final String about = (String) item.get("about");
             final BasicDBList collNames = (BasicDBList) item.get("europeanaCollectionName");
@@ -57,7 +57,7 @@ public class MigratorEuropeanaDao {
         final BasicDBObject recordFields = new BasicDBObject();
 
         if (null != moreRecentThan) {
-            filterByTimestampQuery = QueryBuilder.start().put("timestampUpdated").greaterThanEquals(moreRecentThan).get();
+            filterByTimestampQuery.put("timestampUpdated", new BasicDBObject("$gt", moreRecentThan));
             LOG.info("Query: " + filterByTimestampQuery);
         }
 

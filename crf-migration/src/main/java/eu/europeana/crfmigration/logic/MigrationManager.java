@@ -81,7 +81,7 @@ public class MigrationManager {
                 metrics.incErrorReadingRecord();
 
                 recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
-                recordCursor.skip(positionInRecordCollection - 1);
+                recordCursor.skip(positionInRecordCollection);
 
             }
         }
