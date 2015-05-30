@@ -270,6 +270,7 @@ public class MigrationManagerTest {
                     metrics,
                     dateFilter,
                     migratorConfig.getBatch());
+            migrationManager.migrate();
 
             for (final String name: MigratorMetrics.metricRegistry.getNames()) {
                 MigratorMetrics.metricRegistry.remove(name);
