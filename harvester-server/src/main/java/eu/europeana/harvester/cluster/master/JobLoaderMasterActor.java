@@ -22,8 +22,6 @@ import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
-import org.joda.time.Duration;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 
@@ -102,8 +100,7 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     private Timer loadJobs;
 
-    private long markLoad =0;
-
+    private long markLoad = 0;
 
 
     public JobLoaderMasterActor(final ActorRef receiverActor, final ClusterMasterConfig clusterMasterConfig,
@@ -114,7 +111,7 @@ public class JobLoaderMasterActor extends UntypedActor {
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
                                 final DefaultLimits defaultLimits,
                                 //final HashMap<String, MachineResourceReference> machineResourceReferences,
-                                final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions, final MetricRegistry metrics ) {
+                                final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions, final MetricRegistry metrics) {
         LOG.info("JobLoaderMasterActor constructor");
 
         this.receiverActor = receiverActor;
@@ -137,11 +134,10 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-        if(message instanceof LoadJobs) {
+        if (message instanceof LoadJobs) {
 
 
-
-            if ( markLoad == 0 || System.currentTimeMillis() - markLoad > 300000l ) {
+            if (markLoad == 0 || System.currentTimeMillis() - markLoad > 300000l) {
                 markLoad = System.currentTimeMillis();
                 final Timer.Context context = loadJobs.time();
                 try {
@@ -157,13 +153,13 @@ public class JobLoaderMasterActor extends UntypedActor {
 
             return;
         }
-        if(message instanceof LookInDB) {
+        if (message instanceof LookInDB) {
             updateLists();
 
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
                     TimeUnit.MINUTES), getSelf(), new LookInDB(), getContext().system().dispatcher(), getSelf());
         }
-        if(message instanceof Clean) {
+        if (message instanceof Clean) {
             LOG.info("Clean JobLoaderMasterActor");
             checkForAbandonedJobs();
             getIPDistribution();
@@ -175,15 +171,15 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     private void getIPDistribution() {
         LOG.info("Trying to load the IP distribution...");
-        Page pg = new Page (0,100000);
+        Page pg = new Page(0, 100000);
         List<MachineResourceReference> machines = machineResourceReferenceDao.getAllMachineResourceReferences(pg);
         this.ipDistribution = new HashMap<>();
 
-        for ( MachineResourceReference machine : machines )
+        for (MachineResourceReference machine : machines)
             ipDistribution.put(machine.getIp(), 0);
 
         LOG.info("IP distribution: ");
-        for(Map.Entry<String, Integer> ip : ipDistribution.entrySet()) {
+        for (Map.Entry<String, Integer> ip : ipDistribution.entrySet()) {
             LOG.info("{}: {}", ip.getKey(), ip.getValue());
             //machineResourceReferenceDao.createOrModify(new MachineResourceReference(ip.getKey()), WriteConcern.NORMAL);
         }
@@ -210,17 +206,16 @@ public class JobLoaderMasterActor extends UntypedActor {
     private void checkForNewJobs() {
         final int taskSize = getAllTasks();
 
-        if (taskSize<clusterMasterConfig.getMaxTasksInMemory() ) {
+        if (taskSize < clusterMasterConfig.getMaxTasksInMemory()) {
             //don't load for IPs that are overloaded
             ArrayList<String> noLoadIPs = getOverLoadedIPList(1000);
-            HashMap < String, Integer > tempDistribution = new HashMap<>(ipDistribution);
-            if ( noLoadIPs != null ) {
-                for (String ip : noLoadIPs ) {
+            HashMap<String, Integer> tempDistribution = new HashMap<>(ipDistribution);
+            if (noLoadIPs != null) {
+                for (String ip : noLoadIPs) {
                     if (tempDistribution.containsKey(ip))
                         tempDistribution.remove(ip);
                 }
             }
-
 
 
             LOG.info("========== Looking for new jobs from MongoDB ==========");
@@ -257,12 +252,12 @@ public class JobLoaderMasterActor extends UntypedActor {
             for (final ProcessingJob job : all) {
                 try {
 
-                        i++;
-                        if (i >= 500) {
-                            LOG.info("Done with another 500 jobs out of {}", all.size());
-                            i = 0;
-                        }
-                        addJob(job, resources);
+                    i++;
+                    if (i >= 500) {
+                        LOG.info("Done with another 500 jobs out of {}", all.size());
+                        i = 0;
+                    }
+                    addJob(job, resources);
 
                 } catch (Exception e) {
                     LOG.error("JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());
@@ -272,15 +267,15 @@ public class JobLoaderMasterActor extends UntypedActor {
             LOG.info("Checking IPs with no jobs in database");
 
             ArrayList<String> noJobsIPs = new ArrayList<>();
-            List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0,10000));
+            List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0, 10000));
 
-            for ( Map.Entry<String,Boolean> entry : ipsWithJobs.entrySet() ) {
+            for (Map.Entry<String, Boolean> entry : ipsWithJobs.entrySet()) {
                 if (!entry.getValue()) {
                     noJobsIPs.add(entry.getKey());
                     ipDistribution.remove(entry.getKey());
                     LOG.info("Found IP with no loaded tasks from DB: {}, removing it from IP distribution", entry.getKey());
-                    for ( MachineResourceReference machine : ips) {
-                        if (machine.getIp()==entry.getKey()) {
+                    for (MachineResourceReference machine : ips) {
+                        if (machine.getIp() == entry.getKey()) {
                             machineResourceReferenceDao.delete(machine.getId());
                             ips.remove(machine);
                         }
@@ -290,13 +285,13 @@ public class JobLoaderMasterActor extends UntypedActor {
             }
 
 
-            for ( MachineResourceReference machine : ips) {
+            for (MachineResourceReference machine : ips) {
                 if (!ipDistribution.containsKey(machine.getIp())) {
-                    ipDistribution.put(machine.getIp(),0);
+                    ipDistribution.put(machine.getIp(), 0);
                 }
             }
 
-            if (noJobsIPs.size()>0) {
+            if (noJobsIPs.size() > 0) {
                 LOG.info("Found {} IPs with no jobs loaded from the database, removing them if no jobs in progress", noJobsIPs.size());
                 accountantActor.tell(new CleanIPs(noJobsIPs), ActorRef.noSender());
             }
@@ -305,7 +300,7 @@ public class JobLoaderMasterActor extends UntypedActor {
     }
 
 
-    private int getAllTasks(){
+    private int getAllTasks() {
         final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
         final Future<Object> future = Patterns.ask(accountantActor, new GetNumberOfTasks(), timeout);
         int tasks = 0;
@@ -318,7 +313,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         return tasks;
     }
 
-    private ArrayList<String> getOverLoadedIPList( int threshold){
+    private ArrayList<String> getOverLoadedIPList(int threshold) {
         final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(30, TimeUnit.SECONDS));
         final Future<Object> future = Patterns.ask(accountantActor, new GetOverLoadedIPs(threshold), timeout);
         ArrayList<String> ips = null;
@@ -340,8 +335,8 @@ public class JobLoaderMasterActor extends UntypedActor {
         final List<ProcessingJob> all = processingJobDao.getJobsWithState(JobState.PAUSE, page);
 
         for (final ProcessingJob job : all) {
-            for(Map.Entry elem : actorsPerAddress.entrySet()) {
-                for(final ActorRef actor : (HashSet<ActorRef>)elem.getValue()) {
+            for (Map.Entry elem : actorsPerAddress.entrySet()) {
+                for (final ActorRef actor : (HashSet<ActorRef>) elem.getValue()) {
                     actor.tell(new ChangeJobState(JobState.PAUSE, job.getId()), receiverActor);
                 }
             }
@@ -362,23 +357,23 @@ public class JobLoaderMasterActor extends UntypedActor {
         final List<ProcessingJob> all = processingJobDao.getJobsWithState(JobState.RESUME, page);
 
         final List<String> resourceIds = new ArrayList<>();
-        for(final ProcessingJob job : all) {
-            for(final ProcessingJobTaskDocumentReference task : job.getTasks()) {
+        for (final ProcessingJob job : all) {
+            for (final ProcessingJobTaskDocumentReference task : job.getTasks()) {
                 final String resourceId = task.getSourceDocumentReferenceID();
                 resourceIds.add(resourceId);
             }
         }
         final Map<String, SourceDocumentReference> resources = new HashMap<>();
-        if(resourceIds.size() != 0) {
+        if (resourceIds.size() != 0) {
             final List<SourceDocumentReference> sourceDocumentReferences = sourceDocumentReferenceDao.read(resourceIds);
             for (SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
                 resources.put(sourceDocumentReference.getId(), sourceDocumentReference);
             }
         }
 
-        for(final ProcessingJob job : all) {
-            for(Map.Entry elem : actorsPerAddress.entrySet()) {
-                for(final ActorRef actor : (HashSet<ActorRef>)elem.getValue()) {
+        for (final ProcessingJob job : all) {
+            for (Map.Entry elem : actorsPerAddress.entrySet()) {
+                for (final ActorRef actor : (HashSet<ActorRef>) elem.getValue()) {
                     actor.tell(new ChangeJobState(JobState.RESUME, job.getId()), receiverActor);
                 }
             }
@@ -395,7 +390,7 @@ public class JobLoaderMasterActor extends UntypedActor {
                 LOG.error("Error in checkForResumedJobs->IsJobLoaded: {}", e);
             }
 
-            if(isLoaded) {
+            if (isLoaded) {
                 accountantActor.tell(new ResumeTasks(job.getId()), getSelf());
             } else {
                 addJob(job, resources);
@@ -405,6 +400,7 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     /**
      * Adds a job and its tasks to our evidence.
+     *
      * @param job the ProcessingJob object
      */
     private void addJob(final ProcessingJob job, final Map<String, SourceDocumentReference> resources) {
@@ -414,22 +410,23 @@ public class JobLoaderMasterActor extends UntypedActor {
         processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
 
         final List<String> taskIDs = new ArrayList<>();
-        for(final ProcessingJobTaskDocumentReference task : tasks) {
+        for (final ProcessingJobTaskDocumentReference task : tasks) {
             final String ID = processTask(job, task, resources);
-            if(ID != null) {
+            if (ID != null) {
                 taskIDs.add(ID);
             }
         }
 
-        if (tasks.size() > 10 )
-            LOG.info("Loaded {} tasks for jobID {} on IP {}",tasks.size(),job.getId(), job.getIpAddress());
+        if (tasks.size() > 10)
+            LOG.info("Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
         accountantActor.tell(new AddTasksToJob(job.getId(), taskIDs), getSelf());
     }
 
     /**
      * Loads the task and all needed resources for that task.
-     * @param job the job which contains the task
+     *
+     * @param job  the job which contains the task
      * @param task the concrete task to load
      * @return generated task ID
      */
@@ -438,18 +435,13 @@ public class JobLoaderMasterActor extends UntypedActor {
         final String sourceDocId = task.getSourceDocumentReferenceID();
 
         final SourceDocumentReference sourceDocumentReference = resources.get(sourceDocId);
-        if(sourceDocumentReference == null) {
+        if (sourceDocumentReference == null) {
             return null;
         }
 
         final String ipAddress = job.getIpAddress();
-        final Long speedLimitPerLink = getSpeed(ipAddress);
 
-        final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(100l),
-                speedLimitPerLink, speedLimitPerLink,  Duration.millis(600000l),5000l /* 5 KB / sec */, 0l, true, task.getTaskType(),
-                defaultLimits.getConnectionTimeoutInMillis(), defaultLimits.getMaxNrOfRedirects());
-
-        final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), httpRetrieveConfig,
+        final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), job.getLimits(), task.getTaskType(),
                 job.getId(), task.getSourceDocumentReferenceID(),
                 getHeaders(task.getTaskType(), sourceDocumentReference), task, ipAddress);
 
@@ -462,10 +454,10 @@ public class JobLoaderMasterActor extends UntypedActor {
             LOG.error("Error in checkForResumedJobs->GetTasksFromIP: {}", e);
         }
 
-        if(tasksFromIP == null) {
+        if (tasksFromIP == null) {
             tasksFromIP = new ArrayList<>();
         } else {
-            if(tasksFromIP.contains(retrieveUrl.getId())) {
+            if (tasksFromIP.contains(retrieveUrl.getId())) {
                 return null;
             }
         }
@@ -479,12 +471,13 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     /**
      * Calculates the allowed download speed.
+     *
      * @param ipAddress
      * @return the download speed
      */
     private Long getSpeed(final String ipAddress) {
         Long speedLimitPerLink;
-        if(ipExceptions.getIps().contains(ipAddress)) {
+        if (ipExceptions.getIps().contains(ipAddress)) {
             speedLimitPerLink = defaultLimits.getDefaultBandwidthLimitReadInBytesPerSec() /
                     ipExceptions.getMaxConcurrentConnectionsLimit();
         } else {
@@ -497,19 +490,20 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     /**
      * Returns the headers of a source document if we already retrieved that at least once.
+     *
      * @param documentReferenceTaskType task type
-     * @param newDoc source document object
+     * @param newDoc                    source document object
      * @return list of headers
      */
     private Map<String, String> getHeaders(final DocumentReferenceTaskType documentReferenceTaskType,
                                            final SourceDocumentReference newDoc) {
         Map<String, String> headers = null;
 
-        if(documentReferenceTaskType == null) {
+        if (documentReferenceTaskType == null) {
             return null;
         }
 
-        if((DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD).equals(documentReferenceTaskType)) {
+        if ((DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD).equals(documentReferenceTaskType)) {
             final String statisticsID = newDoc.getLastStatsId();
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                     sourceDocumentProcessingStatisticsDao.read(statisticsID);

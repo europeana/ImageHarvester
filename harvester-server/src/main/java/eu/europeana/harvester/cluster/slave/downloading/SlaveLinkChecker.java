@@ -29,7 +29,7 @@ public class SlaveLinkChecker {
         }
 
         final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(new AsyncHttpClientConfig.Builder()
-                .setMaxRedirects(task.getHttpRetrieveConfig().getMaxNrOfRedirects())
+                .setMaxRedirects(task.getLimits().getRetrievalMaxNrOfRedirects())
                 .setFollowRedirect(true)
                 .setConnectTimeout(100000)
                 .setAcceptAnyCertificate(true)
@@ -53,18 +53,18 @@ public class SlaveLinkChecker {
                 httpRetrieveResponse.setUrl(new URL(task.getUrl()));
                 httpRetrieveResponse.setSourceIp(NetUtils.ipOfUrl(task.getUrl()));
 
-                if (connectionSetupDurationInMillis > task.getHttpRetrieveConfig().getConnectionTimeoutInMillis()) {
+                if (connectionSetupDurationInMillis > task.getLimits().getRetrievalConnectionTimeoutInMillis()) {
                     /* Initial connection setup time longer than threshold. */
                     httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured  " + task.getHttpRetrieveConfig().getConnectionTimeoutInMillis() + " ms");
+                    httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
                     return STATE.ABORT;
                 }
 
 
-                if (connectionSetupDurationInMillis > task.getHttpRetrieveConfig().getTerminationThresholdReadPerSecondInBytes()) {
+                if (connectionSetupDurationInMillis > task.getLimits().getRetrievalTerminationThresholdReadPerSecondInBytes()) {
                     /* Initial connection setup time longer than threshold. */
                     httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured total download duration threshold" + task.getHttpRetrieveConfig().getTerminationThresholdTimeLimit() + " ms");
+                    httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured total download duration threshold" + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
                     return STATE.ABORT;
                 }
                     /* We don't care what kind of status code it has at this moment as we will decide what to
@@ -111,10 +111,10 @@ public class SlaveLinkChecker {
 
                 // Check if the tim threshold limit was exceeded & save that information.
                 final long downloadDurationInMillis = System.currentTimeMillis() - connectionSetupStartTimestamp;
-                if (downloadDurationInMillis > task.getHttpRetrieveConfig().getTerminationThresholdTimeLimit().getMillis()) {
+                if (downloadDurationInMillis > task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis()) {
                     /* Download duration longer than threshold. */
                     httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Link checking aborted as it's duration " + downloadDurationInMillis + " ms was greater than maximum configured  " + task.getHttpRetrieveConfig().getTerminationThresholdTimeLimit().getMillis() + " ms");
+                    httpRetrieveResponse.setLog("Link checking aborted as it's duration " + downloadDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + " ms");
                 }
 
                 // Check if it was aborted because of conditional download with with same headers.

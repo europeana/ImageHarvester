@@ -12,10 +12,8 @@ import eu.europeana.harvester.cluster.domain.messages.RetrieveUrlWithProcessingC
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import org.apache.commons.io.FileUtils;
-import org.joda.time.Duration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -63,17 +61,6 @@ public class RetrieveAndProcessActorTests {
     @Test
     public void canRetreievAndProcessTypicalJob() throws Exception {
 
-        final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(
-                Duration.millis(0),
-                0l,
-                0l,
-                5*1000l, /* terminationThresholdReadPerSecondInBytes */
-                Duration.standardSeconds(10) /* terminationThresholdTimeLimit */,
-                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, /* taskType */
-                (int)Duration.standardSeconds(10).getMillis() /* connectionTimeoutInMillis */,
-                10 /* maxNrOfRedirects */
-        );
-
         final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
         final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
         final ProcessingJobSubTask smallThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(180,180)));
@@ -88,7 +75,7 @@ public class RetrieveAndProcessActorTests {
                 largeThumbnailExtractionSubTask
         );
 
-        final RetrieveUrl task = new RetrieveUrl("id-1", text1GitHubUrl, httpRetrieveConfig, "jobid-1",
+        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null);

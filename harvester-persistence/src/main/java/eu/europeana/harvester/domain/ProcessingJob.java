@@ -47,6 +47,11 @@ public class ProcessingJob {
      */
     private final String ipAddress;
 
+    /**
+     * The hard limits on the retrieval & processing stages of the job.
+     */
+    private final ProcessingJobLimits limits;
+
     public ProcessingJob() {
         this.id = null;
         this.priority = null;
@@ -54,6 +59,7 @@ public class ProcessingJob {
         this.referenceOwner = null;
         this.tasks = null;
         this.state = null;
+        this.limits = new ProcessingJobLimits();
         this.ipAddress = null;
     }
 
@@ -66,11 +72,24 @@ public class ProcessingJob {
         this.referenceOwner = referenceOwner;
         this.tasks = tasks;
         this.state = state;
+        this.limits = new ProcessingJobLimits();;
+    }
+
+    public ProcessingJob(final Integer priority, final Date expectedStartDate, final ReferenceOwner referenceOwner,
+                         final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress,ProcessingJobLimits limits) {
+        this.priority = priority;
+        this.ipAddress = ipAddress;
+        this.id = UUID.randomUUID().toString();
+        this.expectedStartDate = expectedStartDate;
+        this.referenceOwner = referenceOwner;
+        this.tasks = tasks;
+        this.state = state;
+        this.limits = limits;
     }
 
     public ProcessingJob(final String id, final Integer priority, final Date expectedStartDate,
                          final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks,
-                         final JobState state, String ipAddress) {
+                         final JobState state, String ipAddress,ProcessingJobLimits limits) {
         this.id = id;
         this.priority = priority;
         this.expectedStartDate = expectedStartDate;
@@ -78,6 +97,7 @@ public class ProcessingJob {
         this.tasks = tasks;
         this.state = state;
         this.ipAddress = ipAddress;
+        this.limits = limits;
     }
 
     public String getId() {
@@ -108,8 +128,17 @@ public class ProcessingJob {
         return ipAddress;
     }
 
+    public ProcessingJobLimits getLimits() {
+        if (limits == null) return new ProcessingJobLimits(); /* Repair on Read if missing */
+        else return limits;
+    }
+
     public ProcessingJob withState(JobState state) {
-        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress);
+        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress, limits);
+    }
+
+    public ProcessingJob withLimits(ProcessingJobLimits limits) {
+        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress, limits);
     }
 
 }

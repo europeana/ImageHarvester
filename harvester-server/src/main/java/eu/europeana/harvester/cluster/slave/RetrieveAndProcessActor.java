@@ -256,7 +256,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
     }
 
     private long computeMaximumRetrievalAndProcessingDurationInMinutes(RetrieveUrl retrieveUrl) {
-        return retrieveUrl.getHttpRetrieveConfig().getTerminationThresholdTimeLimit().getStandardMinutes() + 10;
+        return Duration.create(retrieveUrl.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis()+retrieveUrl.getLimits().getProcessingTerminationThresholdTimeLimitInMillis(),TimeUnit.MILLISECONDS).toMinutes();
     }
 
 }

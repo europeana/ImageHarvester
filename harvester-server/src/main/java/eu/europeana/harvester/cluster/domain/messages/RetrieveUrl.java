@@ -1,7 +1,8 @@
 package eu.europeana.harvester.cluster.domain.messages;
 
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
+import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
-import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -22,9 +23,9 @@ public class RetrieveUrl implements Serializable {
     private final String url;
 
     /**
-     * Contains all the necessary config information.
+     * Contains all the retrieval & processing limits.
      */
-    private final HttpRetrieveConfig httpRetrieveConfig;
+    private final ProcessingJobLimits limits;
 
     /**
      * The caller jobs id.
@@ -48,12 +49,18 @@ public class RetrieveUrl implements Serializable {
 
     private final String ipAddress;
 
-    public RetrieveUrl(final String id, final String url, final HttpRetrieveConfig httpRetrieveConfig, final String jobId,
+    /**
+     * The specific task type: check limit, conditional or unconditional download.
+     */
+    private final DocumentReferenceTaskType taskType;
+
+    public RetrieveUrl(final String id, final String url,final DocumentReferenceTaskType taskType, final ProcessingJobLimits limits, final String jobId,
                        final String referenceId, final Map<String, String> headers,
                        final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress) {
         this.id = id;
         this.url = url;
-        this.httpRetrieveConfig = httpRetrieveConfig;
+        this.taskType = taskType;
+        this.limits = limits;
         this.jobId = jobId;
         this.referenceId = referenceId;
         this.headers = headers;
@@ -61,12 +68,13 @@ public class RetrieveUrl implements Serializable {
         this.ipAddress = ipAddress;
     }
 
-    public RetrieveUrl(final String url, final HttpRetrieveConfig httpRetrieveConfig, final String jobId,
+    public RetrieveUrl(final String url, final ProcessingJobLimits limits,DocumentReferenceTaskType taskType, final String jobId,
                        final String referenceId, final Map<String, String> headers,
                        final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress) {
         this.id = UUID.randomUUID().toString();
         this.url = url;
-        this.httpRetrieveConfig = httpRetrieveConfig;
+        this.limits = limits;
+        this.taskType = taskType;
         this.jobId = jobId;
         this.referenceId = referenceId;
         this.headers = headers;
@@ -78,10 +86,9 @@ public class RetrieveUrl implements Serializable {
         return url;
     }
 
-    public HttpRetrieveConfig getHttpRetrieveConfig() {
-        return httpRetrieveConfig;
+    public ProcessingJobLimits getLimits() {
+        return limits;
     }
-
     public String getJobId() {
         return jobId;
     }
@@ -107,7 +114,7 @@ public class RetrieveUrl implements Serializable {
         return new HashCodeBuilder(17, 31). // two randomly chosen prime numbers
                 append(jobId).
                 append(referenceId).
-                append(httpRetrieveConfig.getTaskType()).
+                append(taskType).
                 toHashCode();
     }
 
@@ -130,4 +137,7 @@ public class RetrieveUrl implements Serializable {
         return id;
     }
 
+    public DocumentReferenceTaskType getTaskType() {
+        return taskType;
+    }
 }

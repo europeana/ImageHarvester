@@ -74,7 +74,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                     getSender().tell(retrieveUrl, getSelf());
                     return;
                 }
-                RetrieveUrl retrieveUrl = new RetrieveUrl("", "", null, "", "", null, null, "");
+                RetrieveUrl retrieveUrl = new RetrieveUrl("", null, null, "", "", null, null, "");
                 getSender().tell(retrieveUrl, getSelf());
                 return;
             }
@@ -217,7 +217,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final int exceptionLimit = m.getExceptionLimit();
                 final String taskID = m.getTaskID();
 
-                RetrieveUrl retrieveUrl = new RetrieveUrl("", "", null, "", "", null, null, "");
+                RetrieveUrl retrieveUrl = new RetrieveUrl("", null, null, "", "", null, null, "");
                 List<String> tasksFromIP = null;
 
                 final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));

@@ -10,18 +10,15 @@ import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenera
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.harvester.httpclient.HttpRetrieveConfig;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import gr.ntua.image.mediachecker.MediaChecker;
-import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import  org.apache.logging.log4j.LogManager;
-import org.joda.time.Duration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -87,17 +84,10 @@ public class SlaveProcessorTest {
 
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathToStore);
 
-        final HttpRetrieveConfig httpRetrieveConfig = new HttpRetrieveConfig(Duration.millis(0),
-                                                                             0l,
-                                                                             0l,
-                                                                             5 * 1000l, /* terminationThresholdReadPerSecondInBytes */
-                                                                             Duration.standardSeconds(15) /* terminationThresholdTimeLimit */,
-                                                                             DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, /* taskType */
-                                                                             (int) Duration.standardSeconds(10).getMillis() /* connectionTimeoutInMillis */,
-                                                                             10 /* maxNrOfRedirects */);
-        final RetrieveUrl task = new RetrieveUrl("id-1",
+        final RetrieveUrl task = new RetrieveUrl(
                                                  url,
-                                                 httpRetrieveConfig,
+                                                 new ProcessingJobLimits(),
+                                                DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                                                  "jobid-1",
                                                  "referenceid-1", Collections.<String, String>emptyMap(),
                                                  taskDocumentReference,
