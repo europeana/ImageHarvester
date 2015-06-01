@@ -93,11 +93,11 @@ public class RetrieveAndProcessActorTests {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = (DoneDownload)expectMsgAnyClassOf(DoneDownload.class);
+            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
             assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneProcessing msg2 = (DoneProcessing)expectMsgAnyClassOf(DoneProcessing.class);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
             assertEquals(msg2.getImageMetaInfo().getWidth().intValue(),2500);
             assertEquals(msg2.getImageMetaInfo().getHeight().intValue(),1737);

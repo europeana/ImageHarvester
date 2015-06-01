@@ -172,17 +172,12 @@ class Master {
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
                 sourceDocumentReferenceMetaInfoDao, defaultLimits,
                 cleanupInterval, metrics ), "clusterMaster");
-
-//        pingMaster = system.actorOf(Props.create(PingMasterActor.class, pingMasterConfig, router,
-//                machineResourceReferenceDao, machineResourceReferenceStatDao), "pingMaster");
     }
 
     public void start() {
         clusterMaster.tell(new LoadJobs(), ActorRef.noSender());
         clusterMaster.tell(new Monitor(), ActorRef.noSender());
         clusterMaster.tell(new CheckForTaskTimeout(), ActorRef.noSender());
-
-        //pingMaster.tell(new LookInDB(), ActorRef.noSender());
     }
 
     public ActorSystem getActorSystem() {

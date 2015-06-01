@@ -11,16 +11,7 @@ import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.Slave;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
-import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
-import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkChecker;
-import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
-import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
-import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
-import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
-import org.apache.logging.log4j.LogManager;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.util.HashedWheelTimer;
 
 import java.util.concurrent.TimeUnit;
 
@@ -29,16 +20,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class NodeSupervisor extends UntypedActor {
 
-        public static ActorRef createActor(final ActorSystem system,final Slave slave, final ActorRef masterSender, final ChannelFactory channelFactory,
+        public static ActorRef createActor(final ActorSystem system,final Slave slave, final ActorRef masterSender,
                                        final NodeMasterConfig nodeMasterConfig, final MediaStorageClient mediaStorageClient, MetricRegistry metrics) {
-        return system.actorOf(Props.create(NodeSupervisor.class, slave, masterSender, channelFactory, nodeMasterConfig,
+        return system.actorOf(Props.create(NodeSupervisor.class, slave, masterSender, nodeMasterConfig,
                 mediaStorageClient, metrics), "nodeSupervisor");
 
     }
 
     private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
-
-    private HashedWheelTimer hashedWheelTimer = new HashedWheelTimer();
 
     /**
      * Reference to the cluster master actor.
@@ -47,11 +36,6 @@ public class NodeSupervisor extends UntypedActor {
     private final ActorRef masterSender;
 
     private final Slave slave;
-
-    /**
-     * The channel factory used by netty to build the channel.
-     */
-    private final ChannelFactory channelFactory;
 
     /**
      * An object which contains all the config information needed by this actor to start.
@@ -77,13 +61,12 @@ public class NodeSupervisor extends UntypedActor {
 
     private final MetricRegistry metrics;
 
-    public NodeSupervisor(final Slave slave, final ActorRef masterSender, final ChannelFactory channelFactory,
+    public NodeSupervisor(final Slave slave, final ActorRef masterSender,
                           final NodeMasterConfig nodeMasterConfig, final MediaStorageClient mediaStorageClient, MetricRegistry metrics) {
         LOG.info("NodeSupervisor constructor");
 
         this.slave = slave;
         this.masterSender = masterSender;
-        this.channelFactory = channelFactory;
         this.nodeMasterConfig = nodeMasterConfig;
         this.mediaStorageClient = mediaStorageClient;
         this.missedHeartbeats = 0;
@@ -99,7 +82,7 @@ public class NodeSupervisor extends UntypedActor {
         nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(),
                 nodeMasterConfig,
                 mediaStorageClient,
-                hashedWheelTimer, metrics);
+                metrics);
 
         context().watch(nodeMaster);
 
@@ -114,91 +97,114 @@ public class NodeSupervisor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof BagOfTasks) {
-            final BagOfTasks bagOfTasks = (BagOfTasks) message;
-
-            for (final RetrieveUrl request : bagOfTasks.getTasks()) {
-                final StartedTask startedTask = new StartedTask(request.getId());
-
-                getSender().tell(startedTask, getSelf());
-                nodeMaster.tell(new RetrieveUrlWithProcessingConfig(request, nodeMasterConfig.getPathToSave() + "/" + request.getJobId(), nodeMasterConfig.getSource()), getSender());
-            }
-
+            onBagOfTasksReceived((BagOfTasks) message);
             return;
         }
         if (message instanceof Terminated) {
-            LOG.info("Restarting NodeMasterActor...");
-            final Terminated t = (Terminated) message;
-            if (t.getActor() == nodeMaster) {
-                restartNodeMaster();
-            }
-
+            onTerminatedReceived((Terminated) message);
             return;
         }
         if (message instanceof SendHearbeat) {
-            // for safety, send a job request
-            nodeMaster.tell(new RequestTasks(), getSelf());
-
-            if (missedHeartbeats >= 3) {
-                LOG.error("Slave doesn't responded to the heartbeat 3 consecutive times. It will be restarted.");
-                missedHeartbeats = 0;
-
-                getContext().system().stop(nodeMaster);
-                restartNodeMaster();
-            }
-            nodeMaster.tell(message, getSelf());
-            missedHeartbeats += 1;
-
-            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(3,
-                    TimeUnit.MINUTES), getSelf(), new SendHearbeat(), getContext().system().dispatcher(), getSelf());
-
+            onSendHeartBeatReceived(message);
             return;
         }
         if (message instanceof SlaveHeartbeat) {
-            LOG.info("Received slave heartbeat");
-            missedHeartbeats = 0;
-
+            onSlaveHeartBeatReceived();
             return;
         }
         if (message instanceof DisassociatedEvent) {
-            final DisassociatedEvent disassociatedEvent = (DisassociatedEvent) message;
-            LOG.info("Member disassociated: {}", disassociatedEvent.remoteAddress());
-            try {
-                Thread.sleep(300000);
-
-            } catch (InterruptedException e) {
-                LOG.info("Interrupted");
-            }
-
-            slave.restart();
+            onDissasociatedEventReceived((DisassociatedEvent) message);
             return;
         }
 
         if (message instanceof AssociatedEvent) {
-            //nodeMaster.tell( new RequestTasks(), getSelf());
-            LOG.info("Associated and requesting tasks");
+            onAssociatedEventReceived();
+            return ;
         }
 
         if (message instanceof ClusterEvent.MemberUp) {
-            ClusterEvent.MemberUp mUp = (ClusterEvent.MemberUp) message;
-            LOG.info("Member is Up: {}", mUp.member());
-            memberups++;
-            if (memberups == 2)
-                nodeMaster.tell(new RequestTasks(), getSelf());
-
+            onMemberUpReceived((ClusterEvent.MemberUp) message);
+            return ;
         }
         // Anything else
         nodeMaster.tell(message, getSender());
     }
 
+    private void onMemberUpReceived(ClusterEvent.MemberUp message) {
+        ClusterEvent.MemberUp mUp = message;
+        LOG.info("Member is Up: {}", mUp.member());
+        memberups++;
+        if (memberups == 2)
+            nodeMaster.tell(new RequestTasks(), getSelf());
+    }
+
+    private void onAssociatedEventReceived() {
+        //nodeMaster.tell( new RequestTasks(), getSelf());
+        LOG.info("Associated and requesting tasks");
+    }
+
+    private void onDissasociatedEventReceived(DisassociatedEvent message) throws Exception {
+        final DisassociatedEvent disassociatedEvent = message;
+        LOG.info("Member disassociated: {}", disassociatedEvent.remoteAddress());
+        try {
+            Thread.sleep(300000);
+
+        } catch (InterruptedException e) {
+            LOG.info("Interrupted");
+        }
+
+        slave.restart();
+    }
+
+    private void onSlaveHeartBeatReceived() {
+        LOG.info("Received slave heartbeat");
+        missedHeartbeats = 0;
+    }
+
+    private void onSendHeartBeatReceived(Object message) {
+        // for safety, send a job request
+        nodeMaster.tell(new RequestTasks(), getSelf());
+
+        if (missedHeartbeats >= 3) {
+            LOG.error("Slave doesn't responded to the heartbeat 3 consecutive times. It will be restarted.");
+            missedHeartbeats = 0;
+
+            getContext().system().stop(nodeMaster);
+            restartNodeMaster();
+        }
+        nodeMaster.tell(message, getSelf());
+        missedHeartbeats += 1;
+
+        getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(3,
+                TimeUnit.MINUTES), getSelf(), new SendHearbeat(), getContext().system().dispatcher(), getSelf());
+    }
+
+    private void onTerminatedReceived(Terminated message) {
+        LOG.info("Restarting NodeMasterActor...");
+        final Terminated t = message;
+        if (t.getActor() == nodeMaster) {
+            restartNodeMaster();
+        }
+    }
+
+    private void onBagOfTasksReceived(BagOfTasks message) {
+        final BagOfTasks bagOfTasks = message;
+
+        for (final RetrieveUrl request : bagOfTasks.getTasks()) {
+            final StartedTask startedTask = new StartedTask(request.getId());
+
+            getSender().tell(startedTask, getSelf());
+            nodeMaster.tell(new RetrieveUrlWithProcessingConfig(request, nodeMasterConfig.getPathToSave() + "/" + request.getJobId(), nodeMasterConfig.getSource()), getSender());
+        }
+    }
+
     private void restartNodeMaster() {
         LOG.info("NodeSupervisor: restarting nodeMasterActor");
 
-        hashedWheelTimer.stop();
-        hashedWheelTimer = new HashedWheelTimer();
         nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(),
                 nodeMasterConfig,
                 mediaStorageClient,
-                hashedWheelTimer, metrics);
+                metrics);
         context().watch(nodeMaster);
     }
 }

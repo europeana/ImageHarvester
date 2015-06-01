@@ -164,7 +164,7 @@ public class SlaveDownloaderTest {
         final ProcessingJobLimits limits = new ProcessingJobLimits();
 
         final RetrieveUrl task = new RetrieveUrl(image1GitHubUrl, limits,DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, "jobid-1",
-                "referenceid-1", Collections.<String, String>singletonMap("Content-Length", "1399538"),
+                "referenceid-1", Collections.singletonMap("Content-Length", "1399538"),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
 
@@ -190,7 +190,7 @@ public class SlaveDownloaderTest {
         final ProcessingJobLimits limits = new ProcessingJobLimits();
 
         final RetrieveUrl task = new RetrieveUrl(image1GitHubUrl, limits,DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, "jobid-1",
-                "referenceid-1", Collections.<String, String>singletonMap("Content-Length", "1399537"),
+                "referenceid-1", Collections.singletonMap("Content-Length", "1399537"),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                         "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
 

@@ -10,10 +10,7 @@ import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenera
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.ResponseType;
-import eu.europeana.harvester.utils.FileUtils;
-import static net.logstash.logback.marker.Markers.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;

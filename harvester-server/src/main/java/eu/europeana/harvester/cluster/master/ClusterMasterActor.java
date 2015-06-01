@@ -38,8 +38,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-//import eu.europeana.servicebus.client.ESBClient;
-
 public class ClusterMasterActor extends UntypedActor {
 
     private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
@@ -266,17 +264,6 @@ public class ClusterMasterActor extends UntypedActor {
             final MemberUp mUp = (MemberUp) message;
             LOG.info("Member is Up: {}", mUp.member());
 
-            final boolean self =
-                    mUp.member().address().equals(Cluster.get(getContext().system()).selfAddress());
-
-//            if(actorsPerAddress.containsKey(mUp.member().address()) && !self) {
-//                final HashSet<ActorRef> actorRefs = actorsPerAddress.get(mUp.member().address());
-//
-//                for(final ActorRef actorRef : actorRefs) {
-//                    actorRef.tell(new Clean(), receiverActor);
-//                }
-//            }
-
             return;
         }
         if (message instanceof UnreachableMember) {
@@ -318,8 +305,6 @@ public class ClusterMasterActor extends UntypedActor {
         }
         if(message instanceof Clean) {
             LOG.info("Cleaning up ClusterMasterActor and its slaves.");
-
-            //clean();
 
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,
                     TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
@@ -518,26 +503,6 @@ public class ClusterMasterActor extends UntypedActor {
     }
 
     /**
-     * This cleans up the inner memory for a fresh start.
-     */
-    private void clean() {
-        accountantActor.tell(new Clean(), getSelf());
-
-        tasksToSend.clear();
-        tasksPerTime.clear();
-        tasksPerAddress.clear();
-
-        jobLoaderActor.tell(new Clean(), getSelf());
-
-//        for(final Map.Entry<Address, HashSet<ActorRef>> address : actorsPerAddress.entrySet()) {
-//            final Set<ActorRef> actors = address.getValue();
-//            for(final ActorRef actor : actors) {
-//                actor.tell(new Clean(), ActorRef.noSender());
-//            }
-//        }
-    }
-
-    /**
      * ONLY FOR DEBUG
      */
     private void monitor() {
@@ -572,21 +537,6 @@ public class ClusterMasterActor extends UntypedActor {
 
         public DateTime getTime (){
             return when;
-        }
-
-        public void setRequested ( boolean that) {
-            this.was_requested = that;
-        }
-
-        public boolean getRequested(){
-            return this.was_requested;
-        }
-
-        public boolean should_request(){
-            if ((new DateTime().getMillis() - this.when.getMillis()) <= delta )
-                return false;
-            else
-                return true;
         }
 
 

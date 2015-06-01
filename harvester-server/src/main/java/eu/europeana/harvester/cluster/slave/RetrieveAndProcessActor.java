@@ -32,7 +32,8 @@ import java.util.concurrent.TimeUnit;
 import static com.codahale.metrics.MetricRegistry.name;
 
 /**
- * This type of actors checks for a link or downloads a document.
+ * This actor is the actual worker actor.
+ * It does retrieval & processing, wrapping the dangerous activity of executing a job.
  */
 public class RetrieveAndProcessActor extends UntypedActor {
 

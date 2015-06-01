@@ -103,8 +103,6 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
                 final boolean success = sourceDocumentReferenceMetaInfoDao.create(sourceDocumentReferenceMetaInfo,
                         clusterMasterConfig.getWriteConcern());
 
-                //LOG.info("Saving MetaInfo for docid {} with success {}", docId, success);
-
                 if(!success) {
                     sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo,
                             clusterMasterConfig.getWriteConcern());

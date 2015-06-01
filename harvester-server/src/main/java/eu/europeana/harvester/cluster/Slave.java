@@ -131,7 +131,6 @@ public class Slave {
 
         reporter.start(60, TimeUnit.SECONDS);
 
-        //Graphite graphite = new Graphite(new InetSocketAddress("1eye.busymachines.com", 2003));
         Graphite graphite = new Graphite(new InetSocketAddress(config.getString("metrics.graphiteServer"),
                 config.getInt("metrics.graphitePort")));
         GraphiteReporter reporter2 = GraphiteReporter.forRegistry(metrics)
@@ -149,7 +148,7 @@ public class Slave {
 
         final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
 
-        NodeSupervisor.createActor(system, slave, masterSender, channelFactory, nodeMasterConfig,
+        NodeSupervisor.createActor(system, slave, masterSender, nodeMasterConfig,
                 mediaStorageClient, metrics);
 
         //system.actorOf(Props.create(MetricsListener.class), "metricsListener");

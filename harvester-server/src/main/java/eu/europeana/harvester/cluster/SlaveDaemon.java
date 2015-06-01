@@ -13,7 +13,7 @@ public class SlaveDaemon implements Daemon {
     private Slave slave;
 
     @Override
-    public void init(DaemonContext daemonContext) throws DaemonInitException, Exception {
+    public void init(DaemonContext daemonContext) throws Exception {
         LOG.info("Initializing slave");
 
         String[] args = daemonContext.getArguments();

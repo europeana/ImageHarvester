@@ -470,25 +470,6 @@ public class JobLoaderMasterActor extends UntypedActor {
     }
 
     /**
-     * Calculates the allowed download speed.
-     *
-     * @param ipAddress
-     * @return the download speed
-     */
-    private Long getSpeed(final String ipAddress) {
-        Long speedLimitPerLink;
-        if (ipExceptions.getIps().contains(ipAddress)) {
-            speedLimitPerLink = defaultLimits.getDefaultBandwidthLimitReadInBytesPerSec() /
-                    ipExceptions.getMaxConcurrentConnectionsLimit();
-        } else {
-            speedLimitPerLink = defaultLimits.getDefaultBandwidthLimitReadInBytesPerSec() /
-                    defaultLimits.getDefaultMaxConcurrentConnectionsLimit();
-        }
-
-        return speedLimitPerLink;
-    }
-
-    /**
      * Returns the headers of a source document if we already retrieved that at least once.
      *
      * @param documentReferenceTaskType task type

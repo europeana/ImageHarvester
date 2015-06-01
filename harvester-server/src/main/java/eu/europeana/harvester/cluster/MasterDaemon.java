@@ -13,7 +13,7 @@ public class MasterDaemon implements Daemon {
     private Master master;
 
     @Override
-    public void init(DaemonContext daemonContext) throws DaemonInitException, Exception {
+    public void init(DaemonContext daemonContext) throws Exception {
         LOG.info("Initializing master");
 
         String[] args = daemonContext.getArguments();
