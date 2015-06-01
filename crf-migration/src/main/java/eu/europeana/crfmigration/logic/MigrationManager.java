@@ -112,6 +112,7 @@ public class MigrationManager {
                         JobCreator.createJobs(edmObject.getReferenceOwner().getCollectionId(),
                                 edmObject.getReferenceOwner().getProviderId(),
                                 edmObject.getReferenceOwner().getRecordId(),
+                                edmObject.getReferenceOwner().getExecutionId(),
                                 edmObject.getEdmObject(), edmObject.getEdmHasViews(), edmObject.getEdmIsShownBy(), edmObject.getEdmIsShownAt()));
             } catch (UnknownHostException e1) {
                 LOG.error("Exception caught during record processing: " + e1.getMessage(), e1);

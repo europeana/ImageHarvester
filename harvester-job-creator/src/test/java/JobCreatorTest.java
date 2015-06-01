@@ -18,7 +18,7 @@ public class JobCreatorTest {
     private final static String collectionId = "2023831_AG-EU_LinkedHeritage_Rybinsk";
     private final static String providerId = "2023831";
     private final static String recordId = "/2023831/kng_item_item_jsf_id_105436";
-
+    private final static String executionId = "myUIMPlugin1";
     @Before
     public void setUp() {
         jobCreator = new JobCreator();
@@ -32,7 +32,7 @@ public class JobCreatorTest {
     @Test
     public void testEdmObj_ValidUrl() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> jobs =
-        jobCreator.createJobs(collectionId, providerId, recordId, "http://www.google.com",
+        jobCreator.createJobs(collectionId, providerId, recordId,executionId, "http://www.google.com",
                               null, null, null);
 
         assertEquals(1, jobs.size());
@@ -69,7 +69,7 @@ public class JobCreatorTest {
     @Test
     public void testEdmObj_ValidUrl_UnconditionDownload() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, "http://www.google.com",
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, "http://www.google.com",
                                       null, null, null, new ProcessingJobCreationOptions(true));
 
         assertEquals(1, jobs.size());
@@ -114,7 +114,7 @@ public class JobCreatorTest {
         urls.add("http://www.google.com");
 
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(true));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null, new ProcessingJobCreationOptions(true));
 
         assertEquals(urls.size(), jobs.size());
 
@@ -160,7 +160,7 @@ public class JobCreatorTest {
         urls.add("http://www.facebook.com");
 
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(true));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null, new ProcessingJobCreationOptions(true));
 
         assertEquals(urls.size(), jobs.size());
 
@@ -212,7 +212,7 @@ public class JobCreatorTest {
 
 
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(false));
+                jobCreator.createJobs(collectionId, providerId, recordId, executionId,null, urls, null, null, new ProcessingJobCreationOptions(false));
 
         assertEquals(urls.size(), jobs.size());
 
@@ -257,7 +257,7 @@ public class JobCreatorTest {
         urls.add(UUID.randomUUID().toString());
 
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(false));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null, new ProcessingJobCreationOptions(false));
 
         assertEquals(urls.size(), jobs.size());
 
@@ -311,7 +311,7 @@ public class JobCreatorTest {
         urls.add(UUID.randomUUID().toString());
 
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, urls, null, null, new ProcessingJobCreationOptions(false));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null, new ProcessingJobCreationOptions(false));
 
         assertEquals(urls.size(), jobs.size());
 
@@ -353,7 +353,7 @@ public class JobCreatorTest {
     @Test
     public void testEdmIsShownBy_ValidUrl() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(false));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(false));
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
@@ -393,7 +393,7 @@ public class JobCreatorTest {
     @Test
     public void testEdmIsShownBy_ValidUrl_UnconditionalDownload() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(true));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(true));
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
@@ -433,7 +433,7 @@ public class JobCreatorTest {
     @Test
     public void testEdmIsShownBy_ValidUrl_NoneOptions() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(false));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(false));
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
@@ -472,13 +472,13 @@ public class JobCreatorTest {
 
     @Test(expected = MalformedURLException.class)
     public void testEdmIsShownBy_InvalidUrl() throws MalformedURLException, UnknownHostException  {
-        jobCreator.createJobs(collectionId, providerId, recordId, null, null, UUID.randomUUID().toString(), null, null);
+        jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, UUID.randomUUID().toString(), null, null);
     }
 
     @Test
     public void testEdmIsShownAt_ValidUrl() throws MalformedURLException, UnknownHostException  {
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, null, null, null, "http://www.google.com", new ProcessingJobCreationOptions(false));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, null, "http://www.google.com", new ProcessingJobCreationOptions(false));
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());

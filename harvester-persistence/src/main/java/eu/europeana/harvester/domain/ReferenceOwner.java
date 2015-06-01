@@ -25,16 +25,30 @@ public class ReferenceOwner implements Serializable {
      */
     private final String recordId;
 
+    /**
+     * The external identifier that indicates the creator of the job.
+     */
+    private final String executionId;
+
     public ReferenceOwner() {
         this.providerId = null;
         this.collectionId = null;
         this.recordId = null;
+        this.executionId = null;
     }
 
     public ReferenceOwner(final String providerId, final String collectionId, final String recordId) {
         this.providerId = providerId;
         this.collectionId = collectionId;
         this.recordId = recordId;
+        this.executionId = null;
+    }
+
+    public ReferenceOwner(final String providerId, final String collectionId, final String recordId,final String executionId) {
+        this.providerId = providerId;
+        this.collectionId = collectionId;
+        this.recordId = recordId;
+        this.executionId = executionId;
     }
 
     public String getProviderId() {
@@ -47,6 +61,10 @@ public class ReferenceOwner implements Serializable {
 
     public String getRecordId() {
         return recordId;
+    }
+
+    public String getExecutionId() {
+        return executionId;
     }
 
     @Override

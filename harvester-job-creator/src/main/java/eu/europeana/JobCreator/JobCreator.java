@@ -18,6 +18,7 @@ public class JobCreator {
 
     /**
      * Creates processing jobs from basic EDM object properties.
+     *
      * @param collectionId
      * @param providerId
      * @param recordId
@@ -32,16 +33,18 @@ public class JobCreator {
     public final static List<ProcessingJobTuple> createJobs(final String collectionId,
                                                             final String providerId,
                                                             final String recordId,
+                                                            final String executionId,
                                                             final String edmObjectUrl,
                                                             final List<String> edmHasViewUrls,
                                                             final String edmIsShownByUrl,
                                                             final String edmIsShownAtUrl
-                                                            ) throws UnknownHostException, MalformedURLException {
-        return createJobs(collectionId,providerId,recordId,edmObjectUrl,edmHasViewUrls,edmIsShownByUrl,edmIsShownAtUrl,new ProcessingJobCreationOptions(false));
+    ) throws UnknownHostException, MalformedURLException {
+        return createJobs(collectionId, providerId, recordId, executionId, edmObjectUrl, edmHasViewUrls, edmIsShownByUrl, edmIsShownAtUrl, new ProcessingJobCreationOptions(false));
     }
 
     /**
      * Creates processing jobs from basic EDM object properties.
+     *
      * @param collectionId
      * @param providerId
      * @param recordId
@@ -55,24 +58,25 @@ public class JobCreator {
      * @throws MalformedURLException
      */
     public final static List<ProcessingJobTuple> createJobs(final String collectionId,
-                                                     final String providerId,
-                                                     final String recordId,
-                                                     final String edmObjectUrl,
-                                                     final List<String> edmHasViewUrls,
-                                                     final String edmIsShownByUrl,
-                                                     final String edmIsShownAtUrl,
-                                                     final ProcessingJobCreationOptions options) throws UnknownHostException, MalformedURLException {
+                                                            final String providerId,
+                                                            final String recordId,
+                                                            final String executionId,
+                                                            final String edmObjectUrl,
+                                                            final List<String> edmHasViewUrls,
+                                                            final String edmIsShownByUrl,
+                                                            final String edmIsShownAtUrl,
+                                                            final ProcessingJobCreationOptions options) throws UnknownHostException, MalformedURLException {
 
         if (null == collectionId || null == providerId || null == recordId) {
             throw new IllegalArgumentException("Incomplete ownership information : collectionId = " + collectionId + ", providerId = " + providerId + " and recordId = " + recordId + ". Neither of them can be null. ");
         }
 
         if (null == options) {
-          throw new IllegalArgumentException("Options cannot be null");
+            throw new IllegalArgumentException("Options cannot be null");
         }
 
         final List<ProcessingJobTuple> results = new ArrayList();
-        final ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId);
+        final ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId, executionId);
 
         if (null != edmObjectUrl) {
             results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner, options));
