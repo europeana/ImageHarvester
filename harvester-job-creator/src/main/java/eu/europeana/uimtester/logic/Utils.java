@@ -1,4 +1,4 @@
-package eu.europeana.JobCreator.logic;
+package eu.europeana.uimtester.logic;
 
 import java.net.InetAddress;
 import java.net.MalformedURLException;

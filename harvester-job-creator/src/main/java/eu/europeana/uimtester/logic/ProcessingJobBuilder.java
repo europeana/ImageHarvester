@@ -1,7 +1,7 @@
-package eu.europeana.JobCreator.logic;
+package eu.europeana.uimtester.logic;
 
-import eu.europeana.JobCreator.domain.ProcessingJobCreationOptions;
-import eu.europeana.JobCreator.domain.ProcessingJobTuple;
+import eu.europeana.uimtester.domain.ProcessingJobCreationOptions;
+import eu.europeana.uimtester.domain.ProcessingJobTuple;
 import eu.europeana.harvester.domain.*;
 
 import java.net.MalformedURLException;

@@ -1,6 +1,6 @@
-import eu.europeana.JobCreator.JobCreator;
-import eu.europeana.JobCreator.domain.ProcessingJobCreationOptions;
-import eu.europeana.JobCreator.domain.ProcessingJobTuple;
+import eu.europeana.uimtester.JobCreator;
+import eu.europeana.uimtester.domain.ProcessingJobCreationOptions;
+import eu.europeana.uimtester.domain.ProcessingJobTuple;
 import eu.europeana.harvester.domain.*;
 import org.junit.Before;
 import org.junit.Test;

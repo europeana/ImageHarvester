@@ -1,4 +1,4 @@
-package eu.europeana.JobCreator.domain;
+package eu.europeana.uimtester.domain;
 
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.SourceDocumentReference;

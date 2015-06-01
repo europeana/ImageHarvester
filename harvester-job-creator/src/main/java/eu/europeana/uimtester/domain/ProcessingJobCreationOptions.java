@@ -1,4 +1,4 @@
-package eu.europeana.JobCreator.domain;
+package eu.europeana.uimtester.domain;
 
 public class ProcessingJobCreationOptions {
     private final boolean forceUnconditionalDownload;
