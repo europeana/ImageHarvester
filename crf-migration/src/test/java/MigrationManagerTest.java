@@ -258,8 +258,9 @@ public class MigrationManagerTest {
     }
 
     private void runMigrator(final MigratorConfig migratorConfig, final Date dateFilter) {
+        final MigratorMetrics metrics = new MigratorMetrics();
         try {
-            final MigratorMetrics metrics = new MigratorMetrics();
+
 
             final MigratorEuropeanaDao migratorEuropeanaDao = new MigratorEuropeanaDao(migratorConfig.getSourceMongoConfig(), metrics);
             final MigratorHarvesterDao migratorHarvesterDao = new MigratorHarvesterDao(metrics, migratorConfig.getTargetMongoConfig());
@@ -270,13 +271,15 @@ public class MigrationManagerTest {
                     metrics,
                     dateFilter,
                     migratorConfig.getBatch());
-            migrationManager.migrate();
 
+            migrationManager.migrate();
+        } catch (Exception e) {
+            fail("IOException: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()) + "\n");
+        }
+        finally {
             for (final String name: MigratorMetrics.metricRegistry.getNames()) {
                 MigratorMetrics.metricRegistry.remove(name);
             }
-        } catch (Exception e) {
-            fail("IOException: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()) + "\n");
         }
     }
 

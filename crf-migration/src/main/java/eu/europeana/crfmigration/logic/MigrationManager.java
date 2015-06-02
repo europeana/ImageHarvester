@@ -2,8 +2,8 @@ package eu.europeana.crfmigration.logic;
 
 import com.codahale.metrics.Timer;
 import com.mongodb.DBCursor;
-import eu.europeana.uimtester.JobCreator;
-import eu.europeana.uimtester.domain.ProcessingJobTuple;
+import eu.europeana.jobcreator.JobCreator;
+import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.crfmigration.dao.MigratorEuropeanaDao;
 import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
