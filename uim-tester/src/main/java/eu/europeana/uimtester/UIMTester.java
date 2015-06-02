@@ -1,4 +1,4 @@
-package eu.europeana.uimtester;
+package eu.europeana.jobcreator;
 
 /**
  * Created by paul on 01/06/15.

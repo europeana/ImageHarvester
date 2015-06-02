@@ -97,18 +97,17 @@ public class ThumbnailGenerator {
 
     private final static byte[] createThumbnail(final InputStream in, final Integer width, final Integer height) throws Exception {
         final IMOperation op = new IMOperation();
-        op.addRawArgs("-colorspace", "RGB");
 
         if (width != null && height != null) {
             // Scenario 1 : resize both width and height
-            op.addRawArgs("-resize", width + "x" + height);
+            op.addRawArgs("-thumbnail", width + "x" + height);
         } else {
             if (width != null & height == null) {
                 // Scenario 2 : resize width with height proportional
-                op.addRawArgs("-resize", width + "x");
+                op.addRawArgs("-thumbnail", width + "x");
             } else {
                 // Scenario 3 : resize height with width proportional
-                op.addRawArgs("-resize", "x" + height);
+                op.addRawArgs("-thumbnail", "x" + height);
             }
         }
 
