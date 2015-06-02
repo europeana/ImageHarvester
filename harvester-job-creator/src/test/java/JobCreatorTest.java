@@ -43,7 +43,7 @@ public class JobCreatorTest {
 
         assertEquals (JobState.READY, job.getState());
         assertEquals (DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-        assertEquals (3, jobReference.getProcessingTasks().size());
+        assertEquals (4, jobReference.getProcessingTasks().size());
 
         int countThumbnailTasks = 0;
         boolean hasColourExtractionTask = false, hasThumbnailGeneration = false;
@@ -61,51 +61,14 @@ public class JobCreatorTest {
             }
         }
 
-        assertEquals (2, countThumbnailTasks);
-        assertTrue (hasColourExtractionTask);
-        assertTrue (hasThumbnailGeneration);
-    }
-
-    @Test
-    public void testEdmObj_ValidUrl_UnconditionDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId,executionId, "http://www.google.com",
-                                      null, null, null, new ProcessingJobCreationOptions(true));
-
-        assertEquals(1, jobs.size());
-        assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
-
-        final ProcessingJob job = jobs.get(0).getProcessingJob();
-        final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
-
-        assertEquals (JobState.READY, job.getState());
-        assertEquals (DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-        assertEquals (3, jobReference.getProcessingTasks().size());
-
-        int countThumbnailTasks = 0;
-        boolean hasColourExtractionTask = false, hasThumbnailGeneration = false;
-
-        for (final ProcessingJobSubTask subTask: jobReference.getProcessingTasks()) {
-            if (ProcessingJobSubTaskType.COLOR_EXTRACTION == subTask.getTaskType()) {
-                hasColourExtractionTask = true;
-            }
-            else if (ProcessingJobSubTaskType.GENERATE_THUMBNAIL == subTask.getTaskType()) {
-                hasThumbnailGeneration = true;
-                ++countThumbnailTasks;
-            }
-            else {
-                fail ("Generated wrong subtask type: " + subTask.getTaskType().name());
-            }
-        }
-
-        assertEquals (2, countThumbnailTasks);
+        assertEquals (3, countThumbnailTasks);
         assertTrue (hasColourExtractionTask);
         assertTrue (hasThumbnailGeneration);
     }
 
     @Test(expected = MalformedURLException.class)
     public void testEdmObj_InvalidUrl() throws MalformedURLException, UnknownHostException {
-        jobCreator.createJobs(collectionId, providerId, recordId, "img.jgi.doe.gov/ges/img-user-m.p", null, null, null, null);
+        jobCreator.createJobs(collectionId, providerId, recordId, executionId, UUID.randomUUID().toString(), null, null, null);
     }
 
     @Test
@@ -114,7 +77,7 @@ public class JobCreatorTest {
         urls.add("http://www.google.com");
 
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null, new ProcessingJobCreationOptions(true));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null);
 
         assertEquals(urls.size(), jobs.size());
 
@@ -125,7 +88,7 @@ public class JobCreatorTest {
 
             assertEquals(JobState.READY, job.getProcessingJob().getState());
             assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-            assertEquals(4, jobReference.getProcessingTasks().size());
+            assertEquals(5, jobReference.getProcessingTasks().size());
 
             int countThumbnailTasks = 0;
             boolean hasColourExtractionTask = false, hasThumbnailGeneration = false, hasMetadataExtraction = false;
@@ -146,7 +109,7 @@ public class JobCreatorTest {
                 }
             }
 
-            assertEquals(2, countThumbnailTasks);
+            assertEquals(3, countThumbnailTasks);
             assertTrue(hasColourExtractionTask);
             assertTrue(hasThumbnailGeneration);
             assertTrue(hasMetadataExtraction);
@@ -160,7 +123,7 @@ public class JobCreatorTest {
         urls.add("http://www.facebook.com");
 
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null, new ProcessingJobCreationOptions(true));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null);
 
         assertEquals(urls.size(), jobs.size());
 
@@ -170,8 +133,8 @@ public class JobCreatorTest {
             final ProcessingJobTaskDocumentReference jobReference = job.getProcessingJob().getTasks().get(0);
 
             assertEquals(JobState.READY, job.getProcessingJob().getState());
-            assertEquals(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-            assertEquals(4, jobReference.getProcessingTasks().size());
+            assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
+            assertEquals(5, jobReference.getProcessingTasks().size());
 
             int countThumbnailTasks = 0;
             boolean hasColourExtractionTask = false, hasThumbnailGeneration = false, hasMetadataExtraction = false;
@@ -192,7 +155,7 @@ public class JobCreatorTest {
                 }
             }
 
-            assertEquals(2, countThumbnailTasks);
+            assertEquals(3, countThumbnailTasks);
             assertTrue(hasColourExtractionTask);
             assertTrue(hasThumbnailGeneration);
             assertTrue(hasMetadataExtraction);
@@ -212,7 +175,7 @@ public class JobCreatorTest {
 
 
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId, executionId,null, urls, null, null, new ProcessingJobCreationOptions(false));
+                jobCreator.createJobs(collectionId, providerId, recordId, executionId,null, urls, null, null);
 
         assertEquals(urls.size(), jobs.size());
 
@@ -223,7 +186,7 @@ public class JobCreatorTest {
 
             assertEquals(JobState.READY, job.getProcessingJob().getState());
             assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-            assertEquals(4, jobReference.getProcessingTasks().size());
+            assertEquals(5, jobReference.getProcessingTasks().size());
 
             int countThumbnailTasks = 0;
             boolean hasColourExtractionTask = false, hasThumbnailGeneration = false, hasMetadataExtraction = false;
@@ -244,7 +207,7 @@ public class JobCreatorTest {
                 }
             }
 
-            assertEquals(2, countThumbnailTasks);
+            assertEquals(3, countThumbnailTasks);
             assertTrue(hasColourExtractionTask);
             assertTrue(hasThumbnailGeneration);
             assertTrue(hasMetadataExtraction);
@@ -256,44 +219,7 @@ public class JobCreatorTest {
         final List<String> urls = new ArrayList<>();
         urls.add(UUID.randomUUID().toString());
 
-        final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null, new ProcessingJobCreationOptions(false));
-
-        assertEquals(urls.size(), jobs.size());
-
-        for (final ProcessingJobTuple job: jobs) {
-            assertEquals(1, job.getProcessingJob().getTasks().size());
-
-            final ProcessingJobTaskDocumentReference jobReference = job.getProcessingJob().getTasks().get(0);
-
-            assertEquals(JobState.READY, job.getProcessingJob().getState());
-            assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-            assertEquals(4, jobReference.getProcessingTasks().size());
-
-            int countThumbnailTasks = 0;
-            boolean hasColourExtractionTask = false, hasThumbnailGeneration = false, hasMetadataExtraction = false;
-
-            for (final ProcessingJobSubTask subTask : jobReference.getProcessingTasks()) {
-                if (ProcessingJobSubTaskType.COLOR_EXTRACTION == subTask.getTaskType()) {
-                    hasColourExtractionTask = true;
-                }
-                else if (ProcessingJobSubTaskType.GENERATE_THUMBNAIL == subTask.getTaskType()) {
-                    hasThumbnailGeneration = true;
-                    ++countThumbnailTasks;
-                }
-                else if (ProcessingJobSubTaskType.META_EXTRACTION == subTask.getTaskType()) {
-                    hasMetadataExtraction = true;
-                }
-                else {
-                    fail("Generated wrong subtask type: " + subTask.getTaskType().name());
-                }
-            }
-
-            assertEquals(2, countThumbnailTasks);
-            assertTrue(hasColourExtractionTask);
-            assertTrue(hasThumbnailGeneration);
-            assertTrue(hasMetadataExtraction);
-        }
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null);
     }
 
     @Test(expected = MalformedURLException.class)
@@ -310,50 +236,13 @@ public class JobCreatorTest {
         urls.add("http://www.skype.com");
         urls.add(UUID.randomUUID().toString());
 
-        final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null, new ProcessingJobCreationOptions(false));
-
-        assertEquals(urls.size(), jobs.size());
-
-        for (final ProcessingJobTuple job: jobs) {
-            assertEquals(1, job.getProcessingJob().getTasks().size());
-
-            final ProcessingJobTaskDocumentReference jobReference = job.getProcessingJob().getTasks().get(0);
-
-            assertEquals(JobState.READY, job.getProcessingJob().getState());
-            assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-            assertEquals(4, jobReference.getProcessingTasks().size());
-
-            int countThumbnailTasks = 0;
-            boolean hasColourExtractionTask = false, hasThumbnailGeneration = false, hasMetadataExtraction = false;
-
-            for (final ProcessingJobSubTask subTask : jobReference.getProcessingTasks()) {
-                if (ProcessingJobSubTaskType.COLOR_EXTRACTION == subTask.getTaskType()) {
-                    hasColourExtractionTask = true;
-                }
-                else if (ProcessingJobSubTaskType.GENERATE_THUMBNAIL == subTask.getTaskType()) {
-                    hasThumbnailGeneration = true;
-                    ++countThumbnailTasks;
-                }
-                else if (ProcessingJobSubTaskType.META_EXTRACTION == subTask.getTaskType()) {
-                    hasMetadataExtraction = true;
-                }
-                else {
-                    fail("Generated wrong subtask type: " + subTask.getTaskType().name());
-                }
-            }
-
-            assertEquals(2, countThumbnailTasks);
-            assertTrue(hasColourExtractionTask);
-            assertTrue(hasThumbnailGeneration);
-            assertTrue(hasMetadataExtraction);
-        }
+        jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, urls, null, null);
     }
 
     @Test
     public void testEdmIsShownBy_ValidUrl() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(false));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, "http://www.google.com", null);
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
@@ -363,7 +252,7 @@ public class JobCreatorTest {
 
         assertEquals(JobState.READY, job.getState());
         assertEquals(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-        assertEquals(4, jobReference.getProcessingTasks().size());
+        assertEquals(5, jobReference.getProcessingTasks().size());
 
         int countThumbnailTasks = 0;
         boolean hasColourExtractionTask = false, hasThumbnailGeneration = false, hasMetadataExtraction = false;
@@ -384,101 +273,21 @@ public class JobCreatorTest {
             }
         }
 
-        assertEquals(2, countThumbnailTasks);
+        assertEquals(3, countThumbnailTasks);
         assertTrue(hasColourExtractionTask);
         assertTrue(hasThumbnailGeneration);
         assertTrue(hasMetadataExtraction);
     }
 
-    @Test
-    public void testEdmIsShownBy_ValidUrl_UnconditionalDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(true));
-
-        assertEquals(1, jobs.size());
-        assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
-
-        final ProcessingJob job = jobs.get(0).getProcessingJob();
-        final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
-
-        assertEquals (JobState.READY, job.getState());
-        assertEquals (DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-        assertEquals (4, jobReference.getProcessingTasks().size());
-
-        int countThumbnailTasks = 0;
-        boolean hasColourExtractionTask = false, hasThumbnailGeneration = false, hasMetadataExtraction = false;
-
-        for (final ProcessingJobSubTask subTask: jobReference.getProcessingTasks()) {
-            if (ProcessingJobSubTaskType.COLOR_EXTRACTION == subTask.getTaskType()) {
-                hasColourExtractionTask = true;
-            }
-            else if (ProcessingJobSubTaskType.GENERATE_THUMBNAIL == subTask.getTaskType()) {
-                hasThumbnailGeneration = true;
-                ++countThumbnailTasks;
-            }
-            else if (ProcessingJobSubTaskType.META_EXTRACTION == subTask.getTaskType()) {
-                hasMetadataExtraction = true;
-            }
-            else {
-                fail ("Generated wrong subtask type: " + subTask.getTaskType().name());
-            }
-        }
-
-        assertEquals (2, countThumbnailTasks);
-        assertTrue(hasColourExtractionTask);
-        assertTrue (hasThumbnailGeneration);
-        assertTrue (hasMetadataExtraction);
-    }
-
-    @Test
-    public void testEdmIsShownBy_ValidUrl_NoneOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, "http://www.google.com", null, new ProcessingJobCreationOptions(false));
-
-        assertEquals(1, jobs.size());
-        assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
-
-        final ProcessingJob job = jobs.get(0).getProcessingJob();
-        final ProcessingJobTaskDocumentReference jobReference = job.getTasks().get(0);
-
-        assertEquals (JobState.READY, job.getState());
-        assertEquals (DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, jobReference.getTaskType());
-        assertEquals (4, jobReference.getProcessingTasks().size());
-
-        int countThumbnailTasks = 0;
-        boolean hasColourExtractionTask = false, hasThumbnailGeneration = false, hasMetadataExtraction = false;
-
-        for (final ProcessingJobSubTask subTask: jobReference.getProcessingTasks()) {
-            if (ProcessingJobSubTaskType.COLOR_EXTRACTION == subTask.getTaskType()) {
-                hasColourExtractionTask = true;
-            }
-            else if (ProcessingJobSubTaskType.GENERATE_THUMBNAIL == subTask.getTaskType()) {
-                hasThumbnailGeneration = true;
-                ++countThumbnailTasks;
-            }
-            else if (ProcessingJobSubTaskType.META_EXTRACTION == subTask.getTaskType()) {
-                hasMetadataExtraction = true;
-            }
-            else {
-                fail ("Generated wrong subtask type: " + subTask.getTaskType().name());
-            }
-        }
-
-        assertEquals (2, countThumbnailTasks);
-        assertTrue(hasColourExtractionTask);
-        assertTrue (hasThumbnailGeneration);
-        assertTrue (hasMetadataExtraction);
-    }
-
     @Test(expected = MalformedURLException.class)
     public void testEdmIsShownBy_InvalidUrl() throws MalformedURLException, UnknownHostException  {
-        jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, UUID.randomUUID().toString(), null, null);
+        jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, UUID.randomUUID().toString(), null);
     }
 
     @Test
     public void testEdmIsShownAt_ValidUrl() throws MalformedURLException, UnknownHostException  {
         final List<ProcessingJobTuple> jobs =
-                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, null, "http://www.google.com", new ProcessingJobCreationOptions(false));
+                jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, null, "http://www.google.com");
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
