@@ -97,7 +97,6 @@ public class ThumbnailGenerator {
 
     private final static byte[] createThumbnail(final InputStream in, final Integer width, final Integer height) throws Exception {
         final IMOperation op = new IMOperation();
-        op.addRawArgs("-colorspace", "RGB");
 
         if (width != null && height != null) {
             // Scenario 1 : resize both width and height
