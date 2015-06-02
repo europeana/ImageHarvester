@@ -73,6 +73,22 @@ public class MongoDBUtils {
         }
     }
 
+    public DB connectToSource () {
+        return connectToDB(migratorConfig.getSourceMongoConfig().getHost(),
+                           migratorConfig.getSourceMongoConfig().getPort(),
+                           migratorConfig.getSourceMongoConfig().getdBUsername(),
+                           migratorConfig.getSourceMongoConfig().getdBUsername()
+                          ).getDB(migratorConfig.getSourceMongoConfig().getdBName());
+    }
+
+    public DB connectToTarget () {
+        return connectToDB(migratorConfig.getTargetMongoConfig().getHost(),
+                           migratorConfig.getTargetMongoConfig().getPort(),
+                           migratorConfig.getTargetMongoConfig().getdBUsername(),
+                           migratorConfig.getTargetMongoConfig().getdBUsername()
+                          ).getDB(migratorConfig.getTargetMongoConfig().getdBName());
+    }
+
     public void loadMongoData(final String pathToJSONFile, final String collectionName) {
         try {
             JSONParser parser = new JSONParser();

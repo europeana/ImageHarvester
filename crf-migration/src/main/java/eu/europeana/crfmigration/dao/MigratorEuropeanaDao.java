@@ -62,7 +62,6 @@ public class MigratorEuropeanaDao {
         }
 
         recordFields.put("about", 1);
-        recordFields.put("", 1);
         recordFields.put("timestampUpdated", 1);
         recordFields.put("europeanaCollectionName", 1);
         recordFields.put("_id", 0);
