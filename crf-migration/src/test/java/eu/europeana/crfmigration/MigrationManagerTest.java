@@ -1,3 +1,5 @@
+package eu.europeana.crfmigration;
+
 import com.mongodb.*;
 import com.mongodb.util.JSON;
 import com.typesafe.config.Config;
@@ -38,10 +40,10 @@ public class MigrationManagerTest {
 
     @Test
     public void testDBIteration_AllDatabase() {
-        migratorConfig = createMigratorConfig(PATH_PREFIX + "config-files/allData/migration.conf");
+        migratorConfig = createMigratorConfig(PATH_PREFIX + "src/test/resources/config-files/allData/migration.conf");
 
-        loadMongoData(PATH_PREFIX + "data-files/allData/record.json", "record");
-        loadMongoData(PATH_PREFIX + "data-files/allData/aggregation.json", "Aggregation");
+        loadMongoData(PATH_PREFIX + "src/test/resources/data-files/allData/record.json", "record");
+        loadMongoData(PATH_PREFIX + "src/test/resources/data-files/allData/aggregation.json", "Aggregation");
 
         runMigrator(migratorConfig, null);
 
@@ -72,10 +74,10 @@ public class MigrationManagerTest {
 
     @Test
     public void testDBIteration_FilterByDate_BatchSize2_AllMinus2() {
-        migratorConfig = createMigratorConfig(PATH_PREFIX + "config-files/filterSomeByDate/migration.conf");
+        migratorConfig = createMigratorConfig(PATH_PREFIX + "src/test/resources/config-files/filterSomeByDate/migration.conf");
 
-        loadMongoData(PATH_PREFIX + "data-files/filterSomeByDate/record.json", "record");
-        loadMongoData(PATH_PREFIX + "data-files/filterSomeByDate/aggregation.json", "Aggregation");
+        loadMongoData(PATH_PREFIX + "src/test/resources/data-files/filterSomeByDate/record.json", "record");
+        loadMongoData(PATH_PREFIX + "src/test/resources/data-files/filterSomeByDate/aggregation.json", "Aggregation");
 
         runMigrator(migratorConfig, DateTime.parse("2014-08-15T00:00:00.000Z").toDate());
 
@@ -109,10 +111,10 @@ public class MigrationManagerTest {
 
     @Test
     public void testDBIteration_FilterByDate_BatchSize2_All() {
-        migratorConfig = createMigratorConfig(PATH_PREFIX + "config-files/filterNoOneByDate/migration.conf");
+        migratorConfig = createMigratorConfig(PATH_PREFIX + "src/test/resources/config-files/filterNoOneByDate/migration.conf");
 
-        loadMongoData(PATH_PREFIX + "data-files/filterNoOneByDate/record.json", "record");
-        loadMongoData(PATH_PREFIX + "data-files/filterNoOneByDate/aggregation.json", "Aggregation");
+        loadMongoData(PATH_PREFIX + "src/test/resources/data-files/filterNoOneByDate/record.json", "record");
+        loadMongoData(PATH_PREFIX + "src/test/resources/data-files/filterNoOneByDate/aggregation.json", "Aggregation");
 
         runMigrator(migratorConfig, DateTime.parse("2014-06-19T00:00:00.000Z").toDate());
 
