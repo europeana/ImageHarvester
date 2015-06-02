@@ -100,14 +100,14 @@ public class ThumbnailGenerator {
 
         if (width != null && height != null) {
             // Scenario 1 : resize both width and height
-            op.addRawArgs("-resize", width + "x" + height);
+            op.addRawArgs("-thumbnail", width + "x" + height);
         } else {
             if (width != null & height == null) {
                 // Scenario 2 : resize width with height proportional
-                op.addRawArgs("-resize", width + "x");
+                op.addRawArgs("-thumbnail", width + "x");
             } else {
                 // Scenario 3 : resize height with width proportional
-                op.addRawArgs("-resize", "x" + height);
+                op.addRawArgs("-thumbnail", "x" + height);
             }
         }
 
