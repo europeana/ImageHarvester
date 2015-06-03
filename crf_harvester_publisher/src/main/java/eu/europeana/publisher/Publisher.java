@@ -1,6 +1,8 @@
 package eu.europeana.publisher;
 
 import com.typesafe.config.Config;
+import eu.europeana.publisher.domain.GraphiteReporterConfig;
+import eu.europeana.publisher.domain.MongoConfig;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logic.PublisherManager;
 import org.apache.logging.log4j.LogManager;
@@ -47,34 +49,22 @@ public class Publisher {
             System.exit(-1);
         }
 
-        final String graphiteMasterId = config.getString("metrics.masterID");
-        final String graphiteServer = config.getString("metrics.graphiteServer");
-        final Integer graphitePort = config.getInt("metrics.graphitePort");
+
+        final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(config);
 
         final Iterator<? extends Config> sourceMongoIter = sourceMongoConfigList.iterator();
         final Iterator<? extends Config> targetMongoIter = targetMongoConfigList.iterator();
         final List<Thread> threads = new ArrayList<>();
 
         while (sourceMongoIter.hasNext() && targetMongoIter.hasNext()) {
-            final Config sourceMongoConfig = sourceMongoIter.next();
-            final Config targetMongoConfig = targetMongoIter.next();
+            final MongoConfig sourceMongoConfig = new MongoConfig(sourceMongoIter.next());
+            final MongoConfig targetMongoConfig = new MongoConfig(targetMongoIter.next());
 
-            final String sourceHost = sourceMongoConfig.getString("host");
-            final Integer sourcePort = sourceMongoConfig.getInt("port");
-            final String sourceDBName = sourceMongoConfig.getString("dbName");
-            final String sourceDBUsername = sourceMongoConfig.getString("username");
-            final String sourceDBPassword = sourceMongoConfig.getString("password");
-
-            final String targetHost = targetMongoConfig.getString("host");
-            final Integer targetPort = targetMongoConfig.getInt("port");
-            final String targetDBName = targetMongoConfig.getString("dbName");
-            final String targetDBUsername = targetMongoConfig.getString("username");
-            final String targetDBPassword = targetMongoConfig.getString("password");
-
-            final PublisherConfig publisherConfig = new PublisherConfig(sourceHost, sourcePort, sourceDBName,
-                    sourceDBUsername, sourceDBPassword, targetHost, targetPort, targetDBName, targetDBUsername,
-                    targetDBPassword, startTimestamp, startTimestampFile, solrURL, batch,
-                    graphiteMasterId, graphiteServer, graphitePort);
+            final PublisherConfig publisherConfig = new PublisherConfig(
+                    sourceMongoConfig, targetMongoConfig,
+                    startTimestamp, startTimestampFile, solrURL, batch,
+                    graphiteReporterConfig
+            );
 
             threads.add(new Thread(new Runnable() {
                 @Override
