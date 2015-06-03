@@ -1,6 +1,7 @@
-import eu.europeana.jobcreator.JobCreator;
-import eu.europeana.jobcreator.domain.ProcessingJobTuple;
+package eu.europeana.jobcreator;
+
 import eu.europeana.harvester.domain.*;
+import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,12 +25,12 @@ public class JobCreatorTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testAllArgsNull() throws MalformedURLException, UnknownHostException {
+    public void failsToGenerateProcessingJobWhenAllEdmUrlsAreNull() throws MalformedURLException, UnknownHostException {
         jobCreator.createJobs(null, null, null, null ,null, null, null, null);
     }
 
     @Test
-    public void testEdmObj_ValidUrl() throws MalformedURLException, UnknownHostException {
+    public void  canGenerateProcessingJobFromAValidEdmUrl() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> jobs =
         jobCreator.createJobs(collectionId, providerId, recordId,executionId, "http://www.google.com",
                               null, null, null);
@@ -66,12 +67,12 @@ public class JobCreatorTest {
     }
 
     @Test(expected = MalformedURLException.class)
-    public void testEdmObj_InvalidUrl() throws MalformedURLException, UnknownHostException {
+    public void failsToGenerateProcessingJobFromInvalidEdmUrl() throws MalformedURLException, UnknownHostException {
         jobCreator.createJobs(collectionId, providerId, recordId, executionId, UUID.randomUUID().toString(), null, null, null);
     }
 
     @Test
-    public void testEdmHasViewUrls_OneElement() throws MalformedURLException, UnknownHostException   {
+    public void canGenerateValidProcessingJobFromOneValidEdmHasViewsUrls() throws MalformedURLException, UnknownHostException   {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
 
@@ -116,7 +117,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void testEdmHasViewUrls_TwoElements()throws MalformedURLException, UnknownHostException  {
+    public void canGenerateValidProcessingJobFromTwoValidEdmHasViewsUrls()throws MalformedURLException, UnknownHostException  {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
         urls.add("http://www.facebook.com");
@@ -162,7 +163,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void testEdmHasViewUrls_ManyElements()throws MalformedURLException, UnknownHostException  {
+    public void canGenerateValidProcessingJobFromAValidEdmHasViewsUrls()throws MalformedURLException, UnknownHostException  {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
         urls.add("http://www.facebook.com");
@@ -214,7 +215,7 @@ public class JobCreatorTest {
     }
 
     @Test(expected = MalformedURLException.class)
-    public void testEdmHasViewUrls_OneInvalidUrl()throws MalformedURLException, UnknownHostException  {
+    public void failsToGenerateProcessingJobWhereThereIsOneInvalidEdmHasViewUrl()throws MalformedURLException, UnknownHostException  {
         final List<String> urls = new ArrayList<>();
         urls.add(UUID.randomUUID().toString());
 
@@ -222,7 +223,7 @@ public class JobCreatorTest {
     }
 
     @Test(expected = MalformedURLException.class)
-    public void testEdmHasView_Urls_ManyElementsSomeInvalidUrls() throws MalformedURLException, UnknownHostException {
+    public void failsToGenerateProcessingJobFromSomeInvalidEdmHasViewUrls() throws MalformedURLException, UnknownHostException {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
         urls.add("http://www.facebook.com");
@@ -239,7 +240,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void testEdmIsShownBy_ValidUrl() throws MalformedURLException, UnknownHostException {
+    public void canGenerateValidProcessingJobFromAValidEdmIsShownByUrl() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> jobs =
                 jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, "http://www.google.com", null);
 
@@ -279,12 +280,12 @@ public class JobCreatorTest {
     }
 
     @Test(expected = MalformedURLException.class)
-    public void testEdmIsShownBy_InvalidUrl() throws MalformedURLException, UnknownHostException  {
+    public void failsToGenerateProcessingJobFromInvalidEdmIsShownByUrl() throws MalformedURLException, UnknownHostException  {
         jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, UUID.randomUUID().toString(), null);
     }
 
     @Test
-    public void testEdmIsShownAt_ValidUrl() throws MalformedURLException, UnknownHostException  {
+    public void canGenerateValidProcessingJobFromAValidEdmIsShownAtUrl() throws MalformedURLException, UnknownHostException  {
         final List<ProcessingJobTuple> jobs =
                 jobCreator.createJobs(collectionId, providerId, recordId,executionId, null, null, null, "http://www.google.com");
 
@@ -300,7 +301,7 @@ public class JobCreatorTest {
     }
 
     @Test(expected = MalformedURLException.class)
-    public void testEdmIsShownAt_InvalidUrl() throws MalformedURLException, UnknownHostException {
+    public void failsToGenerateProcessingJobFromInvalidEdmIsShownAtUrl() throws MalformedURLException, UnknownHostException {
         jobCreator.createJobs(collectionId, providerId, recordId, null, null, null, UUID.randomUUID().toString(), null);
     }
 
