@@ -1,6 +1,7 @@
 import com.google.common.collect.ImmutableSet;
 import org.javaswift.joss.client.factory.AccountConfig;
 import org.javaswift.joss.client.factory.AccountFactory;
+import org.javaswift.joss.client.factory.AuthenticationMethod;
 import org.jclouds.ContextBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -26,25 +27,29 @@ public class Main {
             accountConfig.setUsername("c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu");
             accountConfig.setPassword("78ae7i9XO3O7CcdkDa87");
             accountConfig.setAuthUrl("https://auth.hydranodes.de:5000/v2.0");
-           // accountConfig.setTenantId("c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu");
+            accountConfig.setTenantId("3c678adbb69641018b645caa104b9252");
             new AccountFactory(accountConfig).createAccount();
         }
-        catch (Exception e) {
+        finally {
 
         }
+       // catch (Exception e) {
+         //   System.out.println(e.getMessage());
+       // }
 
         try {
-            NovaApi novaApi;
+            SwiftApi siwftApi;
             Iterable<Module> modules = ImmutableSet.<Module>of(new SLF4JLoggingModule());
             String provider = "openstack-nova";
             String identity = "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu"; // tenantName:userName
             String credential = "78ae7i9XO3O7CcdkDa87";
 
-            novaApi = ContextBuilder.newBuilder(provider)
+            siwftApi = ContextBuilder.newBuilder(provider)
                                     .endpoint("https://auth.hydranodes.de:5000/v2.0")
                                     .credentials(identity, credential)
                                     .modules(modules)
-                                    .buildApi(NovaApi.class);
+                                    .buildApi(SwiftApi.class);
+            siwftApi.getContainerApi("RegionOne").create("unittest_Alex");
 
             System.out.println("working ?");
         }
