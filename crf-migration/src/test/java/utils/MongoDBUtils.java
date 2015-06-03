@@ -77,7 +77,7 @@ public class MongoDBUtils {
         return connectToDB(migratorConfig.getSourceMongoConfig().getHost(),
                            migratorConfig.getSourceMongoConfig().getPort(),
                            migratorConfig.getSourceMongoConfig().getdBUsername(),
-                           migratorConfig.getSourceMongoConfig().getdBUsername()
+                           migratorConfig.getSourceMongoConfig().getdBPassword()
                           ).getDB(migratorConfig.getSourceMongoConfig().getdBName());
     }
 
@@ -85,7 +85,7 @@ public class MongoDBUtils {
         return connectToDB(migratorConfig.getTargetMongoConfig().getHost(),
                            migratorConfig.getTargetMongoConfig().getPort(),
                            migratorConfig.getTargetMongoConfig().getdBUsername(),
-                           migratorConfig.getTargetMongoConfig().getdBUsername()
+                           migratorConfig.getTargetMongoConfig().getdBPassword()
                           ).getDB(migratorConfig.getTargetMongoConfig().getdBName());
     }
 
