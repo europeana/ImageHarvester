@@ -146,14 +146,17 @@ public class NodeSupervisor extends UntypedActor {
     private void onDissasociatedEventReceived(DisassociatedEvent message) throws Exception {
         final DisassociatedEvent disassociatedEvent = message;
         LOG.info("Member disassociated: {}", disassociatedEvent.remoteAddress());
-        try {
-            Thread.sleep(300000);
+        // if it's the master, restart
+        if (disassociatedEvent.getLocalAddress()==disassociatedEvent.getRemoteAddress()) {
+            try {
+                Thread.sleep(300000);
 
-        } catch (InterruptedException e) {
-            LOG.info("Interrupted");
+            } catch (InterruptedException e) {
+                LOG.info("Interrupted");
+            }
+
+            slave.restart();
         }
-
-        slave.restart();
     }
 
     private void onSlaveHeartBeatReceived() {

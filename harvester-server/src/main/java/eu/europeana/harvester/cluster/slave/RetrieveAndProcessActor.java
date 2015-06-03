@@ -1,8 +1,6 @@
 package eu.europeana.harvester.cluster.slave;
 
 import akka.actor.*;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import akka.pattern.CircuitBreaker;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -19,17 +17,21 @@ import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExt
 import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
+import eu.europeana.harvester.domain.LogMarker;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static net.logstash.logback.marker.Markers.*;
 
 /**
  * This actor is the actual worker actor.
@@ -43,11 +45,12 @@ public class RetrieveAndProcessActor extends UntypedActor {
                                              final String colorMapPath,
                                              MetricRegistry metrics) {
         return system.actorOf(Props.create(RetrieveAndProcessActor.class,
-                httpRetrieveResponseFactory,colorMapPath,mediaStorageClient,
+                httpRetrieveResponseFactory, colorMapPath, mediaStorageClient,
                 metrics));
     }
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    //private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * A factory object which build different types of httpRetrieveResponse objects.
@@ -83,9 +86,9 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
         this.httpRetrieveResponseFactory = httpRetrieveResponseFactory;
         this.metrics = metrics;
-        this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(colorMapPath),new ThumbnailGenerator(colorMapPath), new ColorExtractor(colorMapPath),mediaStorageClient, LOG);
-        this.slaveDownloader = new SlaveDownloader(org.apache.logging.log4j.LogManager.getLogger(SlaveDownloader.class.getName()));
-        this.slaveLinkChecker = new SlaveLinkChecker(org.apache.logging.log4j.LogManager.getLogger(SlaveLinkChecker.class.getName()));
+        this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(colorMapPath),new ThumbnailGenerator(colorMapPath), new ColorExtractor(colorMapPath),mediaStorageClient);
+        this.slaveDownloader = new SlaveDownloader();
+        this.slaveLinkChecker = new SlaveLinkChecker();
 
         responses = metrics.timer(name("ProcessorSlave", "Download responses"));
         dresponses = metrics.timer(name("ProcessorSlave", "Process responses"));
@@ -94,7 +97,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
 
     public void notifyMeOnOpen() {
-        LOG.warning("The slave processing circuit breaker is now open, and will not close for one minute. Killing current actor.");
+        LOG.info(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, "Circuit Breaker"),"The slave processing circuit breaker is now open, and will not close for one minute. Killing current actor.");
         getSelf().tell(PoisonPill.getInstance(), ActorRef.noSender());
     }
 
@@ -134,7 +137,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
         HttpRetrieveResponse response = null;
 
         // Step 1 : Execute retrieval (download OR link checking) + send confirmation when it's done
-        System.out.println("Starting retrieval of "+ task.getUrl());
+        //System.out.println("Starting retrieval of "+ task.getUrl());
+
         final Timer.Context ctx = dresponses.time();
 
         try {
@@ -143,13 +147,13 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == ResponseState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
                     response, task.getDocumentReferenceTask(), task.getIpAddress());
-            LOG.info("Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(),taskWithProcessingConfig.getDownloadPath());
+            LOG.info(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(), taskWithProcessingConfig.getDownloadPath());
 
         } catch (Exception e) {
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), ProcessingState.ERROR,
                     response, task.getDocumentReferenceTask(), task.getIpAddress());
 
-            LOG.error("Exception during retrieval. The http retrieve response could not be created. Probable cause : wrong configuration argument in the slave. The actual message : {}", e.getMessage());
+            LOG.error(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"Exception during retrieval. The http retrieve response could not be created. Probable cause : wrong configuration argument in the slave. The actual message : {}", e.getMessage());
         } finally {
             sender.tell(doneDownloadMessage, getSelf());
         }
@@ -170,7 +174,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                         processingResultTuple.getMediaMetaInfoTuple().getTextMetaInfo());
 
             } catch (Exception e) {
-                LOG.error("Exception during processing. The actual message : {}", e.getMessage());
+                LOG.error(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"Exception during processing. The actual message : {}", e.getMessage());
                 doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
                         null,
                         null,
@@ -179,7 +183,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
             }
         } else {
             // We can skip processing altogether.
-            LOG.error("The task processing stage was skipped because the retrieval stage failed.");
+            LOG.error(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"The task processing stage was skipped because the retrieval stage failed.");
             LOG.info("response state is {}, response log {}", response.getState(), response.getLog());
             doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
                     null,
@@ -216,7 +220,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                     response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, taskWithProcessingConfig.getDownloadPath());
                     slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
                 } catch (Exception e) {
-                    LOG.error("The slave downloader for task type UNCONDITIONAL_DOWNLOAD for path {} has thrown an exception while processing {}",taskWithProcessingConfig.getDownloadPath(), e);
+                    LOG.error(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"The slave downloader for task type UNCONDITIONAL_DOWNLOAD for path {} has thrown an exception while processing {}",taskWithProcessingConfig.getDownloadPath(), e);
                     throw e;
                 }
                 break;

@@ -3,10 +3,11 @@ package eu.europeana.harvester.cluster.slave.downloading;
 import com.ning.http.client.*;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
+import eu.europeana.harvester.domain.LogMarker;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.ResponseState;
 import eu.europeana.harvester.utils.NetUtils;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URL;
@@ -14,13 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static net.logstash.logback.marker.Markers.append;
+
 public class SlaveLinkChecker {
 
-    private org.apache.logging.log4j.Logger LOG;
+    private org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
-    public SlaveLinkChecker(final Logger LOG) {
-        this.LOG = LOG;
-    }
+
 
     public void downloadAndStoreInHttpRetrievResponse(final HttpRetrieveResponse httpRetrieveResponse, final RetrieveUrl task) {
 
@@ -136,7 +137,7 @@ public class SlaveLinkChecker {
 
         try {
             Integer r = downloadListener.get(1, TimeUnit.DAYS /* This timeout should never be reached. There are other timeouts used internally that will expire much quicker. */);
-            LOG.debug("Download finished with status {}", r);
+            LOG.debug(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"Download finished with status {}", r);
 
         } catch (Exception e) {
             cleanup(httpRetrieveResponse, asyncHttpClient, e);

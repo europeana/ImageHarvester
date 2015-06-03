@@ -1,6 +1,5 @@
 package eu.europeana.harvester.cluster.slave.processing;
 
-import akka.event.LoggingAdapter;
 import eu.europeana.harvester.cluster.domain.ContentType;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
@@ -25,14 +24,15 @@ public class SlaveProcessor {
     private final ThumbnailGenerator thumbnailGenerator;
     private final ColorExtractor colorExtractor;
     private final MediaStorageClient mediaStorageClient;
-    private final LoggingAdapter LOG;
 
-    public SlaveProcessor(MediaMetaInfoExtractor metaInfoExtractor, ThumbnailGenerator thumbnailGenerator, ColorExtractor colorExtractor, MediaStorageClient mediaStorageClient, LoggingAdapter LOG) {
+
+    public SlaveProcessor(MediaMetaInfoExtractor metaInfoExtractor, ThumbnailGenerator thumbnailGenerator, ColorExtractor colorExtractor,
+                          MediaStorageClient mediaStorageClient) {
         this.metaInfoExtractor = metaInfoExtractor;
         this.thumbnailGenerator = thumbnailGenerator;
         this.colorExtractor = colorExtractor;
         this.mediaStorageClient = mediaStorageClient;
-        this.LOG = LOG;
+
     }
 
     public ProcessingResultTuple process(final ProcessingJobTaskDocumentReference task, String originalFilePath, String originalFileUrl, byte[] originalFileContent,
