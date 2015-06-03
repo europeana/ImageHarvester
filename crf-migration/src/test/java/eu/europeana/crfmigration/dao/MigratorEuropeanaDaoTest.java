@@ -1,6 +1,7 @@
 package eu.europeana.crfmigration.dao;
 
 import com.mongodb.*;
+import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import eu.europeana.crfmigration.logic.MigratorMetrics;
 import org.joda.time.DateTime;
@@ -11,10 +12,9 @@ import utils.MigratorUtils;
 import utils.MongoDBUtils;
 
 import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static utils.MigratorUtils.*;
 
 /**
@@ -38,7 +38,7 @@ public class MigratorEuropeanaDaoTest {
 
     @After
     public void tearDown() {
-    //   mongoDBUtils.cleanMongoDatabase();
+       mongoDBUtils.cleanMongoDatabase();
     }
 
     @Test
@@ -82,6 +82,62 @@ public class MigratorEuropeanaDaoTest {
             filteringQuery.put("europeanaCollectionName", record.getValue());
 
             assertEquals(1, mongo.find(filteringQuery).size());
+        }
+    }
+
+    @Test
+    public void test_RetrieveSourceDocumentReferences_EmptyRecords() {
+        assertTrue(europeanaDao.retrieveAggregationEDMInformation(Collections.<String, String>emptyMap()).isEmpty());
+    }
+
+    @Test
+    public void test_RetrieveSourceDocumentReferences_OneRecords() {
+        final String recordId = "/04202/BibliographicResource_2000068285812";
+        final String collectionName = "04202_L_BE_UniLibGent_googlebooks";
+        final Map<String, String> record = new HashMap<>();
+        record.put(recordId, collectionName);
+
+        final List<EuropeanaEDMObject> edmObjects = europeanaDao.retrieveAggregationEDMInformation(record);
+
+        assertEquals (1, edmObjects.size());
+
+        final EuropeanaEDMObject edmObject = edmObjects.get(0);
+        assertNull (edmObject.getEdmIsShownBy());
+        assertEquals ("http://search.ugent.be/meercat/x/bkt01?q=900000061304", edmObject.getEdmIsShownAt());
+        assertEquals("http://bks1.books.google.be/books?vid=GENT900000061304&printsec=titlepage&img=1&zoom=1", edmObject.getEdmObject());
+        assertNull(edmObject.getEdmHasViews());
+    }
+
+    @Test
+    public void test_RetrieveSourceDocumentReferences_ManyRecords() {
+        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(null);
+        final Map<String, String> records= europeanaDao.retrieveRecordsIdsFromCursor(cursor, 10);
+        final List<EuropeanaEDMObject> edmObjects = europeanaDao.retrieveAggregationEDMInformation(records);
+
+        final DBCollection aggregationColl = mongoDBUtils.connectToSource().getCollection("Aggregation");
+
+        assertEquals (10, edmObjects.size());
+        try {
+            for (final EuropeanaEDMObject edmObject : edmObjects) {
+                final DBObject aggregation = aggregationColl.find(new BasicDBObject("about",
+                                                                                    "/aggregation/provider" + edmObject.getReferenceOwner().getRecordId())).next();
+
+                final BasicDBList hasViewList = (BasicDBList)aggregation.get("hasView");
+                assertEquals(aggregation.get("edmIsShownAt"), edmObject.getEdmIsShownAt());
+                assertEquals (aggregation.get("edmIsShownBy"), edmObject.getEdmIsShownBy());
+                assertEquals(aggregation.get("edmObject"), edmObject.getEdmObject());
+
+
+                if (null == hasViewList) {
+                    assertNull (edmObject.getEdmHasViews());
+                }
+                else {
+                    assertArrayEquals(edmObject.getEdmHasViews().toArray(), hasViewList.toArray());
+                }
+            }
+        }
+        catch (Exception e) {
+            fail (e.getMessage());
         }
     }
 }

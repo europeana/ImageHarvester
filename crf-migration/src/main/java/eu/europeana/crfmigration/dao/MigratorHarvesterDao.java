@@ -1,7 +1,5 @@
 package eu.europeana.crfmigration.dao;
 
-import com.mongodb.DB;
-import com.mongodb.Mongo;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import eu.europeana.crfmigration.domain.MongoConfig;
@@ -25,7 +23,7 @@ public class MigratorHarvesterDao {
     private final MigratorMetrics metrics;
     private final HarvesterClientImpl harvesterClient;
 
-    public MigratorHarvesterDao(MigratorMetrics metrics, MongoConfig mongoConfig) throws UnknownHostException {
+    public MigratorHarvesterDao (MongoConfig mongoConfig, MigratorMetrics metrics) throws UnknownHostException {
 
         final MorphiaDataStore datastore =
                 new MorphiaDataStore(mongoConfig.getHost(), mongoConfig.getPort(),mongoConfig.getdBName());

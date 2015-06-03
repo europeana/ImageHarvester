@@ -73,7 +73,7 @@ public class MigratorEuropeanaDao {
         return recordCursor;
     }
 
-    public final List<EuropeanaEDMObject> retrieveSourceDocumentReferences(final Map<String, String> records) {
+    public final List<EuropeanaEDMObject> retrieveAggregationEDMInformation(final Map<String, String> records) {
         final List<EuropeanaEDMObject> results = new ArrayList<>();
         for (final Map.Entry<String, String> record : records.entrySet()) {
             final ReferenceOwner referenceOwner = getReferenceOwner(record);

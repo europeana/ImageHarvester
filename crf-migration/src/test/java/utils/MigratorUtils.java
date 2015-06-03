@@ -66,7 +66,9 @@ public class MigratorUtils {
 
 
             final MigratorEuropeanaDao migratorEuropeanaDao = new MigratorEuropeanaDao(migratorConfig.getSourceMongoConfig(), metrics);
-            final MigratorHarvesterDao migratorHarvesterDao = new MigratorHarvesterDao(metrics, migratorConfig.getTargetMongoConfig());
+            final MigratorHarvesterDao migratorHarvesterDao = new MigratorHarvesterDao(migratorConfig.getTargetMongoConfig(),
+
+                                                                                       metrics);
 
             // Prepare the migrator & start it
             final MigrationManager migrationManager = new MigrationManager(migratorEuropeanaDao,

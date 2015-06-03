@@ -90,7 +90,7 @@ public class MigrationManager {
 
     private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch) throws MalformedURLException, UnknownHostException {
         // Retrieve records and convert to jobs
-        final List<EuropeanaEDMObject> edmObjectsOfRecords = migratorEuropeanaDao.retrieveSourceDocumentReferences(recordsInBatch);
+        final List<EuropeanaEDMObject> edmObjectsOfRecords = migratorEuropeanaDao.retrieveAggregationEDMInformation(recordsInBatch);
         final List<ProcessingJobTuple> processingJobTuples = convertEDMObjectToJobs(edmObjectsOfRecords);
         final List<ProcessingJob> processingJobs = ProcessingJobTuple.processingJobsFromList(processingJobTuples);
         final List<SourceDocumentReference> sourceDocumentReferences = ProcessingJobTuple.sourceDocumentReferencesFromList(processingJobTuples);

@@ -96,7 +96,9 @@ public class Migrator {
 
         // Prepare the persistence
         final MigratorEuropeanaDao migratorEuropeanaDao = new MigratorEuropeanaDao(migrationConfig.getSourceMongoConfig(), metrics);
-        final MigratorHarvesterDao migratorHarvesterDao = new MigratorHarvesterDao(metrics, migrationConfig.getTargetMongoConfig());
+        final MigratorHarvesterDao migratorHarvesterDao = new MigratorHarvesterDao(migrationConfig.getTargetMongoConfig(),
+
+                                                                                   metrics);
 
         // Prepare the migrator & start it
         final MigrationManager migrationManager = new MigrationManager(migratorEuropeanaDao,
