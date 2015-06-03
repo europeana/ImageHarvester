@@ -42,7 +42,7 @@ public class SlaveDownloaderTest {
 
     @Test
     public void canAbortUnconditionalDownloadWhenSocketConnectionTimeExceeded() throws Exception {
-        final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
+        final SlaveDownloader slaveDownloader = new SlaveDownloader();
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
 
         final ProcessingJobLimits limits = new ProcessingJobLimits(
@@ -78,7 +78,7 @@ public class SlaveDownloaderTest {
 
     @Test
     public void canAbortUnconditionalDownloadWhenTerminationThresholdTimeLimitExceeded() throws Exception {
-        final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
+        final SlaveDownloader slaveDownloader = new SlaveDownloader();
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
 
         final ProcessingJobLimits limits = new ProcessingJobLimits(
@@ -105,7 +105,7 @@ public class SlaveDownloaderTest {
 
     @Test
     public void canDownloadUnconditionallyWithDefaultLimits() throws Exception {
-        final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
+        final SlaveDownloader slaveDownloader = new SlaveDownloader();
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
 
         final ProcessingJobLimits limits = new ProcessingJobLimits();
@@ -132,7 +132,7 @@ public class SlaveDownloaderTest {
 
     @Test
     public void canDownloadNonExistentUrlUnconditionallyWithDefaultLimits() throws Exception {
-        final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
+        final SlaveDownloader slaveDownloader = new SlaveDownloader();
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
 
         final ProcessingJobLimits limits = new ProcessingJobLimits();
@@ -159,7 +159,7 @@ public class SlaveDownloaderTest {
 
     @Test
     public void canDownloadConditionallyAndSkipDownloadWhenSameContentLengthResponseHeaderEntry() throws Exception {
-        final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
+        final SlaveDownloader slaveDownloader = new SlaveDownloader();
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
         final ProcessingJobLimits limits = new ProcessingJobLimits();
 
@@ -185,7 +185,7 @@ public class SlaveDownloaderTest {
 
     @Test
     public void canDownloadConditionallyAndDownloadWhenDifferentContentLengthResponseHeaderEntry() throws Exception {
-        final SlaveDownloader slaveDownloader = new SlaveDownloader(LOG);
+        final SlaveDownloader slaveDownloader = new SlaveDownloader();
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
         final ProcessingJobLimits limits = new ProcessingJobLimits();
 

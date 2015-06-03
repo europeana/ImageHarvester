@@ -30,7 +30,7 @@ public class SlaveLinkCheckerTest {
 
     @Test
     public void canLinkCheckWithDefaultLimits() throws Exception {
-        final SlaveLinkChecker slaveLinkChecker = new SlaveLinkChecker(LOG);
+        final SlaveLinkChecker slaveLinkChecker = new SlaveLinkChecker();
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.NO_STORAGE,null);
         final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CHECK_LINK,
                 "referenceid-1","a", Collections.<String, String>emptyMap(),
@@ -49,7 +49,7 @@ public class SlaveLinkCheckerTest {
 
     @Test
     public void canLinkCheckWithDefaultLimits1() throws Exception {
-        final SlaveLinkChecker slaveLinkChecker = new SlaveLinkChecker(LOG);
+        final SlaveLinkChecker slaveLinkChecker = new SlaveLinkChecker();
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.NO_STORAGE,null);
         final ProcessingJobLimits limits = new ProcessingJobLimits(
                 100*1000l /* retrievalTerminationThresholdTimeLimitInMillis  */,
@@ -75,7 +75,7 @@ public class SlaveLinkCheckerTest {
 
     @Test
     public void canFailLinkCheckWhenUrlIsNonExistentWithDefaultLimits() throws Exception {
-        final SlaveLinkChecker slaveLinkChecker = new SlaveLinkChecker(LOG);
+        final SlaveLinkChecker slaveLinkChecker = new SlaveLinkChecker();
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.NO_STORAGE,null);
         final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl+"-some-extra-nonsense", new ProcessingJobLimits(), DocumentReferenceTaskType.CHECK_LINK, "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),

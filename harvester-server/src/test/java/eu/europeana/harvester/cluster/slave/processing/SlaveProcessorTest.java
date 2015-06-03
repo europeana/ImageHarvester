@@ -72,15 +72,14 @@ public class SlaveProcessorTest {
         slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP),
                                             new ThumbnailGenerator(PATH_COLORMAP),
                                             new ColorExtractor(PATH_COLORMAP),
-                                            mediaStorageClient,
-                                            loggingAdapter
+                                            mediaStorageClient
                                           );
         taskDocumentReference = new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                                                                            "source-reference-1", subTasks);
     }
 
     private void downloadFile (final String url, final String pathToStore) throws Exception {
-        final SlaveDownloader slaveDownloader = new SlaveDownloader(LogManager.getLogger(SlaveProcessorTest.class.getName()));
+        final SlaveDownloader slaveDownloader = new SlaveDownloader();
 
         final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathToStore);
 
