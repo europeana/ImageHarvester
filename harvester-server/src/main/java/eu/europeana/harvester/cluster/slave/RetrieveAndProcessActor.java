@@ -70,8 +70,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
     private RetrieveUrlWithProcessingConfig taskWithProcessingConfig;
 
     private final MetricRegistry metrics;
-    private final Timer responses, dresponses;
 
+    private final Timer responses, dresponses;
 
     private final SlaveProcessor slaveProcessor;
 

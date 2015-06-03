@@ -12,6 +12,7 @@ import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
+import eu.europeana.harvester.httpclient.response.ResponseState;
 import scala.Option;
 
 import java.io.File;
@@ -73,7 +74,11 @@ public class NodeMasterActor extends UntypedActor {
 
     private final MetricRegistry metrics;
 
-    private Meter retrieve, doneDl, doneProc;
+    private Meter retrieve, meterDoneDownloadTotalCounter, meterDoneProcessingTotalCounter;
+
+    private final Map<ResponseState,Meter> meterDoneDownloadStateCounters;
+
+    private final Map<ProcessingState,Meter> meterDoneProcessingStateCounters;
 
     private List<ActorRef> actors = new ArrayList<>() ;
 
@@ -102,6 +107,16 @@ public class NodeMasterActor extends UntypedActor {
         this.metrics = metrics;
         this.maxSlaves = nodeMasterConfig.getNrOfDownloaderSlaves();
 
+        this.meterDoneDownloadStateCounters = new HashMap();
+        for (final ResponseState state : ResponseState.values()) {
+            meterDoneDownloadStateCounters.put(state,metrics.meter("DoneDownload."+state.name()));
+        }
+
+        this.meterDoneProcessingStateCounters = new HashMap();
+        for (final ProcessingState state : ProcessingState.values()) {
+            meterDoneProcessingStateCounters.put(state,metrics.meter("DoneProcessing."+state.name()));
+        }
+
     }
 
     @Override
@@ -109,8 +124,8 @@ public class NodeMasterActor extends UntypedActor {
         LOG.info("NodeMasterActor preStart");
 
 
-        doneDl = metrics.meter("DoneDownload");
-        doneProc = metrics.meter("DoneProcessing");
+        meterDoneDownloadTotalCounter = metrics.meter("DoneDownload.total");
+        meterDoneProcessingTotalCounter = metrics.meter("DoneProcessing.total");
         //gauge the number of processor actors
         metrics.register(MetricRegistry.name("NodeMasterActor", "actors", "size"),
                 new Gauge<Integer>() {
@@ -307,7 +322,8 @@ public class NodeMasterActor extends UntypedActor {
             }
 
         }
-        doneDl.mark();
+        meterDoneDownloadStateCounters.get(message.getHttpRetrieveResponse().getState()).mark();
+        meterDoneDownloadTotalCounter.mark();
     }
 
     private void onDoneProcessingReceived(Object message) {
@@ -321,7 +337,8 @@ public class NodeMasterActor extends UntypedActor {
             LOG.info("Slave sending DoneProcessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
         }
 
-        doneProc.mark();
+        meterDoneProcessingStateCounters.get(doneProcessing.getProcessingState()).mark();
+        meterDoneProcessingTotalCounter.mark();
     }
 
     private void onCleanReceived() {
