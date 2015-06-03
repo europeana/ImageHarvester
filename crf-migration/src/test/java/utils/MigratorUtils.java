@@ -21,7 +21,7 @@ import static org.junit.Assert.fail;
  * Created by salexandru on 02.06.2015.
  */
 public class MigratorUtils {
-    public static final String PATH_PREFIX = "./src/test/java/";
+    public static final String PATH_PREFIX = "./src/test/java/resources/";
 
     public static MigratorConfig createMigratorConfig(final String pathToConfigFile) {
         final File configFile = new File(PATH_PREFIX + pathToConfigFile);
