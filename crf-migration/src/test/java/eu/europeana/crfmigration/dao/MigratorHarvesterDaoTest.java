@@ -13,6 +13,7 @@ import eu.europeana.harvester.domain.URLSourceType;
 import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.After;
 import org.junit.Before;
@@ -40,10 +41,17 @@ public class MigratorHarvesterDaoTest {
 
     @Before
     public void setUp() throws UnknownHostException {
-        dataStore =  new MorphiaDataStore(migratorConfig.getTargetMongoConfig().getHost(),
+        final MorphiaDataStore morphiaDataStore =  new MorphiaDataStore(migratorConfig.getTargetMongoConfig().getHost(),
                                           migratorConfig.getTargetMongoConfig().getPort(),
                                           migratorConfig.getTargetMongoConfig().getdBName()
-                                        ).getDatastore();
+                                        );
+
+        if (StringUtils.isNotEmpty(migratorConfig.getTargetMongoConfig().getdBUsername())) {
+            morphiaDataStore.getMongo().getDB("admin").authenticate(migratorConfig.getTargetMongoConfig().getdBUsername(),
+                                                                    migratorConfig.getTargetMongoConfig().getdBPassword().toCharArray());
+        }
+        dataStore = morphiaDataStore.getDatastore();
+
         harvesterDao = new MigratorHarvesterDao(migratorConfig.getTargetMongoConfig(), new MigratorMetrics());
     }
 
