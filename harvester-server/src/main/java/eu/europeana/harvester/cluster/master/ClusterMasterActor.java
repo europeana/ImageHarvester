@@ -196,7 +196,7 @@ public class ClusterMasterActor extends UntypedActor {
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,
                 TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
 
-        getJobs = metrics.timer(name("ClusterMaster", "Send jobs"));
+        getJobs = metrics.timer(name("ClusterMaster", "Send jobs to slaves performance"));
 
     }
 

@@ -126,7 +126,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         this.ipsWithJobs = ipsWithJobs;
         this.ipExceptions = ipExceptions;
         this.metrics = metrics;
-        loadJobs = metrics.timer(name("JobLoaderMaster", "Send jobs"));
+        loadJobs = metrics.timer(name("JobLoaderMaster", "Load jobs performance"));
 
         checkForAbandonedJobs();
         getIPDistribution();
@@ -137,7 +137,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         if (message instanceof LoadJobs) {
 
 
-            if (markLoad == 0 || System.currentTimeMillis() - markLoad > 300000l) {
+            if (markLoad == 0 || System.currentTimeMillis() - markLoad > 100000l) {
                 markLoad = System.currentTimeMillis();
                 final Timer.Context context = loadJobs.time();
                 try {
