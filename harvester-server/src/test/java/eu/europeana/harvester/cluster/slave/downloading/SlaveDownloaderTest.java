@@ -7,7 +7,7 @@ import eu.europeana.harvester.domain.ProcessingJobSubTask;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import eu.europeana.harvester.httpclient.response.ResponseState;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.logging.log4j.LogManager;
 import org.junit.After;
@@ -68,7 +68,7 @@ public class SlaveDownloaderTest {
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
-        assertEquals(ResponseState.FINISHED_TIME_LIMIT, response.getState());
+        assertEquals(RetrievingState.FINISHED_TIME_LIMIT, response.getState());
 
         assertEquals(pathOnDisk, response.getAbsolutePath());
         assertNotNull(response.getSourceIp());
@@ -95,7 +95,7 @@ public class SlaveDownloaderTest {
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
-        assertEquals(ResponseState.FINISHED_TIME_LIMIT, response.getState());
+        assertEquals(RetrievingState.FINISHED_TIME_LIMIT, response.getState());
 
         assertEquals(pathOnDisk, response.getAbsolutePath());
         assertNotNull(response.getSourceIp());
@@ -118,7 +118,7 @@ public class SlaveDownloaderTest {
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
-        assertEquals(ResponseState.COMPLETED, response.getState());
+        assertEquals(RetrievingState.COMPLETED, response.getState());
 
         assertEquals(pathOnDisk, response.getAbsolutePath());
         assertNotNull(response.getSourceIp());
@@ -145,7 +145,7 @@ public class SlaveDownloaderTest {
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
-        assertEquals(ResponseState.ERROR, response.getState());
+        assertEquals(RetrievingState.ERROR, response.getState());
         assertEquals(404, response.getHttpResponseCode().intValue());
 
         assertNotNull(response.getSourceIp());
@@ -170,7 +170,7 @@ public class SlaveDownloaderTest {
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
-        assertEquals(ResponseState.COMPLETED, response.getState());
+        assertEquals(RetrievingState.COMPLETED, response.getState());
 
         assertEquals(pathOnDisk, response.getAbsolutePath());
         assertNotNull(response.getSourceIp());
@@ -196,7 +196,7 @@ public class SlaveDownloaderTest {
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
-        assertEquals(ResponseState.COMPLETED, response.getState());
+        assertEquals(RetrievingState.COMPLETED, response.getState());
 
         assertEquals(pathOnDisk, response.getAbsolutePath());
         assertNotNull(response.getSourceIp());

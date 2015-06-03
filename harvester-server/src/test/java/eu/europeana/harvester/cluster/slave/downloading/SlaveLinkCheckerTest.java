@@ -7,13 +7,11 @@ import eu.europeana.harvester.domain.ProcessingJobSubTask;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import eu.europeana.harvester.httpclient.response.ResponseState;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.logging.log4j.LogManager;
 import org.junit.Test;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -39,7 +37,7 @@ public class SlaveLinkCheckerTest {
 
         slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
 
-        assertEquals(ResponseState.COMPLETED, response.getState());
+        assertEquals(RetrievingState.COMPLETED, response.getState());
 
         assertNotNull(response.getSourceIp());
         assertTrue(response.getSocketConnectToDownloadStartDurationInMilliSecs() > 5);
@@ -65,7 +63,7 @@ public class SlaveLinkCheckerTest {
 
         slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
 
-        assertEquals(ResponseState.FINISHED_TIME_LIMIT, response.getState());
+        assertEquals(RetrievingState.FINISHED_TIME_LIMIT, response.getState());
 
         assertNotNull(response.getSourceIp());
         assertTrue(response.getSocketConnectToDownloadStartDurationInMilliSecs() > 5);
@@ -84,7 +82,7 @@ public class SlaveLinkCheckerTest {
 
         slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
 
-        assertEquals(ResponseState.ERROR, response.getState());
+        assertEquals(RetrievingState.ERROR, response.getState());
         assertEquals(404, response.getHttpResponseCode().longValue());
 
         assertNotNull(response.getSourceIp());

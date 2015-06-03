@@ -20,7 +20,7 @@ import eu.europeana.harvester.domain.LogMarker;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import eu.europeana.harvester.httpclient.response.ResponseState;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,7 +134,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
             response = executeRetrieval(task);
 
-            doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == ResponseState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
+            doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == RetrievingState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
                     response, task.getDocumentReferenceTask(), task.getIpAddress());
             LOG.info(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()), "Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(), taskWithProcessingConfig.getDownloadPath());
 
@@ -151,7 +151,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
         // Step 2 : Execute processing + send confirmation when it's done
         DoneProcessing doneProcessingMessage = null;
 
-        if (response.getState() == ResponseState.COMPLETED && task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.CHECK_LINK) {
+        if (response.getState() == RetrievingState.COMPLETED && task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.CHECK_LINK) {
             final Timer.Context processingTimerContext = SlaveMetrics.Worker.Slave.Processing.totalDuration.time();
             ProcessingResultTuple processingResultTuple;
             try {

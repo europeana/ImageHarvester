@@ -25,9 +25,9 @@ public interface HttpRetrieveResponse extends Serializable {
 
     public void addHeader(String type, String value);
 
-    public ResponseState getState();
+    public RetrievingState getState();
 
-    public void setState(ResponseState responseState);
+    public void setState(RetrievingState retrievingState);
 
     public byte[] getContent();
 

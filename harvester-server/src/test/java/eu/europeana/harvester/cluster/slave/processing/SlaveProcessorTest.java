@@ -12,13 +12,12 @@ import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import eu.europeana.harvester.httpclient.response.ResponseState;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import gr.ntua.image.mediachecker.MediaChecker;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import  org.apache.logging.log4j.LogManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,7 +93,7 @@ public class SlaveProcessorTest {
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
-        assertEquals(ResponseState.COMPLETED, response.getState());
+        assertEquals(RetrievingState.COMPLETED, response.getState());
     }
 
     private void checkThumbnails (final String imageName, final Collection<MediaFile> genThumbnails, final String[] colorPalette) throws IOException {

@@ -3,7 +3,7 @@ package eu.europeana.harvester.httpclient.response;
 /**
  * The response state.
  */
-public enum ResponseState {
+public enum RetrievingState {
     ERROR,
     COMPLETED,
     PREPARING,

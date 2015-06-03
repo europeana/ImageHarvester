@@ -96,8 +96,6 @@ public class JobLoaderMasterActor extends UntypedActor {
      */
     private final IPExceptions ipExceptions;
 
-    private final MetricRegistry metrics;
-
     private Timer loadJobs;
 
     private long markLoad = 0;
@@ -110,8 +108,7 @@ public class JobLoaderMasterActor extends UntypedActor {
                                 final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
                                 final DefaultLimits defaultLimits,
-                                //final HashMap<String, MachineResourceReference> machineResourceReferences,
-                                final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions, final MetricRegistry metrics) {
+                                final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions) {
         LOG.info("JobLoaderMasterActor constructor");
 
         this.receiverActor = receiverActor;
@@ -125,8 +122,6 @@ public class JobLoaderMasterActor extends UntypedActor {
         this.defaultLimits = defaultLimits;
         this.ipsWithJobs = ipsWithJobs;
         this.ipExceptions = ipExceptions;
-        this.metrics = metrics;
-        loadJobs = metrics.timer(name("JobLoaderMaster", "Load jobs performance"));
 
         checkForAbandonedJobs();
         getIPDistribution();

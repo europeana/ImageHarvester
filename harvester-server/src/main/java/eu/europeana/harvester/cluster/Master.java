@@ -25,6 +25,7 @@ import eu.europeana.harvester.cluster.domain.messages.CheckForTaskTimeout;
 import eu.europeana.harvester.cluster.domain.messages.LoadJobs;
 import eu.europeana.harvester.cluster.domain.messages.Monitor;
 import eu.europeana.harvester.cluster.master.ClusterMasterActor;
+import eu.europeana.harvester.cluster.master.MasterMetrics;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
 import org.apache.logging.log4j.LogManager;
@@ -47,10 +48,6 @@ class Master {
     private ActorSystem system;
 
     private ActorRef clusterMaster;
-
-    private ActorRef pingMaster;
-    private static final MetricRegistry metrics = new MetricRegistry();
-
 
     public Master(String[] args) {
         this.args = args;
@@ -90,7 +87,7 @@ class Master {
                         Duration.millis(config.getInt("akka.cluster.receiveTimeoutInterval")),
                         config.getInt("ping.timeoutInterval"), WriteConcern.NONE);
 
-        Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
+        Slf4jReporter reporter = Slf4jReporter.forRegistry(MasterMetrics.METRIC_REGISTRY)
                 .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
@@ -100,7 +97,7 @@ class Master {
 
         Graphite graphite = new Graphite(new InetSocketAddress(config.getString("metrics.graphiteServer"),
                 config.getInt("metrics.graphitePort")));
-        GraphiteReporter reporter2 = GraphiteReporter.forRegistry(metrics)
+        GraphiteReporter reporter2 = GraphiteReporter.forRegistry(MasterMetrics.METRIC_REGISTRY)
                 .prefixedWith(config.getString("metrics.masterID"))
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
@@ -171,7 +168,7 @@ class Master {
                 clusterMasterConfig, ipExceptions, processingJobDao, machineResourceReferenceDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
                 sourceDocumentReferenceMetaInfoDao, defaultLimits,
-                cleanupInterval, metrics ), "clusterMaster");
+                cleanupInterval ), "clusterMaster");
     }
 
     public void start() {

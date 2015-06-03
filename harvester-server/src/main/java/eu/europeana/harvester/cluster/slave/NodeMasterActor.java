@@ -276,7 +276,7 @@ public class NodeMasterActor extends UntypedActor {
 
         if(!jobsToStop.contains(jobId)) {
 
-            masterReceiver.tell(new DownloadConfirmation(doneDownload.getTaskID(), doneDownload.getIpAddress()), getSelf());
+            masterReceiver.tell(new DownloadConfirmation(doneDownload.getTaskID(), doneDownload.getIpAddress(),doneDownload.getHttpRetrieveResponse().getState()), getSelf());
 
             if((DocumentReferenceTaskType.CHECK_LINK).equals(doneDownload.getDocumentReferenceTask().getTaskType()) ||
                     (ProcessingState.ERROR).equals(doneDownload.getProcessingState())) {

@@ -41,7 +41,7 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
             file.createNewFile();
             fo = new FileOutputStream(file.getAbsoluteFile());
         } catch (IOException e) {
-            setState(ResponseState.ERROR);
+            setState(RetrievingState.ERROR);
             setException(e);
             LOG.error(e.getMessage());
             throw e;
@@ -73,7 +73,7 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
             contentSizeInBytes += content.length;
             fo.write(content);
         } catch (IOException e) {
-            setState(ResponseState.ERROR);
+            setState(RetrievingState.ERROR);
             setException(e);
             throw e;
         }

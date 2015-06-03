@@ -43,7 +43,7 @@ public class HttpRetrieveResponseMemoryStorage extends HttpRetrieveResponseBase 
 
             this.content = newContent;
         } catch (Exception e) {
-            setState(ResponseState.ERROR);
+            setState(RetrievingState.ERROR);
             setException(e);
             throw e;
         }

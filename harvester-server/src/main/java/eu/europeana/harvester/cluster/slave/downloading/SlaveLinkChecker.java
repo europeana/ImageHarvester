@@ -5,7 +5,7 @@ import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.LogMarker;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
-import eu.europeana.harvester.httpclient.response.ResponseState;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.utils.NetUtils;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +38,7 @@ public class SlaveLinkChecker {
                 .build());
 
 
-        httpRetrieveResponse.setState(ResponseState.PROCESSING);
+        httpRetrieveResponse.setState(RetrievingState.PROCESSING);
         httpRetrieveResponse.setRetrievalDurationInMilliSecs(0l);
         final long connectionSetupStartTimestamp = System.currentTimeMillis();
 
@@ -56,7 +56,7 @@ public class SlaveLinkChecker {
 
                 if (connectionSetupDurationInMillis > task.getLimits().getRetrievalConnectionTimeoutInMillis()) {
                     /* Initial connection setup time longer than threshold. */
-                    httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
+                    httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
                     httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
                     return STATE.ABORT;
                 }
@@ -64,7 +64,7 @@ public class SlaveLinkChecker {
 
                 if (connectionSetupDurationInMillis > task.getLimits().getRetrievalTerminationThresholdReadPerSecondInBytes()) {
                     /* Initial connection setup time longer than threshold. */
-                    httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
+                    httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
                     httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured total download duration threshold" + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
                     return STATE.ABORT;
                 }
@@ -91,12 +91,12 @@ public class SlaveLinkChecker {
 
                 /** We terminate the connection in case of HTTP error only after we collect the response headers */
                 if (httpRetrieveResponse.getHttpResponseCode() >= 400) {
-                    httpRetrieveResponse.setState(ResponseState.ERROR);
+                    httpRetrieveResponse.setState(RetrievingState.ERROR);
                     httpRetrieveResponse.setLog("HTTP >=400 code received. Connection aborted after response headers collected.");
                     return STATE.ABORT;
                 }
 
-                httpRetrieveResponse.setState(ResponseState.COMPLETED);
+                httpRetrieveResponse.setState(RetrievingState.COMPLETED);
                 return STATE.ABORT;
             }
 
@@ -114,12 +114,12 @@ public class SlaveLinkChecker {
                 final long downloadDurationInMillis = System.currentTimeMillis() - connectionSetupStartTimestamp;
                 if (downloadDurationInMillis > task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis()) {
                     /* Download duration longer than threshold. */
-                    httpRetrieveResponse.setState(ResponseState.FINISHED_TIME_LIMIT);
+                    httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
                     httpRetrieveResponse.setLog("Link checking aborted as it's duration " + downloadDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + " ms");
                 }
 
                 // Check if it was aborted because of conditional download with with same headers.
-                if (httpRetrieveResponse.getState() == ResponseState.COMPLETED) {
+                if (httpRetrieveResponse.getState() == RetrievingState.COMPLETED) {
                     // We don't set any exception as the download was aborted for a legitimate reason.
                     cleanup(httpRetrieveResponse, asyncHttpClient, httpRetrieveResponse.getException());
                 }

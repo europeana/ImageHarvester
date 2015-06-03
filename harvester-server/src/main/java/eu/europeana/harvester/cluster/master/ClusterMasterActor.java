@@ -137,11 +137,6 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private final HashMap<String, Boolean> ipsWithJobs = new HashMap<>();
 
-    private final MetricRegistry metrics;
-
-    private com.codahale.metrics.Timer getJobs;
-
-
     private final HashMap< Integer , RequestHolder> jobRequests = new HashMap<>();
 
     public ClusterMasterActor(final ClusterMasterConfig clusterMasterConfig, final IPExceptions ipExceptions,
@@ -151,8 +146,8 @@ public class ClusterMasterActor extends UntypedActor {
                               final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                               final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
                               final DefaultLimits defaultLimits,
-                              final Integer cleanupInterval,
-                              final MetricRegistry metrics) {
+                              final Integer cleanupInterval
+                              ) {
         LOG.info("ClusterMasterActor constructor");
 
         this.ipExceptions = ipExceptions;
@@ -171,8 +166,6 @@ public class ClusterMasterActor extends UntypedActor {
         this.actorsPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<ActorRef>>());
         this.tasksPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<String>>());
         this.tasksPerTime = Collections.synchronizedMap(new HashMap<String, DateTime>());
-        this.metrics = metrics;
-
     }
 
     @Override
@@ -181,13 +174,13 @@ public class ClusterMasterActor extends UntypedActor {
 
         receiverActor = getContext().system().actorOf(Props.create(ReceiverMasterActor.class, clusterMasterConfig,
                 accountantActor, actorsPerAddress, tasksPerAddress, tasksPerTime, processingJobDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao,metrics
+                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao
         ), "receiver");
 
         jobLoaderActor = getContext().system().actorOf(Props.create(JobLoaderMasterActor.class, receiverActor,
                 clusterMasterConfig, accountantActor, actorsPerAddress, processingJobDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
-                defaultLimits, ipsWithJobs, ipExceptions,metrics), "jobLoader");
+                defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
 
         final Cluster cluster = Cluster.get(getContext().system());
         cluster.subscribe(getSelf(), ClusterEvent.initialStateAsEvents(),
@@ -195,8 +188,6 @@ public class ClusterMasterActor extends UntypedActor {
 
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,
                 TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
-
-        getJobs = metrics.timer(name("ClusterMaster", "Send jobs to slaves performance"));
 
     }
 
@@ -224,10 +215,13 @@ public class ClusterMasterActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         if(message instanceof RequestTasks) {
 
-            final com.codahale.metrics.Timer.Context context = getJobs.time();
-            handleRequest(getSender());
-            context.stop();
-
+            MasterMetrics.Master.sendJobSetToSlaveCounter.inc();
+            final com.codahale.metrics.Timer.Context context = MasterMetrics.Master.sendJobSetToSlaveDuration.time();
+            try {
+                handleRequest(getSender());
+            } finally {
+                context.stop();
+            }
             return;
         }
         if(message instanceof LoadJobs) {

@@ -4,10 +4,8 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
-import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
-import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.domain.ProcessingState;
-import eu.europeana.harvester.httpclient.response.ResponseState;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +32,8 @@ public class SlaveMetrics {
     public static final String THUMBNAIL_STORAGE = "thumbnailStorage";
     public static final String ORIGINAL_CACHING = "originalCaching";
 
+    public static final String DONE_DOWNLOAD = "doneDownload";
+    public static final String DONE_PROCESSING = "doneProcessing";
 
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
 
@@ -47,23 +47,24 @@ public class SlaveMetrics {
 
             public static final Counter activeWorkerSlavesCounter = METRIC_REGISTRY.counter(name(Master.NAME, "actors", "size"));
 
-            public static final Map<ResponseState, Meter> doneDownloadStateCounters = new HashMap();
-            public static final Meter doneDownloadTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DoneDownload.class.getName(), TOTAL, COUNTER));
+            public static final Map<RetrievingState, Meter> doneDownloadStateCounters = new HashMap();
+
+            static {
+                for (final RetrievingState state : RetrievingState.values()) {
+                    doneDownloadStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_DOWNLOAD, state.name(), COUNTER)));
+                }
+            }
+
+            public static final Meter doneDownloadTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_DOWNLOAD, TOTAL, COUNTER));
 
             public static final Map<ProcessingState, Meter> doneProcessingStateCounters = new HashMap();
-            public static final Meter doneProcessingTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DoneProcessing.class.getName(), TOTAL, COUNTER));
-
-            // Initialise the static variables
             static {
-                for (final ResponseState state : ResponseState.values()) {
-                    doneDownloadStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DoneDownload.class.getName(), state.name(), COUNTER)));
-                }
-
                 for (final ProcessingState state : ProcessingState.values()) {
-                    doneProcessingStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DoneProcessing.class.getName(), state.name(), COUNTER)));
+                    doneProcessingStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING, state.name(), COUNTER)));
                 }
-
             }
+
+            public static final Meter doneProcessingTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING, TOTAL, COUNTER));
 
         }
 

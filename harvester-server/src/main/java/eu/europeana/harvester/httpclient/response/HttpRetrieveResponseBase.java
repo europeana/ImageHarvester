@@ -19,7 +19,7 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     /**
      * The current state of the response.
      */
-    private ResponseState state = ResponseState.PREPARING;
+    private RetrievingState state = RetrievingState.PREPARING;
 
     /**
      * The url from where the data was retrieved.
@@ -87,12 +87,12 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     private String log = "";
 
     @Override
-    synchronized public ResponseState getState() {
+    synchronized public RetrievingState getState() {
         return state;
     }
 
     @Override
-    synchronized public void setState(ResponseState state) {
+    synchronized public void setState(RetrievingState state) {
         this.state = state;
     }
 
