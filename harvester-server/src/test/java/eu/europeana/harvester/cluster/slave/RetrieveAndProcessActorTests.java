@@ -42,8 +42,6 @@ public class RetrieveAndProcessActorTests {
 
     static ActorSystem system;
 
-    private static MetricRegistry metrics = new MetricRegistry();
-
     @BeforeClass
     public static void setup() throws IOException {
         FileUtils.forceMkdir(new File(FILESYSTEM_PATH_PREFIX));
@@ -88,7 +86,7 @@ public class RetrieveAndProcessActorTests {
      */
         new JavaTestKit(system) {{
 
-            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP,metrics);
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
 
             subject.tell(taskWithConfig, getRef());
 

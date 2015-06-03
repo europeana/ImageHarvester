@@ -15,6 +15,7 @@ import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.slave.NodeSupervisor;
+import eu.europeana.harvester.cluster.slave.SlaveMetrics;
 import eu.europeana.harvester.cluster.slave.validator.ImageMagicValidator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.mongo.MediaStorageClientImpl;
@@ -35,8 +36,6 @@ import java.util.concurrent.TimeUnit;
 public class Slave {
 
     private static final Logger LOG = LogManager.getLogger(Slave.class.getName());
-
-    private static final MetricRegistry metrics = new MetricRegistry();
 
     private final String[] args;
 
@@ -123,7 +122,7 @@ public class Slave {
             System.exit(-1);
         }
 
-        Slf4jReporter reporter = Slf4jReporter.forRegistry(metrics)
+        Slf4jReporter reporter = Slf4jReporter.forRegistry(SlaveMetrics.METRIC_REGISTRY)
                 .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
@@ -133,7 +132,7 @@ public class Slave {
 
         Graphite graphite = new Graphite(new InetSocketAddress(config.getString("metrics.graphiteServer"),
                 config.getInt("metrics.graphitePort")));
-        GraphiteReporter reporter2 = GraphiteReporter.forRegistry(metrics)
+        GraphiteReporter reporter2 = GraphiteReporter.forRegistry(SlaveMetrics.METRIC_REGISTRY)
                 .prefixedWith(config.getString("metrics.slaveID"))
                 .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
@@ -149,7 +148,7 @@ public class Slave {
         final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
 
         NodeSupervisor.createActor(system, slave, masterSender, nodeMasterConfig,
-                mediaStorageClient, metrics);
+                mediaStorageClient, SlaveMetrics.METRIC_REGISTRY);
 
         //system.actorOf(Props.create(MetricsListener.class), "metricsListener");
     }
