@@ -1,7 +1,5 @@
 package eu.europeana.harvester.db.swift;
 
-import com.google.common.collect.ImmutableMap;
-import com.sun.istack.internal.NotNull;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.MediaFile;
 import org.apache.commons.io.IOUtils;
@@ -15,6 +13,9 @@ import org.jclouds.openstack.swift.v1.options.PutOptions;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.jclouds.io.Payloads.newByteArrayPayload;
 
@@ -24,7 +25,10 @@ import static org.jclouds.io.Payloads.newByteArrayPayload;
 public class SwiftMediaStorageClientImpl implements MediaStorageClient {
     private final ObjectApi objectApi;
 
-    public SwiftMediaStorageClientImpl(@NotNull SwiftConfiguration config) {
+    public SwiftMediaStorageClientImpl(SwiftConfiguration config) {
+        if (null == config) {
+            throw new IllegalArgumentException("Config cannot be null");
+        }
         final SwiftApi swiftApi = ContextBuilder.newBuilder("openstack-swift")
                                  .credentials(config.getIdentity(), config.getPassword())
                                  .endpoint(config.getAuthUrl())
@@ -86,9 +90,11 @@ public class SwiftMediaStorageClientImpl implements MediaStorageClient {
         payload.getContentMetadata().setContentType(mediaFile.getContentType());
         payload.getContentMetadata().setContentLength(mediaFile.getLength());
 
-        ImmutableMap<String, String> metadata = ImmutableMap.of("Content-Type", mediaFile.getContentType(),
-                                                                "size", Integer.toString(mediaFile.getSize())
-                                                               );
+        Map<String, String> metadata = new HashMap<>();
+
+        metadata.put("Content-Type", mediaFile.getContentType());
+        metadata.put("size", Integer.toString(mediaFile.getSize()));
+        metadata = Collections.unmodifiableMap(metadata);
 
         objectApi.put(mediaFile.getId(), payload, PutOptions.Builder.metadata(metadata));
     }
