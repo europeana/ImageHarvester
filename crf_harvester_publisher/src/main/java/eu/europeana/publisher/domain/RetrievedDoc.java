@@ -7,10 +7,7 @@ import org.joda.time.DateTime;
  */
 public class RetrievedDoc {
 
-    /**
-     * The mimetype of the resource
-     */
-    private final String type;
+    private final String sourceDocumentReferenceId;
 
     /**
      * Unique ID of the resource
@@ -19,14 +16,14 @@ public class RetrievedDoc {
 
     private final DateTime updatedAt;
 
-    public RetrievedDoc(String type, String recordId,DateTime updatedAt) {
-        this.type = type;
+    public RetrievedDoc(String sourceDocumentReferenceId, String recordId,DateTime updatedAt) {
+        this.sourceDocumentReferenceId = sourceDocumentReferenceId;
         this.recordId = recordId;
         this.updatedAt = updatedAt;
     }
 
-    public String getType() {
-        return type;
+    public String getSourceDocumentReferenceId () {
+        return sourceDocumentReferenceId;
     }
 
     public String getRecordId() {

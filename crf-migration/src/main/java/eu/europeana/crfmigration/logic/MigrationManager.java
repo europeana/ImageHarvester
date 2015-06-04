@@ -99,6 +99,7 @@ public class MigrationManager {
         metrics.logNumberOfProcessingJobsPerBatch(processingJobs.size());
         metrics.logNumberOfSourceDocumentReferencesPerBatch(sourceDocumentReferences.size());
 
+
         migratorHarvesterDao.saveSourceDocumentReferences(sourceDocumentReferences);
         migratorHarvesterDao.saveProcessingJobs(processingJobs);
 

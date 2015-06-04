@@ -3,31 +3,31 @@ package eu.europeana.publisher.domain;
 import com.typesafe.config.Config;
 
 public class GraphiteReporterConfig {
-    private final String graphiteServer;
-    private final String graphiteMasterId;
-    private final int graphitePort;
+    private final String server;
+    private final String masterId;
+    private final int port;
 
     public GraphiteReporterConfig(Config config) {
-        graphiteMasterId = config.getString("metrics.masterID");
-        graphiteServer = config.getString("metrics.graphiteServer");
-        graphitePort = config.getInt("metrics.graphitePort");
+        masterId = config.getString("metrics.masterID");
+        server = config.getString("metrics.server");
+        port = config.getInt("metrics.port");
     }
 
-    public GraphiteReporterConfig (String graphiteServer, String graphiteMasterId, int graphitePort) {
-        this.graphiteServer = graphiteServer;
-        this.graphiteMasterId = graphiteMasterId;
-        this.graphitePort = graphitePort;
+    public GraphiteReporterConfig (String server, String masterId, int port) {
+        this.server = server;
+        this.masterId = masterId;
+        this.port = port;
     }
 
-    public String getGraphiteServer() {
-        return graphiteServer;
+    public String getServer () {
+        return server;
     }
 
-    public String getGraphiteMasterId() {
-        return graphiteMasterId;
+    public String getMasterId () {
+        return masterId;
     }
 
-    public int getGraphitePort() {
-        return graphitePort;
+    public int getPort () {
+        return port;
     }
 }
