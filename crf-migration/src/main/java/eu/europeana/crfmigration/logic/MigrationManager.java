@@ -108,7 +108,6 @@ public class MigrationManager {
         } finally {
             processedJobsTimerContext.stop();
         }
-
     }
 
     private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects) {
