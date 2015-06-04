@@ -1,6 +1,8 @@
 package eu.europeana.harvester.domain;
 
-public class ProcessingJobLimits {
+import java.io.Serializable;
+
+public class ProcessingJobLimits implements Serializable {
 
     /**
      * The time threshold after which the retrieval is terminated. 0 means no limit.

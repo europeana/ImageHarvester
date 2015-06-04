@@ -72,7 +72,7 @@ public class ProcessingJob {
         this.referenceOwner = referenceOwner;
         this.tasks = tasks;
         this.state = state;
-        this.limits = new ProcessingJobLimits();;
+        this.limits = new ProcessingJobLimits();
     }
 
     public ProcessingJob(final Integer priority, final Date expectedStartDate, final ReferenceOwner referenceOwner,

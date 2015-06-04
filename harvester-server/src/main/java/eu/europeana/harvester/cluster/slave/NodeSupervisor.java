@@ -79,10 +79,8 @@ public class NodeSupervisor extends UntypedActor {
     public void preStart() throws Exception {
         LOG.info("NodeSupervisor preStart");
 
-        nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(),
-                nodeMasterConfig,
-                mediaStorageClient,
-                metrics);
+        nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(),nodeMasterConfig, mediaStorageClient);
+
 
         context().watch(nodeMaster);
 
@@ -206,8 +204,7 @@ public class NodeSupervisor extends UntypedActor {
 
         nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(),
                 nodeMasterConfig,
-                mediaStorageClient,
-                metrics);
+                mediaStorageClient);
         context().watch(nodeMaster);
     }
 }

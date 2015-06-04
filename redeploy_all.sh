@@ -18,6 +18,8 @@ ssh -i ./id_rsa -o StrictHostKeyChecking=no crfharvester@dev1.crf.europeana.eu '
 scp -i id_rsa ./harvester.jar crfharvester@dev1.crf.europeana.eu:/home/crfharvester/harvester/harvester.jar
 # start the master
 ssh -i ./id_rsa -o StrictHostKeyChecking=no crfharvester@dev1.crf.europeana.eu 'sudo /etc/init.d/harvester-master start'
+#give it some time to load jobs and stabilze
+sleep 10m
 
 # copy jar to all slaves and start them in sequence
 

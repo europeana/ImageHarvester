@@ -17,6 +17,7 @@ import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenera
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.LogMarker;
+import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
@@ -266,7 +267,14 @@ public class RetrieveAndProcessActor extends UntypedActor {
     }
 
     private long computeMaximumRetrievalAndProcessingDurationInMinutes(RetrieveUrl retrieveUrl) {
-        return Duration.create(retrieveUrl.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + retrieveUrl.getLimits().getProcessingTerminationThresholdTimeLimitInMillis(), TimeUnit.MILLISECONDS).toMinutes();
+        long duration;
+        try {
+            duration = Duration.create(retrieveUrl.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + retrieveUrl.getLimits().getProcessingTerminationThresholdTimeLimitInMillis(), TimeUnit.MILLISECONDS).toMinutes();
+        } catch ( Exception e) {
+            ProcessingJobLimits lm = new ProcessingJobLimits();
+            duration = Duration.create(lm.getRetrievalTerminationThresholdTimeLimitInMillis() + lm.getProcessingTerminationThresholdTimeLimitInMillis(), TimeUnit.MILLISECONDS).toMinutes();
+        }
+        return duration;
     }
 
 }

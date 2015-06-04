@@ -3,7 +3,6 @@ package eu.europeana.harvester.cluster.slave;
 import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.db.MediaStorageClient;
@@ -25,11 +24,10 @@ public class NodeMasterActor extends UntypedActor {
 
         public static ActorRef createActor(final ActorContext context, final ActorRef masterSender, final ActorRef nodeSupervisor,
                                            final NodeMasterConfig nodeMasterConfig,
-                                           final MediaStorageClient mediaStorageClient,
-                                           final MetricRegistry metrics){
+                                           final MediaStorageClient mediaStorageClient){
 
         return context.system().actorOf(Props.create(NodeMasterActor.class,
-                        masterSender, nodeSupervisor, nodeMasterConfig, mediaStorageClient, metrics),
+                        masterSender, nodeSupervisor, nodeMasterConfig, mediaStorageClient),
                 "nodeMaster");
     }
 

@@ -11,6 +11,7 @@ import eu.europeana.harvester.cluster.domain.messages.CleanUp;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
+import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
@@ -74,7 +75,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                     getSender().tell(retrieveUrl, getSelf());
                     return;
                 }
-                RetrieveUrl retrieveUrl = new RetrieveUrl("", null, null, "", "", null, null, "");
+                RetrieveUrl retrieveUrl = new RetrieveUrl("",  new ProcessingJobLimits(), null, "", "", null, null, "");
                 getSender().tell(retrieveUrl, getSelf());
                 return;
             }
@@ -217,7 +218,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final int exceptionLimit = m.getExceptionLimit();
                 final String taskID = m.getTaskID();
 
-                RetrieveUrl retrieveUrl = new RetrieveUrl("", null, null, "", "", null, null, "");
+                RetrieveUrl retrieveUrl = new RetrieveUrl("", new ProcessingJobLimits(), null, "", "", null, null, "");
                 List<String> tasksFromIP = null;
 
                 final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
