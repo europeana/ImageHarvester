@@ -31,4 +31,15 @@ public class ProcessingJobSubTask implements Serializable {
     public GenericSubTaskConfiguration getConfig() {
         return config;
     }
+
+    @Override
+    public boolean equals (Object obj) {
+        if (null == obj || !(obj instanceof ProcessingJobSubTask)) {
+            return false;
+        }
+
+        final ProcessingJobSubTask task = (ProcessingJobSubTask)obj;
+        return this.taskType == task.getTaskType() &&
+               (null == config ? null == task.getConfig() : config.equals(task.getConfig()));
+    }
 }

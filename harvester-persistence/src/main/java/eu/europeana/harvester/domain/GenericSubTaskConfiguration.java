@@ -22,4 +22,14 @@ public class GenericSubTaskConfiguration implements Serializable {
     public ThumbnailConfig getThumbnailConfig() {
         return thumbnailConfig;
     }
+
+    @Override
+    public boolean equals (Object obj) {
+        if (null == obj || !(obj instanceof GenericSubTaskConfiguration)) {
+            return false;
+        }
+        GenericSubTaskConfiguration config = (GenericSubTaskConfiguration)obj;
+        return null == thumbnailConfig ? null == config.getThumbnailConfig() :
+                                         thumbnailConfig.equals(config.getThumbnailConfig());
+    }
 }
