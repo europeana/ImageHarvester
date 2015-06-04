@@ -194,6 +194,7 @@ public class NodeSupervisor extends UntypedActor {
         for (final RetrieveUrl request : bagOfTasks.getTasks()) {
             final StartedTask startedTask = new StartedTask(request.getId());
 
+
             getSender().tell(startedTask, getSelf());
             nodeMaster.tell(new RetrieveUrlWithProcessingConfig(request, nodeMasterConfig.getPathToSave() + "/" + request.getJobId(), nodeMasterConfig.getSource()), getSender());
         }

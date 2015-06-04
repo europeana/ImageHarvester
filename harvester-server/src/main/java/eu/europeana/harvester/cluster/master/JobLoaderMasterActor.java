@@ -443,7 +443,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         try {
             tasksFromIP = (List<String>) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("Error in checkForResumedJobs->GetTasksFromIP: {}", e);
+            LOG.error("Error in processTask->GetTasksFromIP: {}", e);
         }
 
         if (tasksFromIP == null) {
@@ -454,6 +454,7 @@ public class JobLoaderMasterActor extends UntypedActor {
             }
         }
         tasksFromIP.add(retrieveUrl.getId());
+
 
         accountantActor.tell(new AddTasksToIP(ipAddress, tasksFromIP), getSelf());
         accountantActor.tell(new AddTask(retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), getSelf());

@@ -218,7 +218,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final int exceptionLimit = m.getExceptionLimit();
                 final String taskID = m.getTaskID();
 
-                RetrieveUrl retrieveUrl = new RetrieveUrl("", new ProcessingJobLimits(), null, "", "", null, null, "");
+                RetrieveUrl retrieveUrl = new RetrieveUrl("", "", null, new ProcessingJobLimits(), "", "", null, null, "");
                 List<String> tasksFromIP = null;
 
                 final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));

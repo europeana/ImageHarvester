@@ -6,15 +6,12 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.DownloadConfirmation;
 import eu.europeana.harvester.cluster.domain.messages.StartedTask;
 import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
-import eu.europeana.harvester.cluster.slave.SlaveMetrics;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
@@ -158,7 +155,7 @@ public class ReceiverMasterActor extends UntypedActor {
         }
         if(message instanceof DownloadConfirmation) {
             final DownloadConfirmation downloadConfirmation = (DownloadConfirmation) message;
-            accountantActor.tell(new ModifyState((downloadConfirmation).getTaskID(), TaskState.PROCESSING), getSelf());
+            accountantActor.tell(new ModifyState(downloadConfirmation.getTaskID(), TaskState.PROCESSING), getSelf());
             MasterMetrics.Master.doneDownloadStateCounters.get(downloadConfirmation.getState()).mark();
             MasterMetrics.Master.doneDownloadTotalCounter.mark();
 

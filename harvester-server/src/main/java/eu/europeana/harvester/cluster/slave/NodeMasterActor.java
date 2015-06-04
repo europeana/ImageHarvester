@@ -184,6 +184,8 @@ public class NodeMasterActor extends UntypedActor {
                 msg = messages.poll();
 
             if(msg != null) {
+
+
                 ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
                         httpRetrieveResponseFactory, mediaStorageClient, nodeMasterConfig.getColorMapPath()
                         );
@@ -215,6 +217,8 @@ public class NodeMasterActor extends UntypedActor {
 
 
                 if(msg != null) {
+                    RetrieveUrlWithProcessingConfig tst = (RetrieveUrlWithProcessingConfig) msg;
+                    LOG.info("Building a new actor for URL {} "+tst.getRetrieveUrl().getUrl());
 
                     ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
                             httpRetrieveResponseFactory, mediaStorageClient, nodeMasterConfig.getColorMapPath()

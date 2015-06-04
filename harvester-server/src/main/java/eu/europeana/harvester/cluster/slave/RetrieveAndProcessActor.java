@@ -127,6 +127,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
         DoneDownload doneDownloadMessage = null;
         HttpRetrieveResponse response = null;
 
+
         // Step 1 : Execute retrieval (download OR link checking) + send confirmation when it's done
 
         final Timer.Context downloadTimerContext = SlaveMetrics.Worker.Slave.Retrieve.totalDuration.time();
@@ -135,9 +136,13 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
             response = executeRetrieval(task);
 
-            doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == RetrievingState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
-                    response, task.getDocumentReferenceTask(), task.getIpAddress());
-            LOG.info(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()), "Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(), taskWithProcessingConfig.getDownloadPath());
+            if ( response!=null ) {
+                doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == RetrievingState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
+                        response, task.getDocumentReferenceTask(), task.getIpAddress());
+                LOG.info(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()), "Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(), taskWithProcessingConfig.getDownloadPath());
+            } else {
+                LOG.info("Response object is null");
+            }
 
         } catch (Exception e) {
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), ProcessingState.ERROR,
@@ -200,6 +205,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
      * @throws Exception
      */
     private final HttpRetrieveResponse executeRetrieval(final RetrieveUrl task) throws Exception {
+
         HttpRetrieveResponse response = null;
         switch (task.getDocumentReferenceTask().getTaskType()) {
             case CHECK_LINK:
@@ -237,6 +243,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
             default:
                 throw new IllegalArgumentException("Cannot create http response when preparing processing for unknown task type " + task.getDocumentReferenceTask().getTaskType());
         }
+
         return response;
     }
 

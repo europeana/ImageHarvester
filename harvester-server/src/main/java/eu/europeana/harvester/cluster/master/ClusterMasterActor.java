@@ -16,7 +16,6 @@ import akka.pattern.Patterns;
 import akka.remote.AssociatedEvent;
 import akka.remote.DisassociatedEvent;
 import akka.util.Timeout;
-import com.codahale.metrics.MetricRegistry;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
@@ -35,8 +34,6 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import static com.codahale.metrics.MetricRegistry.name;
 
 public class ClusterMasterActor extends UntypedActor {
 
@@ -335,9 +332,9 @@ public class ClusterMasterActor extends UntypedActor {
 
         startTasks();
 
-        for(final RetrieveUrl retrieveUrl : tasksToSend) {
-            tasksPerTime.put(retrieveUrl.getId(), new DateTime());
-        }
+//        for(final RetrieveUrl retrieveUrl : tasksToSend) {
+//            tasksPerTime.put(retrieveUrl.getId(), new DateTime());
+//        }
 
         final BagOfTasks bagOfTasks = new BagOfTasks(tasksToSend);
         getSender().tell(bagOfTasks, receiverActor);
@@ -436,6 +433,7 @@ public class ClusterMasterActor extends UntypedActor {
                 }
 
                 tasksToSend.add(retrieveUrl);
+
 
                 return true;
 
