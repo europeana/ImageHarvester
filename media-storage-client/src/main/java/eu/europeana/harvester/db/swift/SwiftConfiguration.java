@@ -4,37 +4,48 @@ package eu.europeana.harvester.db.swift;
  * Created by salexandru on 03.06.2015.
  */
 public class SwiftConfiguration {
-    private final String provider;
     private final String authUrl;
-    private final String identity;
-    private final String credential;
-    private final String collectionName;
+    private final String userName;
+    private final String password;
+    private final String containerName;
+    private final String regionName;
+    private final String tenantName;
 
-    public SwiftConfiguration (String provider, String authUrl, String identity, String credential, String collectionName) {
-        this.provider = provider;
+    public SwiftConfiguration (String authUrl, String tenantName, String userName, String password, String containerName,
+                               String regionName)  {
         this.authUrl = authUrl;
-        this.identity = identity;
-        this.credential = credential;
-        this.collectionName = collectionName;
-    }
-
-    public String getProvider () {
-        return provider;
+        this.userName = userName;
+        this.password = password;
+        this.containerName = containerName;
+        this.regionName = regionName;
+        this.tenantName = tenantName;
     }
 
     public String getAuthUrl () {
         return authUrl;
     }
 
-    public String getIdentity () {
-        return identity;
+    public String getUserName () {
+        return userName;
     }
 
-    public String getCredential () {
-        return credential;
+    public String getPassword () {
+        return password;
     }
 
-    public String getCollectionName () {
-        return collectionName;
+    public String getContainerName () {
+        return containerName;
+    }
+
+    public String getRegionName () {
+        return regionName;
+    }
+
+    public String getTenantName() {
+        return tenantName;
+    }
+
+    public String getIdentity() {
+        return tenantName + ":" + userName;
     }
 }
