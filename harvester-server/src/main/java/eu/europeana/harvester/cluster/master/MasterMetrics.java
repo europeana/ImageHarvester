@@ -22,9 +22,11 @@ public class MasterMetrics {
     public static final String TOTAL = "total";
 
     public static final String SEND_JOBS_SET_TO_SLAVE = "sendJobsSetToSlave";
+    public static final String LOAD_JOBS_FROM_DB = "loadJobsFromDB";
 
     public static final String DONE_DOWNLOAD = "doneDownload";
     public static final String DONE_PROCESSING = "doneProcessing";
+
 
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
 
@@ -33,6 +35,7 @@ public class MasterMetrics {
         public static final String NAME = "MasterMetrics" + "." + "Master";
         public static final Timer sendJobSetToSlaveDuration = METRIC_REGISTRY.timer(name(Master.NAME, SEND_JOBS_SET_TO_SLAVE, DURATION));
         public static final Counter sendJobSetToSlaveCounter = METRIC_REGISTRY.counter(name(Master.NAME, SEND_JOBS_SET_TO_SLAVE, COUNTER));
+        public static final Timer loadJobFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_JOBS_FROM_DB, COUNTER));
 
 
         public static final Map<RetrievingState, Meter> doneDownloadStateCounters = new HashMap();

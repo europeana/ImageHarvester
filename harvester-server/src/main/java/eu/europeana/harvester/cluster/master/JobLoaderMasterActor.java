@@ -7,7 +7,6 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
@@ -27,8 +26,6 @@ import scala.concurrent.Future;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import static com.codahale.metrics.MetricRegistry.name;
 
 public class JobLoaderMasterActor extends UntypedActor {
 
@@ -134,7 +131,7 @@ public class JobLoaderMasterActor extends UntypedActor {
 
             if (markLoad == 0 || System.currentTimeMillis() - markLoad > 100000l) {
                 markLoad = System.currentTimeMillis();
-                final Timer.Context context = loadJobs.time();
+                final Timer.Context context = MasterMetrics.Master.loadJobFromDBDuration.time();
                 try {
 
                     checkForNewJobs();
