@@ -1,7 +1,6 @@
 package eu.europeana.harvester.db.swift;
 
 import com.google.common.collect.ImmutableMap;
-import com.sun.istack.internal.NotNull;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.MediaFile;
 import org.apache.commons.io.IOUtils;
@@ -24,7 +23,10 @@ import static org.jclouds.io.Payloads.newByteArrayPayload;
 public class SwiftMediaStorageClientImpl implements MediaStorageClient {
     private final ObjectApi objectApi;
 
-    public SwiftMediaStorageClientImpl(@NotNull SwiftConfiguration config) {
+    public SwiftMediaStorageClientImpl(SwiftConfiguration config) {
+        if (null == config) {
+            throw new IllegalArgumentException("Config cannot be null");
+        }
         final SwiftApi swiftApi = ContextBuilder.newBuilder("openstack-swift")
                                  .credentials(config.getIdentity(), config.getPassword())
                                  .endpoint(config.getAuthUrl())
