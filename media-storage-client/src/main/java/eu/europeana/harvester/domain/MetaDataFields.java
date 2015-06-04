@@ -9,6 +9,12 @@ public enum MetaDataFields {
     VERSIONNUMBER,
     TECHNICAL_METADATA,
     ALIASES,
+
+    //used in swift media storage
+    CREATEDAT,
+    MD5,
+
+
     //TODO: why I need this?
     _transientFields
 }

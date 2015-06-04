@@ -18,6 +18,10 @@ public class ThumbnailConfig implements Serializable {
     private Integer height;
 
     public ThumbnailConfig(final Integer width, final Integer height) {
+        if (null == width || null == height) {
+            throw new IllegalArgumentException("No null values are allowed");
+        }
+
         this.width = width;
         this.height = height;
     }
@@ -30,5 +34,14 @@ public class ThumbnailConfig implements Serializable {
 
     public Integer getHeight() {
         return height;
+    }
+
+    @Override
+    public boolean equals (Object obj) {
+        if (null == obj || !(obj instanceof ThumbnailConfig)) {
+            return false;
+        }
+        ThumbnailConfig config = (ThumbnailConfig)obj;
+        return width.equals(config.getWidth()) && height.equals(config.getHeight());
     }
 }

@@ -21,7 +21,7 @@ public class ProcessingJobBuilder {
      * @param options
      * @return
      */
-    public static DocumentReferenceTaskType documentReferenceTaskTypeFromOptions(final ProcessingJobCreationOptions options) {
+    private static DocumentReferenceTaskType documentReferenceTaskTypeFromOptions(final ProcessingJobCreationOptions options) {
         return (options.isForceUnconditionalDownload()) ?
                 DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD :
                 DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD;
@@ -37,6 +37,9 @@ public class ProcessingJobBuilder {
      * @throws UnknownHostException
      */
     public static final List<ProcessingJobTuple> edmObjectUrlJobs(final String url, final ReferenceOwner owner, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+        if (null == options) {
+            throw new IllegalArgumentException("options must not be null");
+        }
 
         final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.ISSHOWNBY, url,
                 null, null, null, null, true);
@@ -68,6 +71,9 @@ public class ProcessingJobBuilder {
      * @throws UnknownHostException
      */
     public static final List<ProcessingJobTuple> edmHasViewUrlsJobs(final List<String> urls, final ReferenceOwner owner, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+        if (null == options) {
+            throw new IllegalArgumentException("options must not be null");
+        }
 
         final List<ProcessingJobTuple> results = new ArrayList();
 
@@ -106,6 +112,9 @@ public class ProcessingJobBuilder {
      * @throws UnknownHostException
      */
     public static final List<ProcessingJobTuple> edmIsShownByUrlJobs(final String url, final ReferenceOwner owner, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+        if (null == options) {
+            throw new IllegalArgumentException("options must not be null");
+        }
 
         final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.ISSHOWNBY, url,
                 null, null, null, null, true);
@@ -139,6 +148,9 @@ public class ProcessingJobBuilder {
      * @throws UnknownHostException
      */
     public static final List<ProcessingJobTuple> edmIsShownAtUrlJobs(final String url, final ReferenceOwner owner, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+        if (null == options) {
+            throw new IllegalArgumentException("options must not be null");
+        }
 
         final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.ISSHOWNAT, url,
                 null, null, null, null, true);

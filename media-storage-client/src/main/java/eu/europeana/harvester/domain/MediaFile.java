@@ -100,7 +100,7 @@ public class MediaFile {
 
         this.id = temp;
         this.source = source;
-        this.length = (long) content.length;
+        this.length = null == content ? 0L : (long) content.length;
         this.name = name;
         this.aliases = aliases;
         this.contentMd5 = contentMd5;
@@ -118,7 +118,7 @@ public class MediaFile {
                      Map<String, String> metaData, int size) {
         this.id = id;
         this.source = source;
-        this.length = (long) content.length;
+        this.length = null == content ? 0L : (long) content.length;
         this.name = name;
         this.aliases = aliases;
         this.contentMd5 = contentMd5;
