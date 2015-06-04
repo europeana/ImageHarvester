@@ -1,18 +1,18 @@
 package eu.europeana.harvester.db.swift;
 
 import eu.europeana.harvester.domain.MediaFile;
-import org.apache.commons.lang.builder.EqualsBuilder;
 import org.jclouds.ContextBuilder;
 import org.jclouds.openstack.swift.v1.SwiftApi;
+import org.jclouds.openstack.swift.v1.domain.SwiftObject;
 import org.jclouds.openstack.swift.v1.features.ContainerApi;
 import org.jclouds.openstack.swift.v1.features.ObjectApi;
-import org.joda.time.DateTime;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Collections;
 
+import static org.jclouds.io.Payloads.newByteArrayPayload;
 import static org.junit.Assert.*;
 
 /**
@@ -31,9 +31,9 @@ public class SwiftMediaStorageClientImplTest {
 
     private final String contentString = "id1-content-stuff";
 
-    private final MediaFile mediaFile = new MediaFile("s", "id1", Collections.<String>emptyList(), "id1",
-                                                      "id1.com", DateTime.now(), contentString.getBytes(), 1, "",
-                                                      Collections.<String, String>emptyMap(), contentString.getBytes().length);
+    private final MediaFile mediaFile = new MediaFile("id1", null, "", null, null, null, null, contentString.getBytes(),
+                                                      null, "", null, contentString.getBytes().length
+                                                    );
 
     @Before
     public void setUp() {
@@ -56,18 +56,28 @@ public class SwiftMediaStorageClientImplTest {
         }
     }
 
+    @After
+    public void tearDown() {
+        for (final SwiftObject swiftObject: objectApi.list()) {
+            objectApi.delete(swiftObject.getName());
+        }
+        containerApi.deleteIfEmpty(containerName);
+    }
+
+    @Test
     public void test_CheckIfExists_False() {
         assertFalse (mediaStorageClient.checkIfExists("ana are mere"));
     }
 
     @Test
     public void test_CheckIfExists_True() {
-        mediaStorageClient.createOrModify(mediaFile);
-        assertTrue (mediaStorageClient.checkIfExists(mediaFile.getId()));
+        objectApi.put(mediaFile.getId(), newByteArrayPayload(mediaFile.getContent()));
+
+        assertTrue(mediaStorageClient.checkIfExists(mediaFile.getId()));
     }
 
     @Test
-    public void test_Delete_DoesntExist() {
+    public void test_Delete_DoesNotExist() {
         assertFalse (mediaStorageClient.checkIfExists("ana are mere"));
         mediaStorageClient.delete("ana are mere");
         assertFalse (mediaStorageClient.checkIfExists("ana are mere"));
@@ -75,54 +85,60 @@ public class SwiftMediaStorageClientImplTest {
 
     @Test
     public void test_Delete_DoesExist() {
-        mediaStorageClient.createOrModify(mediaFile);
-        assertTrue (mediaStorageClient.checkIfExists(mediaFile.getId()));
+        objectApi.put(mediaFile.getId(), newByteArrayPayload(mediaFile.getContent()));
+
         mediaStorageClient.delete(mediaFile.getId());
         assertFalse(mediaStorageClient.checkIfExists(mediaFile.getId()));
     }
 
     @Test
-    public void test_CreateFile() {
+    public void test_CreateNewFile() {
         mediaStorageClient.createOrModify(mediaFile);
         assertTrue (mediaStorageClient.checkIfExists(mediaFile.getId()));
     }
 
     @Test
-    public void test_RetrieveFile_DoesntExist() throws IOException {
+    public void test_RetrieveFile_DoesNotExist() throws IOException {
         assertNull (mediaStorageClient.retrieve(mediaFile.getId(), false));
     }
 
 
     @Test
-         public void test_RetrieveFile_WithContent_DoesExist() throws IOException {
+    public void test_RetrieveFile_WithContent_DoesExist() throws IOException {
         mediaStorageClient.createOrModify(mediaFile);
-        assertNotNull (mediaStorageClient.retrieve(mediaFile.getId(), false));
+        assertNotNull(mediaStorageClient.retrieve(mediaFile.getId(), false));
         final MediaFile retrievedFile = mediaStorageClient.retrieve(mediaFile.getId(), true);
-        assertTrue (EqualsBuilder.reflectionEquals(mediaFile, retrievedFile));
+
+        assertEquals(mediaFile.getId(), retrievedFile.getId());
+        assertEquals(mediaFile.getSize(), retrievedFile.getSize());
+        assertEquals (mediaFile.getContentType(), retrievedFile.getContentType());
+        assertArrayEquals(mediaFile.getContent(), retrievedFile.getContent());
     }
 
     @Test
     public void test_RetrieveFile_WithoutContent_DoesExist() throws IOException {
         mediaStorageClient.createOrModify(mediaFile);
-        assertNotNull (mediaStorageClient.retrieve(mediaFile.getId(), false));
+        assertNotNull(mediaStorageClient.retrieve(mediaFile.getId(), false));
         final MediaFile retrievedFile = mediaStorageClient.retrieve(mediaFile.getId(), true);
 
-        assertTrue (EqualsBuilder.reflectionEquals(mediaFile, retrievedFile, new String[] {"contentMd5", "content", "contentType"}));
-        assertNull (retrievedFile.getContent());
-        assertNull (retrievedFile.getContentMd5());
-        assertNull (retrievedFile.getContentType());
+        assertEquals(mediaFile.getId(), retrievedFile.getId());
     }
 
     @Test
     public void test_ModifyFile() throws IOException {
         mediaStorageClient.createOrModify(mediaFile);
-        MediaFile newMediaFile = new MediaFile("s", "id1", Collections.<String>emptyList(), "id1",
-                "id1.com", DateTime.now(), new byte[] {1}, 1, "",
-                Collections.<String, String>emptyMap(), 1);
-        mediaStorageClient.createOrModify(mediaFile);
-        assertTrue (mediaStorageClient.checkIfExists(mediaFile.getId()));
+
+        final MediaFile newMediaFile = new MediaFile("id1", null, "", null, null, null, null, new byte[] {1, 2},
+                                                     null, "", null, contentString.getBytes().length
+        );
+
+        mediaStorageClient.createOrModify(newMediaFile);
 
         final MediaFile retrievedFile = mediaStorageClient.retrieve(newMediaFile.getId(), true);
-        assertTrue(EqualsBuilder.reflectionEquals(newMediaFile, retrievedFile));
+
+        assertEquals (newMediaFile.getId(), retrievedFile.getId());
+        assertEquals (newMediaFile.getSize(), retrievedFile.getSize());
+        assertEquals(newMediaFile.getContentType(), retrievedFile.getContentType());
+        assertArrayEquals(newMediaFile.getContent(), retrievedFile.getContent());
     }
 }
