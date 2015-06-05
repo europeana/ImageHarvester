@@ -42,7 +42,7 @@ public class ThumbnailGenerator {
         }
 
         if (expectedHeight == ThumbnailType.SMALL.getHeight()) {
-            // Scenario 2 : The thumbnail generation task must make a thumbnail of height = 180 + proportional width
+            // Scenario 1 : The thumbnail generation task must make a thumbnail of height = 180 + proportional width
             if (originalImageInfo.getHeight() < ThumbnailType.SMALL.getHeight()) {
                 // Use the original aspect ratio
                 thumbnailResizedToWidth = null;
@@ -55,7 +55,7 @@ public class ThumbnailGenerator {
         }
 
         if (expectedWidth == ThumbnailType.MEDIUM.getWidth()) {
-            // Scenario 1 : The thumbnail generation task must make a thumbnail of width = 200 + proportional height
+            // Scenario 2 : The thumbnail generation task must make a thumbnail of width = 200 + proportional height
             if (originalImageInfo.getWidth() < ThumbnailType.MEDIUM.getWidth()) {
                 // Use the original aspect ratio
                 thumbnailResizedToWidth = null;
@@ -68,7 +68,7 @@ public class ThumbnailGenerator {
         }
 
         if (expectedWidth == ThumbnailType.LARGE.getWidth()) {
-            // Scenario 1 : The thumbnail generation task must make a thumbnail of width = 400 + proportional height
+            // Scenario 3 : The thumbnail generation task must make a thumbnail of width = 400 + proportional height
             if (originalImageInfo.getWidth() < ThumbnailType.LARGE.getWidth()) {
                 // Use the original aspect ratio
                 thumbnailResizedToWidth = null;
@@ -90,9 +90,30 @@ public class ThumbnailGenerator {
             name = temp[temp.length - 1];
         }
 
-        return new MediaFile(currentProcessId, name, null, null, url,
-                new DateTime(System.currentTimeMillis()), newData, 1, MediaChecker.getMimeType(originalImagePath), null, expectedWidth);
+        final ThumbnailType expectedThumbnailType = thumbnailTypeFromExpectedSize(expectedHeight,expectedWidth);
+        if (expectedThumbnailType == null) throw new IllegalArgumentException("The expected thumbnail height "+expectedHeight+" or width "+expectedWidth+" do not match any of the hardcoded presets");
 
+        return new MediaFile(currentProcessId, name, null, null, url,
+                new DateTime(System.currentTimeMillis()), newData, 1, MediaChecker.getMimeType(originalImagePath), null, expectedWidth)
+                .withId(MediaFile.generateIdFromUrlAndSizeType(originalImageUrl,expectedThumbnailType.name()));
+
+    }
+
+    private final static ThumbnailType thumbnailTypeFromExpectedSize(final Integer expectedHeight,final Integer expectedWidth) {
+        if (expectedHeight == ThumbnailType.SMALL.getHeight() && expectedWidth == ThumbnailType.SMALL.getWidth()) {
+            return ThumbnailType.SMALL;
+        }
+
+        if (expectedHeight == ThumbnailType.MEDIUM.getHeight() && expectedWidth == ThumbnailType.MEDIUM.getWidth()) {
+            return ThumbnailType.MEDIUM;
+        }
+
+
+        if (expectedHeight == ThumbnailType.LARGE.getHeight() && expectedWidth == ThumbnailType.LARGE.getWidth()) {
+            return ThumbnailType.LARGE;
+        }
+
+        return null;
     }
 
     private final static byte[] createThumbnail(final InputStream in, final Integer width, final Integer height) throws Exception {

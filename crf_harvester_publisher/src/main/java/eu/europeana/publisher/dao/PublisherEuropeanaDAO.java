@@ -54,8 +54,4 @@ public class PublisherEuropeanaDAO {
 
         return sourceDocumentProcessingStatisticsList;
     }
-
-    public DBCursor buildCursorForSourceDocumentProcessingStatistics (final Date dateFilter) {
-
-    }
 }

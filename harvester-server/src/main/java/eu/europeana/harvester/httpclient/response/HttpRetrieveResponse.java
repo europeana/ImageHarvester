@@ -29,7 +29,7 @@ public interface HttpRetrieveResponse extends Serializable {
 
     public void setState(RetrievingState retrievingState);
 
-    public byte[] getContent();
+    public byte[] getContent() throws IOException;
 
     public void addContent(byte[] content) throws Exception;
 

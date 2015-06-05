@@ -24,12 +24,13 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class RetrieveAndProcessActorTests {
 
     private static String PROCESSING_PATH_PREFIX = Paths.get("harvester-server/src/test/resources/processing").toAbsolutePath().toString() + "/";
-    private static final String pathOnDisk = PROCESSING_PATH_PREFIX + "current_image1.jpeg";
     private static final String text1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
 
     private static final String PATH_PREFIX = Paths.get("harvester-server/src/test/resources/").toAbsolutePath().toString() + "/" ;
@@ -100,6 +101,16 @@ public class RetrieveAndProcessActorTests {
             assertEquals(msg2.getImageMetaInfo().getWidth().intValue(),2500);
             assertEquals(msg2.getImageMetaInfo().getHeight().intValue(),1737);
             assertEquals(msg2.getImageMetaInfo().getMimeType(),"image/jpeg");
+
+            final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
+            final MediaFile smallStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"SMALL"),true);
+            final MediaFile mediumStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"MEDIUM"),true);
+            final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
+
+            assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
+            assertNotNull(smallStoredContent);
+            assertNotNull(mediumStoredContent);
+            assertNotNull(largeStoredContent);
 
         }};
     }
