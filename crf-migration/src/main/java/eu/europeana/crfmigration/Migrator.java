@@ -16,6 +16,8 @@ import eu.europeana.crfmigration.domain.MongoConfig;
 import eu.europeana.crfmigration.logic.MigrationManager;
 import eu.europeana.crfmigration.logic.MigrationMetrics;
 import org.apache.logging.log4j.LogManager;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeUtils;
 import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.File;
@@ -122,9 +124,7 @@ public class Migrator {
                 dateFilter = ISODateTimeFormat.dateTime().parseDateTime(args[0]).toDate();
             } catch (Exception e) {
                 LOG.error("The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ defaulting to begining of time", e);
-
-                dateFilter = new Date();
-                dateFilter.setYear(1971);
+                dateFilter = DateTime.now().minusYears(20).toDate();
             }
         } else if (args.length > 1) {
             System.out.println("Too many arguments. Please provide only one !");
