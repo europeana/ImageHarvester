@@ -6,6 +6,7 @@ import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 
 public class FileSystemMediaStorageClientImpl implements MediaStorageClient {
@@ -26,7 +27,7 @@ public class FileSystemMediaStorageClientImpl implements MediaStorageClient {
     }
 
     @Override
-    public MediaFile retrieve(String id, Boolean withContent) throws IOException {
+    public MediaFile retrieve(String id, Boolean withContent) throws IOException, NoSuchAlgorithmException {
 
         final byte[] content = Files.readAllBytes(pathOfId(id));
 

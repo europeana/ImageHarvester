@@ -202,7 +202,7 @@ public class MediaStorageClientImplTest {
     }
 
     @Test
-    public void testImage() throws IOException {
+    public void testImage() throws IOException, NoSuchAlgorithmException {
         // Look for a valid id
         final MediaFile mediaFile = client.retrieve("3461671ffc4acf7d501f05d60542999b", true);
         OutputStream out = new BufferedOutputStream(new FileOutputStream("test"));

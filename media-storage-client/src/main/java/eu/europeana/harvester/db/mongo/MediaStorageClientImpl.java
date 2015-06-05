@@ -15,6 +15,7 @@ import eu.europeana.harvester.domain.MongoMetaData;
 import org.joda.time.DateTime;
 import java.io.*;
 import java.net.UnknownHostException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +55,7 @@ public class MediaStorageClientImpl implements MediaStorageClient {
     }
 
     @Override
-    public MediaFile retrieve(String id, Boolean withContent) {
+    public MediaFile retrieve(String id, Boolean withContent) throws NoSuchAlgorithmException {
         final BasicDBObject query = new BasicDBObject();
         query.put("_id", id);
 
