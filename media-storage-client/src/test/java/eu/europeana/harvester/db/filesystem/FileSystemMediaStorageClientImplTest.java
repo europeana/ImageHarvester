@@ -2,7 +2,10 @@ package eu.europeana.harvester.db.filesystem;
 
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.MediaFile;
+import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -22,6 +25,16 @@ public class FileSystemMediaStorageClientImplTest {
 
     private final MediaFile mediaFile;
 
+    @Before
+    public void setUp() throws IOException {
+        FileUtils.forceMkdir(Paths.get(PATH_PREFIX).toFile());
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        FileUtils.forceDelete(Paths.get(PATH_PREFIX).toFile());
+    }
+
     public FileSystemMediaStorageClientImplTest() throws NoSuchAlgorithmException {
         mediaFile = new MediaFile("s", "id1", Collections.<String>emptyList(), "id1",
         "id1.com", DateTime.now(), contentString.getBytes(), 1, "",
@@ -34,7 +47,7 @@ public class FileSystemMediaStorageClientImplTest {
         MediaFile retrievedFile = client.retrieve(mediaFile.getId(),true);
         assertEquals(retrievedFile.getContent().length,mediaFile.getContent().length);
         assertEquals(new String(retrievedFile.getContent()),new String(mediaFile.getContent()));
-
+        client.delete(mediaFile.getId());
     }
 
 

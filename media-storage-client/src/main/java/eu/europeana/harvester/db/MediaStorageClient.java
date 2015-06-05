@@ -33,5 +33,5 @@ public interface MediaStorageClient {
      * Deletes a file with a given id.
      * @param id the if of the file, it's the MD5 of the URL
      */
-    public void delete(String id);
+    public void delete(String id) throws IOException;
 }
