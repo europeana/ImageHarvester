@@ -4,7 +4,6 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.mongodb.DBObject;
 import eu.europeana.crfmigration.domain.MigratorConfig;
-import eu.europeana.crfmigration.logic.MigratorMetrics;
 import eu.europeana.harvester.db.MorphiaDataStore;
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.ReferenceOwner;
@@ -52,7 +51,7 @@ public class MigratorHarvesterDaoTest {
         }
         dataStore = morphiaDataStore.getDatastore();
 
-        harvesterDao = new MigratorHarvesterDao(migratorConfig.getTargetMongoConfig(), new MigratorMetrics());
+        harvesterDao = new MigratorHarvesterDao(migratorConfig.getTargetMongoConfig());
     }
 
     @After

@@ -24,7 +24,7 @@ public class MediaStorageClientImplTest {
 //
 //    @Before
 //    public void setup() throws IOException {
-//        final String configFilePath = "./extra-files/config-files/mediastorage.conf";
+//        final String configFilePath = "src/test/resources/config-files/mediastorage.conf";
 //
 //        final Properties prop = new Properties();
 //        final InputStream input = new FileInputStream(configFilePath);

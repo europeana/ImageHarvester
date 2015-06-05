@@ -2,13 +2,13 @@ package eu.europeana.crfmigration.logic;
 
 import com.codahale.metrics.Timer;
 import com.mongodb.DBCursor;
-import eu.europeana.jobcreator.JobCreator;
-import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.crfmigration.dao.MigratorEuropeanaDao;
 import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.SourceDocumentReference;
+import eu.europeana.jobcreator.JobCreator;
+import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,7 +26,6 @@ import java.util.Map;
 public class MigrationManager {
 
     private static final Logger LOG = LogManager.getLogger(MigrationManager.class.getName());
-    private final MigratorMetrics metrics;
 
     private final MigratorEuropeanaDao migratorEuropeanaDao;
     private final MigratorHarvesterDao migratorHarvesterDao;
@@ -35,23 +34,15 @@ public class MigrationManager {
 
     private final int batch;
 
-    public MigrationManager(final MigratorEuropeanaDao migratorEuropeanaDao, final MigratorHarvesterDao migratorHarvesterDao, final MigratorMetrics metrics, final Date dateFilter, final int batch) throws IOException {
+    public MigrationManager(final MigratorEuropeanaDao migratorEuropeanaDao, final MigratorHarvesterDao migratorHarvesterDao, final Date dateFilter, final int batch) throws IOException {
         this.migratorEuropeanaDao = migratorEuropeanaDao;
         this.migratorHarvesterDao = migratorHarvesterDao;
-        this.metrics = metrics;
         this.dateFilter = dateFilter;
         this.batch = batch;
     }
 
     public void migrate() {
-        try {
-            metrics.startTotalMigrationTimer();
-            starMigration();
-        } finally {
-            for (final Timer.Context context : metrics.getAllTimeContexts()) {
-                context.stop();
-            }
-        }
+        starMigration();
     }
 
     private void starMigration() {
@@ -59,30 +50,28 @@ public class MigrationManager {
         DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
 
         int positionInRecordCollection = 0;
-        metrics.logBatchSize(batch);
 
         while (recordCursor.hasNext()) {
+            final Timer.Context totalTimerContext = MigrationMetrics.Migrator.Batch.totalDuration.time();
             try {
-                final Map<String, String> recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, batch);
-                positionInRecordCollection = positionInRecordCollection + recordsRetrievedInBatch.size();
-                metrics.logBatchDocumentProcessing(recordsRetrievedInBatch.size());
-
+                Map<String, String> recordsRetrievedInBatch = null;
+                final Timer.Context processedRecordsDurationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsDuration.time();
                 try {
-                    metrics.startSourceDocumentReferencesTimer();
-                    migrateRecordsInSingleBatch(recordsRetrievedInBatch);
-                    metrics.stopSourceDocumentReferencesTimer();
-                } catch (Exception e) {
-                    metrics.incBatchProcessingError();
-                    LOG.info(e);
+                    recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, batch);
+                    positionInRecordCollection = positionInRecordCollection + recordsRetrievedInBatch.size();
+                } finally {
+                    processedRecordsDurationTimerContext.stop();
                 }
-
+                migrateRecordsInSingleBatch(recordsRetrievedInBatch);
+                MigrationMetrics.Migrator.Overall.processedRecordsCount.inc(recordsRetrievedInBatch.size());
             } catch (Exception e) {
                 LOG.error("Error reading record after reacord: #" + positionInRecordCollection + "\n");
-                metrics.incErrorReadingRecord();
-
+                MigrationMetrics.Migrator.Batch.skippedBecauseOfErrorCounter.inc();
                 recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
                 recordCursor.skip(positionInRecordCollection);
 
+            } finally {
+                totalTimerContext.stop();
             }
         }
         LOG.info("finished migration");
@@ -90,17 +79,35 @@ public class MigrationManager {
 
     private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch) throws MalformedURLException, UnknownHostException {
         // Retrieve records and convert to jobs
-        final List<EuropeanaEDMObject> edmObjectsOfRecords = migratorEuropeanaDao.retrieveAggregationEDMInformation(recordsInBatch);
+        List<EuropeanaEDMObject> edmObjectsOfRecords = null;
+        final Timer.Context processedRecordsAggregationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsAggregationDuration.time();
+        try {
+            migratorEuropeanaDao.retrieveAggregationEDMInformation(recordsInBatch);
+        } finally {
+            processedRecordsAggregationTimerContext.stop();
+        }
+
         final List<ProcessingJobTuple> processingJobTuples = convertEDMObjectToJobs(edmObjectsOfRecords);
         final List<ProcessingJob> processingJobs = ProcessingJobTuple.processingJobsFromList(processingJobTuples);
         final List<SourceDocumentReference> sourceDocumentReferences = ProcessingJobTuple.sourceDocumentReferencesFromList(processingJobTuples);
 
-        // Save them
-        metrics.logNumberOfProcessingJobsPerBatch(processingJobs.size());
-        metrics.logNumberOfSourceDocumentReferencesPerBatch(sourceDocumentReferences.size());
+        // Save the source document references
+        final Timer.Context processedSourceDocumentReferencesTimerContext = MigrationMetrics.Migrator.Batch.processedSourceDocumentReferencesDuration.time();
+        try {
+            migratorHarvesterDao.saveSourceDocumentReferences(sourceDocumentReferences);
+            MigrationMetrics.Migrator.Overall.processedSourceDocumentReferencesCount.inc(sourceDocumentReferences.size());
+        } finally {
+            processedSourceDocumentReferencesTimerContext.stop();
+        }
 
-        migratorHarvesterDao.saveSourceDocumentReferences(sourceDocumentReferences);
-        migratorHarvesterDao.saveProcessingJobs(processingJobs);
+        // Save the jobs
+        final Timer.Context processedJobsTimerContext = MigrationMetrics.Migrator.Batch.processedJobsDuration.time();
+        try {
+            migratorHarvesterDao.saveProcessingJobs(processingJobs);
+            MigrationMetrics.Migrator.Overall.processedJobsCount.inc(sourceDocumentReferences.size());
+        } finally {
+            processedJobsTimerContext.stop();
+        }
 
     }
 
@@ -116,10 +123,10 @@ public class MigrationManager {
                                 edmObject.getEdmObject(), edmObject.getEdmHasViews(), edmObject.getEdmIsShownBy(), edmObject.getEdmIsShownAt()));
             } catch (UnknownHostException e1) {
                 LOG.error("Exception caught during record processing: " + e1.getMessage(), e1);
-                metrics.incInvalidUrl();
+                MigrationMetrics.Migrator.Overall.invalidUrlCounter.inc();
             } catch (MalformedURLException e1) {
                 LOG.error("Exception caught during record processing: " + e1.getMessage(), e1);
-                metrics.incInvalidUrl();
+                MigrationMetrics.Migrator.Overall.invalidUrlCounter.inc();
             }
         }
         return results;
