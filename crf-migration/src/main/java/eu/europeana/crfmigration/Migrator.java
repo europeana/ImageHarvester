@@ -16,10 +16,12 @@ import eu.europeana.crfmigration.domain.MongoConfig;
 import eu.europeana.crfmigration.logic.MigrationManager;
 import eu.europeana.crfmigration.logic.MigrationMetrics;
 import org.apache.logging.log4j.LogManager;
+import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -109,4 +111,26 @@ public class Migrator {
         LOG.info("Migrator stopped ");
         System.exit(0);
     }
+
+    public static void main(String[] args) throws IOException {
+        LOG.info("Initializing migrator");
+
+        Date dateFilter = null;
+
+        if (1 == args.length) {
+            try {
+                dateFilter = ISODateTimeFormat.dateTime().parseDateTime(args[0]).toDate();
+            } catch (Exception e) {
+                LOG.error("The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ ", e);
+                System.exit(-1);
+            }
+        } else if (args.length > 1) {
+            System.out.println("Too many arguments. Please provide only one !");
+            System.exit(-1);
+        }
+
+        final Migrator migrator = new Migrator(dateFilter);
+        migrator.start();
+    }
+
 }

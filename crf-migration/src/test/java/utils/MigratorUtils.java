@@ -33,7 +33,6 @@ public class MigratorUtils {
         final Config config = ConfigFactory.parseFileAnySyntax(configFile, ConfigParseOptions.defaults()
                                                                                              .setSyntax(ConfigSyntax
                                                                                                                 .CONF));
-
         final Integer batch = config.getInt("config.batch");
 
         final Config sourceMongoConfig = config.getConfig("sourceMongo");
