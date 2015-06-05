@@ -39,7 +39,7 @@ public class Migrator {
 
         LOG.info("Date to filter: " + dateFilter);
 
-        final String configFilePath = "./extra-files/config-files/migration.conf";
+        final String configFilePath = "migration.conf";
         final File configFile = new File(configFilePath);
 
         final Config config = ConfigFactory.parseFileAnySyntax(configFile,
@@ -121,8 +121,10 @@ public class Migrator {
             try {
                 dateFilter = ISODateTimeFormat.dateTime().parseDateTime(args[0]).toDate();
             } catch (Exception e) {
-                LOG.error("The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ ", e);
-                System.exit(-1);
+                LOG.error("The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ defaulting to begining of time", e);
+
+                dateFilter = new Date();
+                dateFilter.setYear(1971);
             }
         } else if (args.length > 1) {
             System.out.println("Too many arguments. Please provide only one !");
