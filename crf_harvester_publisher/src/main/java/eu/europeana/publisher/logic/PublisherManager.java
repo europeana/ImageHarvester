@@ -1,6 +1,7 @@
 package eu.europeana.publisher.logic;
 
 import com.codahale.metrics.*;
+import com.codahale.metrics.Timer;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.mongodb.*;
@@ -24,10 +25,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -95,28 +93,28 @@ public class PublisherManager {
         final DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(config.getStartTimestamp().toDate());
         while (true) {
 
-            final List<RetrievedDoc> retrievedDocs = publisherEuropeanaDao.retrieveDocumentStatistics(cursor, config.getBatch());
+            final Map<String, RetrievedDoc> retrievedDocs = publisherEuropeanaDao.retrieveDocumentStatistics(cursor, config.getBatch());
 
             if (null == retrievedDocs || retrievedDocs.isEmpty()) {
                 break;
             }
 
             try {
-                currentTimestamp = updateTimestamp(retrievedDocs, currentTimestamp);
+                currentTimestamp = updateTimestamp(retrievedDocs.values(), currentTimestamp);
             }
             catch (IOException e) {
                 LOG.error ("Problem writing " + currentTimestamp + "to file: " + config.getStartTimestampFile(), e);
             }
             LOG.info ("New timestamp: " + currentTimestamp);
 
-            final List<SourceDocumentReferenceMetaInfo> metaInfos = publisherEuropeanaDao.retrieveMetaInfo(retrievedDocs);
-            final List<CRFSolrDocument> solrDocuments = FakeTagExtractor.extractTags(metaInfos);
+            final List<SourceDocumentReferenceMetaInfo> metaInfos = publisherEuropeanaDao.retrieveMetaInfo(retrievedDocs.values());
+            final List<CRFSolrDocument> solrDocuments = FakeTagExtractor.extractTags(retrievedDocs, metaInfos, publisherMetrics);
 
 
         }
     }
 
-    private DateTime updateTimestamp (List<RetrievedDoc> retrievedDocs, final DateTime currentTimestamp) throws
+    private DateTime updateTimestamp (Collection<RetrievedDoc> retrievedDocs, final DateTime currentTimestamp) throws
                                                                                                          IOException {
         // Find the latest updatedAt (so we know where to continue from if
         // the batch update fails)
@@ -349,39 +347,6 @@ public class PublisherManager {
         return IDsWithType;
     }
 
-    /**
-     * Checks if there were generated any thumbnail for this image
-     *
-     * @param imageMetaInfo the metainfo object
-     * @return true if there is a thumbnail
-     */
-    private Boolean isImageWithThumbnail (ImageMetaInfo imageMetaInfo) {
-        if (imageMetaInfo.getColorSpace() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getFileFormat() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getFileSize() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getHeight() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getWidth() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getMimeType() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getOrientation() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getColorPalette() == null || imageMetaInfo.getColorPalette().length == 0) {
-            return false;
-        }
 
-        return true;
-    }
 
 }

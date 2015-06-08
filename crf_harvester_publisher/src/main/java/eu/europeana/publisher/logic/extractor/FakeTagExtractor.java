@@ -2,12 +2,14 @@ package eu.europeana.publisher.logic.extractor;
 
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.CRFSolrDocument;
+import eu.europeana.publisher.domain.RetrievedDoc;
 import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by salexandru on 04.06.2015.
@@ -15,7 +17,8 @@ import java.util.List;
 public class FakeTagExtractor {
     private static final Logger LOG = LogManager.getLogger(FakeTagExtractor.class.getName());
 
-    public static List<CRFSolrDocument> extractTags (final List<SourceDocumentReferenceMetaInfo> metaInfos, final
+    public static List<CRFSolrDocument> extractTags (final Map<String, RetrievedDoc> retrievedDocs,
+                                                      final List<SourceDocumentReferenceMetaInfo> metaInfos, final
                                                      PublisherMetrics publisherMetrics
                                                     ) {
 
@@ -99,15 +102,41 @@ public class FakeTagExtractor {
                     break;
             }
 
-            // Creates the wrapping object for the new properties
-            final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(retrievedDocsPerID.get(ID)
-                                                                                          .getRecordId(),
-                                                                        isFulltext, hasThumbnails, hasMedia,
-                                                                        filterTags, facetTags);
-
-            if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith("/9200365/"))
-                solrCandidateDocuments.add(CRFSolrDocument);
-            else LOG.error("Skipping records that starts with /9200365/");
         }
+    }
+
+    /**
+     * Checks if there were generated any thumbnail for this image
+     *
+     * @param imageMetaInfo the metainfo object
+     * @return true if there is a thumbnail
+     */
+    private static boolean isImageWithThumbnail (ImageMetaInfo imageMetaInfo) {
+        if (imageMetaInfo.getColorSpace() != null) {
+            return false;
+        }
+        if (imageMetaInfo.getFileFormat() != null) {
+            return false;
+        }
+        if (imageMetaInfo.getFileSize() != null) {
+            return false;
+        }
+        if (imageMetaInfo.getHeight() != null) {
+            return false;
+        }
+        if (imageMetaInfo.getWidth() != null) {
+            return false;
+        }
+        if (imageMetaInfo.getMimeType() != null) {
+            return false;
+        }
+        if (imageMetaInfo.getOrientation() != null) {
+            return false;
+        }
+        if (imageMetaInfo.getColorPalette() == null || imageMetaInfo.getColorPalette().length == 0) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -16,9 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by salexandru on 03.06.2015.
@@ -50,8 +48,8 @@ public class PublisherEuropeanaDao {
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
     }
 
-    public List<RetrievedDoc> retrieveDocumentStatistics(final DBCursor cursor, final int batchSize) {
-        final List<RetrievedDoc> retrievedDocs = new ArrayList<>();
+    public Map<String, RetrievedDoc> retrieveDocumentStatistics(final DBCursor cursor, final int batchSize) {
+        final Map<String, RetrievedDoc> retrievedDocs = new HashMap<>();
 
         for (final DBObject dbObject: cursor.batchSize(batchSize)) {
             final BasicDBObject item = (BasicDBObject)dbObject;
@@ -60,14 +58,14 @@ public class PublisherEuropeanaDao {
             final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
             final String recordId = referenceOwnerTemp.getString("recordId");
 
-            retrievedDocs.add(new RetrievedDoc(sourceDocumentReferenceId, recordId, updatedAt));
+            retrievedDocs.put(sourceDocumentReferenceId, new RetrievedDoc(sourceDocumentReferenceId, recordId, updatedAt));
         }
 
 
         return retrievedDocs;
     }
 
-    public List<SourceDocumentReferenceMetaInfo> retrieveMetaInfo(final List<RetrievedDoc> retrievedDocs) {
+    public List<SourceDocumentReferenceMetaInfo> retrieveMetaInfo(final Collection<RetrievedDoc> retrievedDocs) {
         final List<String> ids = new ArrayList<>();
 
         for (final RetrievedDoc retrievedDoc: retrievedDocs) {
