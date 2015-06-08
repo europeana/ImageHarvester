@@ -1,6 +1,7 @@
 package eu.europeana.publisher.dao;
 
 import eu.europeana.publisher.domain.CRFSolrDocument;
+import eu.europeana.publisher.domain.RetrievedDocument;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -115,16 +116,22 @@ public class SOLRWriter {
     /**
      * Checks existence of documents in the SOLR index.
      *
-     * @param documentIds the document id's that need to be checked
+     * @param documents the document that need to be checked
      * @return the map that indicates for each document id (map key) whether exists : true or false
      * @throws SolrServerException
      */
-    public Set<String> filterDocumentIds (final List<String> documentIds) throws SolrServerException {
+    public List<RetrievedDocument> filterDocumentIds (final List<RetrievedDocument> documents) throws SolrServerException {
 
-        // Initialise the result : no documents exist
-        final Set<String> result = new HashSet<String>();
-        if (documentIds.isEmpty()) {
-            return result;
+        if (documents.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+
+
+        final Set<String> acceptedRecordIds = new HashSet<>();
+        final List<String> documentIds = new ArrayList<>();
+
+        for (final RetrievedDocument document: documents) {
+            documentIds.add(document.getDocumentStatistic().getRecordId());
         }
 
         // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
@@ -150,7 +157,7 @@ public class SOLRWriter {
                     if (response != null) {
                         final SolrDocumentList solrResults = response.getResults();
                         for (int resultEntryIndex = 0; resultEntryIndex < solrResults.size(); ++resultEntryIndex)
-                            result.add(solrResults.get(resultEntryIndex).getFieldValue("europeana_id").toString());
+                            acceptedRecordIds.add(solrResults.get(resultEntryIndex).getFieldValue("europeana_id").toString());
                     }
                     server.shutdown();
                 } catch (Exception e) {
@@ -161,7 +168,17 @@ public class SOLRWriter {
             }
         }
 
-        return result;
+        final Iterator<RetrievedDocument> documentIterator = documents.iterator();
+
+        while (documentIterator.hasNext()) {
+            final RetrievedDocument document = documentIterator.next();
+
+            if (!acceptedRecordIds.contains(document.getDocumentStatistic().getRecordId())) {
+                documentIterator.remove();
+            }
+        }
+
+        return documents;
 
     }
 }

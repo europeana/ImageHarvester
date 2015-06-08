@@ -13,6 +13,7 @@ import eu.europeana.publisher.dao.SOLRWriter;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logic.extractor.*;
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -88,34 +89,31 @@ public class PublisherManager {
 
     private void startPublisher() throws SolrServerException, IOException {
         DateTime currentTimestamp = config.getStartTimestamp();
-        final DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(config.getStartTimestamp().toDate());
-        while (true) {
 
-            final Map<String, RetrievedDocument> retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor,
-                                                                                                                     config.getBatch());
+        while (true) {
+            final DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
+
+            List<RetrievedDocument> retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor, config.getBatch());
 
             if (null == retrievedDocs || retrievedDocs.isEmpty()) {
                 break;
             }
 
-            retrievedDocs.keySet().removeAll(solrWriter.filterDocumentIds(Lists.newArrayList(retrievedDocs.keySet())));
+            retrievedDocs = solrWriter.filterDocumentIds(retrievedDocs);
 
-
-            final List<CRFSolrDocument> solrDocuments = FakeTagExtractor.extractTags(retrievedDocs.values());
+            final List<CRFSolrDocument> solrDocuments = FakeTagExtractor.extractTags(retrievedDocs);
 
 
             if (null != solrDocuments && !solrDocuments.isEmpty() && solrWriter.updateDocuments(solrDocuments)) {
-                publisherHarvesterDAO.writeMetaInfos(retrievedDocs.values());
+                publisherHarvesterDAO.writeMetaInfos(retrievedDocs);
             }
 
-            if (null != config.getStartTimestampFile()) {
-                try {
-                    currentTimestamp = updateTimestamp(currentTimestamp, retrievedDocs.values());
+            try {
+                    currentTimestamp = updateTimestamp(currentTimestamp, retrievedDocs);
                 } catch (IOException e) {
                     LOG.error("Problem writing " + currentTimestamp + "to file: " + config.getStartTimestampFile(), e);
-                }
-                LOG.info("New successful timestamp: " + currentTimestamp);
             }
+            LOG.info("New successful timestamp: " + currentTimestamp);
         }
     }
 
@@ -132,7 +130,7 @@ public class PublisherManager {
             }
         }
 
-        if (null != time) {
+        if (null != time && null != config.getStartTimestampFile()) {
             Files.write(Paths.get(config.getStartTimestampFile()), time.toString().getBytes());
         }
         return time;

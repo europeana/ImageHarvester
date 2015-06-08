@@ -56,7 +56,7 @@ public class PublisherHarvesterDAO {
 
         for (final RetrievedDocument document: documents) {
             webResourceMetaInfos.add(
-                  new WebResourceMetaInfo(document.getDocumentStatistic().getRecordId(),
+                  new WebResourceMetaInfo(document.getSourceDocumentReferenceMetaInfo().getId(),
                                           document.getSourceDocumentReferenceMetaInfo().getImageMetaInfo(),
                                           document.getSourceDocumentReferenceMetaInfo().getAudioMetaInfo(),
                                           document.getSourceDocumentReferenceMetaInfo().getVideoMetaInfo(),

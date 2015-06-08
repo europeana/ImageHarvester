@@ -49,21 +49,22 @@ public class PublisherEuropeanaDao {
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
     }
 
-    public Map<String, RetrievedDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final int batchSize) {
-        final Map<String, RetrievedDocument> retrievedDocuments = new HashMap<>();
+    public List<RetrievedDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final int batchSize) {
+        final List<RetrievedDocument> retrievedDocuments = new ArrayList<>();
 
         final Map<String, DocumentStatistic> documentStatistics = retrieveDocumentStatistics (cursor, batchSize);
         final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(documentStatistics.keySet());
 
+
         for (final SourceDocumentReferenceMetaInfo metaInfo: metaInfos) {
             final String id = metaInfo.getId();
-            retrievedDocuments.put (id, new RetrievedDocument(documentStatistics.get(id), metaInfo));
+            retrievedDocuments.add(new RetrievedDocument(documentStatistics.get(id), metaInfo));
         }
 
         return retrievedDocuments;
     }
 
-    public Map<String, DocumentStatistic> retrieveDocumentStatistics(final DBCursor cursor, final int batchSize) {
+    private Map<String, DocumentStatistic> retrieveDocumentStatistics(final DBCursor cursor, final int batchSize) {
         final Map<String, DocumentStatistic> documentStatistics = new HashMap<>();
 
         for (final DBObject dbObject: cursor.batchSize(batchSize)) {
@@ -80,15 +81,18 @@ public class PublisherEuropeanaDao {
     }
 
     public List<SourceDocumentReferenceMetaInfo> retrieveMetaInfo(final Collection<String> sourceDocumentReferenceIds) {
-        return null != sourceDocumentReferenceIds ? sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceIds) : null;
+        if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+        return sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceIds);
     }
 
-    public DBCursor buildCursorForDocumentStatistics (final Date dateFilter) {
+    public DBCursor buildCursorForDocumentStatistics (final DateTime dateFilter) {
         final BasicDBObject findQuery = new BasicDBObject();
         final BasicDBObject retrievedFields = new BasicDBObject();
 
         if (null != dateFilter) {
-            findQuery.put("updatedAt", new BasicDBObject("$gt", dateFilter));
+            findQuery.put("updatedAt", new BasicDBObject("$gt", dateFilter.toDate()));
         }
 
         retrievedFields.put("sourceDocumentReferenceId", 1);
@@ -98,9 +102,5 @@ public class PublisherEuropeanaDao {
         retrievedFields.put("_id", 0);
 
         return mongoDB.getCollection("SourceDocumentProcessingStatistics").find(findQuery, retrievedFields);
-    }
-
-    public DBCursor buildCursorForSourceDocumentProcessingStatistics (final Date dateFilter) {
-        return null;
     }
 }
