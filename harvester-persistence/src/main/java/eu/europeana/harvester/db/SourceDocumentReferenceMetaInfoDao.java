@@ -4,6 +4,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -41,7 +42,7 @@ public interface SourceDocumentReferenceMetaInfoDao {
      * @param ids the unique ids of the records
      * @return - found SourceDocumentReferenceMetaInfo objects
      */
-    public List<SourceDocumentReferenceMetaInfo> read(List<String> ids);
+    public List<SourceDocumentReferenceMetaInfo> read(Collection<String> ids);
 
     /**
      * Updates a SourceDocumentReferenceMetaInfo record

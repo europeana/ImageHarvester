@@ -91,15 +91,6 @@ public class MigrationManager {
         final List<ProcessingJob> processingJobs = ProcessingJobTuple.processingJobsFromList(processingJobTuples);
         final List<SourceDocumentReference> sourceDocumentReferences = ProcessingJobTuple.sourceDocumentReferencesFromList(processingJobTuples);
 
-        // Save the source document references
-        final Timer.Context processedSourceDocumentReferencesTimerContext = MigrationMetrics.Migrator.Batch.processedSourceDocumentReferencesDuration.time();
-        try {
-            migratorHarvesterDao.saveSourceDocumentReferences(sourceDocumentReferences);
-            MigrationMetrics.Migrator.Overall.processedSourceDocumentReferencesCount.inc(sourceDocumentReferences.size());
-        } finally {
-            processedSourceDocumentReferencesTimerContext.stop();
-        }
-
         // Save the jobs
         final Timer.Context processedJobsTimerContext = MigrationMetrics.Migrator.Batch.processedJobsDuration.time();
         try {
@@ -108,7 +99,6 @@ public class MigrationManager {
         } finally {
             processedJobsTimerContext.stop();
         }
-
     }
 
     private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects) {

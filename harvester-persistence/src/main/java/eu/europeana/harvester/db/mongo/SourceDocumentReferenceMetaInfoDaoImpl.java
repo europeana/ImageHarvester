@@ -11,6 +11,7 @@ import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.domain.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -49,7 +50,7 @@ public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentRef
     }
 
     @Override
-    public List<SourceDocumentReferenceMetaInfo> read(List<String> ids) {
+    public List<SourceDocumentReferenceMetaInfo> read(Collection<String> ids) {
 
         final Query<SourceDocumentReferenceMetaInfo> query = datastore.createQuery(SourceDocumentReferenceMetaInfo.class).retrievedFields(true,"id","imageMetaInfo","audioMetaInfo","videoMetaInfo","textMetaInfo").hintIndex("_id_").field("_id").hasAnyOf(ids);
         if(query == null) {return new ArrayList<>();}

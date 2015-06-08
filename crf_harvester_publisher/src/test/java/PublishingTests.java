@@ -1,6 +1,8 @@
 import com.mongodb.*;
 import com.mongodb.util.JSON;
 import com.typesafe.config.*;
+import eu.europeana.publisher.domain.GraphiteReporterConfig;
+import eu.europeana.publisher.domain.MongoConfig;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logic.extractor.MediaTypeEncoding;
 import eu.europeana.publisher.logic.PublisherManager;
@@ -47,12 +49,18 @@ public class PublishingTests {
 
     @After
     public void tearDown() {
-     cleanMongoDatabase();
-     cleanSolrDatabase();
+      cleanMongoDatabase();
+      cleanSolrDatabase();
     }
 
-    private Mongo connectToDB(final String host, final Integer port, final String userName, final String password) {
+    private DB connectToDB (final MongoConfig mongoConfig) {
         final Mongo mongo;
+        final String host = mongoConfig.getHost();
+        final Integer port =mongoConfig.getPort();
+        final String userName = mongoConfig.getdBUsername();
+        final String password = mongoConfig.getdBPassword();
+        final String dbName   = mongoConfig.getdBName();
+
         try {
             mongo = new Mongo(host, port);
         } catch (UnknownHostException e) {
@@ -61,7 +69,7 @@ public class PublishingTests {
         }
 
 
-        if (!publisherConfig.getSourceDBUsername().equals("")) {
+        if (StringUtils.isNotEmpty(userName)) {
             final DB sourceDB = mongo.getDB("admin");
             final Boolean auth = sourceDB.authenticate(userName, password.toCharArray());
             if (!auth) {
@@ -69,7 +77,7 @@ public class PublishingTests {
             }
         }
 
-        return mongo;
+        return mongo.getDB(dbName);
     }
 
     private void cleanMongoDatabase() {
@@ -78,22 +86,16 @@ public class PublishingTests {
                 fail("Publisher Configuration cannot be null!");
             }
 
-            final Mongo sourceMongo = connectToDB(publisherConfig.getSourceHost(),
-                    publisherConfig.getSourcePort(),
-                    publisherConfig.getSourceDBUsername(),
-                    publisherConfig.getSourceDBPassword());
+            final DB sourceMongo = connectToDB(publisherConfig.getSourceMongoConfig());
 
-            sourceMongo.getDB(publisherConfig.getSourceDBName()).getCollection("SourceDocumentProcessingStatistics").drop();
-            sourceMongo.getDB(publisherConfig.getSourceDBName()).getCollection("SourceDocumentReferenceMetaInfo").drop();
+            sourceMongo.getCollection("SourceDocumentProcessingStatistics").drop();
+            sourceMongo.getCollection("SourceDocumentReferenceMetaInfo").drop();
 
 
-            final Mongo targetMongo = connectToDB(publisherConfig.getTargetHost(),
-                    publisherConfig.getTargetPort(),
-                    publisherConfig.getTargetDBUsername(),
-                    publisherConfig.getTargetDBPassword());
+            final DB targetMongo = connectToDB(publisherConfig.getTargetMongoConfig());
 
-            targetMongo.getDB(publisherConfig.getTargetDBName()).getCollection("WebResourceMetaInfo").drop();
-            targetMongo.getDB(publisherConfig.getTargetDBName()).getCollection("WebResource").drop();
+            targetMongo.getCollection("WebResourceMetaInfo").drop();
+            targetMongo.getCollection("WebResource").drop();
 
         } catch (Exception e) {
             fail("Clean Mongo Database has failed with Exception: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
@@ -120,11 +122,8 @@ public class PublishingTests {
             JSONParser parser = new JSONParser();
             JSONArray rootObject = (JSONArray) parser.parse(new FileReader(pathToJSONFile));
 
-            final Mongo sourceMongo = connectToDB(publisherConfig.getSourceHost(),
-                    publisherConfig.getSourcePort(),
-                    publisherConfig.getSourceDBUsername(),
-                    publisherConfig.getSourceDBPassword());
-            final DBCollection sourceDB = sourceMongo.getDB(publisherConfig.getSourceDBName()).getCollection(collectionName);
+            final DB sourceMongo = connectToDB(publisherConfig.getSourceMongoConfig());
+            final DBCollection sourceDB = sourceMongo.getCollection(collectionName);
             for (final Object object : rootObject) {
                 final DBObject dbObject = (DBObject) JSON.parse(object.toString());
 
@@ -182,7 +181,7 @@ public class PublishingTests {
         }
     }
 
-    private PublisherConfig createPublisherConfig(final String pathToConfigFile) {
+    private PublisherConfig createPublisherConfig (final String pathToConfigFile) {
         final File configFile = new File(pathToConfigFile);
 
         if (!configFile.canRead()) {
@@ -220,30 +219,20 @@ public class PublishingTests {
 
         final Integer batch = config.getInt("config.batch");
 
-        final Config sourceMongoConfig = config.getConfigList("sourceMongo").get(0);
-        final Config targetMongoConfig = config.getConfigList("targetMongo").get(0);
-
-        final String sourceHost = sourceMongoConfig.getString("host");
-        final Integer sourcePort = sourceMongoConfig.getInt("port");
-        final String sourceDBName = sourceMongoConfig.getString("dbName");
-        final String sourceDBUsername = sourceMongoConfig.getString("username");
-        final String sourceDBPassword = sourceMongoConfig.getString("password");
-
-        final String targetHost = targetMongoConfig.getString("host");
-        final Integer targetPort = targetMongoConfig.getInt("port");
-        final String targetDBName = targetMongoConfig.getString("dbName");
-        final String targetDBUsername = targetMongoConfig.getString("username");
-        final String targetDBPassword = targetMongoConfig.getString("password");
         final String graphiteMasterId = config.getString("metrics.masterID");
-        final String graphiteServer   = config.getString("metrics.graphiteServer");
-        final Integer graphitePort    = config.getInt("metrics.graphitePort");
+        final String graphiteServer = config.getString("metrics.graphiteServer");
+        final Integer graphitePort = config.getInt("metrics.graphitePort");
 
-        return new PublisherConfig(sourceHost, sourcePort, sourceDBName, sourceDBUsername, sourceDBPassword,
-                                   targetHost, targetPort, targetDBName, targetDBUsername, targetDBPassword,
-                                   startTimestamp, startTimestampFile,
-                                   solrURL, batch,
-                                   graphiteMasterId, graphiteServer, graphitePort
+        final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(graphiteServer, graphiteMasterId, graphitePort);
+
+        final MongoConfig sourceConfig = new MongoConfig (config.getConfigList("sourceMongo").get(0));
+        final MongoConfig targetConfig = new MongoConfig (config.getConfigList("targetMongo").get(0));
+
+        return new PublisherConfig(sourceConfig, targetConfig,
+                                   graphiteReporterConfig, startTimestamp,
+                                   startTimestampFile, solrURL, batch
                                   );
+
     }
 
     private void runPublisher(final PublisherConfig publisherConfig) {
@@ -265,19 +254,11 @@ public class PublishingTests {
 
         runPublisher(publisherConfig);
 
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceHost(),
-                publisherConfig.getSourcePort(),
-                publisherConfig.getSourceDBUsername(),
-                publisherConfig.getSourceDBPassword()
-        ).getDB(publisherConfig.getSourceDBName())
+        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
                 .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetHost(),
-                publisherConfig.getTargetPort(),
-                publisherConfig.getTargetDBUsername(),
-                publisherConfig.getTargetDBPassword()
-        ).getDB(publisherConfig.getTargetDBName())
+        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
                 .getCollection("WebResourceMetaInfo");
 
 
@@ -310,19 +291,11 @@ public class PublishingTests {
         loadSOLRData(PATH_PREFIX + "data-files/filterDataByDate/solrData.json");
 
         runPublisher(publisherConfig);
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceHost(),
-                publisherConfig.getSourcePort(),
-                publisherConfig.getSourceDBUsername(),
-                publisherConfig.getSourceDBPassword()
-        ).getDB(publisherConfig.getSourceDBName())
+        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
                 .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetHost(),
-                publisherConfig.getTargetPort(),
-                publisherConfig.getTargetDBUsername(),
-                publisherConfig.getTargetDBPassword()
-        ).getDB(publisherConfig.getTargetDBName())
+        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
                 .getCollection("WebResourceMetaInfo");
 
         final BasicDBObject findQuery = new BasicDBObject();
@@ -361,23 +334,16 @@ public class PublishingTests {
     public void testPublishAllDataWithMetaData() {
         publisherConfig = createPublisherConfig(PATH_PREFIX + "config-files/dataWithMissingMetaInfo/publisher.conf");
         loadMongoData(PATH_PREFIX + "data-files/dataWithMissingMetaInfo/jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(PATH_PREFIX + "data-files/dataWithMissingMetaInfo/metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadMongoData(PATH_PREFIX + "data-files/dataWithMissingMetaInfo/metaInfo.json",
+                      "SourceDocumentReferenceMetaInfo");
         loadSOLRData(PATH_PREFIX + "data-files/dataWithMissingMetaInfo/solrData.json");
 
         runPublisher(publisherConfig);
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceHost(),
-                publisherConfig.getSourcePort(),
-                publisherConfig.getSourceDBUsername(),
-                publisherConfig.getSourceDBPassword()
-        ).getDB(publisherConfig.getSourceDBName())
+        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
                 .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetHost(),
-                publisherConfig.getTargetPort(),
-                publisherConfig.getTargetDBUsername(),
-                publisherConfig.getTargetDBPassword()
-        ).getDB(publisherConfig.getTargetDBName())
+        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
                 .getCollection("WebResourceMetaInfo");
 
 
@@ -406,23 +372,16 @@ public class PublishingTests {
     public void testPublishAllDataWithSolrDocEquivelent() {
         publisherConfig = createPublisherConfig(PATH_PREFIX + "config-files/dataWithMissingSolrDoc/publisher.conf");
         loadMongoData(PATH_PREFIX + "data-files/dataWithMissingSolrDoc/jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(PATH_PREFIX + "data-files/dataWithMissingSolrDoc/metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadMongoData(PATH_PREFIX + "data-files/dataWithMissingSolrDoc/metaInfo.json",
+                      "SourceDocumentReferenceMetaInfo");
         loadSOLRData(PATH_PREFIX + "data-files/dataWithMissingSolrDoc/solrData.json");
 
         runPublisher(publisherConfig);
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceHost(),
-                publisherConfig.getSourcePort(),
-                publisherConfig.getSourceDBUsername(),
-                publisherConfig.getSourceDBPassword()
-        ).getDB(publisherConfig.getSourceDBName())
+        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
                 .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetHost(),
-                publisherConfig.getTargetPort(),
-                publisherConfig.getTargetDBUsername(),
-                publisherConfig.getTargetDBPassword()
-        ).getDB(publisherConfig.getTargetDBName())
+        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
                 .getCollection("WebResourceMetaInfo");
 
 
@@ -465,19 +424,11 @@ public class PublishingTests {
 
         runPublisher(publisherConfig);
 
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceHost(),
-                                                          publisherConfig.getSourcePort(),
-                                                          publisherConfig.getSourceDBUsername(),
-                                                          publisherConfig.getSourceDBPassword()
-                                                         ).getDB(publisherConfig.getSourceDBName())
+        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
                                                           .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetHost(),
-                                                          publisherConfig.getTargetPort(),
-                                                          publisherConfig.getTargetDBUsername(),
-                                                          publisherConfig.getTargetDBPassword()
-                                                         ).getDB(publisherConfig.getTargetDBName())
+        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
                                                           .getCollection("WebResourceMetaInfo");
 
         final BasicDBObject keys = new BasicDBObject();
