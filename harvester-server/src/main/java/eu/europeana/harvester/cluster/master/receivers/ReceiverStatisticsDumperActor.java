@@ -1,4 +1,4 @@
-package eu.europeana.harvester.cluster.master;
+package eu.europeana.harvester.cluster.master.receivers;
 
 import akka.actor.UntypedActor;
 import akka.event.Logging;

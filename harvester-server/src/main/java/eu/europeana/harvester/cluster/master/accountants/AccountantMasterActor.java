@@ -1,4 +1,4 @@
-package eu.europeana.harvester.cluster.master;
+package eu.europeana.harvester.cluster.master.accountants;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;

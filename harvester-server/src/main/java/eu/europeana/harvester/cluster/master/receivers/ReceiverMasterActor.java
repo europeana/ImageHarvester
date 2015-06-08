@@ -1,4 +1,4 @@
-package eu.europeana.harvester.cluster.master;
+package eu.europeana.harvester.cluster.master.receivers;
 
 import akka.actor.ActorRef;
 import akka.actor.Address;
@@ -12,6 +12,7 @@ import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.DownloadConfirmation;
 import eu.europeana.harvester.cluster.domain.messages.StartedTask;
 import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
+import eu.europeana.harvester.cluster.master.MasterMetrics;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
