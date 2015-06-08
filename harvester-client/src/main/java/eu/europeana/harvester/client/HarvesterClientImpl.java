@@ -95,7 +95,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJob createProcessingJob(ProcessingJob processingJob) {
-        LOG.debug("Create processing job {}", processingJob.getId());
+        // LOG.debug("Create processing job {}", processingJob.getId());
 
         processingJobDao.create(processingJob, harvesterClientConfig.getWriteConcern());
         return processingJob;
