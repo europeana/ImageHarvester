@@ -15,10 +15,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.singletonMap;
@@ -39,12 +36,12 @@ public class SOLRWriter {
 
     private final String solrUrl;
 
-    public SOLRWriter(String url) {
+    public SOLRWriter (String url) {
         LOG.info("SOLR writer");
         this.solrUrl = url;
     }
 
-    private SolrServer createServer() {
+    private SolrServer createServer () {
         final HttpSolrServer server = new HttpSolrServer(solrUrl);
         server.setRequestWriter(new BinaryRequestWriter());
         return server;
@@ -55,7 +52,7 @@ public class SOLRWriter {
      *
      * @param newDocs the list of documents and the new fields
      */
-    public boolean updateDocuments(List<CRFSolrDocument> newDocs) throws IOException, SolrServerException {
+    public boolean updateDocuments (List<CRFSolrDocument> newDocs) throws IOException, SolrServerException {
         final List<SolrInputDocument> docsToUpdate = new ArrayList<SolrInputDocument>();
 
         int retry = 0;
@@ -82,7 +79,9 @@ public class SOLRWriter {
                 try {
                     server.add(update);
                 } catch (Exception e) {
-                    LOG.error("SOLR: exception when adding specific document " + update.toString() + " => document skipped", e);
+                    LOG.error("SOLR: exception when adding specific document " + update.toString() + " => document skipped",
+
+                              e);
                 }
             }
 
@@ -97,7 +96,8 @@ public class SOLRWriter {
                 if (retry >= MAX_RETRIES) {
                     LOG.error("Reached maximum number of retries. Skipping record set with size=" + docsToUpdate.size());
                     return false;
-                } else {
+                }
+                else {
                     try {
                         retry++;
                         final long secsToSleep = retry * 10;
@@ -119,19 +119,18 @@ public class SOLRWriter {
      * @return the map that indicates for each document id (map key) whether exists : true or false
      * @throws SolrServerException
      */
-    public Map<String, Boolean> documentExists(final List<String> documentIds) throws SolrServerException {
+    public Set<String> filterDocumentIds (final List<String> documentIds) throws SolrServerException {
 
         // Initialise the result : no documents exist
-        final Map<String, Boolean> result = new HashMap<String, Boolean>();
+        final Set<String> result = new HashSet<String>();
         if (documentIds.isEmpty()) {
             return result;
         }
 
-        for (final String id : documentIds) result.put(id, false);
-
         // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
         for (int documentIdsStartChunkIndex = 0; documentIdsStartChunkIndex <= documentIds.size(); documentIdsStartChunkIndex += MAX_NUMBER_OF_IDS_IN_SOLR_QUERY) {
-            final int endOfArray = (documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY >= documentIds.size()) ? documentIds.size() : documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY;
+            final int endOfArray = (documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY >= documentIds.size()) ? documentIds
+                                                                                                                                  .size() : documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY;
             final List<String> documentIdsToQuery = documentIds.subList(documentIdsStartChunkIndex, endOfArray);
 
             if (!documentIdsToQuery.isEmpty()) {
@@ -151,11 +150,12 @@ public class SOLRWriter {
                     if (response != null) {
                         final SolrDocumentList solrResults = response.getResults();
                         for (int resultEntryIndex = 0; resultEntryIndex < solrResults.size(); ++resultEntryIndex)
-                            result.put(solrResults.get(resultEntryIndex).getFieldValue("europeana_id").toString(), true);
+                            result.add(solrResults.get(resultEntryIndex).getFieldValue("europeana_id").toString());
                     }
                     server.shutdown();
                 } catch (Exception e) {
-                    LOG.error("SOLR query failed when executing existence query " + queryString+" => will mark the docs as non-existing");
+                    LOG.error("SOLR query failed when executing existence query " + queryString + " => will mark the " +
+                                      "docs as non-existing");
                     LOG.error(e);
                 }
             }

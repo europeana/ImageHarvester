@@ -7,8 +7,9 @@ import com.mongodb.*;
 import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.publisher.domain.DocumentStatistic;
 import eu.europeana.publisher.domain.MongoConfig;
-import eu.europeana.publisher.domain.RetrievedDoc;
+import eu.europeana.publisher.domain.RetrievedDocument;
 import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -48,8 +49,22 @@ public class PublisherEuropeanaDao {
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
     }
 
-    public Map<String, RetrievedDoc> retrieveDocumentStatistics(final DBCursor cursor, final int batchSize) {
-        final Map<String, RetrievedDoc> retrievedDocs = new HashMap<>();
+    public Map<String, RetrievedDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final int batchSize) {
+        final Map<String, RetrievedDocument> retrievedDocuments = new HashMap<>();
+
+        final Map<String, DocumentStatistic> documentStatistics = retrieveDocumentStatistics (cursor, batchSize);
+        final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(documentStatistics.keySet());
+
+        for (final SourceDocumentReferenceMetaInfo metaInfo: metaInfos) {
+            final String id = metaInfo.getId();
+            retrievedDocuments.put (id, new RetrievedDocument(documentStatistics.get(id), metaInfo));
+        }
+
+        return retrievedDocuments;
+    }
+
+    public Map<String, DocumentStatistic> retrieveDocumentStatistics(final DBCursor cursor, final int batchSize) {
+        final Map<String, DocumentStatistic> documentStatistics = new HashMap<>();
 
         for (final DBObject dbObject: cursor.batchSize(batchSize)) {
             final BasicDBObject item = (BasicDBObject)dbObject;
@@ -58,21 +73,14 @@ public class PublisherEuropeanaDao {
             final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
             final String recordId = referenceOwnerTemp.getString("recordId");
 
-            retrievedDocs.put(sourceDocumentReferenceId, new RetrievedDoc(sourceDocumentReferenceId, recordId, updatedAt));
+            documentStatistics.put(sourceDocumentReferenceId, new DocumentStatistic(sourceDocumentReferenceId, recordId, updatedAt));
         }
 
-
-        return retrievedDocs;
+        return documentStatistics;
     }
 
-    public List<SourceDocumentReferenceMetaInfo> retrieveMetaInfo(final Collection<RetrievedDoc> retrievedDocs) {
-        final List<String> ids = new ArrayList<>();
-
-        for (final RetrievedDoc retrievedDoc: retrievedDocs) {
-            ids.add(retrievedDoc.getSourceDocumentReferenceId());
-        }
-
-        return sourceDocumentReferenceMetaInfoDao.read(ids);
+    public List<SourceDocumentReferenceMetaInfo> retrieveMetaInfo(final Collection<String> sourceDocumentReferenceIds) {
+        return null != sourceDocumentReferenceIds ? sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceIds) : null;
     }
 
     public DBCursor buildCursorForDocumentStatistics (final Date dateFilter) {

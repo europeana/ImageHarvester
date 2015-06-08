@@ -4,15 +4,14 @@ import com.codahale.metrics.*;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.google.common.collect.Lists;
 import com.mongodb.*;
-import eu.europeana.harvester.cluster.slave.SlaveMetrics;
-import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.dao.PublisherEuropeanaDao;
 import eu.europeana.publisher.dao.PublisherHarvesterDAO;
+import eu.europeana.publisher.domain.RetrievedDocument;
 import eu.europeana.publisher.dao.SOLRWriter;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
-import eu.europeana.publisher.domain.RetrievedDoc;
 import eu.europeana.publisher.logic.extractor.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +22,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -88,265 +86,55 @@ public class PublisherManager {
         }
     }
 
-    private void startPublisherNew() throws SolrServerException, IOException {
+    private void startPublisher() throws SolrServerException, IOException {
         DateTime currentTimestamp = config.getStartTimestamp();
         final DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(config.getStartTimestamp().toDate());
         while (true) {
 
-            final Map<String, RetrievedDoc> retrievedDocs = publisherEuropeanaDao.retrieveDocumentStatistics(cursor, config.getBatch());
+            final Map<String, RetrievedDocument> retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor,
+                                                                                                                     config.getBatch());
 
             if (null == retrievedDocs || retrievedDocs.isEmpty()) {
                 break;
             }
 
-            try {
-                currentTimestamp = updateTimestamp(retrievedDocs.values(), currentTimestamp);
+            retrievedDocs.keySet().removeAll(solrWriter.filterDocumentIds(Lists.newArrayList(retrievedDocs.keySet())));
+
+
+            final List<CRFSolrDocument> solrDocuments = FakeTagExtractor.extractTags(retrievedDocs.values());
+
+
+            if (null != solrDocuments && !solrDocuments.isEmpty() && solrWriter.updateDocuments(solrDocuments)) {
+                publisherHarvesterDAO.writeMetaInfos(retrievedDocs.values());
             }
-            catch (IOException e) {
-                LOG.error ("Problem writing " + currentTimestamp + "to file: " + config.getStartTimestampFile(), e);
+
+            if (null != config.getStartTimestampFile()) {
+                try {
+                    currentTimestamp = updateTimestamp(currentTimestamp, retrievedDocs.values());
+                } catch (IOException e) {
+                    LOG.error("Problem writing " + currentTimestamp + "to file: " + config.getStartTimestampFile(), e);
+                }
+                LOG.info("New successful timestamp: " + currentTimestamp);
             }
-            LOG.info ("New timestamp: " + currentTimestamp);
-
-            final List<SourceDocumentReferenceMetaInfo> metaInfos = publisherEuropeanaDao.retrieveMetaInfo(retrievedDocs.values());
-            final List<CRFSolrDocument> solrDocuments = FakeTagExtractor.extractTags(retrievedDocs, metaInfos, publisherMetrics);
-
-
         }
     }
 
-    private DateTime updateTimestamp (Collection<RetrievedDoc> retrievedDocs, final DateTime currentTimestamp) throws
-                                                                                                         IOException {
-        // Find the latest updatedAt (so we know where to continue from if
-        // the batch update fails)
-        DateTime maxTimestamp = currentTimestamp;
-        for (RetrievedDoc doc : retrievedDocs) {
-            if (null == maxTimestamp) {
-                maxTimestamp = doc.getUpdatedAt();
+    private DateTime updateTimestamp(final DateTime currentTime, final Collection<RetrievedDocument> documents) throws
+                                                                                                                IOException {
+        DateTime time = currentTime;
+
+        for (final RetrievedDocument document: documents) {
+            if (null == time) {
+                time = document.getDocumentStatistic().getUpdatedAt();
             }
-            else if (maxTimestamp.isAfter(doc.getUpdatedAt())) {
-                maxTimestamp = doc.getUpdatedAt();
+            else if (time.isBefore(document.getDocumentStatistic().getUpdatedAt())) {
+                time =document.getDocumentStatistic().getUpdatedAt();
             }
         }
-        Files.write(Paths.get(config.getStartTimestampFile()), maxTimestamp.toString().getBytes());
-        return currentTimestamp;
+
+        if (null != time) {
+            Files.write(Paths.get(config.getStartTimestampFile()), time.toString().getBytes());
+        }
+        return time;
     }
-
-    /**
-     * The starting point of the publisher.
-     */
-    private void startPublisher () throws SolrServerException, IOException {
-        Boolean done = false;
-        HashMap<String, RetrievedDoc> retrievedDocsPerID;
-        List<SourceDocumentReferenceMetaInfo> metaInfos;
-        List<CRFSolrDocument> solrCandidateDocuments = new ArrayList<>();
-        DateTime lastSuccesfulPublish = config.getStartTimestamp();
-
-
-        do {
-            publisherMetrics.startLoopBatchTimer();
-
-            solrCandidateDocuments.clear();
-
-            // Retrieves the docs
-            retrievedDocsPerID = retrieveStatisticsDocumentIdsThatMatch(lastSuccesfulPublish);
-
-
-            // Find the latest updatedAt (so we know where to continue from if
-            // the batch update fails)
-            DateTime lastSuccesfulPublishBeforeMax = lastSuccesfulPublish;
-            for (RetrievedDoc doc : retrievedDocsPerID.values()) {
-                if (lastSuccesfulPublish == null) {
-                    lastSuccesfulPublish = doc.getUpdatedAt();
-                }
-                else {
-                    if (doc.getUpdatedAt().isAfter(lastSuccesfulPublish)) {
-                        lastSuccesfulPublish = doc.getUpdatedAt();
-                    }
-                }
-            }
-
-            // Advance with 1 minute if it's exactly the same (very unlikely).
-            if (null != lastSuccesfulPublishBeforeMax && lastSuccesfulPublishBeforeMax.isEqual(lastSuccesfulPublish)) {
-                lastSuccesfulPublish = lastSuccesfulPublish.plusMinutes(30);
-            }
-
-            if (retrievedDocsPerID.size() == 0) {
-                done = true;
-            }
-            else {
-
-                // Retrieves the corresponding metaInformation objects
-                final List<String> list = new ArrayList<>(retrievedDocsPerID.keySet());
-
-                publisherMetrics.startMongoGetMetaInfoTimer();
-                metaInfos = sourceDocumentReferenceMetaInfoDaoFromSource.read(list);
-                publisherMetrics.stopMongoGetMetaInfoTimer();
-
-                publisherMetrics.logNumberOfMetaInfoDocumentsRetrived(metaInfos.size());
-
-                publisherMetrics.startFakeTagsTimer();
-                // Iterates over the meta info objects.
-
-                publisherMetrics.stopFakeTagsTimer();
-
-                // Check which candidate documents have an existing SOLR
-                // document
-                publisherMetrics.logNumberOfDocumentsProcessed(solrCandidateDocuments.size());
-
-                final List<String> candidateDocumentIds = new ArrayList<String>();
-                for (CRFSolrDocument doc : solrCandidateDocuments) {
-                    candidateDocumentIds.add(doc.getRecordId());
-                }
-
-                publisherMetrics.startSolrReadIdsTimer();
-                final Map<String, Boolean> documentIdToExistence = solrWriter.documentExists(candidateDocumentIds);
-                publisherMetrics.stopSolrReadIdsTimer();
-
-                int documentThatExist = 0;
-                for (String id : documentIdToExistence.keySet()) {
-                    if (documentIdToExistence.get(id) == true) {
-                        documentThatExist++;
-                    }
-                }
-
-                publisherMetrics.logNumberOfDocumentsThatExistInSolr(documentThatExist);
-
-                // Generate the MongoDB documents that will be written in
-                // MongoDB : only the ones that have a corresponding SOLR
-                // document qualify
-                final List<WebResourceMetaInfo> webResourceMetaInfosToUpdate = new ArrayList<>(documentThatExist);
-                for (SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
-                    final String recordId = retrievedDocsPerID.get(metaInfo.getId()).getRecordId();
-                    final Boolean value = documentIdToExistence.get(recordId);
-                    if (null != value && true == value) {
-                        final WebResourceMetaInfo webResourceMetaInfo = new WebResourceMetaInfo(metaInfo.getId(),
-                                                                                                metaInfo.getImageMetaInfo(),
-                                                                                                metaInfo.getAudioMetaInfo(),
-                                                                                                metaInfo.getVideoMetaInfo(),
-                                                                                                metaInfo.getTextMetaInfo());
-                        webResourceMetaInfosToUpdate.add(webResourceMetaInfo);
-                    }
-                }
-
-                if (!solrCandidateDocuments.isEmpty()) {
-                    // Filter the SOLR documents that will be written in SOLR :
-                    // only the ones that have a coresponding SOLR document
-                    // qualify
-                    final List<CRFSolrDocument> solrDocsToUpdate = new ArrayList<>(documentThatExist);
-                    for (CRFSolrDocument doc : solrCandidateDocuments) {
-                        final Boolean value = documentIdToExistence.get(doc.getRecordId());
-                        if (null != value && true == value) {
-                            solrDocsToUpdate.add(doc);
-                        }
-                    }
-
-                    publisherMetrics.logNumberOfDocumentsPublished(solrDocsToUpdate.size());
-
-                    // Writes the properties to the SOLR.
-                    publisherMetrics.startSolrUpdateTimer();
-                    final boolean successSolrUpdate = solrWriter.updateDocuments(solrDocsToUpdate);
-                    publisherMetrics.stopSolrUpdateTimer();
-
-                    // Writes the meta info to a separate MongoDB instance.
-                    if (successSolrUpdate) {
-                        publisherMetrics.startMongoWriteTimer();
-                        webResourceMetaInfoDAO.create(webResourceMetaInfosToUpdate, WriteConcern.ACKNOWLEDGED);
-                        publisherMetrics.stopMongoWriteTimer();
-                    }
-
-                    if (config.getStartTimestampFile() != null) {
-                        final Path path = Paths.get(config.getStartTimestampFile());
-                        Files.deleteIfExists(path);
-                        Files.write(path, lastSuccesfulPublish.toString().getBytes());
-                        LOG.error("Writing last succesfull timestamp " + lastSuccesfulPublish
-                                                                                 .toString() + " to file " + config.getStartTimestampFile());
-                    }
-
-                }
-                else {
-                    LOG.error("No records found in Solr");
-                }
-            }
-            publisherMetrics.stopLoopBatchTimer();
-        } while (!done);
-    }
-
-    /**
-     * Retrieves a batch of documents
-     *
-     * @return the needed information from the retrieved documents.
-     */
-    private HashMap<String, RetrievedDoc> retrieveStatisticsDocumentIdsThatMatch (final DateTime startTimeStamp) {
-        publisherMetrics.startMongoGetDocStatTimer();
-
-        final HashMap<String, RetrievedDoc> IDsWithType = new HashMap<>();
-
-        final DBCollection sourceDocumentProcessingStatisticsCollection = sourceDB.getCollection("SourceDocumentProcessingStatistics");
-
-        // Query construction
-        BasicDBObject findQuery;
-        if (null == startTimeStamp) {
-            //	findQuery = new BasicDBObject("state", "SUCCESS");
-            findQuery = new BasicDBObject();
-
-        }
-        else {
-            LOG.error("Retrieving SourceDocumentProcessingStatistics gt than timestamp " + startTimeStamp);
-
-            findQuery = new BasicDBObject();
-            findQuery.put("updatedAt", new BasicDBObject("$gt", startTimeStamp.toDate()));
-            // findQuery.put("state", "SUCCESS"); -- COMMENTED BY PAUL
-
-        }
-
-        final BasicDBObject fields = new BasicDBObject("sourceDocumentReferenceId", true)
-                                             .append("httpResponseContentType", true)
-                                             .append("referenceOwner.recordId", true).append("_id", false)
-                                             .append("updatedAt", true);
-
-        // Sort query results in ascending order by "updatedAt" field.
-        final BasicDBObject sortOrder = new BasicDBObject();
-        sortOrder.put("updatedAt", 1);
-
-        DBCursor sourceDocumentProcessingStatisticsCursor = sourceDocumentProcessingStatisticsCollection
-                                                                    .find(findQuery, fields).sort(sortOrder)
-                                                                    .limit(LIMIT)
-                                                                    .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
-
-
-        LOG.error("Executing MongoDB query to retrieve stats " + sourceDocumentProcessingStatisticsCursor.getQuery()
-                                                                                                         .toString());
-
-        // Iterates over the loaded documents and takes the important
-        // information from them
-        LOG.error("Retrieving SourceDocumentProcessingStatistics from cursor with size " + sourceDocumentProcessingStatisticsCursor
-                                                                                                   .size());
-
-        while (sourceDocumentProcessingStatisticsCursor.hasNext()) {
-            final BasicDBObject item = (BasicDBObject) sourceDocumentProcessingStatisticsCursor.next();
-            final DateTime updatedAt = new DateTime(item.getDate("updatedAt"));
-            final String sourceDocumentReferenceId = item.getString("sourceDocumentReferenceId");
-            final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
-            final String recordId = referenceOwnerTemp.getString("recordId");
-            final String temp = item.getString("httpResponseContentType");
-            String type = "";
-            if (temp != null) {
-                final String[] parts = temp.split(";");
-                type = parts[0];
-            }
-
-            if (type.contains(",")) {
-                type = type.substring(0, type.indexOf(","));
-            }
-
-            final RetrievedDoc retrievedDoc = new RetrievedDoc(type, recordId, updatedAt);
-            IDsWithType.put(sourceDocumentReferenceId, retrievedDoc);
-        }
-
-        publisherMetrics.stopMongoGetDocStatTimer();
-        return IDsWithType;
-    }
-
-
-
 }

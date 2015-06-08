@@ -1,15 +1,14 @@
 package eu.europeana.publisher.logic.extractor;
 
 import eu.europeana.harvester.domain.*;
+import eu.europeana.publisher.domain.RetrievedDocument;
 import eu.europeana.publisher.domain.CRFSolrDocument;
-import eu.europeana.publisher.domain.RetrievedDoc;
-import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by salexandru on 04.06.2015.
@@ -17,19 +16,18 @@ import java.util.Map;
 public class FakeTagExtractor {
     private static final Logger LOG = LogManager.getLogger(FakeTagExtractor.class.getName());
 
-    public static List<CRFSolrDocument> extractTags (final Map<String, RetrievedDoc> retrievedDocs,
-                                                      final List<SourceDocumentReferenceMetaInfo> metaInfos, final
-                                                     PublisherMetrics publisherMetrics
-                                                    ) {
+    public static List<CRFSolrDocument> extractTags (final Collection<RetrievedDocument> retrievedDocuments) {
+        final List<CRFSolrDocument> solrDocuments = new ArrayList<>();
 
-        for (SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
+        for (final RetrievedDocument document : retrievedDocuments) {
+            final SourceDocumentReferenceMetaInfo metaInfo = document.getSourceDocumentReferenceMetaInfo();
+
             final String ID = metaInfo.getId();
             final Integer mediaTypeCode = CommonTagExtractor.getMediaTypeCode(metaInfo);
             Integer mimeTypeCode = null;
 
             if (null == metaInfo.getAudioMetaInfo() && null == metaInfo.getImageMetaInfo() &&
                         null == metaInfo.getVideoMetaInfo() && null == metaInfo.getTextMetaInfo()) {
-                publisherMetrics.incTotalNumberOfDocumentsWithoutMetaInfo();
                 LOG.error("Record : " + ID + " with metaInfo id: " + metaInfo.getId() + " has no metainfo");
                 continue;
             }
@@ -49,11 +47,9 @@ public class FakeTagExtractor {
 
             if (null == mimeTypeCode) {
                 LOG.error("Mime-Type null for document id: " + ID);
-                publisherMetrics.incTotalNumberOfInvalidMimetypes();
             }
             else if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
                 LOG.error("Skipping record with mimetype text/html. ID: " + ID);
-                publisherMetrics.incTotalNumberOfInvalidMimetypes();
                 continue;
             }
 
@@ -102,7 +98,22 @@ public class FakeTagExtractor {
                     break;
             }
 
+            final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(document.getDocumentStatistic().getRecordId(),
+                                                                        isFulltext,
+                                                                        hasThumbnails,
+                                                                        hasMedia,
+                                                                        filterTags,
+                                                                        facetTags
+            );
+
+
+            if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith("/9200365/"))
+                solrDocuments.add(CRFSolrDocument);
+            else
+                LOG.error("Skipping records that starts with /9200365/");
+
         }
+        return solrDocuments;
     }
 
     /**
