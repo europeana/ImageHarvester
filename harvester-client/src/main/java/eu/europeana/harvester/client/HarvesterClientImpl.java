@@ -81,7 +81,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public void createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException {
-        LOG.debug("Create or modify {} SourceDocumentReferences documents ",sourceDocumentReferences.size());
+        //LOG.debug("Create or modify {} SourceDocumentReferences documents ",sourceDocumentReferences.size());
 
         for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
             // Persist the IP reference.
@@ -113,7 +113,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJob stopJob(String jobId) {
-        LOG.debug("Stopping job with id: {}", jobId);
+        //LOG.debug("Stopping job with id: {}", jobId);
         final ProcessingJob processingJob = processingJobDao.read(jobId);
         final JobState currentState = processingJob.getState();
         if ((JobState.RUNNING).equals(currentState)
@@ -130,7 +130,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJob startJob(String jobId) {
-        LOG.debug("Starting job with id: {}", jobId);
+        //LOG.debug("Starting job with id: {}", jobId);
         final ProcessingJob processingJob = processingJobDao.read(jobId);
         final ProcessingJob newProcessingJob = processingJob.withState(JobState.RESUME);
         processingJobDao.update(newProcessingJob, harvesterClientConfig.getWriteConcern());
@@ -145,7 +145,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJobStats statsOfJob(String jobId) {
-        LOG.debug("Retrieving job stats.");
+        //LOG.debug("Retrieving job stats.");
         final ProcessingJob processingJob = processingJobDao.read(jobId);
 
         final Map<ProcessingState, Set<String>> recordIdsByState = new HashMap<ProcessingState, Set<String>>();
