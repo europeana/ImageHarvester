@@ -39,6 +39,8 @@ public class MigrationMetrics {
 
             public static final Timer processedJobsDuration = METRIC_REGISTRY.timer(name(NAME, "processedJobs", DURATION));
 
+            public static final Timer processedSourceDocumentReferencesDuration = METRIC_REGISTRY.timer(name(NAME, "proccessSourceDocumentReferences", DURATION));
+
             public static final Timer totalDuration = METRIC_REGISTRY.timer(name(NAME, TOTAL,DURATION));
 
         }
