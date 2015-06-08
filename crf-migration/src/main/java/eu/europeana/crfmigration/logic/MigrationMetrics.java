@@ -22,8 +22,10 @@ public class MigrationMetrics {
             public static String NAME = Migrator.NAME + "." + "Overall";
 
             public static final Counter invalidUrlCounter = METRIC_REGISTRY.counter(name(NAME, "invalidUrl",COUNTER));
+            public static final Counter invalidAggregationCounter = METRIC_REGISTRY.counter(name(NAME, "invalidAggregation",COUNTER));
 
             public static final Counter processedRecordsCount = METRIC_REGISTRY.counter(name(NAME, "processedRecords",COUNTER));
+            public static final Counter processedRecordsAggregationCount = METRIC_REGISTRY.counter(name(NAME, "processedRecordsAggregation",COUNTER));
             public static final Counter processedSourceDocumentReferencesCount = METRIC_REGISTRY.counter(name(NAME, "processedSourceDocumentReferences",COUNTER));
             public static final Counter processedJobsCount = METRIC_REGISTRY.counter(name(NAME, "processedJobs",COUNTER));
         }
@@ -34,8 +36,6 @@ public class MigrationMetrics {
 
             public static final Timer processedRecordsDuration = METRIC_REGISTRY.timer(name(NAME, "processedRecords",DURATION));
             public static final Timer processedRecordsAggregationDuration = METRIC_REGISTRY.timer(name(NAME, "processedRecordsAggregation",DURATION));
-
-            public static final Timer processedSourceDocumentReferencesDuration = METRIC_REGISTRY.timer(name(NAME, "processedSourceDocumentReferences", DURATION));
 
             public static final Timer processedJobsDuration = METRIC_REGISTRY.timer(name(NAME, "processedJobs", DURATION));
 

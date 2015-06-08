@@ -15,10 +15,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Creates the processing jobs and the source documents needed by them.
@@ -65,7 +62,7 @@ public class MigrationManager {
                 migrateRecordsInSingleBatch(recordsRetrievedInBatch);
                 MigrationMetrics.Migrator.Overall.processedRecordsCount.inc(recordsRetrievedInBatch.size());
             } catch (Exception e) {
-                LOG.error("Error reading record after reacord: #" + positionInRecordCollection + "\n");
+                LOG.error("Error reading record after record: #" + positionInRecordCollection + "\n");
                 MigrationMetrics.Migrator.Batch.skippedBecauseOfErrorCounter.inc();
                 recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
                 recordCursor.skip(positionInRecordCollection);
@@ -79,10 +76,11 @@ public class MigrationManager {
 
     private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch) throws MalformedURLException, UnknownHostException {
         // Retrieve records and convert to jobs
-        List<EuropeanaEDMObject> edmObjectsOfRecords = null;
+        List<EuropeanaEDMObject> edmObjectsOfRecords = Collections.emptyList();
         final Timer.Context processedRecordsAggregationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsAggregationDuration.time();
         try {
             edmObjectsOfRecords = migratorEuropeanaDao.retrieveAggregationEDMInformation(recordsInBatch);
+            MigrationMetrics.Migrator.Overall.processedRecordsAggregationCount.inc(edmObjectsOfRecords.size());
         } finally {
             processedRecordsAggregationTimerContext.stop();
         }
@@ -95,7 +93,8 @@ public class MigrationManager {
         final Timer.Context processedJobsTimerContext = MigrationMetrics.Migrator.Batch.processedJobsDuration.time();
         try {
             migratorHarvesterDao.saveProcessingJobs(processingJobs);
-            MigrationMetrics.Migrator.Overall.processedJobsCount.inc(sourceDocumentReferences.size());
+            MigrationMetrics.Migrator.Overall.processedJobsCount.inc(processingJobs.size());
+            MigrationMetrics.Migrator.Overall.processedSourceDocumentReferencesCount.inc(sourceDocumentReferences.size());
         } finally {
             processedJobsTimerContext.stop();
         }

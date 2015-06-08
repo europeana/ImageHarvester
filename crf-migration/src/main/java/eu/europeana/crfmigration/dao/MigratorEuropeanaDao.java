@@ -3,6 +3,7 @@ package eu.europeana.crfmigration.dao;
 import com.mongodb.*;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
 import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.crfmigration.logic.MigrationMetrics;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,7 +79,8 @@ public class MigratorEuropeanaDao {
             final DBObject aggregation = getAggregation("/aggregation/provider" + record.getKey());
 
             if (null == aggregation) {
-                LOG.error("Missing aggregation: /aggregation/provider" + record.getKey() + " at record: " + record.getKey() + "\n");
+                MigrationMetrics.Migrator.Overall.invalidAggregationCounter.inc();
+                LOG.debug("Missing aggregation: /aggregation/provider" + record.getKey() + " at record: " + record.getKey() + "\n");
                 continue;
             }
 
