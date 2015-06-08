@@ -90,10 +90,15 @@ public class PublisherManager {
     private void startPublisher() throws SolrServerException, IOException {
         DateTime currentTimestamp = config.getStartTimestamp();
 
+        LOG.info ("start publishing data");
         while (true) {
             final DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
 
+            LOG.info ("query: " + cursor.getQuery());
+
             List<RetrievedDocument> retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor, config.getBatch());
+
+            LOG.info ("Retrieved Documents With Metainfo: " + retrievedDocs.size());
 
             if (null == retrievedDocs || retrievedDocs.isEmpty()) {
                 break;
@@ -101,11 +106,16 @@ public class PublisherManager {
 
             retrievedDocs = solrWriter.filterDocumentIds(retrievedDocs);
 
+            LOG.info ("#Documents after solr filtering: " + retrievedDocs.size());
+
             final List<CRFSolrDocument> solrDocuments = FakeTagExtractor.extractTags(retrievedDocs);
 
 
             if (null != solrDocuments && !solrDocuments.isEmpty() && solrWriter.updateDocuments(solrDocuments)) {
                 publisherHarvesterDAO.writeMetaInfos(retrievedDocs);
+            }
+            else {
+                LOG.error ("There was a problem with writing this batch to solr. No metainfo was written to mongo. Maybe documents where empty ?");
             }
 
             try {
@@ -113,8 +123,10 @@ public class PublisherManager {
                 } catch (IOException e) {
                     LOG.error("Problem writing " + currentTimestamp + "to file: " + config.getStartTimestampFile(), e);
             }
-            LOG.info("New successful timestamp: " + currentTimestamp);
+            LOG.info("New timestamp: " + currentTimestamp);
         }
+
+        LOG.info ("Finished publishing all data");
     }
 
     private DateTime updateTimestamp(final DateTime currentTime, final Collection<RetrievedDocument> documents) throws
