@@ -82,7 +82,7 @@ public class MigrationManager {
         List<EuropeanaEDMObject> edmObjectsOfRecords = null;
         final Timer.Context processedRecordsAggregationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsAggregationDuration.time();
         try {
-            migratorEuropeanaDao.retrieveAggregationEDMInformation(recordsInBatch);
+            edmObjectsOfRecords = migratorEuropeanaDao.retrieveAggregationEDMInformation(recordsInBatch);
         } finally {
             processedRecordsAggregationTimerContext.stop();
         }
@@ -112,6 +112,10 @@ public class MigrationManager {
     }
 
     private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects) {
+        if (null == edmObjects || edmObjects.isEmpty()) {
+            LOG.error ("No jobs to save");
+            return new ArrayList<>();
+        }
         final List<ProcessingJobTuple> results = new ArrayList();
         for (final EuropeanaEDMObject edmObject : edmObjects) {
             try {

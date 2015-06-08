@@ -44,6 +44,10 @@ public class Migrator {
         final String configFilePath = "migration.conf";
         final File configFile = new File(configFilePath);
 
+        if (!configFile.canRead()) {
+            throw new IOException("Cannot read file " + configFilePath);
+        }
+
         final Config config = ConfigFactory.parseFileAnySyntax(configFile,
                 ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
 
