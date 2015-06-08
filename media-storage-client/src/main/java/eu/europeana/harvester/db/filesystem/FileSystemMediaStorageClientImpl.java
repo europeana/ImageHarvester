@@ -5,7 +5,11 @@ import eu.europeana.harvester.domain.MediaFile;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 
 public class FileSystemMediaStorageClientImpl implements MediaStorageClient {
@@ -26,7 +30,7 @@ public class FileSystemMediaStorageClientImpl implements MediaStorageClient {
     }
 
     @Override
-    public MediaFile retrieve(String id, Boolean withContent) throws IOException {
+    public MediaFile retrieve(String id, Boolean withContent) throws IOException, NoSuchAlgorithmException {
 
         final byte[] content = Files.readAllBytes(pathOfId(id));
 
@@ -44,18 +48,14 @@ public class FileSystemMediaStorageClientImpl implements MediaStorageClient {
                 Files.delete(pathOfId(mediaFile.getId()));
             }
             Files.write(pathOfId(mediaFile.getId()), mediaFile.getContent(), StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING );
+                    StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void delete(String id) {
-        try {
-            Files.delete(pathOfId(id));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void delete(String id) throws IOException {
+        Files.delete(pathOfId(id));
     }
 }

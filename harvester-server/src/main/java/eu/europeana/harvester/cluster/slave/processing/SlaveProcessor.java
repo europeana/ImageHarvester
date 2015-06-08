@@ -11,10 +11,12 @@ import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenera
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.ResponseType;
+import org.joda.time.DateTime;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,13 +73,13 @@ public class SlaveProcessor {
         } finally {
             thumbnailStorageDurationContext.stop();
 
-            // (3.3) Cache original if is image
-            if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
+            // (3.3) Cache original if it is an image
+            if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE) && mediaMetaInfoTuple != null) {
                 SlaveMetrics.Worker.Slave.Processing.originalCachingCounter.inc();
                 final Timer.Context originalCachingDurationContext = SlaveMetrics.Worker.Slave.Processing.originalCachingDuration.time();
                 try {
-                    // TODO : Implement storage of original.
-
+                    final MediaFile mediaFile = generateOriginal(originalFilePath, originalFileUrl, originalFileContent, processingProcessId, mediaMetaInfoTuple.getImageMetaInfo());
+                    mediaStorageClient.createOrModify(mediaFile);
                 } finally {
                     originalCachingDurationContext.stop();
                     Files.deleteIfExists(Paths.get(originalFilePath));
@@ -158,6 +160,19 @@ public class SlaveProcessor {
         }
     }
 
+    private final MediaFile generateOriginal(final String originalFilePath, final String originalFileUrl, final byte[] originalFileContent, final String processingProcessId, final ImageMetaInfo imageMetaInfo) throws NoSuchAlgorithmException {
+
+        if (originalFilePath == null || originalFileUrl == null || originalFileContent == null)
+            throw new IllegalArgumentException("Cannot generate media file as all must be non-null : filepath, url & content");
+        if (imageMetaInfo == null)
+            throw new IllegalArgumentException("Cannot generate media file from null image meta info");
+
+        return MediaFile.createMinimalMediaFileWithSizeType("ORIGINAL", processingProcessId, originalFilePath,
+                originalFileUrl, DateTime.now(), originalFileContent, imageMetaInfo.getMimeType(),
+                originalFileContent.length);
+
+    }
+
     private final Map<ProcessingJobSubTask, MediaFile> generateThumbnails(final String originalFilePath, final String originalFileUrl, final byte[] originalFileContent, final String processingProcessId, final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks) throws Exception {
         final Map<ProcessingJobSubTask, MediaFile> results = new HashMap<ProcessingJobSubTask, MediaFile>();
         for (final ProcessingJobSubTask thumbnailGenerationTask : thumbnailGenerationProcessingTasks) {
@@ -166,9 +181,10 @@ public class SlaveProcessor {
                 final Timer.Context thumbnailGenerationDurationContext = SlaveMetrics.Worker.Slave.Processing.thumbnailGenerationDuration.time();
                 try {
                     final GenericSubTaskConfiguration config = thumbnailGenerationTask.getConfig();
-                    results.put(thumbnailGenerationTask, thumbnailGenerator.createMediaFileWithThumbnail(config.getThumbnailConfig().getHeight(),
+                    final MediaFile thumbnailMediaFile = thumbnailGenerator.createMediaFileWithThumbnail(config.getThumbnailConfig().getHeight(),
                             config.getThumbnailConfig().getWidth(), processingProcessId, originalFileUrl,
-                            originalFileContent, originalFilePath));
+                            originalFileContent, originalFilePath);
+                    results.put(thumbnailGenerationTask, thumbnailMediaFile);
                 } finally {
                     thumbnailGenerationDurationContext.stop();
                 }

@@ -3,7 +3,6 @@ package eu.europeana.crfmigration.dao;
 import com.mongodb.*;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
 import eu.europeana.crfmigration.domain.MigratorConfig;
-import eu.europeana.crfmigration.logic.MigratorMetrics;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
@@ -33,7 +32,7 @@ public class MigratorEuropeanaDaoTest {
         mongoDBUtils = new MongoDBUtils(migratorConfig);
         mongoDBUtils.loadMongoData(PATH_PREFIX + "data-files/aggregation.json", "Aggregation");
         mongoDBUtils.loadMongoData(PATH_PREFIX + "data-files/record.json", "record");
-        europeanaDao = new MigratorEuropeanaDao(migratorConfig.getSourceMongoConfig(), new MigratorMetrics());
+        europeanaDao = new MigratorEuropeanaDao(migratorConfig.getSourceMongoConfig());
     }
 
     @After

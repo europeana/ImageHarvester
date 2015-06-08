@@ -3,7 +3,6 @@ package eu.europeana.crfmigration.dao;
 import com.mongodb.*;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
 import eu.europeana.crfmigration.domain.MongoConfig;
-import eu.europeana.crfmigration.logic.MigratorMetrics;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,9 +17,8 @@ public class MigratorEuropeanaDao {
     private final MongoConfig mongoConfig;
     private final Mongo mongo;
     private final DB database;
-    private final MigratorMetrics metrics;
 
-    public MigratorEuropeanaDao(MongoConfig mongoConfig, final MigratorMetrics metrics) throws UnknownHostException {
+    public MigratorEuropeanaDao(MongoConfig mongoConfig) throws UnknownHostException {
         this.mongoConfig = mongoConfig;
 
         mongo = new Mongo(mongoConfig.getHost(), mongoConfig.getPort());
@@ -34,7 +32,6 @@ public class MigratorEuropeanaDao {
             }
         }
         database = mongo.getDB(mongoConfig.getdBName());
-        this.metrics = metrics;
     }
 
     public final Map<String, String> retrieveRecordsIdsFromCursor(final DBCursor recordCursor,int batchSize) {
@@ -82,7 +79,6 @@ public class MigratorEuropeanaDao {
 
             if (null == aggregation) {
                 LOG.error("Missing aggregation: /aggregation/provider" + record.getKey() + " at record: " + record.getKey() + "\n");
-                metrics.incEmptyAggregations();
                 continue;
             }
 
@@ -102,8 +98,6 @@ public class MigratorEuropeanaDao {
     }
 
     private final DBObject getAggregation(String aggregationAbout) {
-        try {
-            metrics.startGetAggregationTimer();
 
             final DBCollection aggregationCollection = database.getCollection("Aggregation");
 
@@ -118,9 +112,6 @@ public class MigratorEuropeanaDao {
             aggregationFields.put("_id", 0);
 
             return aggregationCollection.findOne(whereQueryAggregation, aggregationFields);
-        } finally {
-            metrics.stopGetAggregationTimer();
-        }
     }
 
     private final ReferenceOwner getReferenceOwner(final Map.Entry pairs) {

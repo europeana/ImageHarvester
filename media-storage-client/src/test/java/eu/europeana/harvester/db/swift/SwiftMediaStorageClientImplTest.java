@@ -1,6 +1,7 @@
 package eu.europeana.harvester.db.swift;
 
 import eu.europeana.harvester.domain.MediaFile;
+import org.apache.commons.io.FileUtils;
 import org.jclouds.ContextBuilder;
 import org.jclouds.openstack.swift.v1.SwiftApi;
 import org.jclouds.openstack.swift.v1.domain.SwiftObject;
@@ -37,6 +38,7 @@ public class SwiftMediaStorageClientImplTest {
 
     @Before
     public void setUp() {
+
         swiftConfiguration = new SwiftConfiguration("https://auth.hydranodes.de:5000/v2.0",
                                                     "d35f3a21-cf35-48a0-a035-99bfc2252528.swift.tenant@a9s.eu",
                                                     "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu",

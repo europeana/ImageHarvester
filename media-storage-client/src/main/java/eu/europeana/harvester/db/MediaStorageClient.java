@@ -3,6 +3,7 @@ package eu.europeana.harvester.db;
 import eu.europeana.harvester.domain.MediaFile;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 public interface MediaStorageClient {
 
@@ -20,7 +21,7 @@ public interface MediaStorageClient {
      * @param withContent boolean which indicates the intent of the user (retrieve with or without the content)
      * @return an object which contains all the metainfos and optionally the actual content
      */
-    public MediaFile retrieve(String id, Boolean withContent) throws IOException;
+    public MediaFile retrieve(String id, Boolean withContent) throws IOException, NoSuchAlgorithmException;
 
     /**
      * If the file does not exists in the DB it creates it, otherwise it will be updated.
@@ -32,5 +33,5 @@ public interface MediaStorageClient {
      * Deletes a file with a given id.
      * @param id the if of the file, it's the MD5 of the URL
      */
-    public void delete(String id);
+    public void delete(String id) throws IOException;
 }

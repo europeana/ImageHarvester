@@ -9,7 +9,6 @@ import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import eu.europeana.crfmigration.domain.MongoConfig;
 import eu.europeana.crfmigration.logic.MigrationManager;
-import eu.europeana.crfmigration.logic.MigratorMetrics;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +33,6 @@ public class MigratorUtils {
         final Config config = ConfigFactory.parseFileAnySyntax(configFile, ConfigParseOptions.defaults()
                                                                                              .setSyntax(ConfigSyntax
                                                                                                                 .CONF));
-
         final Integer batch = config.getInt("config.batch");
 
         final Config sourceMongoConfig = config.getConfig("sourceMongo");
@@ -61,28 +59,20 @@ public class MigratorUtils {
     }
 
     public static void runMigrator(final MigratorConfig migratorConfig, final Date dateFilter) throws IOException {
-        final MigratorMetrics metrics = new MigratorMetrics();
-        try {
 
 
-            final MigratorEuropeanaDao migratorEuropeanaDao = new MigratorEuropeanaDao(migratorConfig.getSourceMongoConfig(), metrics);
-            final MigratorHarvesterDao migratorHarvesterDao = new MigratorHarvesterDao(migratorConfig.getTargetMongoConfig(),
+            final MigratorEuropeanaDao migratorEuropeanaDao = new MigratorEuropeanaDao(migratorConfig.getSourceMongoConfig());
+            final MigratorHarvesterDao migratorHarvesterDao = new MigratorHarvesterDao(migratorConfig.getTargetMongoConfig()
 
-                                                                                       metrics);
+                                                                                       );
 
             // Prepare the migrator & start it
             final MigrationManager migrationManager = new MigrationManager(migratorEuropeanaDao,
                                                                            migratorHarvesterDao,
-                                                                           metrics,
                                                                            dateFilter,
                                                                            migratorConfig.getBatch());
 
             migrationManager.migrate();
-        }
-        finally {
-            for (final String name: MigratorMetrics.metricRegistry.getNames()) {
-                MigratorMetrics.metricRegistry.remove(name);
-            }
-        }
+
     }
 }

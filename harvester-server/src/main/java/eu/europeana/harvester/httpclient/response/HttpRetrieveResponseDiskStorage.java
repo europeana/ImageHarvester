@@ -54,17 +54,10 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
     }
 
     @Override
-    synchronized public byte[] getContent() {
+    synchronized public byte[] getContent() throws IOException {
         final File file = new File(absolutePath);
-        try {
             final byte[] data = Files.toByteArray(file);
-
             return data;
-        } catch (IOException e) {
-            LOG.error(e.getMessage());
-        }
-
-        return null;
     }
 
     @Override
