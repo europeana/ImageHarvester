@@ -5,6 +5,8 @@ import eu.europeana.harvester.domain.*;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * The public interface to the eu.europeana.harvester client. Used by any external system to control the eu.europeana.harvester cluster.
@@ -16,7 +18,7 @@ public interface HarvesterClient {
      *
      * @param sourceDocumentReferences contains basic information about a source document
      */
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(final List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException;
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(final List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
 
     /**
      * Sends to the master a new processing job.
@@ -65,7 +67,7 @@ public interface HarvesterClient {
 
     public SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url);
 
-    public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException;
+    public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
 
     public void updateSourceDocumentProcesssingStatisticsForUrl(String url);
 

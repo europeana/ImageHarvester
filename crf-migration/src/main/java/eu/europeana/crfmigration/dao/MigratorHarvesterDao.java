@@ -15,6 +15,8 @@ import org.apache.maven.shared.utils.StringUtils;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class MigratorHarvesterDao {
     private static final Logger LOG = LogManager.getLogger(MigratorHarvesterDao.class.getName());
@@ -44,7 +46,7 @@ public class MigratorHarvesterDao {
     }
 
 
-    public void saveSourceDocumentReferences(final List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException {
+    public void saveSourceDocumentReferences(final List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         try{
             LOG.info("start saving sourceDocumentReferences");
             harvesterClient.createOrModifySourceDocumentReference(sourceDocumentReferences);

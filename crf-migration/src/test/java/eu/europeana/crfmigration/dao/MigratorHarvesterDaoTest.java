@@ -23,6 +23,8 @@ import utils.MongoDBUtils;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 
@@ -61,13 +63,13 @@ public class MigratorHarvesterDaoTest {
     }
 
     @Test
-    public void test_SourceDocumentReferences_EmptyList() throws MalformedURLException, UnknownHostException {
+    public void test_SourceDocumentReferences_EmptyList() throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         harvesterDao.saveSourceDocumentReferences(Collections.EMPTY_LIST);
         assertEquals (0, dataStore.getCount(SourceDocumentReference.class));
     }
 
     @Test
-    public void test_SourceDocumentReferences_OneElement() throws MalformedURLException, UnknownHostException {
+    public void test_SourceDocumentReferences_OneElement() throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         final SourceDocumentReference sourceDocumentReference =
                 new SourceDocumentReference(owner, URLSourceType.ISSHOWNBY, "http://www.google.com",
                                             null, null, null, null, true);
@@ -76,7 +78,7 @@ public class MigratorHarvesterDaoTest {
     }
 
     @Test
-    public void test_SourceDocumentReferences_ManyElements() throws MalformedURLException, UnknownHostException {
+    public void test_SourceDocumentReferences_ManyElements() throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         final List<SourceDocumentReference> sourceDocumentReferences =new ArrayList<>();
         sourceDocumentReferences.add(
            new SourceDocumentReference(owner, URLSourceType.ISSHOWNBY, "http://www.google.com", null, null, null, null, true)

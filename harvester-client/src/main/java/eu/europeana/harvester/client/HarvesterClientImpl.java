@@ -12,11 +12,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.net.InetAddress;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * The meeting point between the client and the application.
@@ -67,9 +67,9 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     public HarvesterClientImpl(ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
-            SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-            SourceDocumentReferenceDao sourceDocumentReferenceDao,
-            SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao, HarvesterClientConfig harvesterClientConfig) {
+                               SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                               SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                               SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao, HarvesterClientConfig harvesterClientConfig) {
 
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
@@ -80,16 +80,30 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException {
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         //LOG.debug("Create or modify {} SourceDocumentReferences documents ",sourceDocumentReferences.size());
         final List<MachineResourceReference> machineResourceReferences = new ArrayList<>();
+
+        final List<String> urls = new ArrayList<String>();
+
+        // Resolve all url of IP's
         for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
-            // Persist the IP reference.
-            final InetAddress address = InetAddress.getByName(new URL(sourceDocumentReference.getUrl()).getHost());
-            machineResourceReferences.add(new MachineResourceReference(address.getHostAddress()));
+            urls.add(sourceDocumentReference.getUrl());
         }
 
-        machineResourceReferenceDao.createOrModify(machineResourceReferences,harvesterClientConfig.getWriteConcern());
+        final Map<String, String> urlToIpMap = HarvesterClientHelper.resolveIpsOfUrls(urls);
+
+        // Prepare all the machine references
+        for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
+            if (!urlToIpMap.containsKey(sourceDocumentReference.getUrl())) {
+                throw new MalformedURLException("Cannot solve the IP of the url {}" + sourceDocumentReference.getUrl());
+            } else {
+                machineResourceReferences.add(new MachineResourceReference(urlToIpMap.get(sourceDocumentReference.getUrl())));
+            }
+        }
+
+        // Persist everything.
+        machineResourceReferenceDao.createOrModify(machineResourceReferences, harvesterClientConfig.getWriteConcern());
         return sourceDocumentReferenceDao.createOrModify(sourceDocumentReferences, harvesterClientConfig.getWriteConcern());
     }
 
@@ -147,7 +161,7 @@ public class HarvesterClientImpl implements HarvesterClient {
         for (final ProcessingJobTaskDocumentReference task : processingJob.getTasks()) {
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics
                     = sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(
-                            task.getSourceDocumentReferenceID(), jobId);
+                    task.getSourceDocumentReferenceID(), jobId);
 
             if (sourceDocumentProcessingStatistics != null) {
                 final ProcessingState processingState = sourceDocumentProcessingStatistics.getState();
@@ -166,7 +180,7 @@ public class HarvesterClientImpl implements HarvesterClient {
                 recordIdsByState.put(processingState, recordIds);
                 sourceDocumentReferenceIdsByState.put(processingState, sourceDocIds);
             }
-        } 
+        }
 
         return new ProcessingJobStats(recordIdsByState, sourceDocumentReferenceIdsByState);
     }
@@ -183,7 +197,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException {
+    public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         final List<SourceDocumentReference> sourceDocumentReferenceList
                 = sourceDocumentReferenceDao.findByRecordID(recordID);
         final List<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatisticsList

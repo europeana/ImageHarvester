@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Creates the processing jobs and the source documents needed by them.
@@ -74,7 +76,7 @@ public class MigrationManager {
         LOG.info("finished migration");
     }
 
-    private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch) throws MalformedURLException, UnknownHostException {
+    private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         // Retrieve records and convert to jobs
         List<EuropeanaEDMObject> edmObjectsOfRecords = Collections.emptyList();
         final Timer.Context processedRecordsAggregationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsAggregationDuration.time();
