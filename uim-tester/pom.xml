@@ -53,6 +53,16 @@
             <artifactId>surefire-junit47</artifactId>
             <version>2.18.1</version>
         </dependency>
+        <dependency>
+            <groupId>eu.europeana</groupId>
+            <artifactId>harvester-client</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.europeana</groupId>
+            <artifactId>harvester-client</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>

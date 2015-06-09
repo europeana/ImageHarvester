@@ -1,0 +1,36 @@
+recordSamples {
+  samples = [
+    # Sample 1
+    {
+    sampleId = "sample-1"
+    collectionId = "collection-1"
+    providerId = "provider-1"
+    recordId = "record-1"
+    executionId = "execution-1"
+    edmObjectUrl = "https://github.com/europeana/ImageHarvester/raw/master/harvester-server/src/test/resources/image1.jpeg"
+    edmHasViewUrls = [
+        "url11",
+        "url12"
+      ]
+    edmIsShownByUrl = "url13"
+    edmIsShownAtUrl = "url14"
+    },
+    # Sample 2
+    {
+      sampleId = "sample-2"
+      collectionId = "collection-1"
+      providerId = "provider-1"
+      recordId = "record-2"
+      executionId = "execution-1"
+      edmObjectUrl = "https://github.com/europeana/ImageHarvester/raw/master/harvester-server/src/test/resources/image2.jpeg"
+      edmHasViewUrls = [
+      "url21",
+      "url22"
+      ]
+      edmIsShownByUrl = "url23"
+      edmIsShownAtUrl = "url24"
+    }
+  ]
+}
+
+
