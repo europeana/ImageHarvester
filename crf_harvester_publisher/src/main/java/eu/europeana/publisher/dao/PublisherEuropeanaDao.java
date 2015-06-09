@@ -10,7 +10,6 @@ import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.publisher.domain.DocumentStatistic;
 import eu.europeana.publisher.domain.MongoConfig;
 import eu.europeana.publisher.domain.RetrievedDocument;
-import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,13 +24,16 @@ import java.util.*;
 public class PublisherEuropeanaDao {
     private static final Logger LOG = LogManager.getLogger(PublisherEuropeanaDao.class.getName());
 
-    private PublisherMetrics metrics;
     private DB mongoDB;
 
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
-    public PublisherEuropeanaDao (@NotNull MongoConfig mongoConfig, @NotNull PublisherMetrics metrics) throws
-                                                                                                       UnknownHostException {
+    public PublisherEuropeanaDao (@NotNull MongoConfig mongoConfig) throws UnknownHostException {
+
+        if (null == mongoConfig) {
+            throw new IllegalArgumentException ("mongoConfig cannot be null");
+        }
+
         final Mongo mongo = new Mongo(mongoConfig.getHost(), mongoConfig.getPort());
 
         if (StringUtils.isNotEmpty(mongoConfig.getdBUsername())) {
@@ -43,13 +45,20 @@ public class PublisherEuropeanaDao {
             }
         }
         mongoDB = mongo.getDB(mongoConfig.getdBName());
-        this.metrics = metrics;
 
         final Datastore dataStore = new Morphia().createDatastore(mongo, mongoConfig.getdBName());
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
     }
 
     public List<RetrievedDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final int batchSize) {
+        if (null == cursor) {
+            throw new IllegalArgumentException ("cursor is null");
+        }
+
+        if (batchSize <= 0) {
+            throw new IllegalArgumentException ("batch size should be a positive number (0 is excluded the)");
+        }
+
         final List<RetrievedDocument> retrievedDocuments = new ArrayList<>();
 
         final Map<String, DocumentStatistic> documentStatistics = retrieveDocumentStatistics (cursor, batchSize);
@@ -96,7 +105,6 @@ public class PublisherEuropeanaDao {
         }
 
         retrievedFields.put("sourceDocumentReferenceId", 1);
-        retrievedFields.put("httpResponseContentType", 1);
         retrievedFields.put("referenceOwner.recordId", 1);
         retrievedFields.put("updatedAt", 1);
         retrievedFields.put("_id", 0);

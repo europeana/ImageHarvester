@@ -18,28 +18,11 @@ public class DocumentStatistic {
 
     private final DateTime updatedAt;
 
-    private SourceDocumentReferenceMetaInfo metaInfo;
-
-
     public DocumentStatistic (String sourceDocumentReferenceId, String recordId, DateTime updatedAt) {
         this.sourceDocumentReferenceId = sourceDocumentReferenceId;
         this.recordId = recordId;
         this.updatedAt = updatedAt;
-        this.metaInfo = null;
     }
-
-    public DocumentStatistic (String sourceDocumentReferenceId, String recordId, DateTime updatedAt, SourceDocumentReferenceMetaInfo metaInfo) {
-        this.sourceDocumentReferenceId = sourceDocumentReferenceId;
-        this.recordId = recordId;
-        this.updatedAt = updatedAt;
-        this.metaInfo = metaInfo;
-    }
-
-    public void setMetaInfo (final SourceDocumentReferenceMetaInfo metaInfo) {
-        this.metaInfo = metaInfo;
-    }
-
-    public SourceDocumentReferenceMetaInfo getMetaInfo() {return metaInfo;}
 
     public String getSourceDocumentReferenceId () {
         return sourceDocumentReferenceId;
