@@ -1,6 +1,9 @@
 package eu.europeana.harvester.client;
 
-import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.harvester.domain.ProcessingState;
+import eu.europeana.harvester.domain.SourceDocumentReference;
+import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -52,18 +55,20 @@ public interface HarvesterClient {
      */
     public ProcessingJob startJob(String jobId);
 
+
+    /**
+     * Retrieves a job.
+     *
+     * @param jobId the unique id of the job
+     * @return the job
+     */
+    public ProcessingJob retrieveProcessingJob(String jobId);
+
     /**
      * Not implemented yet.
      */
     public List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state);
 
-    /**
-     * Collects information about a job status.
-     *
-     * @param jobId the unique id of the job
-     * @return a ProcessingJobStats object which contains the states of tasks in different forms.
-     */
-    public ProcessingJobStats statsOfJob(String jobId);
 
     public SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url);
 

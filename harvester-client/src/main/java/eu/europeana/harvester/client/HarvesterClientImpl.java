@@ -150,39 +150,8 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public ProcessingJobStats statsOfJob(String jobId) {
-        //LOG.debug("Retrieving job stats.");
-        final ProcessingJob processingJob = processingJobDao.read(jobId);
-
-        final Map<ProcessingState, Set<String>> recordIdsByState = new HashMap<ProcessingState, Set<String>>();
-        final Map<ProcessingState, Set<String>> sourceDocumentReferenceIdsByState
-                = new HashMap<ProcessingState, Set<String>>();
-
-        for (final ProcessingJobTaskDocumentReference task : processingJob.getTasks()) {
-            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics
-                    = sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(
-                    task.getSourceDocumentReferenceID(), jobId);
-
-            if (sourceDocumentProcessingStatistics != null) {
-                final ProcessingState processingState = sourceDocumentProcessingStatistics.getState();
-                Set<String> recordIds = recordIdsByState.get(processingState);
-                if (recordIds == null) {
-                    recordIds = new HashSet<String>();
-                }
-                recordIds.add(sourceDocumentProcessingStatistics.getReferenceOwner().getRecordId());
-
-                Set<String> sourceDocIds = sourceDocumentReferenceIdsByState.get(processingState);
-                if (sourceDocIds == null) {
-                    sourceDocIds = new HashSet<String>();
-                }
-                sourceDocIds.add(sourceDocumentProcessingStatistics.getSourceDocumentReferenceId());
-
-                recordIdsByState.put(processingState, recordIds);
-                sourceDocumentReferenceIdsByState.put(processingState, sourceDocIds);
-            }
-        }
-
-        return new ProcessingJobStats(recordIdsByState, sourceDocumentReferenceIdsByState);
+    public ProcessingJob retrieveProcessingJob(String jobId) {
+        return processingJobDao.read(jobId);
     }
 
     @Override
