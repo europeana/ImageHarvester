@@ -43,13 +43,22 @@ public interface SourceDocumentProcessingStatisticsDao {
      *                     operation
      * @return - success or failure
      */
-    public void createOrUpdate(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
+    public void createOrModify(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
-     * Deletes a record from DB
-     * @param id the unique id of the record
-     * @return - an object which contains all information about this operation
+     * If the objects don't exists they get created; otherwise updates the a SourceDocumentProcessingStatistics record
+     * @param sourceDocumentProcessingStatistics the modified SourceDocumentProcessingStatistics object
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
+     * @return - success or failure
      */
+    public Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrUpdate(List<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatistics, WriteConcern writeConcern);
+
+        /**
+         * Deletes a record from DB
+         * @param id the unique id of the record
+         * @return - an object which contains all information about this operation
+         */
     public WriteResult delete(String id);
 
     /**

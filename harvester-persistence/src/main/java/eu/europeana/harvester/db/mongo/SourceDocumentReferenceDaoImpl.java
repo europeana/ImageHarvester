@@ -39,6 +39,11 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
     }
 
     @Override
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModify(List<SourceDocumentReference> sourceDocumentReferences, WriteConcern writeConcern) {
+            return datastore.save(sourceDocumentReferences, writeConcern);
+    }
+
+    @Override
     public void createOrModify(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern) {
         datastore.save(sourceDocumentReference, writeConcern);
     }

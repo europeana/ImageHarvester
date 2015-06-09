@@ -52,8 +52,13 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     }
 
     @Override
-    public void createOrUpdate(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern) {
+    public void createOrModify(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern) {
         datastore.save(sourceDocumentProcessingStatistics, writeConcern);
+    }
+
+    @Override
+    public Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrUpdate(List<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatistics, WriteConcern writeConcern) {
+        return datastore.save(sourceDocumentProcessingStatistics, writeConcern);
     }
 
     @Override

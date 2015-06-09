@@ -25,9 +25,8 @@ public interface WebResourceMetaInfoDAO {
      * Persists a WebResourceMetaInfo object
      * @param webResourceMetaInfos - a list of new objects
      * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
-     *                     operation
      */
-    public void create(List<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern);
+    public Iterable<com.google.code.morphia.Key<WebResourceMetaInfo>> createOrModify(List<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern);
 
 
     /**

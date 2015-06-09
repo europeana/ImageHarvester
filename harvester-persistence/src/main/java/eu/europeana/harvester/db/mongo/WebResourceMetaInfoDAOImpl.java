@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * MongoDB DAO implementation for CRUD with WebResourceMetaInfo collection
  */
-public class WebResourceMetaInfoDAOImpl implements WebResourceMetaInfoDAO {
+public class WebResourceMetaInfoDaoImpl implements WebResourceMetaInfoDAO {
 
     /**
      * The Datastore interface provides type-safe methods for accessing and storing your java objects in MongoDB.
@@ -21,7 +21,7 @@ public class WebResourceMetaInfoDAOImpl implements WebResourceMetaInfoDAO {
      */
     private final Datastore datastore;
 
-    public WebResourceMetaInfoDAOImpl(Datastore datastore) {
+    public WebResourceMetaInfoDaoImpl(Datastore datastore) {
         this.datastore = datastore;
     }
 
@@ -36,8 +36,8 @@ public class WebResourceMetaInfoDAOImpl implements WebResourceMetaInfoDAO {
     }
 
     @Override
-    public void create(List<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern) {
-        datastore.save(webResourceMetaInfos, writeConcern);
+    public Iterable<com.google.code.morphia.Key<WebResourceMetaInfo>> createOrModify(List<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern) {
+        return datastore.save(webResourceMetaInfos, writeConcern);
     }
 
     @Override

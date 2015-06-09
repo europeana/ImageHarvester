@@ -25,10 +25,19 @@ public interface ProcessingJobDao {
     public boolean create(ProcessingJob processingJob, WriteConcern writeConcern);
 
     /**
-     * Reads and returns a ProcessingJob object
-     * @param id the unique id of the record
-     * @return - found ProcessingJob object, it can be null
+     * Creates or (if existing) modifies the ProcessingJobs objects
+     * @param processingJobs - a new object
+     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                     operation
+     * @return returns if the operation was successful
      */
+    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(List<ProcessingJob> processingJobs, WriteConcern writeConcern);
+
+        /**
+         * Reads and returns a ProcessingJob object
+         * @param id the unique id of the record
+         * @return - found ProcessingJob object, it can be null
+         */
     public ProcessingJob read(String id);
 
     /**

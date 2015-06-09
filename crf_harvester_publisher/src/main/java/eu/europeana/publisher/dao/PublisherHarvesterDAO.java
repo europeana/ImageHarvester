@@ -2,12 +2,10 @@ package eu.europeana.publisher.dao;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
-import com.mongodb.DB;
 import com.mongodb.Mongo;
 import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.WebResourceMetaInfoDAO;
-import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
-import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDAOImpl;
+import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 import eu.europeana.publisher.domain.MongoConfig;
 import eu.europeana.publisher.domain.RetrievedDocument;
@@ -48,7 +46,7 @@ public class PublisherHarvesterDAO {
         this.metrics = publisherMetrics;
 
         final Datastore dataStore = new Morphia().createDatastore(mongo, mongoConfig.getdBName());
-        webResourceMetaInfoDAO = new WebResourceMetaInfoDAOImpl(dataStore);
+        webResourceMetaInfoDAO = new WebResourceMetaInfoDaoImpl(dataStore);
     }
 
     public void writeMetaInfos (Collection<RetrievedDocument> documents) {
@@ -65,6 +63,6 @@ public class PublisherHarvesterDAO {
             );
         }
 
-        webResourceMetaInfoDAO.create(webResourceMetaInfos, WriteConcern.ACKNOWLEDGED);
+        webResourceMetaInfoDAO.createOrModify(webResourceMetaInfos, WriteConcern.ACKNOWLEDGED);
     }
 }

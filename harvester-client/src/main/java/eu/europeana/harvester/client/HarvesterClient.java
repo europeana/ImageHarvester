@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * The public interface to the eu.europeana.harvester client. Used by any external system to control the eu.europeana.harvester cluster.
  */
-interface HarvesterClient {
+public interface HarvesterClient {
 
     /**
      * Writes to the database a list if sourceDocumentReference objects if they does not exists otherwise updates them.

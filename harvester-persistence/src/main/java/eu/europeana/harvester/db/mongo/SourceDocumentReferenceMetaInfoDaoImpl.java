@@ -40,8 +40,8 @@ public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentRef
     }
 
     @Override
-    public void create(List<SourceDocumentReferenceMetaInfo> sourceDocumentReferenceMetaInfos, WriteConcern writeConcern) {
-        datastore.save(sourceDocumentReferenceMetaInfos, writeConcern);
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReferenceMetaInfo>> createOrModify(List<SourceDocumentReferenceMetaInfo> sourceDocumentReferenceMetaInfos, WriteConcern writeConcern) {
+        return datastore.save(sourceDocumentReferenceMetaInfos, writeConcern);
     }
 
     @Override

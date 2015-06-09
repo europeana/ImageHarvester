@@ -207,7 +207,7 @@ public class HarvesterClientImpl implements HarvesterClient {
         for (final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics : sourceDocumentProcessingStatisticsList) {
             final SourceDocumentProcessingStatistics newSourceDocumentProcessingStatistics
                     = sourceDocumentProcessingStatistics.withActive(active);
-            sourceDocumentProcessingStatisticsDao.createOrUpdate(newSourceDocumentProcessingStatistics,
+            sourceDocumentProcessingStatisticsDao.createOrModify(newSourceDocumentProcessingStatistics,
                     harvesterClientConfig.getWriteConcern());
         }
 

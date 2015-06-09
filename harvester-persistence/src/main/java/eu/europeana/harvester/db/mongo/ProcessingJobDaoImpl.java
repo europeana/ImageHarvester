@@ -39,6 +39,11 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
     }
 
     @Override
+    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(List<ProcessingJob> processingJobs, WriteConcern writeConcern) {
+            return datastore.save(processingJobs, writeConcern);
+    }
+
+    @Override
     public ProcessingJob read(String id) {
         return datastore.get(ProcessingJob.class, id);
     }
