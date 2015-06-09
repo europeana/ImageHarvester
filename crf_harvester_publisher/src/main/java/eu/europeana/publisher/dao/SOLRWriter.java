@@ -2,15 +2,16 @@ package eu.europeana.publisher.dao;
 
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.RetrievedDocument;
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
@@ -38,12 +39,15 @@ public class SOLRWriter {
     private final String solrUrl;
 
     public SOLRWriter (String url) {
-        LOG.info("SOLR writer");
+        if (null == url || url.trim().isEmpty()) {
+            throw new IllegalArgumentException("Solr Url cannot be null");
+        }
+
         this.solrUrl = url;
     }
 
-    private SolrServer createServer () {
-        final HttpSolrServer server = new HttpSolrServer(solrUrl);
+    private SolrClient createServer () {
+        final HttpSolrClient server = new HttpSolrClient(solrUrl);
         server.setRequestWriter(new BinaryRequestWriter());
         return server;
     }
@@ -53,17 +57,22 @@ public class SOLRWriter {
      *
      * @param newDocs the list of documents and the new fields
      */
-    public boolean updateDocuments (List<CRFSolrDocument> newDocs) throws IOException, SolrServerException {
+    public boolean updateDocuments (List<CRFSolrDocument> newDocs) throws IOException{
+        if (null == newDocs || newDocs.isEmpty()) {
+            return false;
+        }
+
         final List<SolrInputDocument> docsToUpdate = new ArrayList<SolrInputDocument>();
 
         int retry = 0;
         while (retry <= MAX_RETRIES) {
-            final SolrServer server = createServer();
+            final SolrClient server = createServer();
 
             // Adding individual documents in server
             for (final CRFSolrDocument CRFSolrDocument : newDocs) {
 
                 final SolrInputDocument update = new SolrInputDocument();
+
 
                 update.addField("europeana_id", CRFSolrDocument.getRecordId());
 
@@ -78,7 +87,8 @@ public class SOLRWriter {
                 update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
 
                 try {
-                    server.add(update);
+                    final UpdateResponse response = server.add(update);
+                    LOG.info(response.toString());
                 } catch (Exception e) {
                     LOG.error("SOLR: exception when adding specific document " + update.toString() + " => document skipped",
 
@@ -89,11 +99,11 @@ public class SOLRWriter {
             try {
                 LOG.info("SOLR: added " + newDocs.size() + " documents with commit - retry" + retry);
                 server.commit();
-                server.shutdown();
+                server.close();
                 return true;
             } catch (Exception e) {
                 LOG.error("Got exception while committing added documents", e);
-                server.shutdown();
+                server.close();
                 if (retry >= MAX_RETRIES) {
                     LOG.error("Reached maximum number of retries. Skipping record set with size=" + docsToUpdate.size());
                     return false;
@@ -118,11 +128,10 @@ public class SOLRWriter {
      *
      * @param documents the document that need to be checked
      * @return the map that indicates for each document id (map key) whether exists : true or false
-     * @throws SolrServerException
      */
-    public List<RetrievedDocument> filterDocumentIds (final List<RetrievedDocument> documents) throws SolrServerException {
+    public List<RetrievedDocument> filterDocumentIds (final List<RetrievedDocument> documents) {
 
-        if (documents.isEmpty()) {
+        if (null == documents || documents.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
 
@@ -150,7 +159,7 @@ public class SOLRWriter {
                 query.set(CommonParams.FL, "europeana_id");
 
                 try {
-                    final SolrServer server = createServer();
+                    final SolrClient server = createServer();
 
                     final QueryResponse response = server.query(query);
                     // Mark in the result the documents id's that have been found
@@ -159,7 +168,7 @@ public class SOLRWriter {
                         for (int resultEntryIndex = 0; resultEntryIndex < solrResults.size(); ++resultEntryIndex)
                             acceptedRecordIds.add(solrResults.get(resultEntryIndex).getFieldValue("europeana_id").toString());
                     }
-                    server.shutdown();
+                    server.close();
                 } catch (Exception e) {
                     LOG.error("SOLR query failed when executing existence query " + queryString + " => will mark the " +
                                       "docs as non-existing");

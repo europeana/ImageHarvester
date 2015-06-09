@@ -24,16 +24,16 @@ import java.util.List;
 /**
  * Created by salexandru on 03.06.2015.
  */
-public class PublisherHarvesterDAO {
+public class PublisherHarvesterDao {
     private static final Logger LOG = LogManager.getLogger(PublisherEuropeanaDao.class.getName());
-
-    private PublisherMetrics metrics;
 
     private WebResourceMetaInfoDAO webResourceMetaInfoDAO;
 
-    public PublisherHarvesterDAO (MongoConfig mongoConfig, PublisherMetrics publisherMetrics) throws
-                                                                                              UnknownHostException {
+    public PublisherHarvesterDao (MongoConfig mongoConfig) throws UnknownHostException {
 
+        if (null == mongoConfig ) {
+            throw new IllegalArgumentException ("mongoConfig cannot be null");
+        }
 
         final Mongo mongo = new Mongo(mongoConfig.getHost(), mongoConfig.getPort());
 
@@ -45,13 +45,16 @@ public class PublisherHarvesterDAO {
                 System.exit(-1);
             }
         }
-        this.metrics = publisherMetrics;
 
         final Datastore dataStore = new Morphia().createDatastore(mongo, mongoConfig.getdBName());
         webResourceMetaInfoDAO = new WebResourceMetaInfoDAOImpl(dataStore);
     }
 
     public void writeMetaInfos (Collection<RetrievedDocument> documents) {
+        if (null == documents || documents.isEmpty()) {
+            return ;
+        }
+
         final List<WebResourceMetaInfo> webResourceMetaInfos = new ArrayList<>();
 
         for (final RetrievedDocument document: documents) {
