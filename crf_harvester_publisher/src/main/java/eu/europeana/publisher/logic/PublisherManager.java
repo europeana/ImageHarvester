@@ -89,10 +89,11 @@ public class PublisherManager {
 
     private void startPublisher() throws SolrServerException, IOException {
         DateTime currentTimestamp = config.getStartTimestamp();
+        final DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
 
         LOG.info ("start publishing data");
-        while (true) {
-            final DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
+        while (cursor.hasNext()) {
+
 
             LOG.info ("query: " + cursor.getQuery());
 

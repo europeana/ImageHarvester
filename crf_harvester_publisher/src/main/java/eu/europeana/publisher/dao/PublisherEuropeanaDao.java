@@ -67,8 +67,8 @@ public class PublisherEuropeanaDao {
     private Map<String, DocumentStatistic> retrieveDocumentStatistics(final DBCursor cursor, final int batchSize) {
         final Map<String, DocumentStatistic> documentStatistics = new HashMap<>();
 
-        for (final DBObject dbObject: cursor.batchSize(batchSize)) {
-            final BasicDBObject item = (BasicDBObject)dbObject;
+        for (int count = 0; cursor.hasNext() && count < batchSize; ++count) {
+            final BasicDBObject item = (BasicDBObject)cursor.next();
             final DateTime updatedAt = new DateTime(item.getDate("updatedAt"));
             final String sourceDocumentReferenceId = item.getString("sourceDocumentReferenceId");
             final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
