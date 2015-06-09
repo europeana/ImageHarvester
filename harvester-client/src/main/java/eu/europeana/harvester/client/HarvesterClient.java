@@ -13,29 +13,30 @@ public interface HarvesterClient {
 
     /**
      * Writes to the database a list if sourceDocumentReference objects if they does not exists otherwise updates them.
-     * @param sourceDocumentReference contains basic information about a source document
+     *
+     * @param sourceDocumentReferences contains basic information about a source document
      */
-    public void createOrModifySourceDocumentReference(final List<SourceDocumentReference> sourceDocumentReference) throws MalformedURLException, UnknownHostException;
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(final List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException;
 
     /**
      * Sends to the master a new processing job.
-     * @param processingJob contains a list of tasks
+     *
+     * @param processingJobs contains a list of jobs
      * @return the processing job
      */
-    public ProcessingJob createProcessingJob(final ProcessingJob processingJob);
+    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(List<ProcessingJob> processingJobs);
 
     /**
-     * Not implemented yet.
+     * Sends to the master a new processing job.
+     *
+     * @param processingJob contains a single job
+     * @return the processing job
      */
-    public ProcessingJob createProcessingJobForCollection(String collectionId, DocumentReferenceTaskType type);
-
-    /**
-     * Not implemented yet.
-     */
-    public ProcessingJob createProcessingJobForRecord(String recordId, DocumentReferenceTaskType type);
+    public com.google.code.morphia.Key<ProcessingJob> createOrModify(ProcessingJob processingJob);
 
     /**
      * Stops a working or standby job.
+     *
      * @param jobId the unique id of the job
      * @return the updated job
      */
@@ -43,6 +44,7 @@ public interface HarvesterClient {
 
     /**
      * Starts a stopped job.
+     *
      * @param jobId the unique id of the job
      * @return the updated job
      */
@@ -55,12 +57,13 @@ public interface HarvesterClient {
 
     /**
      * Collects information about a job status.
+     *
      * @param jobId the unique id of the job
      * @return a ProcessingJobStats object which contains the states of tasks in different forms.
      */
     public ProcessingJobStats statsOfJob(String jobId);
 
-    public SourceDocumentReferenceMetaInfo  retrieveMetaInfoByUrl(String url);
+    public SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url);
 
     public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException;
 
@@ -68,6 +71,7 @@ public interface HarvesterClient {
 
     /**
      * Updates specific sourceDocumentReferenceMetaInfo document.
+     *
      * @param sourceDocumentReferenceMetaInfo
      * @return
      */

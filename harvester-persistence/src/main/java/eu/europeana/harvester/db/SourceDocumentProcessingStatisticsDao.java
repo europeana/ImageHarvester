@@ -43,7 +43,7 @@ public interface SourceDocumentProcessingStatisticsDao {
      *                     operation
      * @return - success or failure
      */
-    public void createOrModify(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
+    public com.google.code.morphia.Key<SourceDocumentProcessingStatistics> createOrModify(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
      * If the objects don't exists they get created; otherwise updates the a SourceDocumentProcessingStatistics record

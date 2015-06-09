@@ -80,35 +80,27 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public void createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException {
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException {
         //LOG.debug("Create or modify {} SourceDocumentReferences documents ",sourceDocumentReferences.size());
-
+        final List<MachineResourceReference> machineResourceReferences = new ArrayList<>();
         for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
             // Persist the IP reference.
             final InetAddress address = InetAddress.getByName(new URL(sourceDocumentReference.getUrl()).getHost());
-            machineResourceReferenceDao.createOrModify(new MachineResourceReference(address.getHostAddress()), harvesterClientConfig.getWriteConcern());
-
-            // Persist the document reference.
-            sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, harvesterClientConfig.getWriteConcern());
+            machineResourceReferences.add(new MachineResourceReference(address.getHostAddress()));
         }
+
+        machineResourceReferenceDao.createOrModify(machineResourceReferences,harvesterClientConfig.getWriteConcern());
+        return sourceDocumentReferenceDao.createOrModify(sourceDocumentReferences, harvesterClientConfig.getWriteConcern());
     }
 
     @Override
-    public ProcessingJob createProcessingJob(ProcessingJob processingJob) {
-        // LOG.debug("Create processing job {}", processingJob.getId());
-
-        processingJobDao.create(processingJob, harvesterClientConfig.getWriteConcern());
-        return processingJob;
+    public com.google.code.morphia.Key<ProcessingJob> createOrModify(ProcessingJob processingJob) {
+        return processingJobDao.createOrModify(processingJob, harvesterClientConfig.getWriteConcern());
     }
 
     @Override
-    public ProcessingJob createProcessingJobForCollection(String collectionId, DocumentReferenceTaskType type) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public ProcessingJob createProcessingJobForRecord(String recordId, DocumentReferenceTaskType type) {
-        throw new NotImplementedException();
+    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(List<ProcessingJob> processingJobs) {
+        return processingJobDao.createOrModify(processingJobs, harvesterClientConfig.getWriteConcern());
     }
 
     @Override

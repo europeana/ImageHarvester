@@ -58,7 +58,7 @@ public class MigratorHarvesterDao {
         LOG.info ("saving created jobs");
         try {
             for (final ProcessingJob processingJob : jobs) {
-                harvesterClient.createProcessingJob(processingJob);
+                harvesterClient.createOrModify(processingJob);
             }
         }
         finally {

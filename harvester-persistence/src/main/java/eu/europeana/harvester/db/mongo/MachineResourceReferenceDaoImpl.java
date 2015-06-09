@@ -36,8 +36,8 @@ public class MachineResourceReferenceDaoImpl implements MachineResourceReference
     }
 
     @Override
-    public void createOrModify(MachineResourceReference machineResourceReference, WriteConcern writeConcern) {
-        datastore.save(machineResourceReference, writeConcern);
+    public com.google.code.morphia.Key<MachineResourceReference> createOrModify(MachineResourceReference machineResourceReference, WriteConcern writeConcern) {
+        return datastore.save(machineResourceReference, writeConcern);
     }
 
     @Override

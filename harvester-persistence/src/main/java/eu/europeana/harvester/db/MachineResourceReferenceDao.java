@@ -24,12 +24,10 @@ public interface MachineResourceReferenceDao {
 
     /**
      * Modifies an existing MachineResourceReference record, if it doesn't exists then creates it.
-     *
-     * @param machineResourceReference modified or new object
+     *  @param machineResourceReference modified or new object
      * @param writeConcern             describes the guarantee that MongoDB provides when reporting on the success of a write
-     *                                 operation
      */
-    public void createOrModify(MachineResourceReference machineResourceReference, WriteConcern writeConcern);
+    public com.google.code.morphia.Key<MachineResourceReference> createOrModify(MachineResourceReference machineResourceReference, WriteConcern writeConcern);
 
     /**
      * Modifies an existing MachineResourceReference records, if it doesn't exists then creates it.
