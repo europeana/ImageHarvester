@@ -14,6 +14,13 @@ import java.util.List;
  */
 public class SourceDocumentReference {
 
+    public final static String idFromUrl(final String url) {
+        final HashCode hc = hf.newHasher()
+                .putString(url, Charsets.UTF_8)
+                .hash();
+        return hc.toString();
+    }
+
     /**
      * The id of the link. Used for storage identity/uniqueness.
      */
@@ -76,10 +83,7 @@ public class SourceDocumentReference {
                                    final String url, final String ipAddress, final String lastStatsId,
                                    final Long redirectPathDepth, final List<String> redirectionPath,
                                    final Boolean active) {
-        final HashCode hc = hf.newHasher()
-                .putString(url, Charsets.UTF_8)
-                .hash();
-        this.id = hc.toString();
+        this.id = SourceDocumentReference.idFromUrl(url);
         this.referenceOwner = referenceOwner;
         this.urlSourceType = urlSourceType;
         this.url = url;

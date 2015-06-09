@@ -4,6 +4,7 @@ import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.Property;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -141,4 +142,11 @@ public class ProcessingJob {
         return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress, limits);
     }
 
+    public List<String> getAllReferencedSourceDocumentIds() {
+        final List<String> results = new ArrayList<String>();
+        for (final ProcessingJobTaskDocumentReference task : this.tasks) {
+            results.add(task.getSourceDocumentReferenceID());
+        }
+        return results;
+    }
 }

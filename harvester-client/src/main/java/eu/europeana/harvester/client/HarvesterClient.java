@@ -1,9 +1,6 @@
 package eu.europeana.harvester.client;
 
-import eu.europeana.harvester.domain.ProcessingJob;
-import eu.europeana.harvester.domain.ProcessingState;
-import eu.europeana.harvester.domain.SourceDocumentReference;
-import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.domain.*;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -69,19 +66,24 @@ public interface HarvesterClient {
      */
     public List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state);
 
+    public SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url);
 
-    public SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url);
+    public SourceDocumentReference retrieveSourceDocumentReferenceById(String id);
+
+        public SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url);
 
     public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
 
-    public void updateSourceDocumentProcesssingStatisticsForUrl(String url);
+    public void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId);
 
-    /**
-     * Updates specific sourceDocumentReferenceMetaInfo document.
-     *
-     * @param sourceDocumentReferenceMetaInfo
-     * @return
-     */
+    public SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId);
+
+        /**
+         * Updates specific sourceDocumentReferenceMetaInfo document.
+         *
+         * @param sourceDocumentReferenceMetaInfo
+         * @return
+         */
     public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo);
 }
 

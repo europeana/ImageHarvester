@@ -154,15 +154,20 @@ public class HarvesterClientImpl implements HarvesterClient {
         return processingJobDao.read(jobId);
     }
 
+
+    @Override
+    public SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url) {
+        return sourceDocumentReferenceDao.read(SourceDocumentReference.idFromUrl(url));
+    }
+
+    @Override
+    public SourceDocumentReference retrieveSourceDocumentReferenceById(String id) {
+        return sourceDocumentReferenceDao.read(id);
+    }
+
     @Override
     public SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url) {
-        final HashFunction hf = Hashing.md5();
-        final HashCode hc = hf.newHasher()
-                .putString(url, Charsets.UTF_8)
-                .hash();
-        final String id = hc.toString();
-
-        return sourceDocumentReferenceMetaInfoDao.read(id);
+        return sourceDocumentReferenceMetaInfoDao.read(SourceDocumentReferenceMetaInfo.idFromUrl(url));
     }
 
     @Override
@@ -195,19 +200,17 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public void updateSourceDocumentProcesssingStatisticsForUrl(String url) {
-
-        final HashFunction hf = Hashing.md5();
-        final HashCode hc = hf.newHasher()
-                .putString(url, Charsets.UTF_8)
-                .hash();
-        final String id = hc.toString();
-
-        SourceDocumentProcessingStatistics s = this.sourceDocumentProcessingStatisticsDao.read(id);
+    public void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId) {
+        SourceDocumentProcessingStatistics s = this.sourceDocumentProcessingStatisticsDao.read(SourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId,processingJobId));
         if (s != null) {
             this.sourceDocumentProcessingStatisticsDao.update(s.withActive(true), WriteConcern.NORMAL);
         }
 
+    }
+
+    @Override
+    public SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId) {
+       return this.sourceDocumentProcessingStatisticsDao.read(SourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId,processingJobId));
     }
 
 }

@@ -2,6 +2,10 @@ package eu.europeana.harvester.domain;
 
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.Property;
+import com.google.common.base.Charsets;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 
 import java.util.Date;
 import java.util.Map;
@@ -11,9 +15,13 @@ import java.util.Map;
  */
 public class SourceDocumentProcessingStatistics {
 
+    public static final String idOf(final String sourceDocumentReferenceId,final String processingJobId) {
+        return sourceDocumentReferenceId+"-"+processingJobId;
+    }
+
     @Id
     @Property("id")
-	private final String id;
+    private final String id;
 
     /**
      * When was the statistic created.
@@ -35,7 +43,7 @@ public class SourceDocumentProcessingStatistics {
     /**
      * The processing state.
      */
-	private final ProcessingState state;
+    private final ProcessingState state;
 
     /**
      * An object which contains: provider id, collection id, record id
@@ -47,17 +55,17 @@ public class SourceDocumentProcessingStatistics {
     /**
      * The reference to the source document.
      */
-	private final String sourceDocumentReferenceId;
+    private final String sourceDocumentReferenceId;
 
     /**
      * The processing job that executed.
      */
-	private final String processingJobId;
+    private final String processingJobId;
 
     /**
      * The HTTP response code.
      */
-	private final Integer httpResponseCode;
+    private final Integer httpResponseCode;
 
     /**
      * The HTTP response content type.
@@ -91,12 +99,12 @@ public class SourceDocumentProcessingStatistics {
      * The IP of the source. Useful for debugging when working with DNS load balanced sources that have a pool of real
      * IP's for the same domain name.
      */
-	private final String sourceIp;
+    private final String sourceIp;
 
     /**
      * The HTTP response headers.
      */
-	private final Map<String, String> httpResponseHeaders;
+    private final Map<String, String> httpResponseHeaders;
 
     /**
      * The cause of the error if the task failed.
@@ -190,6 +198,7 @@ public class SourceDocumentProcessingStatistics {
         this.httpResponseHeaders = httpResponseHeaders;
         this.log = log;
     }
+
     public String getId() {
         return id;
     }
@@ -202,7 +211,9 @@ public class SourceDocumentProcessingStatistics {
         return updatedAt;
     }
 
-    public Boolean getActive() {return active;}
+    public Boolean getActive() {
+        return active;
+    }
 
     public DocumentReferenceTaskType getTaskType() {
         return taskType;
@@ -216,7 +227,9 @@ public class SourceDocumentProcessingStatistics {
         return referenceOwner;
     }
 
-    public URLSourceType getUrlSourceType() {return urlSourceType;}
+    public URLSourceType getUrlSourceType() {
+        return urlSourceType;
+    }
 
     public String getSourceDocumentReferenceId() {
         return sourceDocumentReferenceId;
