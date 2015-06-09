@@ -1,4 +1,4 @@
-package eu.europeana.uimtester.domain;
+package eu.europeana.uimtester.jobcreator.domain;
 
 import java.util.List;
 

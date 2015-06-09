@@ -1,7 +1,7 @@
-package eu.europeana.uimtester.logic;
+package eu.europeana.uimtester.jobcreator.logic;
 
 import com.typesafe.config.Config;
-import eu.europeana.uimtester.domain.UIMTestSample;
+import eu.europeana.uimtester.jobcreator.domain.UIMTestSample;
 import eu.europeana.uimtester.domain.UIMTesterFieldNames;
 
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Helpers to load the UIM Tester record samples from a config object.
  */
-public class UIMTestSampleLoader {
+public class JobCreatorTesterInputLoader {
 
     public static final List<UIMTestSample> loadSamplesFromConfig(final Config config) {
         final List<UIMTestSample> results = new ArrayList<>();
