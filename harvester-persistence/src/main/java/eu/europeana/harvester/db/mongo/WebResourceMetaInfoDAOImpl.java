@@ -4,7 +4,7 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
-import eu.europeana.harvester.db.WebResourceMetaInfoDAO;
+import eu.europeana.harvester.db.WebResourceMetaInfoDao;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * MongoDB DAO implementation for CRUD with WebResourceMetaInfo collection
  */
-public class WebResourceMetaInfoDaoImpl implements WebResourceMetaInfoDAO {
+public class WebResourceMetaInfoDaoImpl implements WebResourceMetaInfoDao {
 
     /**
      * The Datastore interface provides type-safe methods for accessing and storing your java objects in MongoDB.
