@@ -1,256 +1,61 @@
+package eu.europeana.publisher.logic;
+
+import categories.IntegrationTest;
 import com.mongodb.*;
-import com.mongodb.util.JSON;
-import com.typesafe.config.*;
-import eu.europeana.publisher.domain.GraphiteReporterConfig;
-import eu.europeana.publisher.domain.MongoConfig;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logic.extractor.MediaTypeEncoding;
-import eu.europeana.publisher.logic.PublisherManager;
-import inverseLogic.CommonPropertyExtractor;
-import inverseLogic.ImagePropertyExtractor;
-import inverseLogic.SoundPropertyExtractor;
-import inverseLogic.VideoPropertyExtractor;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import utilities.inverseLogic.CommonPropertyExtractor;
+import utilities.inverseLogic.ImagePropertyExtractor;
+import utilities.inverseLogic.SoundPropertyExtractor;
+import utilities.inverseLogic.VideoPropertyExtractor;
+import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrInputDocument;
-import org.joda.time.DateTime;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
-@Category(IntegrationTest.class)
-public class PublishingTests {
-    private PublisherConfig publisherConfig;
+import static utilities.DButils.*;
+import static utilities.ConfigUtils.*;
 
-    private static String PATH_PREFIX = "./src/test/java/";
+@Category(IntegrationTest.class)
+public class PublisherManagerTests {
+    private PublisherConfig publisherConfig;
 
     @After
     public void tearDown() {
-      cleanMongoDatabase();
-      cleanSolrDatabase();
-    }
-
-    private DB connectToDB (final MongoConfig mongoConfig) {
-        final Mongo mongo;
-        final String host = mongoConfig.getHost();
-        final Integer port =mongoConfig.getPort();
-        final String userName = mongoConfig.getdBUsername();
-        final String password = mongoConfig.getdBPassword();
-        final String dbName   = mongoConfig.getdBName();
-
-        try {
-            mongo = new Mongo(host, port);
-        } catch (UnknownHostException e) {
-            fail("Cannot connect to mongo database. Unkown host: " + e.getMessage());
-            return null;
-        }
-
-
-        if (StringUtils.isNotEmpty(userName)) {
-            final DB sourceDB = mongo.getDB("admin");
-            final Boolean auth = sourceDB.authenticate(userName, password.toCharArray());
-            if (!auth) {
-                fail("Mongo source auth error");
-            }
-        }
-
-        return mongo.getDB(dbName);
-    }
-
-    private void cleanMongoDatabase() {
-        try {
-            if (null == publisherConfig) {
-                fail("Publisher Configuration cannot be null!");
-            }
-
-            final DB sourceMongo = connectToDB(publisherConfig.getSourceMongoConfig());
-
-            sourceMongo.getCollection("SourceDocumentProcessingStatistics").drop();
-            sourceMongo.getCollection("SourceDocumentReferenceMetaInfo").drop();
-
-
-            final DB targetMongo = connectToDB(publisherConfig.getTargetMongoConfig());
-
-            targetMongo.getCollection("WebResourceMetaInfo").drop();
-            targetMongo.getCollection("WebResource").drop();
-
-        } catch (Exception e) {
-            fail("Clean Mongo Database has failed with Exception: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
-        }
-    }
-
-    private void cleanSolrDatabase() {
-        try {
-            if (null == publisherConfig) {
-                fail("Publisher Configuration cannot be null");
-            }
-
-            final SolrServer solrServer = new HttpSolrServer(publisherConfig.getSolrURL());
-            solrServer.deleteByQuery("*:*");
-            solrServer.commit();
-        } catch (Exception e) {
-            fail("Clean Mongo Database has failed with Exception: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
-        }
+      cleanMongoDatabase(publisherConfig.getSourceMongoConfig(), publisherConfig.getTargetMongoConfig());
+      cleanSolrDatabase(publisherConfig.getSolrURL());
     }
 
 
-    private void loadMongoData(final String pathToJSONFile, final String collectionName) {
-        try {
-            JSONParser parser = new JSONParser();
-            JSONArray rootObject = (JSONArray) parser.parse(new FileReader(pathToJSONFile));
-
-            final DB sourceMongo = connectToDB(publisherConfig.getSourceMongoConfig());
-            final DBCollection sourceDB = sourceMongo.getCollection(collectionName);
-            for (final Object object : rootObject) {
-                final DBObject dbObject = (DBObject) JSON.parse(object.toString());
-
-                if (dbObject.containsField("updatedAt")) {
-                    dbObject.put("updatedAt", DateTime.parse(dbObject.get("updatedAt").toString()).toDate());
-                }
-                if (dbObject.containsField("createdAt")) {
-                    dbObject.put("createdAt", DateTime.parse(dbObject.get("createdAt").toString()).toDate());
-                }
-
-                sourceDB.save(dbObject);
-            }
-        } catch (Exception e) {
-            fail("Failed to load data to mongo\n" + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
-        }
-    }
-
-    private void loadSOLRData(final String pathToJSONFile) {
-        try {
-            JSONParser parser = new JSONParser();
-            JSONArray rootObject = (JSONArray) parser.parse(new FileReader(pathToJSONFile));
-
-            for (int retry = 1; retry <= 11; ++retry) {
-                if (11 == retry) {
-                    fail("Couldn't load data to solr");
-                    return;
-                }
-
-                final SolrServer solrServer = new HttpSolrServer(publisherConfig.getSolrURL());
-
-                for (final Object object : rootObject) {
-                    final JSONObject jsonObject = (JSONObject) object;
-                    final SolrInputDocument inputDocument = new SolrInputDocument();
-
-                    inputDocument.addField("europeana_id", jsonObject.get("europeana_id"));
-
-                    try {
-                        solrServer.add(inputDocument);
-                    } catch (Exception e) {
-                        System.out.println("Failed to load document " + jsonObject.toJSONString());
-                    }
-                }
-
-                try {
-                    solrServer.commit();
-                    solrServer.shutdown();
-                    return;
-                } catch (Exception e) {
-                    System.out.print("Failed to commit data to solr\n" + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
-                    TimeUnit.SECONDS.sleep(10 * retry);
-                }
-            }
-        } catch (Exception e) {
-            fail("Failed to load data to solr\n" + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
-        }
-    }
-
-    private PublisherConfig createPublisherConfig (final String pathToConfigFile) {
-        final File configFile = new File(pathToConfigFile);
-
-        if (!configFile.canRead()) {
-            fail("Cannot read file " + pathToConfigFile);
-            return null;
-        }
-
-        final Config config = ConfigFactory.parseFileAnySyntax(configFile,
-                ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
-
-        DateTime startTimestamp = null;
-        try {
-            startTimestamp = DateTime.parse(config.getString("criteria.startTimestamp"));
-        } catch (ConfigException.Null e) {
-        }
-
-
-        String startTimestampFile = null;
-        try {
-            startTimestampFile = config.getString("criteria.startTimestampFile");
-            if (null != startTimestampFile) {
-                String file = FileUtils.readFileToString(new File(startTimestampFile), Charset.forName("UTF-8").name());
-                if (!StringUtils.isEmpty(file)) {
-                    startTimestamp = DateTime.parse(file.trim());
-                }
-            }
-        } catch (ConfigException.Null e) {
-        } catch (FileNotFoundException e) {
-        } catch (IOException e) {
-            fail("Fail to load startTimestampFile: " + startTimestampFile + "\n" + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()) + "\n");
-            return null;
-        }
-
-        final String solrURL = config.getString("solr.url");
-
-        final Integer batch = config.getInt("config.batch");
-
-        final String graphiteMasterId = config.getString("metrics.masterID");
-        final String graphiteServer = config.getString("metrics.graphiteServer");
-        final Integer graphitePort = config.getInt("metrics.graphitePort");
-
-        final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(graphiteServer, graphiteMasterId, graphitePort);
-
-        final MongoConfig sourceConfig = new MongoConfig (config.getConfigList("sourceMongo").get(0));
-        final MongoConfig targetConfig = new MongoConfig (config.getConfigList("targetMongo").get(0));
-
-        return new PublisherConfig(sourceConfig, targetConfig,
-                                   graphiteReporterConfig, startTimestamp,
-                                   startTimestampFile, solrURL, batch
-                                  );
-
-    }
 
     private void runPublisher(final PublisherConfig publisherConfig) {
         try {
             new PublisherManager(publisherConfig).start();
-        } catch (SolrServerException e) {
+        } catch (Exception e) {
             fail("SolrServerException: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()) + "\n");
-        } catch (IOException e) {
-            fail("IOException: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()) + "\n");
         }
     }
 
     @Test
-    public void testPublishAllData() {
-        publisherConfig = createPublisherConfig(PATH_PREFIX + "config-files/validData/publisher.conf");
-        loadMongoData(PATH_PREFIX + "data-files/validData/jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(PATH_PREFIX + "data-files/validData/metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData(PATH_PREFIX + "data-files/validData/solrData.json");
+    public void testPublishAllData() throws  IOException {
+        final String pathToData =  "src/test/resources/data-files/validData/";
+        publisherConfig = createPublisherConfig("src/test/resources/config-files/validData/publisher.conf");
+
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadSOLRData(pathToData + "solrData.json", publisherConfig.getSolrURL());
 
         runPublisher(publisherConfig);
 
@@ -271,7 +76,7 @@ public class PublishingTests {
 
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrServer solrServer = new HttpSolrServer(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
@@ -284,11 +89,14 @@ public class PublishingTests {
     }
 
     @Test
-    public void testPublishAllDataAfterDate() {
-        publisherConfig = createPublisherConfig(PATH_PREFIX + "config-files/filterDataByDate/publisher.conf");
-        loadMongoData(PATH_PREFIX + "data-files/filterDataByDate/jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(PATH_PREFIX + "data-files/filterDataByDate/metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData(PATH_PREFIX + "data-files/filterDataByDate/solrData.json");
+    public void testPublishAllDataAfterDate() throws IOException {
+        final String pathToData =  "src/test/resources/data-files/filterDataByDate/";
+        publisherConfig = createPublisherConfig("src/test/resources/config-files/filterDataByDate" +
+                                                        "/publisher.conf");
+
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadSOLRData (pathToData + "solrData.json", publisherConfig.getSolrURL());
 
         runPublisher(publisherConfig);
         final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
@@ -318,7 +126,7 @@ public class PublishingTests {
         final DBCursor targetResults = targetMetaInfoDB.find(new BasicDBObject()).sort(new BasicDBObject("_id", 1));
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrServer solrServer = new HttpSolrServer(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
@@ -331,12 +139,14 @@ public class PublishingTests {
     }
 
     @Test
-    public void testPublishAllDataWithMetaData() {
-        publisherConfig = createPublisherConfig(PATH_PREFIX + "config-files/dataWithMissingMetaInfo/publisher.conf");
-        loadMongoData(PATH_PREFIX + "data-files/dataWithMissingMetaInfo/jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(PATH_PREFIX + "data-files/dataWithMissingMetaInfo/metaInfo.json",
-                      "SourceDocumentReferenceMetaInfo");
-        loadSOLRData(PATH_PREFIX + "data-files/dataWithMissingMetaInfo/solrData.json");
+    public void testPublishAllDataWithMetaData() throws IOException {
+        final String pathToData =  "src/test/resources/data-files/dataWithMissingMetaInfo/";
+        publisherConfig = createPublisherConfig("src/test/resources/config-files/dataWithMissingMetaInfo/publisher.conf");
+
+
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadSOLRData (pathToData + "solrData.json", publisherConfig.getSolrURL());
 
         runPublisher(publisherConfig);
         final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
@@ -356,7 +166,7 @@ public class PublishingTests {
 
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrServer solrServer = new HttpSolrServer(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
@@ -369,12 +179,14 @@ public class PublishingTests {
     }
 
     @Test
-    public void testPublishAllDataWithSolrDocEquivelent() {
-        publisherConfig = createPublisherConfig(PATH_PREFIX + "config-files/dataWithMissingSolrDoc/publisher.conf");
-        loadMongoData(PATH_PREFIX + "data-files/dataWithMissingSolrDoc/jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(PATH_PREFIX + "data-files/dataWithMissingSolrDoc/metaInfo.json",
-                      "SourceDocumentReferenceMetaInfo");
-        loadSOLRData(PATH_PREFIX + "data-files/dataWithMissingSolrDoc/solrData.json");
+    public void testPublishAllDataWithSolrDocEquivelent() throws IOException {
+        final String pathToData =  "src/test/resources/data-files/dataWithMissingSolrDoc/";
+        publisherConfig = createPublisherConfig("src/test/resources/config-files/dataWithMissingSolrDoc" +
+                                                        "/publisher.conf");
+
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadSOLRData (pathToData + "solrData.json", publisherConfig.getSolrURL());
 
         runPublisher(publisherConfig);
         final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
@@ -402,7 +214,7 @@ public class PublishingTests {
 
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrServer solrServer = new HttpSolrServer(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
@@ -416,11 +228,14 @@ public class PublishingTests {
 
 
     @Test
-    public void testFakeTags() {
-        publisherConfig = createPublisherConfig(PATH_PREFIX + "config-files/dataFakeTags/publisher.conf");
-        loadMongoData(PATH_PREFIX + "data-files/dataFakeTags/jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(PATH_PREFIX + "data-files/dataFakeTags/metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData(PATH_PREFIX + "data-files/dataFakeTags/solrData.json");
+    public void testFakeTags() throws IOException {
+        final String pathToData =  "src/test/resources/data-files/dataFakeTags/";
+        publisherConfig = createPublisherConfig("src/test/resources/config-files/dataFakeTags/publisher.conf");
+
+
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadSOLRData (pathToData + "solrData.json", publisherConfig.getSolrURL());
 
         runPublisher(publisherConfig);
 
@@ -440,7 +255,7 @@ public class PublishingTests {
 
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrServer solrServer = new HttpSolrServer(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
@@ -485,7 +300,7 @@ public class PublishingTests {
                     }
                 }
             }
-        } catch (SolrServerException e) {
+        } catch (Exception e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
         }
     }
