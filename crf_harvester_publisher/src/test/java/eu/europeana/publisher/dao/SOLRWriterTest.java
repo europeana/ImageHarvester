@@ -15,6 +15,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.unitils.reflectionassert.ReflectionAssert;
 import utilities.ConfigUtils;
@@ -142,6 +143,7 @@ public class SOLRWriterTest {
     }
 
     @Test
+    @Ignore
     public void test_UpdateDocuments_PreserveFields_SimpleData() throws IOException, SolrServerException {
         final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
         final SolrQuery query = new SolrQuery();
@@ -171,6 +173,7 @@ public class SOLRWriterTest {
     }
 
     @Test
+    @Ignore
     public void test_UpdateDocuments_PreserveFields_ProblamaticData() throws IOException, SolrServerException {
         tearDown();
         setUpSolrSpecialCase();
