@@ -8,10 +8,7 @@ import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.Page;
 import eu.europeana.harvester.domain.ProcessingJob;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * MongoDB DAO implementation for CRUD with processing_job collection
@@ -44,7 +41,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(List<ProcessingJob> processingJobs, WriteConcern writeConcern) {
+    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(Collection<ProcessingJob> processingJobs, WriteConcern writeConcern) {
             return datastore.save(processingJobs, writeConcern);
     }
 

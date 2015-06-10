@@ -11,6 +11,7 @@ import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -39,7 +40,7 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModify(List<SourceDocumentReference> sourceDocumentReferences, WriteConcern writeConcern) {
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModify(Collection<SourceDocumentReference> sourceDocumentReferences, WriteConcern writeConcern) {
             return datastore.save(sourceDocumentReferences, writeConcern);
     }
 

@@ -8,6 +8,7 @@ import eu.europeana.harvester.db.WebResourceMetaInfoDAO;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -36,7 +37,7 @@ public class WebResourceMetaInfoDAOImpl implements WebResourceMetaInfoDAO {
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<WebResourceMetaInfo>> createOrModify(List<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern) {
+    public Iterable<com.google.code.morphia.Key<WebResourceMetaInfo>> createOrModify(Collection<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern) {
         return datastore.save(webResourceMetaInfos, writeConcern);
     }
 

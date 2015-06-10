@@ -4,6 +4,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ public interface WebResourceMetaInfoDAO {
      * @param webResourceMetaInfos - a list of new objects
      * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
      */
-    public Iterable<com.google.code.morphia.Key<WebResourceMetaInfo>> createOrModify(List<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern);
+    public Iterable<com.google.code.morphia.Key<WebResourceMetaInfo>> createOrModify(Collection<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern);
 
 
     /**

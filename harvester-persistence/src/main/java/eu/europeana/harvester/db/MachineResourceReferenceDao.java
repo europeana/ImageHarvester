@@ -5,6 +5,7 @@ import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.MachineResourceReference;
 import eu.europeana.harvester.domain.Page;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -36,7 +37,7 @@ public interface MachineResourceReferenceDao {
      * @param writeConcern              describes the guarantee that MongoDB provides when reporting on the success of a write
      *                                  operation
      */
-    public Iterable<com.google.code.morphia.Key<MachineResourceReference>> createOrModify(List<MachineResourceReference> machineResourceReferences, WriteConcern writeConcern);
+    public Iterable<com.google.code.morphia.Key<MachineResourceReference>> createOrModify(Collection<MachineResourceReference> machineResourceReferences, WriteConcern writeConcern);
 
     /**
      * Reads and returns a MachineResourceReference object

@@ -1,10 +1,7 @@
 package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
-import com.google.code.morphia.annotations.Id;
-import com.google.code.morphia.annotations.Property;
 import com.google.code.morphia.query.Query;
-import com.mongodb.BasicDBObject;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
@@ -40,7 +37,7 @@ public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentRef
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReferenceMetaInfo>> createOrModify(List<SourceDocumentReferenceMetaInfo> sourceDocumentReferenceMetaInfos, WriteConcern writeConcern) {
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReferenceMetaInfo>> createOrModify(Collection<SourceDocumentReferenceMetaInfo> sourceDocumentReferenceMetaInfos, WriteConcern writeConcern) {
         return datastore.save(sourceDocumentReferenceMetaInfos, writeConcern);
     }
 

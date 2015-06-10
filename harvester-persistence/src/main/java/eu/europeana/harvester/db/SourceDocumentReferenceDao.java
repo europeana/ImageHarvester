@@ -4,6 +4,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -32,12 +33,11 @@ public interface SourceDocumentReferenceDao {
 
     /**
      * Modifies an existing SourceDocumentReference record, if it doesn't exists then creates it.
-     *
-     * @param sourceDocumentReferences modified or new objects
+     *  @param sourceDocumentReferences modified or new objects
      * @param writeConcern             describes the guarantee that MongoDB provides when reporting on the success of a write
-     *                                 operation
      */
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModify(List<SourceDocumentReference> sourceDocumentReferences, WriteConcern writeConcern);
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModify(Collection
+                                                                                                 <SourceDocumentReference> sourceDocumentReferences, WriteConcern writeConcern);
 
     /**
      * Reads and returns a SourceDocumentReference object

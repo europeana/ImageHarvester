@@ -25,9 +25,9 @@ public interface SourceDocumentReferenceMetaInfoDao {
      * Persists a SourceDocumentReferenceMetaInfo object
      * @param sourceDocumentReferenceMetaInfos - a list of new objects
      * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
-     *                     operation
      */
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReferenceMetaInfo>> createOrModify(List<SourceDocumentReferenceMetaInfo> sourceDocumentReferenceMetaInfos, WriteConcern writeConcern);
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReferenceMetaInfo>> createOrModify(Collection
+                                                                                                         <SourceDocumentReferenceMetaInfo> sourceDocumentReferenceMetaInfos, WriteConcern writeConcern);
 
 
     /**

@@ -6,6 +6,7 @@ import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.Page;
 import eu.europeana.harvester.domain.ProcessingJob;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public interface ProcessingJobDao {
      *                       operation
      * @return returns if the operation was successful
      */
-    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(List<ProcessingJob> processingJobs, WriteConcern writeConcern);
+    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(Collection<ProcessingJob> processingJobs, WriteConcern writeConcern);
 
     /**
      * Reads and returns a ProcessingJob object

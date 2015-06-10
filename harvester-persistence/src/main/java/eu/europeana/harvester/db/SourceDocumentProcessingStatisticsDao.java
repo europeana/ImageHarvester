@@ -4,6 +4,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -52,7 +53,7 @@ public interface SourceDocumentProcessingStatisticsDao {
      *                     operation
      * @return - success or failure
      */
-    public Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrUpdate(List<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatistics, WriteConcern writeConcern);
+    public Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrUpdate(Collection<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
         /**
          * Deletes a record from DB
