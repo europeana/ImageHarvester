@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * DAO for CRUD with WebResourceMetaInfoDAO collection
  */
-public interface WebResourceMetaInfoDao {
+public interface WebResourceMetaInfoDAO {
 
 
     /**

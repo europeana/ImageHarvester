@@ -4,8 +4,8 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.Mongo;
 import com.mongodb.WriteConcern;
-import eu.europeana.harvester.db.WebResourceMetaInfoDao;
-import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
+import eu.europeana.harvester.db.WebResourceMetaInfoDAO;
+import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDAOImpl;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 import eu.europeana.publisher.domain.MongoConfig;
 import eu.europeana.publisher.domain.RetrievedDocument;
@@ -27,7 +27,7 @@ public class PublisherHarvesterDAO {
 
     private PublisherMetrics metrics;
 
-    private WebResourceMetaInfoDao webResourceMetaInfoDao;
+    private WebResourceMetaInfoDAO webResourceMetaInfoDao;
 
     public PublisherHarvesterDAO (MongoConfig mongoConfig, PublisherMetrics publisherMetrics) throws
                                                                                               UnknownHostException {
@@ -46,7 +46,7 @@ public class PublisherHarvesterDAO {
         this.metrics = publisherMetrics;
 
         final Datastore dataStore = new Morphia().createDatastore(mongo, mongoConfig.getdBName());
-        webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(dataStore);
+        webResourceMetaInfoDao = new WebResourceMetaInfoDAOImpl(dataStore);
     }
 
     public void writeMetaInfos (Collection<RetrievedDocument> documents) {
