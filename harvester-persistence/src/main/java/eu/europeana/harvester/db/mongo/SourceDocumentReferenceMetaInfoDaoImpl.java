@@ -9,6 +9,7 @@ import eu.europeana.harvester.domain.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,6 +39,9 @@ public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentRef
 
     @Override
     public Iterable<com.google.code.morphia.Key<SourceDocumentReferenceMetaInfo>> createOrModify(Collection<SourceDocumentReferenceMetaInfo> sourceDocumentReferenceMetaInfos, WriteConcern writeConcern) {
+        if (null == sourceDocumentReferenceMetaInfos || sourceDocumentReferenceMetaInfos.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
         return datastore.save(sourceDocumentReferenceMetaInfos, writeConcern);
     }
 

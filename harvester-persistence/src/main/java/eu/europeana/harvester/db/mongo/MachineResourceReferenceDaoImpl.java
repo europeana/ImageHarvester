@@ -9,6 +9,7 @@ import eu.europeana.harvester.domain.MachineResourceReference;
 import eu.europeana.harvester.domain.Page;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,6 +44,9 @@ public class MachineResourceReferenceDaoImpl implements MachineResourceReference
 
     @Override
     public Iterable<com.google.code.morphia.Key<MachineResourceReference>> createOrModify(Collection<MachineResourceReference> machineResourceReferences, WriteConcern writeConcern) {
+        if (null == machineResourceReferences || machineResourceReferences.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
         return datastore.save(machineResourceReferences, writeConcern);
     }
 

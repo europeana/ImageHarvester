@@ -11,8 +11,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
+import org.unitils.reflectionassert.ReflectionAssert;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -40,6 +45,17 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
     }
 
     @Test
+    public void test_CreateOrModify_NullCollection() {
+        assertFalse (sourceDocumentReferenceMetaInfoDao.createOrModify(null, WriteConcern.NONE).iterator().hasNext());
+    }
+
+    @Test
+    public void test_CreateOrModify_EmptyCollection() {
+        assertFalse(sourceDocumentReferenceMetaInfoDao.createOrModify(Collections.EMPTY_LIST, WriteConcern.NONE)
+                                                      .iterator().hasNext());
+    }
+
+    @Test
     public void testCreate() throws Exception {
         final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
                 new SourceDocumentReferenceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", "", null, null, null), null, null, null);
@@ -52,6 +68,26 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
                         sourceDocumentReferenceMetaInfo.getId()).getImageMetaInfo().getHeight());
 
         sourceDocumentReferenceMetaInfoDao.delete(sourceDocumentReferenceMetaInfo.getId());
+    }
+
+    @Test
+    public void test_CreateOrModify_ManyElements() {
+        final List<SourceDocumentReferenceMetaInfo> metaInfos = new ArrayList<>();
+
+        for (int i = 0; i < 50; ++i) {
+            metaInfos.add(
+                new SourceDocumentReferenceMetaInfo(Integer.toString(i), new ImageMetaInfo(10, 10, "", "", "", null, null, null), null, null, null)
+            );
+        }
+
+        sourceDocumentReferenceMetaInfoDao.createOrModify(metaInfos, WriteConcern.NONE);
+
+        for (final SourceDocumentReferenceMetaInfo metaInfo: metaInfos) {
+            final SourceDocumentReferenceMetaInfo writtenInfo = sourceDocumentReferenceMetaInfoDao.read(metaInfo.getId());
+
+            sourceDocumentReferenceMetaInfoDao.delete(metaInfo.getId());
+            ReflectionAssert.assertReflectionEquals(metaInfo, writtenInfo);
+        }
     }
 
     @Test

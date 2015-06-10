@@ -10,8 +10,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
+import org.unitils.reflectionassert.ReflectionAssert;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -38,6 +43,16 @@ public class SourceDocumentReferenceDaoImplTest {
     }
 
     @Test
+    public void test_CreateOrModify_NullCollection() throws Exception {
+        assertFalse (sourceDocumentReferenceDao.createOrModify((Collection)null, WriteConcern.NONE).iterator().hasNext());
+    }
+
+    @Test
+    public void test_CreateOrModify_EmptyCollection() throws Exception {
+        assertFalse (sourceDocumentReferenceDao.createOrModify(Collections.EMPTY_LIST, WriteConcern.NONE).iterator().hasNext());
+    }
+
+    @Test
     public void testCreate() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
                 new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
@@ -48,6 +63,28 @@ public class SourceDocumentReferenceDaoImplTest {
                 sourceDocumentReferenceDao.read(sourceDocumentReference.getId()).getUrl());
 
         sourceDocumentReferenceDao.delete(sourceDocumentReference.getId());
+    }
+
+    @Test
+    public void test_CreateOrModify_ManyElements() throws Exception {
+        final List<SourceDocumentReference> documentReferences = new ArrayList<>();
+
+        for (int i = 0; i < 50; ++i) {
+            final String iString = Integer.toString(i);
+            documentReferences.add(
+               new SourceDocumentReference(iString, new ReferenceOwner(iString, iString, iString, iString),
+                                           null, "test", null, null, 0l, null, true
+                                          )
+            );
+        }
+        sourceDocumentReferenceDao.createOrModify(documentReferences, WriteConcern.NONE);
+
+        for (final SourceDocumentReference document: documentReferences) {
+            final SourceDocumentReference  writtenDocument = sourceDocumentReferenceDao.read(document.getId());
+
+            sourceDocumentReferenceDao.delete(document.getId());
+            ReflectionAssert.assertReflectionEquals(document, writtenDocument);
+        }
     }
 
     @Test

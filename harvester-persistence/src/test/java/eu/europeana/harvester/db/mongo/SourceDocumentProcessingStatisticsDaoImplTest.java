@@ -12,9 +12,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
+import org.unitils.reflectionassert.ReflectionAssert;
 
 import java.net.UnknownHostException;
-import java.util.Date;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -42,6 +43,16 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
     }
 
     @Test
+    public void test_CreateOrModify_NullCollection() {
+        assertFalse (sourceDocumentProcessingStatisticsDao.createOrModify((Collection)null, WriteConcern.NONE).iterator().hasNext());
+    }
+
+    @Test
+    public void test_CreateOrModify_EmptyCollection() {
+        assertFalse (sourceDocumentProcessingStatisticsDao.createOrModify(Collections.EMPTY_LIST, WriteConcern.NONE).iterator().hasNext());
+    }
+
+    @Test
     public void testCreate() throws Exception {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, new ReferenceOwner("1", "1", "1"),
@@ -54,6 +65,35 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
                         sourceDocumentProcessingStatistics.getId()).getHttpResponseContentSizeInBytes());
 
         sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics.getId());
+    }
+
+    @Test
+    public void test_CreateOrModify_ManyElements() {
+        final List<SourceDocumentProcessingStatistics> documents = new ArrayList<>();
+
+        for (int i = 0; i < 50; ++i) {
+            final String iString = Integer.toString(i);
+            documents.add(
+               new SourceDocumentProcessingStatistics(iString,
+                                                             new Date(),
+                                                      new Date(),
+                                                      true, null, null,
+                                                      new ReferenceOwner(iString, iString, iString, iString),
+                                                      null, "", "", 100, "", (i + 1L)*1024l, i * 1L , 0l, 0l, "", null, ""
+                                                    )
+            );
+        }
+        sourceDocumentProcessingStatisticsDao.createOrModify(documents, WriteConcern.NONE);
+
+        for (final SourceDocumentProcessingStatistics document: documents) {
+            final SourceDocumentProcessingStatistics writtenDocument = sourceDocumentProcessingStatisticsDao.read(document.getId());
+
+            assertNotNull(writtenDocument);
+
+
+            ReflectionAssert.assertReflectionEquals(document, writtenDocument);
+            sourceDocumentProcessingStatisticsDao.delete(writtenDocument.getId());
+        }
     }
 
     @Test

@@ -9,6 +9,7 @@ import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -58,7 +59,11 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrUpdate(Collection<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatistics, WriteConcern writeConcern) {
+    public Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrModify (Collection<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatistics,
+                                                                                                     WriteConcern writeConcern) {
+        if (null == sourceDocumentProcessingStatistics || sourceDocumentProcessingStatistics.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
         return datastore.save(sourceDocumentProcessingStatistics, writeConcern);
     }
 

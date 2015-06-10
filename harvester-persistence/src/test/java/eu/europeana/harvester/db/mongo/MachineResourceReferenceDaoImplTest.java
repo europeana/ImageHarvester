@@ -8,10 +8,12 @@ import eu.europeana.harvester.db.MachineResourceReferenceDao;
 import eu.europeana.harvester.domain.MachineResourceReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -93,7 +95,20 @@ public class MachineResourceReferenceDaoImplTest {
     }
 
     @Test
-    public void testCreateOrModify() throws Exception {
+    public void testCreatOrModify_NullCollection() {
+        assertFalse(machineResourceReferenceDao.createOrModify((Collection) null, WriteConcern.NONE).iterator()
+                                               .hasNext());
+    }
+
+    @Test
+    public void testCreatOrModify_EmptyCollection() {
+        assertFalse(machineResourceReferenceDao.createOrModify((Collection) null, WriteConcern.NONE).iterator().hasNext());
+    }
+
+
+
+    @Test
+    public void testCreateOrModify_OneElement() throws Exception {
         final MachineResourceReference machineResourceReference =
                 new MachineResourceReference("1");
         assertNull(machineResourceReferenceDao.read(machineResourceReference.getId()));
@@ -103,5 +118,45 @@ public class MachineResourceReferenceDaoImplTest {
 
         machineResourceReferenceDao.delete(machineResourceReference.getId());
     }
+
+    @Test
+    public void testCreateOrModify_TwoElements() throws Exception {
+        final List<MachineResourceReference> machineResourceReference =
+                Arrays.asList(
+                    new MachineResourceReference("1"),
+                    new MachineResourceReference("2")
+                );
+
+        for (int i = 1; i < 3; ++i) {
+            assertNull(machineResourceReferenceDao.read(Integer.toString(i)));
+        }
+
+        machineResourceReferenceDao.createOrModify(machineResourceReference, WriteConcern.NONE);
+
+        for (int i = 1; i < 3; ++i) {
+            assertNotNull(machineResourceReferenceDao.read(Integer.toString(i)));
+            machineResourceReferenceDao.delete(Integer.toString(i));
+        }
+    }
+
+    @Test
+    public void testCreateOrModify_ManyElements() throws Exception {
+        final List<MachineResourceReference> machineResourceReference = new ArrayList<>();
+        final int size = new Random().nextInt(1000) + 50;
+
+        for (int i = 0; i < size; ++i) {
+            assertNull(machineResourceReferenceDao.read(Integer.toString(i)));
+            machineResourceReference.add(new MachineResourceReference(Integer.toString(i)));
+        }
+
+        machineResourceReferenceDao.createOrModify(machineResourceReference, WriteConcern.NONE);
+
+        for (int i = 0; i < size; ++i) {
+            assertNotNull(machineResourceReferenceDao.read(Integer.toString(i)));
+            machineResourceReferenceDao.delete(Integer.toString(i));
+        }
+    }
+
+
 
 }

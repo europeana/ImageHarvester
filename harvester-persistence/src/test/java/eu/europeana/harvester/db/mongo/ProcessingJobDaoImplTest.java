@@ -8,15 +8,15 @@ import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.unitils.reflectionassert.ReflectionAssert;
 
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -44,7 +44,17 @@ public class ProcessingJobDaoImplTest {
     }
 
     @Test
-    public void testCreate() throws Exception {
+    public void testCreate_NullCollection() {
+        assertFalse(processingJobDao.createOrModify((Collection)null, WriteConcern.NONE).iterator().hasNext());
+    }
+
+    @Test
+    public void testCreate_EmptyCollection() {
+        assertFalse(processingJobDao.createOrModify(Collections.EMPTY_LIST, WriteConcern.NONE).iterator().hasNext());
+    }
+
+    @Test
+    public void testCreate_OneElement() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
                 new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "a.com", null, null, 0l, null, true);
         final ProcessingJobTaskDocumentReference processingJobTaskDocumentReference =
@@ -59,6 +69,40 @@ public class ProcessingJobDaoImplTest {
         assertEquals(processingJob.getId(), processingJobDao.read(processingJob.getId()).getId());
 
         processingJobDao.delete(processingJob.getId());
+    }
+
+    @Test
+    public void testCreateOrModify_ManyElements() throws Exception {
+        final SourceDocumentReference sourceDocumentReference =
+                new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "a.com", null, null, 0l, null, true);
+        final ProcessingJobTaskDocumentReference processingJobTaskDocumentReference =
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                                                       sourceDocumentReference.getId(), null);
+        final List<ProcessingJobTaskDocumentReference> tasks = new ArrayList<>();
+        tasks.add(processingJobTaskDocumentReference);
+
+        final List<ProcessingJob> processingJobs = new ArrayList<>();
+        final Random random = new Random();
+        for (int i = 0; i < 50; ++i) {
+            processingJobs.add(new ProcessingJob(
+                  1,
+                  DateTime.now().toDate(),
+                  new ReferenceOwner("1", "1", "1"),
+                  tasks,
+                  JobState.values()[random.nextInt(JobState.values().length)],
+                  "127.0.0.1"
+            ));
+        }
+
+        processingJobDao.createOrModify(processingJobs, WriteConcern.NONE);
+
+        for (final ProcessingJob job: processingJobs) {
+            final ProcessingJob writtenJob = processingJobDao.read(job.getId());
+
+
+            processingJobDao.delete(job.getId());
+            ReflectionAssert.assertReflectionEquals(job, writtenJob);
+        }
     }
 
     @Test
