@@ -4,16 +4,14 @@ import com.codahale.metrics.*;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import com.google.common.collect.Lists;
 import com.mongodb.*;
 import eu.europeana.publisher.dao.PublisherEuropeanaDao;
-import eu.europeana.publisher.dao.PublisherHarvesterDAO;
+import eu.europeana.publisher.dao.PublisherHarvesterDao;
 import eu.europeana.publisher.domain.RetrievedDocument;
 import eu.europeana.publisher.dao.SOLRWriter;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logic.extractor.*;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -39,7 +37,7 @@ public class PublisherManager {
 
     private final SOLRWriter solrWriter;
     private PublisherEuropeanaDao publisherEuropeanaDao;
-    private PublisherHarvesterDAO publisherHarvesterDAO;
+    private PublisherHarvesterDao publisherHarvesterDao;
 
     private final PublisherMetrics publisherMetrics;
 
@@ -47,8 +45,8 @@ public class PublisherManager {
         this.config = config;
         publisherMetrics = new PublisherMetrics();
 
-        publisherEuropeanaDao = new PublisherEuropeanaDao(config.getSourceMongoConfig(), publisherMetrics);
-        publisherHarvesterDAO = new PublisherHarvesterDAO(config.getTargetMongoConfig(), publisherMetrics);
+        publisherEuropeanaDao = new PublisherEuropeanaDao(config.getSourceMongoConfig());
+        publisherHarvesterDao = new PublisherHarvesterDao(config.getTargetMongoConfig());
 
 
         solrWriter = new SOLRWriter(config.getSolrURL());
@@ -113,7 +111,7 @@ public class PublisherManager {
 
 
             if (null != solrDocuments && !solrDocuments.isEmpty() && solrWriter.updateDocuments(solrDocuments)) {
-                publisherHarvesterDAO.writeMetaInfos(retrievedDocs);
+                publisherHarvesterDao.writeMetaInfos(retrievedDocs);
             }
             else {
                 LOG.error ("There was a problem with writing this batch to solr. No metainfo was written to mongo. Maybe documents where empty ?");

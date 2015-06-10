@@ -1,4 +1,4 @@
-package inverseLogic;
+package utilities.inverseLogic;
 
 import eu.europeana.publisher.logic.extractor.TagEncoding;
 

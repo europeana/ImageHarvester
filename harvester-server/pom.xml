@@ -25,7 +25,7 @@
         <profile>
             <id>IntegrationTests</id>
             <properties>
-                <testcase.groups>categories.IntegrationTest</testcase.groups>
+                <testcase.groups>categories.categories.IntegrationTest</testcase.groups>
             </properties>
         </profile>
     </profiles>
