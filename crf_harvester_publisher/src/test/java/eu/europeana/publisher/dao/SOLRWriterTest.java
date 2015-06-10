@@ -5,7 +5,7 @@ import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.publisher.domain.DocumentStatistic;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.RetrievedDocument;
-import eu.europeana.publisher.logic.extractor.FakeTagExtractor;
+import eu.europeana.publisher.logic.extract.FakeTagExtractor;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
