@@ -1,4 +1,4 @@
-package eu.europeana.publisher.logic.extractor;
+package extractor;
 
 
 public enum MediaTypeEncoding {

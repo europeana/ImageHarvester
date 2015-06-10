@@ -1,4 +1,4 @@
-package eu.europeana.publisher.logic.extractor;
+package extractor;
 
 import eu.europeana.harvester.domain.ImageMetaInfo;
 import eu.europeana.harvester.domain.ImageOrientation;

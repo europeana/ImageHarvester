@@ -11,7 +11,7 @@ import eu.europeana.publisher.domain.RetrievedDocument;
 import eu.europeana.publisher.dao.SOLRWriter;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
-import eu.europeana.publisher.logic.extractor.*;
+import eu.europeana.publisher.logic.extract.FakeTagExtractor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;

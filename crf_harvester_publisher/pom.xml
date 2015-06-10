@@ -84,7 +84,11 @@
     </build>
 
     <dependencies>
-
+        <dependency>
+            <groupId>eu.europeana</groupId>
+            <artifactId>crf-fake-tags</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
 
         <dependency>
             <groupId>commons-daemon</groupId>

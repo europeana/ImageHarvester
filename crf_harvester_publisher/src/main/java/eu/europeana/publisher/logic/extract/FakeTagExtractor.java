@@ -1,8 +1,12 @@
-package eu.europeana.publisher.logic.extractor;
+package eu.europeana.publisher.logic.extract;
 
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.RetrievedDocument;
 import eu.europeana.publisher.domain.CRFSolrDocument;
+import extractor.CommonTagExtractor;
+import extractor.ImageTagExtractor;
+import extractor.SoundTagExtractor;
+import extractor.VideoTagExtractor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

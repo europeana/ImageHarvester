@@ -4,6 +4,7 @@ import eu.europeana.harvester.domain.*;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -18,7 +19,8 @@ public interface HarvesterClient {
      *
      * @param sourceDocumentReferences contains basic information about a source document
      */
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(final List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(final
+                                                                                                                Collection<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
 
     /**
      * Sends to the master a new processing job.
@@ -26,7 +28,7 @@ public interface HarvesterClient {
      * @param processingJobs contains a list of jobs
      * @return the processing job
      */
-    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(List<ProcessingJob> processingJobs);
+    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(Collection<ProcessingJob> processingJobs);
 
     /**
      * Sends to the master a new processing job.

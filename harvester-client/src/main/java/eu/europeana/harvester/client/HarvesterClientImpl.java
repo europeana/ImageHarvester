@@ -1,9 +1,5 @@
 package eu.europeana.harvester.client;
 
-import com.google.common.base.Charsets;
-import com.google.common.hash.HashCode;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.*;
 import eu.europeana.harvester.db.mongo.*;
@@ -80,7 +76,11 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(Collection<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
+        if (null == sourceDocumentReferences || sourceDocumentReferences.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+
         //LOG.debug("Create or modify {} SourceDocumentReferences documents ",sourceDocumentReferences.size());
         final List<MachineResourceReference> machineResourceReferences = new ArrayList<>();
 
@@ -113,7 +113,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(List<ProcessingJob> processingJobs) {
+    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(Collection<ProcessingJob> processingJobs) {
         return processingJobDao.createOrModify(processingJobs, harvesterClientConfig.getWriteConcern());
     }
 
