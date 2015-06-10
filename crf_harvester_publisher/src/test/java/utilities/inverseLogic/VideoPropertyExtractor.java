@@ -1,6 +1,7 @@
 package utilities.inverseLogic;
 
-import eu.europeana.publisher.logic.extractor.TagEncoding;
+
+import crf_faketags.extractor.TagEncoding;
 
 public class VideoPropertyExtractor {
     public static String getQuality(Integer tag) {

@@ -3,10 +3,10 @@ package eu.europeana.publisher.logic.extract;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.RetrievedDocument;
 import eu.europeana.publisher.domain.CRFSolrDocument;
-import extractor.CommonTagExtractor;
-import extractor.ImageTagExtractor;
-import extractor.SoundTagExtractor;
-import extractor.VideoTagExtractor;
+import crf_faketags.extractor.CommonTagExtractor;
+import crf_faketags.extractor.ImageTagExtractor;
+import crf_faketags.extractor.SoundTagExtractor;
+import crf_faketags.extractor.VideoTagExtractor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

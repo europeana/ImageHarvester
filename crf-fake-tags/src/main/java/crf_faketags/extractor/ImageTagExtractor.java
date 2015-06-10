@@ -1,4 +1,4 @@
-package extractor;
+package crf_faketags.extractor;
 
 import eu.europeana.harvester.domain.ImageMetaInfo;
 import eu.europeana.harvester.domain.ImageOrientation;

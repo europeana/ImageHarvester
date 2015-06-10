@@ -1,4 +1,4 @@
-package extractor;
+package crf_faketags.extractor;
 
 
 public enum MediaTypeEncoding {

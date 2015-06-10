@@ -3,7 +3,7 @@ package eu.europeana.publisher.logic;
 import categories.IntegrationTest;
 import com.mongodb.*;
 import eu.europeana.publisher.domain.PublisherConfig;
-import eu.europeana.publisher.logic.extractor.MediaTypeEncoding;
+import crf_faketags.extractor.MediaTypeEncoding;
 import org.apache.solr.client.solrj.SolrServerException;
 import utilities.inverseLogic.CommonPropertyExtractor;
 import utilities.inverseLogic.ImagePropertyExtractor;
