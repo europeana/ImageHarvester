@@ -1,14 +1,14 @@
 package eu.europeana.publisher;
 
 import com.typesafe.config.*;
+import eu.europeana.publisher.logging.LoggingComponent;
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
 import org.apache.commons.daemon.DaemonInitException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,13 +16,14 @@ import java.nio.charset.Charset;
 
 public class PublisherDaemon implements Daemon {
 
-    private static final Logger LOG = LogManager.getLogger(PublisherDaemon.class.getName());
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private Publisher publisher;
 
     @Override
     public void init(DaemonContext daemonContext) throws DaemonInitException, Exception {
-        LOG.info("Initializing publisher");
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                "Initialising the publisher daemon");
 
         String[] args = daemonContext.getArguments();
 
@@ -39,7 +40,8 @@ public class PublisherDaemon implements Daemon {
 
         final File configFile = new File(configFilePath);
         if(!configFile.exists()) {
-            LOG.error("Config file not found!");
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                    "Config file not found. Exiting.");
             System.exit(-1);
         }
 
@@ -51,7 +53,8 @@ public class PublisherDaemon implements Daemon {
             startTimestamp = DateTime.parse(config.getString("criteria.startTimestamp"));
         }
         catch (ConfigException.Null e) {
-            LOG.info("startTimestamp is null");
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                    "Start timestamp is null. Defaulting to 1 Jan 1970..");
         }
 
 
@@ -61,22 +64,27 @@ public class PublisherDaemon implements Daemon {
             if (null != startTimestampFile) {
                 String file = FileUtils.readFileToString(new File(startTimestampFile), Charset.forName("UTF-8").name());
                 if (StringUtils.isEmpty(file)) {
-                    LOG.info("File is empty => startTimestamp is null");
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                            "Start timestamp file is null. Defaulting to 1 Jan 1970..");
                 }
                 else {
                     startTimestamp = DateTime.parse(file.trim());
-                    LOG.info("startTimestamp loaded from file is "+startTimestamp);
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                            "Start timestamp {} loaded from file.",startTimestamp);
                 }
             }
             else {
-                LOG.info("startTimestampFile is null");
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                        "Start timestamp is null. Defaulting to 1 Jan 1970..");
             }
         }
         catch (ConfigException.Null e) {
-            LOG.info("startTimestampFile is null");
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                    "Start timestamp is null. Defaulting to 1 Jan 1970..");
         }
         catch (FileNotFoundException e) {
-            LOG.info("Timestamp file doesn't exist => startTimestampFile is null");
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                    "Start timestamp file does not exist. Defaulting to 1 Jan 1970..");
         }
 
         publisher = new Publisher(startTimestamp,startTimestampFile,config);
@@ -84,20 +92,16 @@ public class PublisherDaemon implements Daemon {
 
     @Override
     public void start() throws Exception {
-        LOG.info("Starting publisher");
-
         publisher.start();
     }
 
     @Override
     public void stop() throws Exception {
-        LOG.info("Stopping publisher");
-
         publisher.stop();
     }
 
     @Override
     public void destroy() {
-        LOG.info("Destroying publisher");
+
     }
 }

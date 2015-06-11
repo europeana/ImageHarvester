@@ -6,7 +6,7 @@ import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 import eu.europeana.publisher.domain.PublisherConfig;
-import eu.europeana.publisher.domain.RetrievedDocument;
+import eu.europeana.publisher.domain.HarvesterDocument;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +36,7 @@ public class PublisherHarvesterDaoTest {
 
     private PublisherHarvesterDao harvesterDao;
     private List<WebResourceMetaInfo> correctMetaInfos;
-    private List<RetrievedDocument> retrievedDocuments;
+    private List<HarvesterDocument> harvesterDocuments;
 
     private WebResourceMetaInfoDao webResourceMetaInfoDao;
 
@@ -51,10 +51,10 @@ public class PublisherHarvesterDaoTest {
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
 
         correctMetaInfos = new ArrayList<>();
-        retrievedDocuments = new ArrayList<>();
-        retrievedDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
+        harvesterDocuments = new ArrayList<>();
+        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
 
-        for (final RetrievedDocument document: retrievedDocuments) {
+        for (final HarvesterDocument document: harvesterDocuments) {
             final WebResourceMetaInfo webResourceMetaInfo = new WebResourceMetaInfo(
               document.getSourceDocumentReferenceMetaInfo().getId(),
               document.getSourceDocumentReferenceMetaInfo().getImageMetaInfo(),
@@ -99,10 +99,10 @@ public class PublisherHarvesterDaoTest {
 
     @Test
     public void test_Write_OneElement () {
-        harvesterDao.writeMetaInfos(retrievedDocuments.subList(0, 1));
+        harvesterDao.writeMetaInfos(harvesterDocuments.subList(0, 1));
 
         int idx = 0;
-        for (final RetrievedDocument document: retrievedDocuments.subList(0, 1)) {
+        for (final HarvesterDocument document: harvesterDocuments.subList(0, 1)) {
             final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
 
             final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
@@ -113,10 +113,10 @@ public class PublisherHarvesterDaoTest {
 
     @Test
     public void test_Write_TwoElements () {
-        harvesterDao.writeMetaInfos(retrievedDocuments.subList(0, 2));
+        harvesterDao.writeMetaInfos(harvesterDocuments.subList(0, 2));
 
         int idx = 0;
-        for (final RetrievedDocument document: retrievedDocuments.subList(0, 2)) {
+        for (final HarvesterDocument document: harvesterDocuments.subList(0, 2)) {
             final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
 
             final WebResourceMetaInfo correctMetaInfo =correctMetaInfos.get(idx++);
@@ -127,10 +127,10 @@ public class PublisherHarvesterDaoTest {
 
     @Test
     public void test_Write_AllElements () {
-        harvesterDao.writeMetaInfos(retrievedDocuments);
+        harvesterDao.writeMetaInfos(harvesterDocuments);
 
         int idx = 0;
-        for (final RetrievedDocument document: retrievedDocuments) {
+        for (final HarvesterDocument document: harvesterDocuments) {
             final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
 
             final WebResourceMetaInfo correctMetaInfo =correctMetaInfos.get(idx++);

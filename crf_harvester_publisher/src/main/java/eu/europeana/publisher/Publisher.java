@@ -1,15 +1,14 @@
 package eu.europeana.publisher;
 
-import com.sun.corba.se.impl.orbutil.graph.Graph;
 import com.typesafe.config.Config;
 import eu.europeana.publisher.domain.GraphiteReporterConfig;
 import eu.europeana.publisher.domain.MongoConfig;
 import eu.europeana.publisher.domain.PublisherConfig;
+import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherManager;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.joda.time.DateTime;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ import java.util.List;
 
 public class Publisher {
 
-    private static Logger LOG = LogManager.getLogger(Publisher.class.getName());
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final DateTime startTimestamp;
     private final String startTimestampFile;
@@ -31,8 +30,6 @@ public class Publisher {
     }
 
     public void start() throws IOException, SolrServerException {
-        LOG.info("Start publishing ...");
-
 
         final String solrURL = config.getString("solr.url");
         final Integer batch = config.getInt("config.batch");
@@ -40,13 +37,15 @@ public class Publisher {
         final List<? extends Config> sourceMongoConfigList = config.getConfigList("sourceMongo");
         final List<? extends Config> targetMongoConfigList = config.getConfigList("targetMongo");
 
-        if (sourceMongoConfigList.size() != targetMongoConfigList.size()) {
-            LOG.error("sourceMongo configuration and targetMongo configuration from config file have different sizes!");
+        if (1 != targetMongoConfigList.size()) {
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                    "Target mongo configuration size is != 1. Currently the publisher does not support multiple targets. Exiting.");
             System.exit(-1);
         }
 
-        if (0 == sourceMongoConfigList.size()) {
-            LOG.error("Empty source/target Mongo configurations from cofig file");
+        if (1 != sourceMongoConfigList.size()) {
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                    "Source mongo configuration size is != 1. Currently the publisher does not support multiple sources. Exiting.");
             System.exit(-1);
         }
 
@@ -58,42 +57,18 @@ public class Publisher {
 
         final Iterator<? extends Config> sourceMongoIter = sourceMongoConfigList.iterator();
         final Iterator<? extends Config> targetMongoIter = targetMongoConfigList.iterator();
-        final List<Thread> threads = new ArrayList<>();
 
-        while (sourceMongoIter.hasNext() && targetMongoIter.hasNext()) {
-            final MongoConfig sourceConfig = new MongoConfig(sourceMongoIter.next());
-            final MongoConfig targetConfig = new MongoConfig (targetMongoIter.next());
+        final MongoConfig sourceConfig = new MongoConfig(sourceMongoIter.next());
+        final MongoConfig targetConfig = new MongoConfig(targetMongoIter.next());
 
 
+        final PublisherConfig publisherConfig = new PublisherConfig(sourceConfig, targetConfig,
+                graphiteReporterConfig, startTimestamp,
+                startTimestampFile, solrURL, batch
 
-            threads.add(new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    final PublisherConfig publisherConfig = new PublisherConfig(sourceConfig, targetConfig,
-                                                                                graphiteReporterConfig, startTimestamp,
-                                                                                startTimestampFile, solrURL, batch
-                                                                               );
-                    final PublisherManager publisherManager;
-                    try {
-
-                        publisherManager = new PublisherManager(publisherConfig);
-                        publisherManager.start();
-                    } catch (Exception e) {
-                        LOG.error("Exception was thrown", e);
-                    }
-                }
-            }));
-        }
-
-        for (final Thread thread : threads) thread.start();
-
-        for (final Thread thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                LOG.error("Join failed for thread " + thread.getId(), e);
-            }
-        }
+        );
+        final PublisherManager publisherManager = new PublisherManager(publisherConfig);
+        publisherManager.start();
     }
 
     public void stop() throws IOException, SolrServerException {

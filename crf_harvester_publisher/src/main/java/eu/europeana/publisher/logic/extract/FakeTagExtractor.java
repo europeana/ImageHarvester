@@ -1,14 +1,15 @@
 package eu.europeana.publisher.logic.extract;
 
-import eu.europeana.harvester.domain.*;
-import eu.europeana.publisher.domain.RetrievedDocument;
-import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.crf_faketags.extractor.CommonTagExtractor;
 import eu.europeana.crf_faketags.extractor.ImageTagExtractor;
 import eu.europeana.crf_faketags.extractor.SoundTagExtractor;
 import eu.europeana.crf_faketags.extractor.VideoTagExtractor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import eu.europeana.harvester.domain.*;
+import eu.europeana.publisher.SkippedRecords;
+import eu.europeana.publisher.domain.CRFSolrDocument;
+import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.logging.LoggingComponent;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,12 +19,12 @@ import java.util.List;
  * Created by salexandru on 04.06.2015.
  */
 public class FakeTagExtractor {
-    private static final Logger LOG = LogManager.getLogger(FakeTagExtractor.class.getName());
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(FakeTagExtractor.class.getName());
 
-    public static List<CRFSolrDocument> extractTags (final Collection<RetrievedDocument> retrievedDocuments) {
+    public static List<CRFSolrDocument> extractTags(final Collection<HarvesterDocument> harvesterDocuments,final String publishingBatchId) {
         final List<CRFSolrDocument> solrDocuments = new ArrayList<>();
 
-        for (final RetrievedDocument document : retrievedDocuments) {
+        for (final HarvesterDocument document : harvesterDocuments) {
             final SourceDocumentReferenceMetaInfo metaInfo = document.getSourceDocumentReferenceMetaInfo();
 
             final String ID = metaInfo.getId();
@@ -31,29 +32,29 @@ public class FakeTagExtractor {
             Integer mimeTypeCode = null;
 
             if (null == metaInfo.getAudioMetaInfo() && null == metaInfo.getImageMetaInfo() &&
-                        null == metaInfo.getVideoMetaInfo() && null == metaInfo.getTextMetaInfo()) {
-                LOG.error("Record : " + ID + " with metaInfo id: " + metaInfo.getId() + " has no metainfo");
+                    null == metaInfo.getVideoMetaInfo() && null == metaInfo.getTextMetaInfo()) {
+
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR, publishingBatchId, null, document.getReferenceOwner()),
+                        "MetaInfo missing from CRF entry. Skipping generating any tags.");
                 continue;
             }
 
             if (null != metaInfo.getAudioMetaInfo() && null != metaInfo.getAudioMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getAudioMetaInfo().getMimeType());
-            }
-            else if (null != metaInfo.getVideoMetaInfo() && null != metaInfo.getVideoMetaInfo().getMimeType()) {
+            } else if (null != metaInfo.getVideoMetaInfo() && null != metaInfo.getVideoMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getVideoMetaInfo().getMimeType());
-            }
-            else if (null != metaInfo.getImageMetaInfo() && null != metaInfo.getImageMetaInfo().getMimeType()) {
+            } else if (null != metaInfo.getImageMetaInfo() && null != metaInfo.getImageMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getImageMetaInfo().getMimeType());
-            }
-            else if (null != metaInfo.getTextMetaInfo() && null != metaInfo.getTextMetaInfo().getMimeType()) {
+            } else if (null != metaInfo.getTextMetaInfo() && null != metaInfo.getTextMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getTextMetaInfo().getMimeType());
             }
 
             if (null == mimeTypeCode) {
-                LOG.error("Mime-Type null for document id: " + ID);
-            }
-            else if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
-                LOG.error("Skipping record with mimetype text/html. ID: " + ID);
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR, publishingBatchId, null, document.getReferenceOwner()),
+                        "Mime-Type is missing (is null) for CRF entry with meta-info ID {} . No Mime-Type tags will be generated.", ID);
+            } else if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR, publishingBatchId, null, document.getReferenceOwner()),
+                        "Mime-Type is text/html for CRF entry with meta-info ID {}. The entire CRF entry will be skipped..", ID);
                 continue;
             }
 
@@ -68,8 +69,8 @@ public class FakeTagExtractor {
             // type.
             switch (mediaTypeCode) {
                 case 0:
-                    LOG.error("RecordID " + ID + " with metainfo id: " + metaInfo.getId() + " has " +
-                                      "mediaTypeCode 0 skipping.");
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR, publishingBatchId, null, document.getReferenceOwner()),
+                            "CRF entry had a media type code 0. The entire CRF entry will be skipped..", ID);
                     continue;
 
                 case 1:
@@ -102,20 +103,21 @@ public class FakeTagExtractor {
                     break;
             }
 
-            final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(document.getDocumentStatistic().getRecordId(),
-                                                                        isFulltext,
-                                                                        hasThumbnails,
-                                                                        hasMedia,
-                                                                        filterTags,
-                                                                        facetTags
+            final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(document.getReferenceOwner().getRecordId(),
+                    isFulltext,
+                    hasThumbnails,
+                    hasMedia,
+                    filterTags,
+                    facetTags
             );
 
 
-            if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith("/9200365/"))
+            if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith(SkippedRecords.id)) {
                 solrDocuments.add(CRFSolrDocument);
-            else
-                LOG.error("Skipping records that starts with /9200365/");
-
+            } else {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR, publishingBatchId, null, document.getReferenceOwner()),
+                        "Skipping record that starts with ID {}. The entire CRF entry will be skipped.", SkippedRecords.id);
+            }
         }
         return solrDocuments;
     }
@@ -126,7 +128,7 @@ public class FakeTagExtractor {
      * @param imageMetaInfo the metainfo object
      * @return true if there is a thumbnail
      */
-    private static boolean isImageWithThumbnail (ImageMetaInfo imageMetaInfo) {
+    private static boolean isImageWithThumbnail(ImageMetaInfo imageMetaInfo) {
         if (imageMetaInfo.getColorSpace() != null) {
             return false;
         }

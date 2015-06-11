@@ -1,19 +1,21 @@
 package eu.europeana.publisher.dao;
 
-import com.drew.lang.annotations.NotNull;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
-import com.mongodb.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCursor;
+import com.mongodb.Mongo;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
+import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
-import eu.europeana.publisher.domain.DocumentStatistic;
 import eu.europeana.publisher.domain.MongoConfig;
-import eu.europeana.publisher.domain.RetrievedDocument;
+import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.logging.LoggingComponent;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
+import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.*;
@@ -22,13 +24,13 @@ import java.util.*;
  * Created by salexandru on 03.06.2015.
  */
 public class PublisherEuropeanaDao {
-    private static final Logger LOG = LogManager.getLogger(PublisherEuropeanaDao.class.getName());
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private DB mongoDB;
 
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
-    public PublisherEuropeanaDao (@NotNull MongoConfig mongoConfig) throws UnknownHostException {
+    public PublisherEuropeanaDao (MongoConfig mongoConfig) throws UnknownHostException {
 
         if (null == mongoConfig) {
             throw new IllegalArgumentException ("mongoConfig cannot be null");
@@ -40,7 +42,8 @@ public class PublisherEuropeanaDao {
            boolean auth = mongo.getDB("admin").authenticate(mongoConfig.getdBUsername(), mongoConfig.getdBPassword().toCharArray());
 
             if (!auth) {
-                LOG.error ("Publisher Europeana Mongo auth failed");
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA),
+                        "Publisher Europeana Mongo auth failed. The provided credentials do not match. Exiting.");
                 System.exit(-1);
             }
         }
@@ -50,7 +53,7 @@ public class PublisherEuropeanaDao {
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
     }
 
-    public List<RetrievedDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final int batchSize) {
+    public List<HarvesterDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final int batchSize) {
         if (null == cursor) {
             throw new IllegalArgumentException ("cursor is null");
         }
@@ -59,31 +62,35 @@ public class PublisherEuropeanaDao {
             throw new IllegalArgumentException ("batch size should be a positive number (0 is excluded the)");
         }
 
-        final List<RetrievedDocument> retrievedDocuments = new ArrayList<>();
+        final List<HarvesterDocument> completeHarvesterDocuments = new ArrayList<>();
 
-        final Map<String, DocumentStatistic> documentStatistics = retrieveDocumentStatistics (cursor, batchSize);
-        final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(documentStatistics.keySet());
+        final Map<String, HarvesterDocument> incompleteHarvesterDocuments = retrieveHarvesterDocumentsWithoutMetaInfo(cursor, batchSize);
+        final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(incompleteHarvesterDocuments.keySet());
 
 
         for (final SourceDocumentReferenceMetaInfo metaInfo: metaInfos) {
             final String id = metaInfo.getId();
-            retrievedDocuments.add(new RetrievedDocument(documentStatistics.get(id), metaInfo));
+            completeHarvesterDocuments.add(incompleteHarvesterDocuments.get(id).withSourceDocumentReferenceMetaInfo(metaInfo));
         }
 
-        return retrievedDocuments;
+        return completeHarvesterDocuments;
     }
 
-    private Map<String, DocumentStatistic> retrieveDocumentStatistics(final DBCursor cursor, final int batchSize) {
-        final Map<String, DocumentStatistic> documentStatistics = new HashMap<>();
+    private Map<String, HarvesterDocument> retrieveHarvesterDocumentsWithoutMetaInfo(final DBCursor cursor, final int batchSize) {
+        final Map<String, HarvesterDocument> documentStatistics = new HashMap<>();
 
         for (int count = 0; cursor.hasNext() && count < batchSize; ++count) {
             final BasicDBObject item = (BasicDBObject)cursor.next();
             final DateTime updatedAt = new DateTime(item.getDate("updatedAt"));
             final String sourceDocumentReferenceId = item.getString("sourceDocumentReferenceId");
             final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
-            final String recordId = referenceOwnerTemp.getString("recordId");
 
-            documentStatistics.put(sourceDocumentReferenceId, new DocumentStatistic(sourceDocumentReferenceId, recordId, updatedAt));
+            final String providerId = referenceOwnerTemp.getString("providerId");
+            final String collectionId = referenceOwnerTemp.getString("collectionId");
+            final String recordId = referenceOwnerTemp.getString("recordId");
+            final String executionId = referenceOwnerTemp.getString("executionId");
+
+            documentStatistics.put(sourceDocumentReferenceId, new HarvesterDocument(sourceDocumentReferenceId, updatedAt, new ReferenceOwner(providerId,collectionId,recordId,executionId),null));
         }
 
         return documentStatistics;

@@ -8,10 +8,10 @@ import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 import eu.europeana.publisher.domain.MongoConfig;
-import eu.europeana.publisher.domain.RetrievedDocument;
+import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.logging.LoggingComponent;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -22,8 +22,7 @@ import java.util.List;
  * Created by salexandru on 03.06.2015.
  */
 public class PublisherHarvesterDao {
-    private static final Logger LOG = LogManager.getLogger(PublisherEuropeanaDao.class.getName());
-
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private WebResourceMetaInfoDao webResourceMetaInfoDao;
 
@@ -39,7 +38,8 @@ public class PublisherHarvesterDao {
             boolean auth = mongo.getDB("admin").authenticate(mongoConfig.getdBUsername(), mongoConfig.getdBPassword().toCharArray());
 
             if (!auth) {
-                LOG.error ("Publisher Europeana Mongo auth failed");
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_HARVESTER),
+                        "Publisher Harvester Mongo auth failed. The provided credentials do not match. Exiting.");
                 System.exit(-1);
             }
         }
@@ -48,14 +48,14 @@ public class PublisherHarvesterDao {
         webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(dataStore);
     }
 
-    public void writeMetaInfos (Collection<RetrievedDocument> documents) {
+    public void writeMetaInfos (Collection<HarvesterDocument> documents) {
         if (null == documents || documents.isEmpty()) {
             return ;
         }
 
         final List<WebResourceMetaInfo> webResourceMetaInfos = new ArrayList<>();
 
-        for (final RetrievedDocument document: documents) {
+        for (final HarvesterDocument document: documents) {
             webResourceMetaInfos.add(
                   new WebResourceMetaInfo(document.getSourceDocumentReferenceMetaInfo().getId(),
                                           document.getSourceDocumentReferenceMetaInfo().getImageMetaInfo(),

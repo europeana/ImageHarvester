@@ -9,7 +9,7 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.publisher.domain.PublisherConfig;
-import eu.europeana.publisher.domain.RetrievedDocument;
+import eu.europeana.publisher.domain.HarvesterDocument;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
@@ -147,13 +147,13 @@ public class PublisherEuropeanaDaoTest {
         final DBCollection jobStatistics = DButils.connectToDB(publisherConfig.getSourceMongoConfig()).getCollection("SourceDocumentProcessingStatistics");
         final DBCollection metaInfos = DButils.connectToDB(publisherConfig.getSourceMongoConfig()).getCollection("SourceDocumentReferenceMetaInfo");
         while (cursor.hasNext()) {
-            final List<RetrievedDocument> documents = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, batchSize);
+            final List<HarvesterDocument> documents = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, batchSize);
 
             assertEquals(batchSize, documents.size());
 
-            for (final RetrievedDocument document : documents) {
+            for (final HarvesterDocument document : documents) {
                 if (null != filter) {
-                    assertTrue (filter.isBefore(document.getDocumentStatistic().getUpdatedAt()));
+                    assertTrue (filter.isBefore(document.getUpdatedAt()));
                 }
 
                 {
@@ -161,9 +161,9 @@ public class PublisherEuropeanaDaoTest {
 
 
                     queryFindDocument.put("sourceDocumentReferenceId",
-                                          document.getDocumentStatistic().getSourceDocumentReferenceId());
-                    queryFindDocument.put("updatedAt", document.getDocumentStatistic().getUpdatedAt().toDate());
-                    queryFindDocument.put("referenceOwner.recordId", document.getDocumentStatistic().getRecordId());
+                                          document.getSourceDocumentReferenceId());
+                    queryFindDocument.put("updatedAt", document.getUpdatedAt().toDate());
+                    queryFindDocument.put("referenceOwner.recordId", document.getReferenceOwner().getRecordId());
 
                     assertEquals(1L, jobStatistics.count(queryFindDocument));
                 }
@@ -171,7 +171,7 @@ public class PublisherEuropeanaDaoTest {
                 {
                     final BasicDBObject queryFindMetaInfo = new BasicDBObject();
 
-                    queryFindMetaInfo.put ("_id", document.getDocumentStatistic().getSourceDocumentReferenceId());
+                    queryFindMetaInfo.put ("_id", document.getSourceDocumentReferenceId());
 
                     assertEquals(1L, metaInfos.count(queryFindMetaInfo));
                 }

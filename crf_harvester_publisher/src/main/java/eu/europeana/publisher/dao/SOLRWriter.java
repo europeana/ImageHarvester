@@ -1,11 +1,10 @@
 package eu.europeana.publisher.dao;
 
+import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.publisher.domain.CRFSolrDocument;
-import eu.europeana.publisher.domain.RetrievedDocument;
-import org.apache.commons.collections.map.HashedMap;
+import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.logging.LoggingComponent;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
@@ -15,6 +14,7 @@ import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -34,12 +34,14 @@ public class SOLRWriter {
     private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 100;
 
     private static final int MAX_RETRIES = 5;
-    private static final Logger LOG = LogManager.getLogger(SOLRWriter.class.getName());
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final String solrUrl;
 
     public SOLRWriter (String url) {
         if (null == url || url.trim().isEmpty()) {
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR),
+                    "Cannot initialise the SOLR persistence as the provided Sorl base url is null.Exiting.");
             throw new IllegalArgumentException("Solr Url cannot be null");
         }
 
@@ -57,7 +59,7 @@ public class SOLRWriter {
      *
      * @param newDocs the list of documents and the new fields
      */
-    public boolean updateDocuments (List<CRFSolrDocument> newDocs) throws IOException{
+    public boolean updateDocuments (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException{
         if (null == newDocs || newDocs.isEmpty()) {
             return false;
         }
@@ -88,31 +90,33 @@ public class SOLRWriter {
 
                 try {
                     final UpdateResponse response = server.add(update);
-                    LOG.info(response.toString());
                 } catch (Exception e) {
-                    LOG.error("SOLR: exception when adding specific document " + update.toString() + " => document skipped",
-
-                              e);
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,publishingBatchId,null,new ReferenceOwner(null, null, CRFSolrDocument.getRecordId())),
+                            "Exception when adding specific document " + update.toString() + " => document skipped",e);
                 }
             }
 
             try {
-                LOG.info("SOLR: added " + newDocs.size() + " documents with commit - retry" + retry);
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
+                        "Trying to update {} SOLR documents with commit retry policy. Current retry count is {}",newDocs.size(),retry);
                 server.commit();
                 server.close();
                 return true;
             } catch (Exception e) {
-                LOG.error("Got exception while committing added documents", e);
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
+                        "Failed to update {} SOLR documents with commit retry policy. Current retry count is {}", newDocs.size(), retry);
                 server.close();
                 if (retry >= MAX_RETRIES) {
-                    LOG.error("Reached maximum number of retries. Skipping record set with size=" + docsToUpdate.size());
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
+                            "Failed to update {} SOLR documents with commit retry policy. Reached maximum retry count {}. Skipping updating all these documents.", newDocs.size(), MAX_RETRIES);
                     return false;
                 }
                 else {
                     try {
                         retry++;
                         final long secsToSleep = retry * 10;
-                        LOG.error("Exception with SOLR ...." + e.getMessage() + " retries executed already " + retry + " => sleeping " + secsToSleep + " s and retrying");
+                        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
+                                "Failed to update "+newDocs.size()+" SOLR documents with commit retry policy. Current retry count is "+retry+" . Sleeping "+secsToSleep+" seconds before trying again.");
                         TimeUnit.SECONDS.sleep(secsToSleep);
                     } catch (InterruptedException e1) {
                         e1.printStackTrace();
@@ -129,7 +133,7 @@ public class SOLRWriter {
      * @param documents the document that need to be checked
      * @return the map that indicates for each document id (map key) whether exists : true or false
      */
-    public List<RetrievedDocument> filterDocumentIds (final List<RetrievedDocument> documents) {
+    public List<HarvesterDocument> filterDocumentIds (final List<HarvesterDocument> documents,final String publishingBatchId) {
 
         if (null == documents || documents.isEmpty()) {
             return Collections.EMPTY_LIST;
@@ -139,8 +143,8 @@ public class SOLRWriter {
         final Set<String> acceptedRecordIds = new HashSet<>();
         final List<String> documentIds = new ArrayList<>();
 
-        for (final RetrievedDocument document: documents) {
-            documentIds.add(document.getDocumentStatistic().getRecordId());
+        for (final HarvesterDocument document: documents) {
+            documentIds.add(document.getReferenceOwner().getRecordId());
         }
 
         // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
@@ -170,19 +174,19 @@ public class SOLRWriter {
                     }
                     server.close();
                 } catch (Exception e) {
-                    LOG.error("SOLR query failed when executing existence query " + queryString + " => will mark the " +
-                                      "docs as non-existing");
-                    LOG.error(e);
+
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
+                            "Failed when executing existence query for {} documents. Will mark the documents as non-existent. The query string is {}",documents.size(),queryString);
                 }
             }
         }
 
-        final Iterator<RetrievedDocument> documentIterator = documents.iterator();
+        final Iterator<HarvesterDocument> documentIterator = documents.iterator();
 
         while (documentIterator.hasNext()) {
-            final RetrievedDocument document = documentIterator.next();
+            final HarvesterDocument document = documentIterator.next();
 
-            if (!acceptedRecordIds.contains(document.getDocumentStatistic().getRecordId())) {
+            if (!acceptedRecordIds.contains(document.getReferenceOwner().getRecordId())) {
                 documentIterator.remove();
             }
         }

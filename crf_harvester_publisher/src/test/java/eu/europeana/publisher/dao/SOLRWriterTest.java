@@ -1,10 +1,10 @@
 package eu.europeana.publisher.dao;
 
 import com.mongodb.DBCursor;
+import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
-import eu.europeana.publisher.domain.DocumentStatistic;
+import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
-import eu.europeana.publisher.domain.RetrievedDocument;
 import eu.europeana.publisher.logic.extract.FakeTagExtractor;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -25,7 +25,6 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.fail;
 import static utilities.DButils.loadMongoData;
 
 /**
@@ -36,98 +35,102 @@ public class SOLRWriterTest {
     private static final String CONFIG_PATH_PREFIX = "./src/test/resources/config-files/";
 
     private static final PublisherConfig publisherConfig = ConfigUtils
-                                                                   .createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
+            .createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
 
+    private static final String testBatchId = "tst-batch";
     private SOLRWriter solrWriter;
-    private List<RetrievedDocument> retrievedDocuments;
-    private List<RetrievedDocument> validDocuments;
+    private List<HarvesterDocument> harvesterDocuments;
+    private List<HarvesterDocument> validDocuments;
 
 
     @Before
-    public void setUp () throws UnknownHostException {
+    public void setUp() throws UnknownHostException {
         solrWriter = new SOLRWriter(publisherConfig.getSolrURL());
 
         DButils.loadSOLRData(DATA_PATH_PREFIX + "solrData.json", publisherConfig.getSolrURL());
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json",
-                      "SourceDocumentProcessingStatistics");
+                "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json",
-                      "SourceDocumentReferenceMetaInfo");
+                "SourceDocumentReferenceMetaInfo");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
 
-        retrievedDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
-        validDocuments = new ArrayList<>(retrievedDocuments);
+        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
+        validDocuments = new ArrayList<>(harvesterDocuments);
 
-        int size = retrievedDocuments.size();
+        int size = harvesterDocuments.size();
         for (int i = 0; i < size; ++i) {
-            retrievedDocuments.add(new RetrievedDocument(new DocumentStatistic(UUID.randomUUID().toString(),
-                                                                               UUID.randomUUID().toString(), DateTime.now()),
-                                                         new SourceDocumentReferenceMetaInfo("", null, null, null,
-                                                                                             null)));
+            final ReferenceOwner referenceOwner = new ReferenceOwner(UUID.randomUUID().toString(),
+                    UUID.randomUUID().toString(), UUID.randomUUID().toString());
+
+            harvesterDocuments.add(new HarvesterDocument(UUID.randomUUID().toString(), DateTime.now(),
+                            referenceOwner, new SourceDocumentReferenceMetaInfo("", null, null, null,
+                            null))
+            );
         }
     }
 
     @After
-    public void tearDown () {
+    public void tearDown() {
         DButils.cleanMongoDatabase(publisherConfig.getSourceMongoConfig(), publisherConfig.getTargetMongoConfig());
-       // DButils.cleanSolrDatabase(publisherConfig.getSolrURL());
+        // DButils.cleanSolrDatabase(publisherConfig.getSolrURL());
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void test_NullSolrUrl () {
+    @Test(expected = IllegalArgumentException.class)
+    public void test_NullSolrUrl() {
         new SOLRWriter(null);
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void test_EmptySolrUrl () {
+    @Test(expected = IllegalArgumentException.class)
+    public void test_EmptySolrUrl() {
         new SOLRWriter("\t\t\n\r");
     }
 
     @Test
-    public void test_FilterDocuments_NullList () throws SolrServerException {
-        assertTrue(solrWriter.filterDocumentIds(null).isEmpty());
+    public void test_FilterDocuments_NullList() throws SolrServerException {
+        assertTrue(solrWriter.filterDocumentIds(null, testBatchId).isEmpty());
     }
 
     @Test
-    public void test_FilterDocuments_EmptyList () throws SolrServerException {
-        assertTrue(solrWriter.filterDocumentIds(Collections.EMPTY_LIST).isEmpty());
+    public void test_FilterDocuments_EmptyList() throws SolrServerException {
+        assertTrue(solrWriter.filterDocumentIds(Collections.EMPTY_LIST, testBatchId).isEmpty());
     }
 
     @Test
-    public void test_FilterDocuments_AllValid () throws SolrServerException {
-        assertArrayEquals(validDocuments.toArray(), solrWriter.filterDocumentIds(validDocuments).toArray());
+    public void test_FilterDocuments_AllValid() throws SolrServerException {
+        assertArrayEquals(validDocuments.toArray(), solrWriter.filterDocumentIds(validDocuments, testBatchId).toArray());
     }
 
     @Test
-    public void test_FilterDocuments_SomeAreInvalid () throws SolrServerException {
-        assertArrayEquals(validDocuments.toArray(), solrWriter.filterDocumentIds(retrievedDocuments).toArray());
+    public void test_FilterDocuments_SomeAreInvalid() throws SolrServerException {
+        assertArrayEquals(validDocuments.toArray(), solrWriter.filterDocumentIds(harvesterDocuments, testBatchId).toArray());
     }
 
     @Test
-    public void test_FilterDocuments_AllInvalid () throws SolrServerException {
-        final List<RetrievedDocument> invalidDocuments = retrievedDocuments.subList(6, retrievedDocuments.size());
-        assertTrue(solrWriter.filterDocumentIds(invalidDocuments).isEmpty());
+    public void test_FilterDocuments_AllInvalid() throws SolrServerException {
+        final List<HarvesterDocument> invalidDocuments = harvesterDocuments.subList(6, harvesterDocuments.size());
+        assertTrue(solrWriter.filterDocumentIds(invalidDocuments, testBatchId).isEmpty());
     }
 
 
     @Test
-    public void test_UpdateDocuments_NullList () throws IOException, SolrServerException {
-        assertFalse(solrWriter.updateDocuments(null));
+    public void test_UpdateDocuments_NullList() throws IOException, SolrServerException {
+        assertFalse(solrWriter.updateDocuments(null, testBatchId));
     }
 
     @Test
-    public void test_UpdateDocuments_EmptyList () throws IOException, SolrServerException {
-        assertFalse(solrWriter.updateDocuments(Collections.EMPTY_LIST));
+    public void test_UpdateDocuments_EmptyList() throws IOException, SolrServerException {
+        assertFalse(solrWriter.updateDocuments(Collections.EMPTY_LIST, testBatchId));
     }
 
     @Test
-    public void test_UpdateDocuments () throws IOException, SolrServerException {
+    public void test_UpdateDocuments() throws IOException, SolrServerException {
         final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
         final SolrQuery query = new SolrQuery();
 
 
-        solrWriter.updateDocuments(FakeTagExtractor.extractTags(validDocuments));
+        solrWriter.updateDocuments(FakeTagExtractor.extractTags(validDocuments, testBatchId), testBatchId);
 
 
         query.clear();
@@ -157,11 +160,11 @@ public class SOLRWriterTest {
 
         final SolrDocumentList resultsBeforeUpdate = solrServer.query(query).getResults();
 
-        solrWriter.updateDocuments(FakeTagExtractor.extractTags(validDocuments));
+        solrWriter.updateDocuments(FakeTagExtractor.extractTags(validDocuments, testBatchId), testBatchId);
 
         final SolrDocumentList resultsAfterUpdate = solrServer.query(query).getResults();
 
-        assertEquals (resultsBeforeUpdate.getNumFound(), resultsAfterUpdate.getNumFound());
+        assertEquals(resultsBeforeUpdate.getNumFound(), resultsAfterUpdate.getNumFound());
 
         Iterator<SolrDocument> beforeIter = resultsBeforeUpdate.listIterator();
         Iterator<SolrDocument> afterIter = resultsAfterUpdate.listIterator();
@@ -191,11 +194,11 @@ public class SOLRWriterTest {
 
         final SolrDocumentList resultsBeforeUpdate = solrServer.query(query).getResults();
 
- //       solrWriter.updateDocuments(FakeTagExtractor.extractTags(validDocuments));
+        //       solrWriter.updateDocuments(FakeTagExtractor.extractTags(validDocuments));
 
         final SolrDocumentList resultsAfterUpdate = solrServer.query(query).getResults();
 
-        assertEquals (resultsBeforeUpdate.getNumFound(), resultsAfterUpdate.getNumFound());
+        assertEquals(resultsBeforeUpdate.getNumFound(), resultsAfterUpdate.getNumFound());
 
         Iterator<SolrDocument> beforeIter = resultsBeforeUpdate.listIterator();
         Iterator<SolrDocument> afterIter = resultsAfterUpdate.listIterator();
@@ -205,27 +208,30 @@ public class SOLRWriterTest {
         }
     }
 
-    private void setUpSolrSpecialCase () throws UnknownHostException {
+    private void setUpSolrSpecialCase() throws UnknownHostException {
         solrWriter = new SOLRWriter(publisherConfig.getSolrURL());
 
         DButils.loadSOLRData(DATA_PATH_PREFIX + "solrSpecialCase/solrData.json", publisherConfig.getSolrURL());
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "solrSpecialCase/jobStatistics.json",
-                      "SourceDocumentProcessingStatistics");
+                "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "solrSpecialCase/metaInfo.json",
-                      "SourceDocumentReferenceMetaInfo");
+                "SourceDocumentReferenceMetaInfo");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
 
-        retrievedDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
-        validDocuments = new ArrayList<>(retrievedDocuments);
+        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
+        validDocuments = new ArrayList<>(harvesterDocuments);
 
-        int size = retrievedDocuments.size();
+        int size = harvesterDocuments.size();
         for (int i = 0; i < size; ++i) {
-            retrievedDocuments.add(new RetrievedDocument(new DocumentStatistic(UUID.randomUUID().toString(),
-                                                                               UUID.randomUUID().toString(), DateTime.now()),
-                                                         new SourceDocumentReferenceMetaInfo("", null, null, null,
-                                                                                             null)));
+            final ReferenceOwner referenceOwner = new ReferenceOwner(UUID.randomUUID().toString(),
+                    UUID.randomUUID().toString(), UUID.randomUUID().toString());
+
+            harvesterDocuments.add(new HarvesterDocument(UUID.randomUUID().toString(),
+                    DateTime.now(), referenceOwner,
+                    new SourceDocumentReferenceMetaInfo("", null, null, null,
+                            null)));
         }
     }
 }
