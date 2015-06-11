@@ -14,6 +14,9 @@ import eu.europeana.harvester.cluster.domain.utils.Pair;
 import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
 import eu.europeana.harvester.domain.ReferenceOwner;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -26,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 public class AccountantAllTasksActor extends UntypedActor {
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
 
     /**
@@ -122,7 +125,9 @@ public class AccountantAllTasksActor extends UntypedActor {
                 try {
                     tasksFromIP = (List<String>) Await.result(future, timeout.duration());
                 } catch (Exception e) {
-                    LOG.error("Error: {}", e);
+                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                            "Error while waiting to receive tasks per IP.",e);
+                    // TODO : Evaluate if it is acceptable to hide the exception here.
                 }
 
 
@@ -179,14 +184,17 @@ public class AccountantAllTasksActor extends UntypedActor {
 
 
             if (message instanceof Clean) {
-                LOG.info("Clean maps accountant actor");
+                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                        "Clean maps accountant actor");
                 allTasks.clear();
 
                 return;
             }
 
             if (message instanceof CleanUp) {
-                LOG.info("Clean old entries with processing or downloading state accountant actor");
+                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                        "Clean old entries with processing or downloading state accountant actor");
+
                 cleanTasks();
                 getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
                         TimeUnit.MINUTES), getSelf(), new CleanUp(), getContext().system().dispatcher(), getSelf());
@@ -231,7 +239,9 @@ public class AccountantAllTasksActor extends UntypedActor {
                 try {
                     tasksFromIP = (List<String>) Await.result(future, timeout.duration());
                 } catch (Exception e) {
-                    LOG.error("Error: {}", e);
+                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                            "Exception while waiting for answer for getting tasks per IP.", e);
+                    // TODO : Evaluate if it is acceptable to hide the exception here.
                 }
 
 
@@ -277,15 +287,17 @@ public class AccountantAllTasksActor extends UntypedActor {
                     getSender().tell(retrieveUrl, getSelf());
                     return;
                 } catch (Exception e) {
-                    LOG.error("Accountant actor, GetRetrieveUrl: {}", e.getMessage());
-
+                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                            "Exception related to GetRetrieveUrl.", e);
                     getSender().tell(retrieveUrl, getSelf());
 
                     return;
                 }
             }
         } catch (Exception e) {
-            LOG.error("Accountant actor: {}", e.getMessage());
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                    "General exception in accountant actor.", e);
+            // TODO : Evaluate if it is acceptable to hide the exception here.;
         }
     }
 

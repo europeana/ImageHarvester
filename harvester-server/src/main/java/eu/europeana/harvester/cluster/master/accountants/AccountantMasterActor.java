@@ -6,17 +6,17 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AccountantMasterActor extends UntypedActor {
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private ActorRef accountantAllTasksActor;
     private ActorRef accountantTasksPerIPActor;
     private ActorRef accountantTasksPerJobActor;
-
-
-
 
     public AccountantMasterActor (){
         this.accountantAllTasksActor = getContext().system().actorOf(Props.create(AccountantAllTasksActor.class), "accountantAll");
@@ -158,8 +158,9 @@ public class AccountantMasterActor extends UntypedActor {
                 return;
             }
         } catch(Exception e) {
-            //e.printStackTrace();
-            LOG.error("Accountant master actor: {}", e.getMessage());
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                    "General exception in accountant actor.", e);
+            // TODO : Evaluate if it is acceptable to hide the exception here.;
         }
     }
 

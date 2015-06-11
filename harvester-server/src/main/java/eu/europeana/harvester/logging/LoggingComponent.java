@@ -11,7 +11,15 @@ import static net.logstash.logback.marker.Markers.appendEntries;
 
 public class LoggingComponent {
 
-    public static final String PREFIX_MASTER = "harvester.master";
+    public static class Master {
+        public static final String PREFIX_MASTER = "harvester.master";
+
+        public static final String TASKS_ACCOUNTANT = PREFIX_MASTER+"."+"accountant";
+        public static final String TASKS_LOADER = PREFIX_MASTER+"."+"loader";
+        public static final String TASKS_RECEIVER = PREFIX_MASTER+"."+"receiver";
+        public static final String TASKS_SENDER = PREFIX_MASTER+"."+"senderr";
+
+    }
 
     public static class Slave {
         public static final String PREFIX = "harvester.slave";
