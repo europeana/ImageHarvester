@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * MongoDB DAO implementation for CRUD with WebResourceMetaInfo collection
  */
-public class WebResourceMetaInfoDAOImpl implements WebResourceMetaInfoDAO {
+class WebResourceMetaInfoDAOImpl implements WebResourceMetaInfoDAO {
 
     /**
      * The Datastore interface provides type-safe methods for accessing and storing your java objects in MongoDB.

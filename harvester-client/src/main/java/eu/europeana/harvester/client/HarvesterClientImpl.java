@@ -10,7 +10,10 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -53,6 +56,8 @@ public class HarvesterClientImpl implements HarvesterClient {
      */
     private final HarvesterClientConfig harvesterClientConfig;
 
+    private final CachingUrlResolver cachingUrlResolver;
+
     public HarvesterClientImpl(final MorphiaDataStore datastore, final HarvesterClientConfig harvesterClientConfig) {
         this(new ProcessingJobDaoImpl(datastore.getDatastore()),
                 new MachineResourceReferenceDaoImpl(datastore.getDatastore()),
@@ -73,6 +78,7 @@ public class HarvesterClientImpl implements HarvesterClient {
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
         this.harvesterClientConfig = harvesterClientConfig;
+        this.cachingUrlResolver = new CachingUrlResolver();
     }
 
     @Override
@@ -84,22 +90,9 @@ public class HarvesterClientImpl implements HarvesterClient {
         //LOG.debug("Create or modify {} SourceDocumentReferences documents ",sourceDocumentReferences.size());
         final List<MachineResourceReference> machineResourceReferences = new ArrayList<>();
 
-        final List<String> urls = new ArrayList<String>();
-
-        // Resolve all url of IP's
-        for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
-            urls.add(sourceDocumentReference.getUrl());
-        }
-
-        final Map<String, String> urlToIpMap = HarvesterClientHelper.resolveIpsOfUrls(urls);
-
         // Prepare all the machine references
         for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
-            if (!urlToIpMap.containsKey(sourceDocumentReference.getUrl())) {
-                throw new MalformedURLException("Cannot solve the IP of the url {}" + sourceDocumentReference.getUrl());
-            } else {
-                machineResourceReferences.add(new MachineResourceReference(urlToIpMap.get(sourceDocumentReference.getUrl())));
-            }
+            machineResourceReferences.add(new MachineResourceReference(cachingUrlResolver.resolveIpOfUrl(sourceDocumentReference.getUrl())));
         }
 
         // Persist everything.
@@ -200,8 +193,8 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId) {
-        SourceDocumentProcessingStatistics s = this.sourceDocumentProcessingStatisticsDao.read(SourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId,processingJobId));
+    public void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId, final String processingJobId) {
+        SourceDocumentProcessingStatistics s = this.sourceDocumentProcessingStatisticsDao.read(SourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId, processingJobId));
         if (s != null) {
             this.sourceDocumentProcessingStatisticsDao.update(s.withActive(true), WriteConcern.NORMAL);
         }
@@ -209,8 +202,8 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId) {
-       return this.sourceDocumentProcessingStatisticsDao.read(SourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId,processingJobId));
+    public SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId, final String processingJobId) {
+        return this.sourceDocumentProcessingStatisticsDao.read(SourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId, processingJobId));
     }
 
 }
