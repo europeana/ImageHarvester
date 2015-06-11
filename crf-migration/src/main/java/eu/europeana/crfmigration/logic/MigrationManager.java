@@ -5,12 +5,14 @@ import com.mongodb.DBCursor;
 import eu.europeana.crfmigration.dao.MigratorEuropeanaDao;
 import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
+import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -24,7 +26,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class MigrationManager {
 
-    private static final Logger LOG = LogManager.getLogger(MigrationManager.class.getName());
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final MigratorEuropeanaDao migratorEuropeanaDao;
     private final MigratorHarvesterDao migratorHarvesterDao;
@@ -45,7 +47,8 @@ public class MigrationManager {
     }
 
     private void starMigration() {
-        LOG.info("start migration");
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                "Started migration process with minimum date filter {}", dateFilter);
         DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
 
         int positionInRecordCollection = 0;
@@ -64,7 +67,9 @@ public class MigrationManager {
                 migrateRecordsInSingleBatch(recordsRetrievedInBatch);
                 MigrationMetrics.Migrator.Overall.processedRecordsCount.inc(recordsRetrievedInBatch.size());
             } catch (Exception e) {
-                LOG.error("Error reading record after record: #" + positionInRecordCollection + "\n");
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                        "Error reading record after record: #" + positionInRecordCollection,e);
+
                 MigrationMetrics.Migrator.Batch.skippedBecauseOfErrorCounter.inc();
                 recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
                 recordCursor.skip(positionInRecordCollection);
@@ -73,7 +78,8 @@ public class MigrationManager {
                 totalTimerContext.stop();
             }
         }
-        LOG.info("finished migration");
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                "Finished migration process with minimum date filter {}", dateFilter);
     }
 
     private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
@@ -112,7 +118,8 @@ public class MigrationManager {
 
     private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects) {
         if (null == edmObjects || edmObjects.isEmpty()) {
-            LOG.error ("No jobs to save");
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+                    "No jobs to convert.");
             return new ArrayList<>();
         }
         final List<ProcessingJobTuple> results = new ArrayList();
@@ -124,11 +131,13 @@ public class MigrationManager {
                                 edmObject.getReferenceOwner().getRecordId(),
                                 edmObject.getReferenceOwner().getExecutionId(),
                                 edmObject.getEdmObject(), edmObject.getEdmHasViews(), edmObject.getEdmIsShownBy(), edmObject.getEdmIsShownAt()));
-            } catch (UnknownHostException e1) {
-                LOG.error("Exception caught during record processing: " + e1.getMessage(), e1);
+            } catch (UnknownHostException e) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+                        "Exception while converting record.",e);
                 MigrationMetrics.Migrator.Overall.invalidUrlCounter.inc();
-            } catch (MalformedURLException e1) {
-                LOG.error("Exception caught during record processing: " + e1.getMessage(), e1);
+            } catch (MalformedURLException e) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+                        "Exception while converting record.",e);
                 MigrationMetrics.Migrator.Overall.invalidUrlCounter.inc();
             }
         }

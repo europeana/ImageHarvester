@@ -3,6 +3,7 @@ package eu.europeana.crfmigration.dao;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.harvester.client.HarvesterClientConfig;
 import eu.europeana.harvester.client.HarvesterClientImpl;
 import eu.europeana.harvester.db.MorphiaDataStore;
@@ -11,6 +12,7 @@ import eu.europeana.harvester.domain.SourceDocumentReference;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.shared.utils.StringUtils;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -19,7 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 public class MigratorHarvesterDao {
-    private static final Logger LOG = LogManager.getLogger(MigratorHarvesterDao.class.getName());
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final HarvesterClientImpl harvesterClient;
 
@@ -48,23 +50,23 @@ public class MigratorHarvesterDao {
 
     public void saveSourceDocumentReferences(final List<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         try{
-            LOG.info("start saving sourceDocumentReferences");
             harvesterClient.createOrModifySourceDocumentReference(sourceDocumentReferences);
         }
         finally {
-            LOG.info ("saving sourceDocumentReferences is done");
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_HARVESTER),
+                    "Finished saving {} source document references", sourceDocumentReferences.size());
         }
     }
 
     public void saveProcessingJobs(final List<ProcessingJob> jobs) {
-        LOG.info ("saving created jobs");
         try {
             for (final ProcessingJob processingJob : jobs) {
                 harvesterClient.createOrModify(processingJob);
             }
         }
         finally {
-            LOG.info ("done saving jobs");
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_HARVESTER),
+                    "Finished saving {} jobs", jobs.size());
         }
     }
 

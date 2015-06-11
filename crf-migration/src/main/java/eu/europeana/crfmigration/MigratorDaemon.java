@@ -1,23 +1,25 @@
 package eu.europeana.crfmigration;
 
+import eu.europeana.crfmigration.logging.LoggingComponent;
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
 import org.apache.commons.daemon.DaemonInitException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 
 public class MigratorDaemon implements Daemon {
 
-    private static final Logger LOG = LogManager.getLogger(MigratorDaemon.class.getName());
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(MigratorDaemon.class.getName());
 
     private Migrator migrator;
 
     @Override
     public void init(DaemonContext daemonContext) throws DaemonInitException, Exception {
-        LOG.info("Initializing migrator");
 
         String[] args = daemonContext.getArguments();
 
@@ -27,8 +29,9 @@ public class MigratorDaemon implements Daemon {
             try {
                 dateFilter = ISODateTimeFormat.dateTime().parseDateTime(args[0]).toDate();
             } catch (Exception e) {
-                LOG.error("The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ ", e);
-                System.exit(-1);
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                        "The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ defaulting to begining of time", e);
+                dateFilter = DateTime.now().minusYears(20).toDate();
             }
         } else if (args.length > 1) {
             System.out.println("Too many arguments. Please provide only one !");
@@ -40,20 +43,17 @@ public class MigratorDaemon implements Daemon {
 
     @Override
     public void start() throws Exception {
-        LOG.info("Starting migrator");
-
         migrator.start();
     }
 
     @Override
     public void stop() throws Exception {
-        LOG.info("Stopping migrator");
-
         migrator.stop();
     }
 
     @Override
     public void destroy() {
-        LOG.info("Destroying migrator");
+
+
     }
 }

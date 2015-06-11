@@ -3,17 +3,17 @@ package eu.europeana.crfmigration.dao;
 import com.mongodb.*;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
 import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.crfmigration.logic.MigrationMetrics;
 import eu.europeana.harvester.domain.ReferenceOwner;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.maven.shared.utils.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.*;
 
 public class MigratorEuropeanaDao {
-    private static final Logger LOG = LogManager.getLogger(MigratorEuropeanaDao.class.getName());
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final MongoConfig mongoConfig;
     private final Mongo mongo;
@@ -56,7 +56,8 @@ public class MigratorEuropeanaDao {
 
         if (null != moreRecentThan) {
             filterByTimestampQuery.put("timestampUpdated", new BasicDBObject("$gt", moreRecentThan));
-            LOG.info("Query: " + filterByTimestampQuery);
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA),
+                    "Query: " + filterByTimestampQuery);
         }
 
         recordFields.put("about", 1);
@@ -80,7 +81,10 @@ public class MigratorEuropeanaDao {
 
             if (null == aggregation) {
                 MigrationMetrics.Migrator.Overall.invalidAggregationCounter.inc();
-                LOG.debug("Missing aggregation: /aggregation/provider" + record.getKey() + " at record: " + record.getKey() + "\n");
+
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,null,(String) aggregation.get("edmObject"), referenceOwner),
+                        "Missing aggregation: /aggregation/provider" + record.getKey());
+                /* It's consistent with business logic to log and continue as we want to ignore records that cannot be migrated. */
                 continue;
             }
 

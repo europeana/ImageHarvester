@@ -13,23 +13,22 @@ import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.GraphiteReporterConfig;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.crfmigration.logic.MigrationManager;
 import eu.europeana.crfmigration.logic.MigrationMetrics;
-import org.apache.logging.log4j.LogManager;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeUtils;
 import org.joda.time.format.ISODateTimeFormat;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 
 public class Migrator {
-    private static final org.apache.logging.log4j.Logger LOG = LogManager.getLogger(MigrationManager.class.getName());
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Migrator.class.getName());
     private final Date dateFilter;
 
     public Migrator(Date dateFilter) {
@@ -89,8 +88,6 @@ public class Migrator {
 
         graphiteReporter.start(30, TimeUnit.SECONDS);
 
-        // Prepare the LOG reporter
-        // TODO : This is probably not correct!
         final Slf4jReporter reporter = Slf4jReporter.forRegistry(MigrationMetrics.METRIC_REGISTRY)
                 .outputTo(org.slf4j.LoggerFactory.getLogger(LOG.getName()))
                 .convertRatesTo(TimeUnit.SECONDS)
@@ -119,7 +116,6 @@ public class Migrator {
     }
 
     public static void main(String[] args) throws IOException {
-        LOG.info("Initializing migrator");
 
         Date dateFilter = null;
 
@@ -127,7 +123,8 @@ public class Migrator {
             try {
                 dateFilter = ISODateTimeFormat.dateTime().parseDateTime(args[0]).toDate();
             } catch (Exception e) {
-                LOG.error("The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ defaulting to begining of time", e);
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                        "The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ defaulting to begining of time", e);
                 dateFilter = DateTime.now().minusYears(20).toDate();
             }
         } else if (args.length > 1) {
