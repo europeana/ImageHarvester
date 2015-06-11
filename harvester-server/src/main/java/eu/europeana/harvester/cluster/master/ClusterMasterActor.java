@@ -10,8 +10,6 @@ import akka.cluster.ClusterEvent.MemberEvent;
 import akka.cluster.ClusterEvent.MemberRemoved;
 import akka.cluster.ClusterEvent.MemberUp;
 import akka.cluster.ClusterEvent.UnreachableMember;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import akka.remote.AssociatedEvent;
 import akka.remote.DisassociatedEvent;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
@@ -30,7 +28,10 @@ import org.slf4j.LoggerFactory;
 import scala.Option;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ClusterMasterActor extends UntypedActor {
@@ -139,7 +140,7 @@ public class ClusterMasterActor extends UntypedActor {
                               final DefaultLimits defaultLimits,
                               final Integer cleanupInterval
                               ) {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor constructor");
 
         this.ipExceptions = ipExceptions;
@@ -159,7 +160,7 @@ public class ClusterMasterActor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor prestart");
 
         accountantActor = getContext().system().actorOf(Props.create(AccountantMasterActor.class), "accountant");
@@ -189,7 +190,7 @@ public class ClusterMasterActor extends UntypedActor {
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor prestart");
         getContext().system().stop(jobSenderActor);
         getContext().system().stop(jobLoaderActor);
@@ -200,7 +201,7 @@ public class ClusterMasterActor extends UntypedActor {
     @Override
     public void postRestart(Throwable reason) throws Exception {
         super.postRestart(reason);
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor poststart");
 
         getSelf().tell(new LoadJobs(), ActorRef.noSender());
@@ -242,14 +243,14 @@ public class ClusterMasterActor extends UntypedActor {
         // cluster events
         if (message instanceof MemberUp) {
             final MemberUp mUp = (MemberUp) message;
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                     "Member is Up: {}", mUp.member());
 
             return;
         }
         if (message instanceof UnreachableMember) {
             final UnreachableMember mUnreachable = (UnreachableMember) message;
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+            LOG.info(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
                     "Member detected as Unreachable: {}", mUnreachable.member());
 
             return;
@@ -257,14 +258,14 @@ public class ClusterMasterActor extends UntypedActor {
         if (message instanceof AssociatedEvent) {
             final AssociatedEvent associatedEvent = (AssociatedEvent) message;
 
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+            LOG.info(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
                     "Member associated: {}", associatedEvent.remoteAddress());
 
             return;
         }
         if (message instanceof DisassociatedEvent) {
             final DisassociatedEvent disassociatedEvent = (DisassociatedEvent) message;
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                     "Member disassociated: {}", disassociatedEvent.remoteAddress());
 
             //recoverTasks(disassociatedEvent.remoteAddress());
@@ -272,7 +273,7 @@ public class ClusterMasterActor extends UntypedActor {
         }
         if (message instanceof MemberRemoved) {
             final MemberRemoved mRemoved = (MemberRemoved) message;
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                     "Member is Removed: {}", mRemoved.member());
 
             //recoverTasks(mRemoved.member().address());
@@ -290,7 +291,7 @@ public class ClusterMasterActor extends UntypedActor {
             throw new NotImplementedException();
         }
         if(message instanceof Clean) {
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                     "Cleaning up ClusterMasterActor and its slaves.");
 
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,

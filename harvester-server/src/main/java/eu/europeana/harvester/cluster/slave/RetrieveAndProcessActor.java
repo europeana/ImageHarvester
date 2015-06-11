@@ -16,7 +16,6 @@ import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExt
 import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.LogMarker;
 import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
@@ -31,7 +30,6 @@ import scala.concurrent.duration.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static net.logstash.logback.marker.Markers.append;
 
 /**
  * This actor is the actual worker actor.
@@ -87,7 +85,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
 
     public void notifyMeOnOpen() {
-        LOG.warn(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+        LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                 "The slave processing circuit breaker is now open, and will not close for one minute. Slave worker suicides now with poison pill.");
         SlaveMetrics.Worker.Slave.forcedSelfDestructCounter.inc();
         getSelf().tell(PoisonPill.getInstance(), ActorRef.noSender());
@@ -140,17 +138,17 @@ public class RetrieveAndProcessActor extends UntypedActor {
             if (response != null) {
                 doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == RetrievingState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
                         response, task.getDocumentReferenceTask(), task.getIpAddress());
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                         "Retrieval url finished with success and the temporary file is stored on disk at {}", taskWithProcessingConfig.getDownloadPath());
             } else {
-                LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                         "Retrieval url failed in an unexpected way. This might be a bug in harvester slave code.");
             }
 
         } catch (Exception e) {
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), ProcessingState.ERROR,
                     response, task.getDocumentReferenceTask(), task.getIpAddress());
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                     "Exception during retrieval. The http retrieve response could not be created. Probable cause : wrong configuration argument in the slave.", e);
         } finally {
             downloadTimerContext.stop();
@@ -172,7 +170,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                         processingResultTuple.getMediaMetaInfoTuple().getTextMetaInfo());
 
             } catch (Exception e) {
-                LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                         "Exception during processing. :  "+e.getLocalizedMessage(), e);
 
                 doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
@@ -185,7 +183,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
             }
         } else {
             // We can skip processing altogether.
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                     "Processing stage skipped because retrieval involved only link checking or finished with non-complete state : "+response.getState()+" and reason "+response.getLog());
 
             doneProcessingMessage = new DoneProcessing(doneDownloadMessage,

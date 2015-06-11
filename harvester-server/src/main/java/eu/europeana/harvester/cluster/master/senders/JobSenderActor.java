@@ -3,8 +3,6 @@ package eu.europeana.harvester.cluster.master.senders;
 import akka.actor.ActorRef;
 import akka.actor.UnhandledMessage;
 import akka.actor.UntypedActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.Clean;
@@ -77,7 +75,7 @@ public class JobSenderActor extends UntypedActor {
                           final Integer cleanupInterval, final ActorRef jobLoaderActor,
                           final  ActorRef accountantActor, final ActorRef receiverActor
     ) {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
                 "JobSenderActor constructor");
 
         this.ipExceptions = ipExceptions;
@@ -112,7 +110,7 @@ public class JobSenderActor extends UntypedActor {
 
 
         if(message instanceof Clean) {
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
                     "Cleaning up ClusterMasterActor and its slaves.");
 
             getContext().system().scheduler().scheduleOnce(Duration.create(cleanupInterval,

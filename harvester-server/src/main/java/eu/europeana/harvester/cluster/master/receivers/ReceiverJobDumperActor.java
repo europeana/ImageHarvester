@@ -56,7 +56,7 @@ public class ReceiverJobDumperActor extends UntypedActor {
     public ReceiverJobDumperActor(final ClusterMasterConfig clusterMasterConfig,
                                   final ActorRef accountantActor,
                                   final ProcessingJobDao processingJobDao){
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverJobDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
@@ -91,7 +91,7 @@ public class ReceiverJobDumperActor extends UntypedActor {
         try {
             taskStates = (List<TaskState>) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                     "Error at markDone->GetTaskStatesPerJob.", e);
             // TODO : Investigate if it make sense to hide the exception here.
         }
@@ -101,7 +101,7 @@ public class ReceiverJobDumperActor extends UntypedActor {
         try {
             retrieveUrl = (RetrieveUrl) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                     "Error at markDone->GetTask", e);
             // TODO : Investigate if it make sense to hide the exception here.
 

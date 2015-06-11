@@ -91,7 +91,7 @@ public class AccountantTaskPerIPActor extends UntypedActor {
             }
 
             if (message instanceof Clean) {
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                         "Clean maps Tasks/IP accountant actor");
 
                 tasksPerIP.clear();
@@ -102,7 +102,7 @@ public class AccountantTaskPerIPActor extends UntypedActor {
 
         } catch (Exception e) {
 
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                     "While cleaning maps Tasks/IP accountant actor", e);
         }
     }
@@ -113,7 +113,7 @@ public class AccountantTaskPerIPActor extends UntypedActor {
             if (IPsToCheck.contains(task.getKey()) && !checkTaskStates(task.getValue())) {
                 String IP = task.getKey();
                 tasksPerIP.remove(IP);
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                         "Removing IP {} from monitored for tasks ", IP);
             }
         }
@@ -179,11 +179,11 @@ public class AccountantTaskPerIPActor extends UntypedActor {
             if (processing != 0) {
                 ipsProcessing += 1;
             }
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                     "TASKS PER IP stat : " + task.getKey() + " : ready: " + ready + ", downloading: " + downloading + ", processing: " + processing);
 
         }
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                 "IPS without loaded tasks: " + ipsWithoutLoadedTasks + " | IPS downloading tasks: " + ipsDownloading + "IPS processing tasks: " + ipsProcessing + " | Number of IPs: " + tasksPerIP.size());
 
     }
@@ -210,7 +210,7 @@ public class AccountantTaskPerIPActor extends UntypedActor {
 
 
         }
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                 "Found {} IPs that are overloaded", IPs.size());
 
         return IPs;
@@ -231,7 +231,7 @@ public class AccountantTaskPerIPActor extends UntypedActor {
             try {
                 taskState = (TaskState) Await.result(future, timeout.duration());
             } catch (Exception e) {
-                LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                         "Exception while checking task states ", e);
 
             }
@@ -259,7 +259,7 @@ public class AccountantTaskPerIPActor extends UntypedActor {
         try {
             taskState = (TaskState) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                     "Exception while getting task state ", e);
         }
 

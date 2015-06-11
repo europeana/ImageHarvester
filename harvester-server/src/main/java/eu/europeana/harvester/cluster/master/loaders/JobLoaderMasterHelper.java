@@ -29,7 +29,7 @@ public class JobLoaderMasterHelper  {
 
 
     public static Map<String, Integer> getIPDistribution( MachineResourceReferenceDao machineResourceReferenceDao, Logger LOG ) {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "Trying to load the IP distribution...");
 
         Page pg = new Page(0, 100000);
@@ -72,7 +72,7 @@ public class JobLoaderMasterHelper  {
      */
     private static void checkForPausedJobs( ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao, ActorRef accountantActor,
                                             Logger LOG  ) {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "Looking for paused job in database to resume");
         final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
         final List<ProcessingJob> all = processingJobDao.getJobsWithState(JobState.PAUSE, page);
@@ -92,7 +92,7 @@ public class JobLoaderMasterHelper  {
     private static void checkForResumedJobs(ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao,
                                      SourceDocumentReferenceDao sourceDocumentReferenceDao, SourceDocumentProcessingStatisticsDao sourceDocumentProcessingDao,
                                      ActorRef accountantActor, Logger LOG) {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "Looking for resumed job in database to resume");
         final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
         final List<ProcessingJob> all = processingJobDao.getJobsWithState(JobState.RESUME, page);
@@ -123,7 +123,7 @@ public class JobLoaderMasterHelper  {
             try {
                 isLoaded = (Boolean) Await.result(future, timeout.duration());
             } catch (Exception e) {
-                LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                         "Error in checkForResumedJobs->IsJobLoaded",e);
             }
 
@@ -157,7 +157,7 @@ public class JobLoaderMasterHelper  {
         }
 
         if (tasks.size() > 10)
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
         accountantActor.tell(new AddTasksToJob(job.getId(), taskIDs), ActorRef.noSender() );
@@ -192,7 +192,7 @@ public class JobLoaderMasterHelper  {
         try {
             tasksFromIP = (List<String>) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Error in processTask->GetTasksFromIP",e);
         }
 
@@ -247,7 +247,7 @@ public class JobLoaderMasterHelper  {
      */
     public static void checkForAbandonedJobs(ProcessingJobDao processingJobDao, ClusterMasterConfig clusterMasterConfig,
                                              Logger LOG ) {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "Checking for abandoned jobs in database");
         final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
         List<ProcessingJob> all;
@@ -269,7 +269,7 @@ public class JobLoaderMasterHelper  {
             }
         } while (all.size() != 0);
 
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "Done with checking for abandoned jobs in database");
     }
 

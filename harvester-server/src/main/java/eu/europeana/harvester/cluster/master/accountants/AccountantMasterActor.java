@@ -158,7 +158,7 @@ public class AccountantMasterActor extends UntypedActor {
                 return;
             }
         } catch(Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                     "General exception in accountant actor.", e);
             // TODO : Evaluate if it is acceptable to hide the exception here.;
         }

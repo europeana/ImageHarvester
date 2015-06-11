@@ -84,7 +84,7 @@ public class NodeMasterActor extends UntypedActor {
                            final NodeMasterConfig nodeMasterConfig,
                            final MediaStorageClient mediaStorageClient
                            ) {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                 "Slave master constructed.");
 
         this.masterSender = masterSender;
@@ -101,7 +101,7 @@ public class NodeMasterActor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                 "Slave master preStart.");
 
         lastRequest = 0l;
@@ -118,14 +118,14 @@ public class NodeMasterActor extends UntypedActor {
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                 "Slave master preStart.");
     }
 
     @Override
     public void postRestart(Throwable reason) throws Exception {
         super.postRestart(reason);
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                 "Slave master postStart.");
 
         sentRequest = false;
@@ -180,7 +180,7 @@ public class NodeMasterActor extends UntypedActor {
         ActorRef which = t.getActor();
         removeActorFromReferenceArray(which);
 
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                 "Slave master received worker termination message. Worker Actor {} terminated. Master stats : Messages {}. All ProcessorActors {}. ",t.getActor(),messages.size(),actors.size());
 
         if (actors.size()<maxSlaves){
@@ -196,7 +196,7 @@ public class NodeMasterActor extends UntypedActor {
                         );
                 addActorToReferenceArray(newActor);
                 context().watch(newActor);
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                         "Slave master starting new Worker Actor {} ",newActor);
                 newActor.tell(msg, getSelf());
             }
@@ -224,7 +224,7 @@ public class NodeMasterActor extends UntypedActor {
 
                 if(msg != null) {
                     RetrieveUrlWithProcessingConfig tst = (RetrieveUrlWithProcessingConfig) msg;
-                    LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                             "Slave master starting new Worker Actor for url {} ",tst.getRetrieveUrl().getUrl());
 
                     ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
@@ -248,12 +248,12 @@ public class NodeMasterActor extends UntypedActor {
                 masterSender.tell(new RequestTasks(), nodeSupervisor);
                 sentRequest = true;
                 lastRequest = System.currentTimeMillis();
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                         "Slave master requesting tasks from node supervisor ");
             }
         }
         else if(!sentRequest && masterSender != null && messages.size() < nodeMasterConfig.getTaskNrLimit()) {
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                     "Slave master sent request for tasks ");
 
             masterSender.tell(new RequestTasks(), nodeSupervisor);
@@ -268,10 +268,10 @@ public class NodeMasterActor extends UntypedActor {
                     //self().tell(new RequestTasks(), ActorRef.noSender());
                     masterSender.tell(new RequestTasks(), nodeSupervisor);
                     lastRequest = System.currentTimeMillis();
-                    LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                             "Slave master requesting tasks time difference ");
                 } else {
-                    LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                             "No request: " + messages.size() + " " + sentRequest + " task limits: "+
                                     nodeMasterConfig.getTaskNrLimit()+" time diff : " +diff);
                 }
@@ -290,7 +290,7 @@ public class NodeMasterActor extends UntypedActor {
             if((DocumentReferenceTaskType.CHECK_LINK).equals(doneDownload.getDocumentReferenceTask().getTaskType()) ||
                     (ProcessingState.ERROR).equals(doneDownload.getProcessingState())) {
 
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                         "Slave sending DoneDownload message for job {} and task {}", doneDownload.getJobId(), doneDownload.getTaskID());
 
                 masterReceiver.tell(new DoneProcessing(doneDownload, null, null, null, null), getSelf());
@@ -312,7 +312,7 @@ public class NodeMasterActor extends UntypedActor {
         if(!jobsToStop.contains(jobId)) {
             masterReceiver.tell(message, getSelf());
 
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                     "Slave sending DoneProcessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
         }
 
@@ -321,7 +321,7 @@ public class NodeMasterActor extends UntypedActor {
     }
 
     private void onCleanReceived() {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                 "Cleaning up slave");
 
         context().system().stop(getSelf());
@@ -333,7 +333,7 @@ public class NodeMasterActor extends UntypedActor {
 
     private void onChangeJobStateReceived(ChangeJobState message) {
         final ChangeJobState changeJobState = message;
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.MASTER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                 "Changing job state to: {}", changeJobState.getNewState());
 
         switch (changeJobState.getNewState()) {

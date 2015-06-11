@@ -1,7 +1,6 @@
 package eu.europeana.harvester.cluster.master.senders;
 
 import akka.actor.ActorRef;
-import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
@@ -40,7 +39,7 @@ public class JobSenderHelper  {
         try {
             percentage = (Double) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
                     "Exception while responding to get tasks request",e);
 
             percentage = 0.0;
@@ -52,7 +51,7 @@ public class JobSenderHelper  {
         final BagOfTasks bagOfTasks = new BagOfTasks(tasksToSend);
         sender.tell(bagOfTasks, receiverActor);
 
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
                 "Percentage of IPs which has loaded requests: {}% load when it's below: {}",
                 percentage, defaultLimits.getMinTasksPerIPPercentage());
 
@@ -85,7 +84,7 @@ public class JobSenderHelper  {
                 try {
                     tasksFromIP = (List<String>) Await.result(future, timeout.duration());
                 } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
                             "Error at startTasks->getTasksFromIP.", e);
 
                     continue;
@@ -146,7 +145,7 @@ public class JobSenderHelper  {
                 try {
                     retrieveUrl = (RetrieveUrl) Await.result(future, timeout.duration());
                 } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
                             "Error at startOneDownload -> getTask", e);
 
                 }

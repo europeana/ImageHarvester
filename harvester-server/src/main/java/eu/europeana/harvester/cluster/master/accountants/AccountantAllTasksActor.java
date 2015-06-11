@@ -125,7 +125,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 try {
                     tasksFromIP = (List<String>) Await.result(future, timeout.duration());
                 } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                             "Error while waiting to receive tasks per IP.",e);
                     // TODO : Evaluate if it is acceptable to hide the exception here.
                 }
@@ -184,7 +184,7 @@ public class AccountantAllTasksActor extends UntypedActor {
 
 
             if (message instanceof Clean) {
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                         "Clean maps accountant actor");
                 allTasks.clear();
 
@@ -192,7 +192,7 @@ public class AccountantAllTasksActor extends UntypedActor {
             }
 
             if (message instanceof CleanUp) {
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                         "Clean old entries with processing or downloading state accountant actor");
 
                 cleanTasks();
@@ -239,7 +239,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 try {
                     tasksFromIP = (List<String>) Await.result(future, timeout.duration());
                 } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                             "Exception while waiting for answer for getting tasks per IP.", e);
                     // TODO : Evaluate if it is acceptable to hide the exception here.
                 }
@@ -287,7 +287,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                     getSender().tell(retrieveUrl, getSelf());
                     return;
                 } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                             "Exception related to GetRetrieveUrl.", e);
                     getSender().tell(retrieveUrl, getSelf());
 
@@ -295,7 +295,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 }
             }
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_ACCOUNTANT),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                     "General exception in accountant actor.", e);
             // TODO : Evaluate if it is acceptable to hide the exception here.;
         }

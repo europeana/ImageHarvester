@@ -104,7 +104,7 @@ public class JobLoaderMasterActor extends UntypedActor {
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
                                 final DefaultLimits defaultLimits,
                                 final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions) {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "The loader master is constructed");
 
         this.receiverActor = receiverActor;
@@ -140,12 +140,12 @@ public class JobLoaderMasterActor extends UntypedActor {
                     loaderActor.tell(message, ActorRef.noSender());
 
                 } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                             "Exception while loading jobs", e);
                 }
 
             } else
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                         "Job loader still working");
 
             return;
@@ -158,7 +158,7 @@ public class JobLoaderMasterActor extends UntypedActor {
                     TimeUnit.MINUTES), getSelf(), new LookInDB(), getContext().system().dispatcher(), getSelf());
         }
         if (message instanceof Clean) {
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Clean JobLoaderMasterActor");
 
             JobLoaderMasterHelper.checkForAbandonedJobs(processingJobDao, clusterMasterConfig, LOG);

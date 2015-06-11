@@ -2,7 +2,6 @@ package eu.europeana.harvester.logging;
 
 import eu.europeana.harvester.domain.LogMarker;
 import eu.europeana.harvester.domain.ReferenceOwner;
-import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,11 +30,11 @@ public class LoggingComponent {
     }
 
 
-    public static final net.logstash.logback.marker.MapEntriesAppendingMarker appendAppFields(final Logger LOG, final String appComponent) {
-        return appendAppFields(LOG, appComponent, null, null, null);
+    public static final net.logstash.logback.marker.MapEntriesAppendingMarker appendAppFields(final String appComponent) {
+        return appendAppFields(appComponent, null, null, null);
     }
 
-    public static final net.logstash.logback.marker.MapEntriesAppendingMarker appendAppFields(final Logger LOG, final String appComponent, final String jobId, final String url, final ReferenceOwner referenceOwner) {
+    public static final net.logstash.logback.marker.MapEntriesAppendingMarker appendAppFields(final String appComponent, final String jobId, final String url, final ReferenceOwner referenceOwner) {
 
         final Map<String, String> map = new HashMap<String, String>();
         if (referenceOwner != null) map.put(LogMarker.EUROPEANA_PROVIDER_ID, referenceOwner.getProviderId());

@@ -52,7 +52,7 @@ public class JobLoaderExecutorHelper  {
             }
 
 
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "#IPs with tasks: temp "+tempDistribution.size()+", all: "+ipDistribution.size());
 
             final Timer.Context loadJobTasksFromDBDuration = MasterMetrics.Master.loadJobTasksFromDBDuration.time();
@@ -61,7 +61,7 @@ public class JobLoaderExecutorHelper  {
                     processingJobDao.getDiffusedJobsWithState(JobState.READY, page, tempDistribution, ipsWithJobs);
             loadJobTasksFromDBDuration.stop();
 
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Done with loading jobs. Creating tasks from "+all.size()+" jobs.");
 
             final Timer.Context loadJobResourcesFromDBDuration = MasterMetrics.Master.loadJobResourcesFromDBDuration.time();
@@ -83,7 +83,7 @@ public class JobLoaderExecutorHelper  {
             }
             loadJobResourcesFromDBDuration.stop();
 
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Done with loading {} resources.",resources.size());
 
             int i = 0;
@@ -92,7 +92,7 @@ public class JobLoaderExecutorHelper  {
 
                     i++;
                     if (i >= 500) {
-                        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                                 "Done with another 500 jobs out of {}", all.size());
                         i = 0;
                     }
@@ -100,11 +100,11 @@ public class JobLoaderExecutorHelper  {
                             accountantActor, LOG);
 
                 } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                             "JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());
                 }
             }
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Checking IPs with no jobs in database");
 
             ArrayList<String> noJobsIPs = new ArrayList<>();
@@ -114,7 +114,7 @@ public class JobLoaderExecutorHelper  {
                 if (!entry.getValue()) {
                     noJobsIPs.add(entry.getKey());
                     ipDistribution.remove(entry.getKey());
-                    LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                             "Found IP with no loaded tasks from DB: {}, removing it from IP distribution", entry.getKey());
 
                     for (MachineResourceReference machine : ips) {
@@ -135,7 +135,7 @@ public class JobLoaderExecutorHelper  {
             }
 
             if (noJobsIPs.size() > 0) {
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                         "Found {} IPs with no jobs loaded from the database, removing them if no jobs in progress", noJobsIPs.size());
 
                 accountantActor.tell(new CleanIPs(noJobsIPs), ActorRef.noSender());
@@ -152,7 +152,7 @@ public class JobLoaderExecutorHelper  {
         try {
             tasks = (int) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Exception while getting all tasks", e);
         }
 
@@ -166,7 +166,7 @@ public class JobLoaderExecutorHelper  {
         try {
             ips = (ArrayList<String>) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "OverloadedIPs", e);
         }
 
@@ -197,7 +197,7 @@ public class JobLoaderExecutorHelper  {
         }
 
         if (tasks.size() > 10)
-            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
         accountantActor.tell(new AddTasksToJob(job.getId(), taskIDs), ActorRef.noSender());
@@ -233,7 +233,7 @@ public class JobLoaderExecutorHelper  {
         try {
             tasksFromIP = (List<String>) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+            LOG.error(LoggingComponent.appendAppFields( LoggingComponent.Master.TASKS_LOADER),
                     "Error in processTask->GetTasksFromIP", e);
         }
 

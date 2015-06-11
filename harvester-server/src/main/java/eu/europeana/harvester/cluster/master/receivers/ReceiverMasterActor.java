@@ -4,8 +4,6 @@ import akka.actor.ActorRef;
 import akka.actor.Address;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
@@ -103,7 +101,7 @@ public class ReceiverMasterActor extends UntypedActor {
                                final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao
                                ){
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverMasterActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
@@ -121,7 +119,7 @@ public class ReceiverMasterActor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverMasterActor prestart");
 
         receiverJobDumper = getContext().system().actorOf(Props.create(ReceiverJobDumperActor.class, clusterMasterConfig,
@@ -140,7 +138,7 @@ public class ReceiverMasterActor extends UntypedActor {
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverMasterActor prestart");
 
         getContext().system().stop(receiverJobDumper);
@@ -259,7 +257,7 @@ public class ReceiverMasterActor extends UntypedActor {
             }
 
             if ( counter+100 < success + error) {
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                         "Finished 100+ tasks with success: {}, with error: {}", success, error);
 
                 counter = success+error;

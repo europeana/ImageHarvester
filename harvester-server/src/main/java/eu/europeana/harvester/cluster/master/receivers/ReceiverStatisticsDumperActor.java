@@ -1,8 +1,6 @@
 package eu.europeana.harvester.cluster.master.receivers;
 
 import akka.actor.UntypedActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
@@ -41,7 +39,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
     public ReceiverStatisticsDumperActor(final ClusterMasterConfig clusterMasterConfig,
                                          final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                          final SourceDocumentReferenceDao sourceDocumentReferenceDao){
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverStatisticsDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;

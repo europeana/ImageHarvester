@@ -2,8 +2,6 @@ package eu.europeana.harvester.cluster.master.receivers;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
@@ -49,7 +47,7 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
                                        final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                        final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao){
 
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverMetaInfoDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
@@ -96,7 +94,7 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
         try {
             documentReference = (ProcessingJobTaskDocumentReference) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                     "Error at saveMetaInfo->GetConcreteTask", e);
         }
 

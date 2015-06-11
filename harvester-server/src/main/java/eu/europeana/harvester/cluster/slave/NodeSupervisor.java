@@ -65,7 +65,7 @@ public class NodeSupervisor extends UntypedActor {
     public NodeSupervisor(final Slave slave, final ActorRef masterSender,
                           final NodeMasterConfig nodeMasterConfig, final MediaStorageClient mediaStorageClient, MetricRegistry metrics) {
 
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Slave supervisor constructed.");
 
         this.slave = slave;
@@ -80,7 +80,7 @@ public class NodeSupervisor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Slave supervisor pre starting.");
 
         nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(), nodeMasterConfig, mediaStorageClient);
@@ -134,7 +134,7 @@ public class NodeSupervisor extends UntypedActor {
 
     private void onMemberUpReceived(ClusterEvent.MemberUp message) {
         ClusterEvent.MemberUp mUp = message;
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Cluster member is up : {} ", mUp.member());
 
         memberups++;
@@ -143,24 +143,24 @@ public class NodeSupervisor extends UntypedActor {
     }
 
     private void onAssociatedEventReceived() {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Associated and requesting tasks ");
     }
 
     private void onDissasociatedEventReceived(DisassociatedEvent message) throws Exception {
         final DisassociatedEvent disassociatedEvent = message;
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Member disassociated: {}", disassociatedEvent.remoteAddress());
 
         // if it's the master, restart
         if (disassociatedEvent.getLocalAddress() == disassociatedEvent.getRemoteAddress()) {
             try {
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                         "Master {} disassociated. Waiting 30 secs.", disassociatedEvent.remoteAddress());
                 Thread.sleep(300000);
 
             } catch (InterruptedException e) {
-                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                         "Master {} disassociated. Interrupted while waiting 30 secs.", e);
             }
 
@@ -169,7 +169,7 @@ public class NodeSupervisor extends UntypedActor {
     }
 
     private void onSlaveHeartBeatReceived() {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Received slave heartbeat");
         missedHeartbeats = 0;
     }
@@ -179,7 +179,7 @@ public class NodeSupervisor extends UntypedActor {
         nodeMaster.tell(new RequestTasks(), getSelf());
 
         if (missedHeartbeats >= 3) {
-            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                     "Slave hasn't responded to the heartbeat 3 consecutive times. It will be restarted.");
             missedHeartbeats = 0;
 
@@ -194,7 +194,7 @@ public class NodeSupervisor extends UntypedActor {
     }
 
     private void onTerminatedReceived(Terminated message) {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Preparing to restart the slave master");
         final Terminated t = message;
         if (t.getActor() == nodeMaster) {
@@ -215,7 +215,7 @@ public class NodeSupervisor extends UntypedActor {
     }
 
     private void restartNodeMaster() {
-        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SUPERVISOR),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Slave master restarting started.");
 
         nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(),
