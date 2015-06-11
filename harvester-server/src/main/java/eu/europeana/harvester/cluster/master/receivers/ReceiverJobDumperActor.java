@@ -2,8 +2,6 @@ package eu.europeana.harvester.cluster.master.receivers;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
@@ -13,7 +11,7 @@ import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.GetTask;
 import eu.europeana.harvester.cluster.domain.messages.inner.GetTaskStatesPerJob;
 import eu.europeana.harvester.cluster.domain.messages.inner.RemoveJob;
-import eu.europeana.harvester.db.ProcessingJobDao;
+import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.logging.LoggingComponent;

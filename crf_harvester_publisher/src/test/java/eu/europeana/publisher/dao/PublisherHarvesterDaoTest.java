@@ -2,7 +2,7 @@ package eu.europeana.publisher.dao;
 
 import com.google.code.morphia.Morphia;
 import com.mongodb.DBCursor;
-import eu.europeana.harvester.db.WebResourceMetaInfoDao;
+import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 import eu.europeana.publisher.domain.PublisherConfig;

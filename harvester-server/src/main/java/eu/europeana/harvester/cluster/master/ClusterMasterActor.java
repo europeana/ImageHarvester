@@ -20,7 +20,7 @@ import eu.europeana.harvester.cluster.master.accountants.AccountantMasterActor;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
 import eu.europeana.harvester.cluster.master.senders.JobSenderActor;
-import eu.europeana.harvester.db.*;
+import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;

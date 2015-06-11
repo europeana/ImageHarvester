@@ -4,7 +4,7 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
-import eu.europeana.harvester.db.ProcessingJobDao;
+import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

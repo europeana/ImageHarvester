@@ -1,4 +1,4 @@
-package eu.europeana.harvester.db;
+package eu.europeana.harvester.db.interfaces;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;

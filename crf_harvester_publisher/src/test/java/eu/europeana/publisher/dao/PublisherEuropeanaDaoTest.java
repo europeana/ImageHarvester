@@ -5,7 +5,7 @@ import com.google.code.morphia.Morphia;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
-import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.publisher.domain.PublisherConfig;

@@ -7,7 +7,7 @@ import com.mongodb.WriteConcern;
 import eu.europeana.harvester.client.HarvesterClient;
 import eu.europeana.harvester.client.HarvesterClientConfig;
 import eu.europeana.harvester.client.HarvesterClientImpl;
-import eu.europeana.harvester.db.*;
+import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
 import org.junit.After;

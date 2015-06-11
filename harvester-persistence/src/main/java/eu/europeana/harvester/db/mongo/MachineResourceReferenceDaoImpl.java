@@ -4,7 +4,7 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
-import eu.europeana.harvester.db.MachineResourceReferenceDao;
+import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
 import eu.europeana.harvester.domain.MachineResourceReference;
 import eu.europeana.harvester.domain.Page;
 

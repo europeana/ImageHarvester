@@ -4,7 +4,7 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
-import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 
 import java.util.ArrayList;

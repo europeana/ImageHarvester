@@ -1,7 +1,6 @@
 package eu.europeana.harvester.cluster.master.loaders;
 
 import akka.actor.ActorRef;
-import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import com.codahale.metrics.Timer;
@@ -11,14 +10,13 @@ import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
 import eu.europeana.harvester.cluster.master.MasterMetrics;
-import eu.europeana.harvester.db.MachineResourceReferenceDao;
-import eu.europeana.harvester.db.ProcessingJobDao;
-import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.db.SourceDocumentReferenceDao;
+import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
+import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 

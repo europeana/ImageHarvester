@@ -4,7 +4,7 @@ import com.drew.lang.annotations.NotNull;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.*;
-import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.publisher.domain.DocumentStatistic;

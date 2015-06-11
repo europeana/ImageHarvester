@@ -2,6 +2,7 @@ package eu.europeana.harvester.client;
 
 import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.*;
+import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;

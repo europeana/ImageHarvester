@@ -7,7 +7,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
-import eu.europeana.harvester.db.SourceDocumentReferenceDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 
 import java.util.ArrayList;

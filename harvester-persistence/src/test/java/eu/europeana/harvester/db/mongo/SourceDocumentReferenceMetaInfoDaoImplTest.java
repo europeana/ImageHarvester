@@ -4,7 +4,7 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
-import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.domain.ImageMetaInfo;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import org.apache.logging.log4j.LogManager;
@@ -15,7 +15,6 @@ import org.unitils.reflectionassert.ReflectionAssert;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 

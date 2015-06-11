@@ -6,10 +6,10 @@ import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.LoadJobs;
 import eu.europeana.harvester.cluster.master.MasterMetrics;
-import eu.europeana.harvester.db.MachineResourceReferenceDao;
-import eu.europeana.harvester.db.ProcessingJobDao;
-import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.db.SourceDocumentReferenceDao;
+import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
+import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +123,7 @@ public class JobLoaderExecutorActor extends UntypedActor {
 
             } catch (Exception e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                        "Exception while loading jobs",e);
+                        "Exception while loading jobs", e);
             }
             context.stop();
             self().tell(PoisonPill.getInstance(), ActorRef.noSender());

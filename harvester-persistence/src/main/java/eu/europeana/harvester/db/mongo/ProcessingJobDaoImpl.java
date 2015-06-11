@@ -3,7 +3,7 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.mongodb.*;
-import eu.europeana.harvester.db.ProcessingJobDao;
+import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.Page;
 import eu.europeana.harvester.domain.ProcessingJob;
