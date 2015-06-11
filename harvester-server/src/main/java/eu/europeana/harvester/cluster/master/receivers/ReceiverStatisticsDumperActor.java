@@ -9,12 +9,15 @@ import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 import eu.europeana.harvester.domain.SourceDocumentReference;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 
 public class ReceiverStatisticsDumperActor extends UntypedActor {
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * Contains all the configuration needed by this actor.
@@ -38,7 +41,8 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
     public ReceiverStatisticsDumperActor(final ClusterMasterConfig clusterMasterConfig,
                                          final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                          final SourceDocumentReferenceDao sourceDocumentReferenceDao){
-        LOG.info("ReceiverStatisticsDumperActor constructor");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                "ReceiverStatisticsDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;

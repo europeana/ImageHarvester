@@ -15,6 +15,9 @@ import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -23,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ReceiverMetaInfoDumperActor extends UntypedActor {
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * Contains all the configuration needed by this actor.
@@ -45,7 +48,9 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
                                        final ActorRef accountantActor,
                                        final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                        final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao){
-        LOG.info("ReceiverMetaInfoDumperActor constructor");
+
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                "ReceiverMetaInfoDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
@@ -91,7 +96,8 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
         try {
             documentReference = (ProcessingJobTaskDocumentReference) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("Error at saveMetaInfo->GetConcreteTask: {}", e);
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                    "Error at saveMetaInfo->GetConcreteTask", e);
         }
 
         if(documentReference == null || documentReference.getSourceDocumentReferenceID().equals("")) {

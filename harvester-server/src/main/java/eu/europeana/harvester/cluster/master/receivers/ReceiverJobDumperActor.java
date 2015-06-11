@@ -16,6 +16,9 @@ import eu.europeana.harvester.cluster.domain.messages.inner.RemoveJob;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -26,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ReceiverJobDumperActor extends UntypedActor {
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * Contains all the configuration needed by this actor.
@@ -53,7 +56,8 @@ public class ReceiverJobDumperActor extends UntypedActor {
     public ReceiverJobDumperActor(final ClusterMasterConfig clusterMasterConfig,
                                   final ActorRef accountantActor,
                                   final ProcessingJobDao processingJobDao){
-        LOG.info("ReceiverJobDumperActor constructor");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                "ReceiverJobDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;
@@ -87,7 +91,9 @@ public class ReceiverJobDumperActor extends UntypedActor {
         try {
             taskStates = (List<TaskState>) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("Error at markDone->GetTaskStatesPerJob: {}", e);
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                    "Error at markDone->GetTaskStatesPerJob.", e);
+            // TODO : Investigate if it make sense to hide the exception here.
         }
 
         RetrieveUrl retrieveUrl = null;
@@ -95,7 +101,10 @@ public class ReceiverJobDumperActor extends UntypedActor {
         try {
             retrieveUrl = (RetrieveUrl) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("Error at markDone->GetTask: {}", e);
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                    "Error at markDone->GetTask", e);
+            // TODO : Investigate if it make sense to hide the exception here.
+
         }
 
         if(retrieveUrl != null && !retrieveUrl.getId().equals("")) {

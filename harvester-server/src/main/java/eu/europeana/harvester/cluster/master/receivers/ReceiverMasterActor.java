@@ -18,7 +18,10 @@ import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.domain.ProcessingState;
+import eu.europeana.harvester.logging.LoggingComponent;
 import org.apache.james.mime4j.dom.datetime.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Option;
 
 import java.util.HashSet;
@@ -26,7 +29,7 @@ import java.util.Map;
 
 public class ReceiverMasterActor extends UntypedActor {
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * Contains all the configuration needed by this actor.
@@ -100,7 +103,8 @@ public class ReceiverMasterActor extends UntypedActor {
                                final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao
                                ){
-        LOG.info("ReceiverMasterActor constructor");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                "ReceiverMasterActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;
@@ -117,7 +121,8 @@ public class ReceiverMasterActor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-        LOG.info("ReceiverMasterActor preStart");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                "ReceiverMasterActor prestart");
 
         receiverJobDumper = getContext().system().actorOf(Props.create(ReceiverJobDumperActor.class, clusterMasterConfig,
                 accountantActor,  processingJobDao), "jobDumper");
@@ -135,7 +140,8 @@ public class ReceiverMasterActor extends UntypedActor {
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
-        LOG.info("ReceiverMasterActor preRestart");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                "ReceiverMasterActor prestart");
 
         getContext().system().stop(receiverJobDumper);
         getContext().system().stop(receiverMetaInfoDumper);
@@ -253,7 +259,9 @@ public class ReceiverMasterActor extends UntypedActor {
             }
 
             if ( counter+100 < success + error) {
-                LOG.info("Finished 100+ tasks with success: {}, with error: {}", success, error);
+                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_RECEIVER),
+                        "Finished 100+ tasks with success: {}, with error: {}", success, error);
+
                 counter = success+error;
             }
 
