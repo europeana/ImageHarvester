@@ -13,6 +13,7 @@ public class LoggingComponent {
 
     public static class Master {
         public static final String PREFIX_MASTER = "harvester.master";
+        public static final String CLUSTER_MASTER = PREFIX_MASTER+"."+"clusterMaster";
 
         public static final String TASKS_ACCOUNTANT = PREFIX_MASTER+"."+"accountant";
         public static final String TASKS_LOADER = PREFIX_MASTER+"."+"loader";

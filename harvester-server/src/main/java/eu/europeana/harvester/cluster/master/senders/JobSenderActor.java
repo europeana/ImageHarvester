@@ -10,6 +10,9 @@ import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.Clean;
 import eu.europeana.harvester.cluster.domain.messages.RequestTasks;
 import eu.europeana.harvester.cluster.master.MasterMetrics;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -18,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 public class JobSenderActor extends UntypedActor {
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * The cluster master is split into three separate actors.
@@ -74,7 +77,8 @@ public class JobSenderActor extends UntypedActor {
                           final Integer cleanupInterval, final ActorRef jobLoaderActor,
                           final  ActorRef accountantActor, final ActorRef receiverActor
     ) {
-        LOG.info("JobSenderActor constructor");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+                "JobSenderActor constructor");
 
         this.ipExceptions = ipExceptions;
         this.defaultLimits = defaultLimits;
@@ -108,7 +112,8 @@ public class JobSenderActor extends UntypedActor {
 
 
         if(message instanceof Clean) {
-            LOG.info("Cleaning up ClusterMasterActor and its slaves.");
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+                    "Cleaning up ClusterMasterActor and its slaves.");
 
             getContext().system().scheduler().scheduleOnce(Duration.create(cleanupInterval,
                     TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());

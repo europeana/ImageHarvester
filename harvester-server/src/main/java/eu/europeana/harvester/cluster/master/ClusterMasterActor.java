@@ -23,7 +23,10 @@ import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
 import eu.europeana.harvester.cluster.master.senders.JobSenderActor;
 import eu.europeana.harvester.db.*;
+import eu.europeana.harvester.logging.LoggingComponent;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Option;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -32,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ClusterMasterActor extends UntypedActor {
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * The cluster master is split into three separate actors.
@@ -136,7 +139,8 @@ public class ClusterMasterActor extends UntypedActor {
                               final DefaultLimits defaultLimits,
                               final Integer cleanupInterval
                               ) {
-        LOG.info("ClusterMasterActor constructor");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                "ClusterMasterActor constructor");
 
         this.ipExceptions = ipExceptions;
         this.clusterMasterConfig = clusterMasterConfig;
@@ -155,7 +159,8 @@ public class ClusterMasterActor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-        LOG.info("ClusterMasterActor preStart");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                "ClusterMasterActor prestart");
 
         accountantActor = getContext().system().actorOf(Props.create(AccountantMasterActor.class), "accountant");
 
@@ -184,7 +189,8 @@ public class ClusterMasterActor extends UntypedActor {
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
-        LOG.info("ClusterMasterActor preRestart");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                "ClusterMasterActor prestart");
         getContext().system().stop(jobSenderActor);
         getContext().system().stop(jobLoaderActor);
         getContext().system().stop(receiverActor);
@@ -194,7 +200,8 @@ public class ClusterMasterActor extends UntypedActor {
     @Override
     public void postRestart(Throwable reason) throws Exception {
         super.postRestart(reason);
-        LOG.info("ClusterMasterActor postRestart");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                "ClusterMasterActor poststart");
 
         getSelf().tell(new LoadJobs(), ActorRef.noSender());
         getSelf().tell(new CheckForTaskTimeout(), ActorRef.noSender());
@@ -218,10 +225,8 @@ public class ClusterMasterActor extends UntypedActor {
         }
 
         if(message instanceof Monitor) {
-            LOG.info("============ Monitor =============");
             monitor();
             accountantActor.tell(message, ActorRef.noSender());
-            LOG.info("===================================");
 
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
                     TimeUnit.MINUTES), getSelf(), new Monitor(), getContext().system().dispatcher(), getSelf());
@@ -237,32 +242,38 @@ public class ClusterMasterActor extends UntypedActor {
         // cluster events
         if (message instanceof MemberUp) {
             final MemberUp mUp = (MemberUp) message;
-            LOG.info("Member is Up: {}", mUp.member());
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                    "Member is Up: {}", mUp.member());
 
             return;
         }
         if (message instanceof UnreachableMember) {
             final UnreachableMember mUnreachable = (UnreachableMember) message;
-            LOG.info("Member detected as Unreachable: {}", mUnreachable.member());
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                    "Member detected as Unreachable: {}", mUnreachable.member());
 
             return;
         }
         if (message instanceof AssociatedEvent) {
             final AssociatedEvent associatedEvent = (AssociatedEvent) message;
-            LOG.info("Member associated: {}", associatedEvent.remoteAddress());
+
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                    "Member associated: {}", associatedEvent.remoteAddress());
 
             return;
         }
         if (message instanceof DisassociatedEvent) {
             final DisassociatedEvent disassociatedEvent = (DisassociatedEvent) message;
-            LOG.info("Member disassociated: {}", disassociatedEvent.remoteAddress());
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                    "Member disassociated: {}", disassociatedEvent.remoteAddress());
 
             //recoverTasks(disassociatedEvent.remoteAddress());
             return;
         }
         if (message instanceof MemberRemoved) {
             final MemberRemoved mRemoved = (MemberRemoved) message;
-            LOG.info("Member is Removed: {}", mRemoved.member());
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                    "Member is Removed: {}", mRemoved.member());
 
             //recoverTasks(mRemoved.member().address());
 
@@ -279,7 +290,8 @@ public class ClusterMasterActor extends UntypedActor {
             throw new NotImplementedException();
         }
         if(message instanceof Clean) {
-            LOG.info("Cleaning up ClusterMasterActor and its slaves.");
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.CLUSTER_MASTER),
+                    "Cleaning up ClusterMasterActor and its slaves.");
 
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,
                     TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
@@ -292,6 +304,7 @@ public class ClusterMasterActor extends UntypedActor {
      */
 
 
+    // TODO : Refactor this as it polutes the logstash index.
     private void monitor() {
         LOG.info("Active nodes: {}", tasksPerAddress.size());
         LOG.info("Actors per node: ");

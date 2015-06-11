@@ -12,6 +12,8 @@ import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.CheckIPsWithJobs;
 import eu.europeana.harvester.cluster.domain.messages.inner.GetRetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.GetTasksFromIP;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -30,7 +32,7 @@ public class JobSenderHelper  {
      * @param sender sender actor.
      */
     public static void handleRequest(ActorRef sender, ActorRef accountantActor, ActorRef receiverActor, ActorRef jobLoaderActor,
-                               DefaultLimits defaultLimits, HashMap<String, Boolean> ipsWithJobs, LoggingAdapter LOG, IPExceptions ipExceptions) {
+                               DefaultLimits defaultLimits, HashMap<String, Boolean> ipsWithJobs, Logger LOG, IPExceptions ipExceptions) {
 
         final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
         final Future<Object> future = Patterns.ask(accountantActor, new CheckIPsWithJobs(ipsWithJobs), timeout);
@@ -38,15 +40,11 @@ public class JobSenderHelper  {
         try {
             percentage = (Double) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("Error: {}", e);
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+                    "Exception while responding to get tasks request",e);
+
             percentage = 0.0;
         }
-
-        LOG.info("Request tasks from: {}", sender);
-
-        final Long start = System.currentTimeMillis();
-
-
 
         List<RetrieveUrl> tasksToSend = startTasks(defaultLimits, ipsWithJobs, accountantActor, ipExceptions, LOG);
 
@@ -54,11 +52,10 @@ public class JobSenderHelper  {
         final BagOfTasks bagOfTasks = new BagOfTasks(tasksToSend);
         sender.tell(bagOfTasks, receiverActor);
 
-        LOG.info("Done with processing the request from: {} in {} seconds. Sent: {}",
-                sender, (System.currentTimeMillis() - start) / 1000.0, bagOfTasks.getTasks().size());
-
-        LOG.info("Percentage of IPs which has loaded requests: {}% load when it's below: {}",
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+                "Percentage of IPs which has loaded requests: {}% load when it's below: {}",
                 percentage, defaultLimits.getMinTasksPerIPPercentage());
+
         if(percentage < defaultLimits.getMinTasksPerIPPercentage()) {
             //accountantActor.tell(new CleanIPs(), getSelf());
             jobLoaderActor.tell(new LoadJobs(), ActorRef.noSender());
@@ -69,7 +66,7 @@ public class JobSenderHelper  {
      * Check if we are allowed to start one or more jobs if yes then starts them.
      */
     private static List<RetrieveUrl> startTasks(DefaultLimits defaultLimits, HashMap<String, Boolean> ipsWithJobs, ActorRef accountantActor,
-                            IPExceptions ipExceptions, LoggingAdapter LOG) {
+                            IPExceptions ipExceptions, Logger LOG) {
         List<RetrieveUrl> tasksToSend = new ArrayList<>();
         final int maxToSend = defaultLimits.getTaskBatchSize();
         try {
@@ -88,7 +85,9 @@ public class JobSenderHelper  {
                 try {
                     tasksFromIP = (List<String>) Await.result(future, timeout.duration());
                 } catch (Exception e) {
-                    LOG.error("Error at startTasks->getTasksFromIP: {}", e);
+                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+                            "Error at startTasks->getTasksFromIP.", e);
+
                     continue;
                 }
 
@@ -123,7 +122,7 @@ public class JobSenderHelper  {
      * @return - at success true at failure false
      */
     private static RetrieveUrl startOneDownload(final List<String> tasksFromIP, final String IP, IPExceptions ipExceptions,
-                                     DefaultLimits defaultLimits, ActorRef accountantActor, LoggingAdapter LOG) {
+                                     DefaultLimits defaultLimits, ActorRef accountantActor, Logger LOG) {
         RetrieveUrl retrieveUrl = null;
 
         if (! ipExceptions.getIgnoredIPs().contains(IP)) {
@@ -147,7 +146,9 @@ public class JobSenderHelper  {
                 try {
                     retrieveUrl = (RetrieveUrl) Await.result(future, timeout.duration());
                 } catch (Exception e) {
-                    LOG.error("Error at startOneDownload -> getTask: {}", e);
+                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_SENDER),
+                            "Error at startOneDownload -> getTask", e);
+
                 }
                 if (retrieveUrl == null || retrieveUrl.getId().equals("")) {
                     continue;
