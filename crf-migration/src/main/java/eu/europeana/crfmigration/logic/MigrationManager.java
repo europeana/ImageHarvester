@@ -12,6 +12,7 @@ import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -49,29 +50,31 @@ public class MigrationManager {
     private void starMigration() {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                 "Started migration process with minimum date filter {}", dateFilter);
-        DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
+        DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter,null);
 
         int positionInRecordCollection = 0;
 
         while (recordCursor.hasNext()) {
+            final String migratingBatchId = "migrating-batch-"+ DateTime.now().getMillis()+"-"+Math.random();
+
             final Timer.Context totalTimerContext = MigrationMetrics.Migrator.Batch.totalDuration.time();
             try {
                 Map<String, String> recordsRetrievedInBatch = null;
                 final Timer.Context processedRecordsDurationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsDuration.time();
                 try {
-                    recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, batch);
+                    recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, batch,migratingBatchId);
                     positionInRecordCollection = positionInRecordCollection + recordsRetrievedInBatch.size();
                 } finally {
                     processedRecordsDurationTimerContext.stop();
                 }
-                migrateRecordsInSingleBatch(recordsRetrievedInBatch);
+                migrateRecordsInSingleBatch(recordsRetrievedInBatch,migratingBatchId);
                 MigrationMetrics.Migrator.Overall.processedRecordsCount.inc(recordsRetrievedInBatch.size());
             } catch (Exception e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,migratingBatchId,null,null),
                         "Error reading record after record: #" + positionInRecordCollection,e);
 
                 MigrationMetrics.Migrator.Batch.skippedBecauseOfErrorCounter.inc();
-                recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
+                recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter,migratingBatchId);
                 recordCursor.skip(positionInRecordCollection);
 
             } finally {
@@ -82,24 +85,24 @@ public class MigrationManager {
                 "Finished migration process with minimum date filter {}", dateFilter);
     }
 
-    private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
+    private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch,final String migratingBatchId) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         // Retrieve records and convert to jobs
         List<EuropeanaEDMObject> edmObjectsOfRecords = Collections.emptyList();
         final Timer.Context processedRecordsAggregationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsAggregationDuration.time();
         try {
-            edmObjectsOfRecords = migratorEuropeanaDao.retrieveAggregationEDMInformation(recordsInBatch);
+            edmObjectsOfRecords = migratorEuropeanaDao.retrieveAggregationEDMInformation(recordsInBatch,migratingBatchId);
             MigrationMetrics.Migrator.Overall.processedRecordsAggregationCount.inc(edmObjectsOfRecords.size());
         } finally {
             processedRecordsAggregationTimerContext.stop();
         }
 
-        final List<ProcessingJobTuple> processingJobTuples = convertEDMObjectToJobs(edmObjectsOfRecords);
+        final List<ProcessingJobTuple> processingJobTuples = convertEDMObjectToJobs(edmObjectsOfRecords,migratingBatchId);
         final List<ProcessingJob> processingJobs = ProcessingJobTuple.processingJobsFromList(processingJobTuples);
         final List<SourceDocumentReference> sourceDocumentReferences = ProcessingJobTuple.sourceDocumentReferencesFromList(processingJobTuples);
 
         final Timer.Context processedSourceDocumentRef = MigrationMetrics.Migrator.Batch.processedSourceDocumentReferencesDuration.time();
         try {
-            migratorHarvesterDao.saveSourceDocumentReferences(sourceDocumentReferences);
+            migratorHarvesterDao.saveSourceDocumentReferences(sourceDocumentReferences,migratingBatchId);
             MigrationMetrics.Migrator.Overall.processedSourceDocumentReferencesCount.inc(sourceDocumentReferences.size());
         } finally {
             processedSourceDocumentRef.stop();
@@ -108,7 +111,7 @@ public class MigrationManager {
         // Save the jobs
         final Timer.Context processedJobsTimerContext = MigrationMetrics.Migrator.Batch.processedJobsDuration.time();
         try {
-            migratorHarvesterDao.saveProcessingJobs(processingJobs);
+            migratorHarvesterDao.saveProcessingJobs(processingJobs,migratingBatchId);
             MigrationMetrics.Migrator.Overall.processedJobsCount.inc(processingJobs.size());
             MigrationMetrics.Migrator.Overall.processedSourceDocumentReferencesCount.inc(sourceDocumentReferences.size());
         } finally {
@@ -116,9 +119,9 @@ public class MigrationManager {
         }
     }
 
-    private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects) {
+    private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects,final String migratingBatchId) {
         if (null == edmObjects || edmObjects.isEmpty()) {
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB,migratingBatchId,null,null),
                     "No jobs to convert.");
             return new ArrayList<>();
         }
@@ -132,11 +135,11 @@ public class MigrationManager {
                                 edmObject.getReferenceOwner().getExecutionId(),
                                 edmObject.getEdmObject(), edmObject.getEdmHasViews(), edmObject.getEdmIsShownBy(), edmObject.getEdmIsShownAt()));
             } catch (UnknownHostException e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB,migratingBatchId,null,null),
                         "Exception while converting record.",e);
                 MigrationMetrics.Migrator.Overall.invalidUrlCounter.inc();
             } catch (MalformedURLException e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB,migratingBatchId,null,null),
                         "Exception while converting record.",e);
                 MigrationMetrics.Migrator.Overall.invalidUrlCounter.inc();
             }

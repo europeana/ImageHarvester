@@ -35,7 +35,7 @@ public class MigratorEuropeanaDao {
         database = mongo.getDB(mongoConfig.getdBName());
     }
 
-    public final Map<String, String> retrieveRecordsIdsFromCursor(final DBCursor recordCursor,int batchSize) {
+    public final Map<String, String> retrieveRecordsIdsFromCursor(final DBCursor recordCursor,int batchSize,final String migratingBatchId) {
         final Map<String, String> records = new HashMap<>();
         int i = 0;
         while (recordCursor.hasNext() && (i < batchSize)) {
@@ -49,14 +49,14 @@ public class MigratorEuropeanaDao {
         return records;
     }
 
-    public final DBCursor buildRecordsRetrievalCursorByFilter(Date moreRecentThan) {
+    public final DBCursor buildRecordsRetrievalCursorByFilter(Date moreRecentThan,final String migratingBatchId) {
         final DBCollection recordCollection = database.getCollection("record");
         DBObject filterByTimestampQuery = new BasicDBObject();
         final BasicDBObject recordFields = new BasicDBObject();
 
         if (null != moreRecentThan) {
             filterByTimestampQuery.put("timestampUpdated", new BasicDBObject("$gt", moreRecentThan));
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA),
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,migratingBatchId,null,null),
                     "Query: " + filterByTimestampQuery);
         }
 
@@ -72,17 +72,17 @@ public class MigratorEuropeanaDao {
         return recordCursor;
     }
 
-    public final List<EuropeanaEDMObject> retrieveAggregationEDMInformation(final Map<String, String> records) {
+    public final List<EuropeanaEDMObject> retrieveAggregationEDMInformation(final Map<String, String> records,final String migratingBatchId) {
         final List<EuropeanaEDMObject> results = new ArrayList<>();
         for (final Map.Entry<String, String> record : records.entrySet()) {
-            final ReferenceOwner referenceOwner = getReferenceOwner(record);
+            final ReferenceOwner referenceOwner = getReferenceOwner(record,migratingBatchId);
 
-            final DBObject aggregation = getAggregation("/aggregation/provider" + record.getKey());
+            final DBObject aggregation = getAggregation("/aggregation/provider" + record.getKey(),migratingBatchId);
 
             if (null == aggregation) {
                 MigrationMetrics.Migrator.Overall.invalidAggregationCounter.inc();
 
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,null,(String) aggregation.get("edmObject"), referenceOwner),
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,migratingBatchId,(String) aggregation.get("edmObject"), referenceOwner),
                         "Missing aggregation: /aggregation/provider" + record.getKey());
                 /* It's consistent with business logic to log and continue as we want to ignore records that cannot be migrated. */
                 continue;
@@ -103,7 +103,7 @@ public class MigratorEuropeanaDao {
         return results;
     }
 
-    private final DBObject getAggregation(String aggregationAbout) {
+    private final DBObject getAggregation(String aggregationAbout,final String migratingBatchId) {
 
             final DBCollection aggregationCollection = database.getCollection("Aggregation");
 
@@ -120,7 +120,7 @@ public class MigratorEuropeanaDao {
             return aggregationCollection.findOne(whereQueryAggregation, aggregationFields);
     }
 
-    private final ReferenceOwner getReferenceOwner(final Map.Entry pairs) {
+    private final ReferenceOwner getReferenceOwner(final Map.Entry pairs,final String migratingBatchId) {
         final String about = (String) pairs.getKey();
         final String collectionId = (String) pairs.getValue();
 

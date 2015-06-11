@@ -24,7 +24,7 @@ public class LoggingComponent {
         return appendAppFields(appComponent, null, null, null);
     }
 
-    public static final net.logstash.logback.marker.MapEntriesAppendingMarker appendAppFields(final String appComponent, final String jobId, final String url, final ReferenceOwner referenceOwner) {
+    public static final net.logstash.logback.marker.MapEntriesAppendingMarker appendAppFields(final String appComponent, final String migratingBatchId, final String url, final ReferenceOwner referenceOwner) {
 
         final Map<String, String> map = new HashMap<String, String>();
         if (referenceOwner != null) map.put(LogMarker.EUROPEANA_PROVIDER_ID, referenceOwner.getProviderId());
@@ -33,7 +33,7 @@ public class LoggingComponent {
         if (referenceOwner != null)
             map.put(LogMarker.EUROPEANA_PROCESSING_JOB_EXECUTION_ID, referenceOwner.getExecutionId());
         if (url != null) map.put(LogMarker.EUROPEANA_URL, url);
-        if (jobId != null) map.put(LogMarker.EUROPEANA_PROCESSING_JOB_ID, jobId);
+        if (migratingBatchId != null) map.put(LogMarker.EUROPEANA_MIGRATING_BATCH_ID, migratingBatchId);
         if (appComponent != null) map.put(LogMarker.EUROPEANA_COMPONENT, appComponent);
         return appendEntries(map);
     }
