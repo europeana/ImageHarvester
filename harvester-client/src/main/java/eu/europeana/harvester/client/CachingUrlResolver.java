@@ -24,7 +24,6 @@ public class CachingUrlResolver {
                                 new CacheLoader<String, String>() {
                                     public String load(String key) throws UnknownHostException {
                                         final InetAddress address = InetAddress.getByName(key);
-                                        System.out.println("Resolving "+key+ " to "+address.getHostAddress());
                                         return address.getHostAddress();
                                     }
                                 });
