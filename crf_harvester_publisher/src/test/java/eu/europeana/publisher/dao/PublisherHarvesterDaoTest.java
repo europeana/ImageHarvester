@@ -1,11 +1,9 @@
 package eu.europeana.publisher.dao;
 
-import ch.qos.logback.core.db.dialect.DBUtil;
 import com.google.code.morphia.Morphia;
 import com.mongodb.DBCursor;
-import eu.europeana.harvester.db.WebResourceMetaInfoDAO;
-import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDAOImpl;
-import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.db.WebResourceMetaInfoDao;
+import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.RetrievedDocument;
@@ -40,7 +38,7 @@ public class PublisherHarvesterDaoTest {
     private List<WebResourceMetaInfo> correctMetaInfos;
     private List<RetrievedDocument> retrievedDocuments;
 
-    private WebResourceMetaInfoDAO webResourceMetaInfoDAO;
+    private WebResourceMetaInfoDao webResourceMetaInfoDao;
 
     @Before
     public void setUp() throws UnknownHostException {
@@ -68,7 +66,7 @@ public class PublisherHarvesterDaoTest {
             correctMetaInfos.add (webResourceMetaInfo);
         }
 
-        webResourceMetaInfoDAO = new WebResourceMetaInfoDAOImpl(
+        webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(
             new Morphia().createDatastore(connectToDB(publisherConfig.getTargetMongoConfig()).getMongo(),
                                           publisherConfig.getTargetMongoConfig().getdBName()
                                          )
@@ -105,7 +103,7 @@ public class PublisherHarvesterDaoTest {
 
         int idx = 0;
         for (final RetrievedDocument document: retrievedDocuments.subList(0, 1)) {
-            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDAO.read(document.getSourceDocumentReferenceMetaInfo().getId());
+            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
 
             final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
 
@@ -119,7 +117,7 @@ public class PublisherHarvesterDaoTest {
 
         int idx = 0;
         for (final RetrievedDocument document: retrievedDocuments.subList(0, 2)) {
-            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDAO.read(document.getSourceDocumentReferenceMetaInfo().getId());
+            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
 
             final WebResourceMetaInfo correctMetaInfo =correctMetaInfos.get(idx++);
 
@@ -133,7 +131,7 @@ public class PublisherHarvesterDaoTest {
 
         int idx = 0;
         for (final RetrievedDocument document: retrievedDocuments) {
-            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDAO.read(document.getSourceDocumentReferenceMetaInfo().getId());
+            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
 
             final WebResourceMetaInfo correctMetaInfo =correctMetaInfos.get(idx++);
 

@@ -1,10 +1,7 @@
 package eu.europeana.harvester.cluster.slave.downloading;
 
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ProcessingJobLimits;
-import eu.europeana.harvester.domain.ProcessingJobSubTask;
-import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
@@ -33,7 +30,7 @@ public class SlaveLinkCheckerTest {
         final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CHECK_LINK,
                 "referenceid-1","a", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
-                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
+                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null,new ReferenceOwner("unknown","unknwon","unknown"));
 
         slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
 
@@ -59,7 +56,7 @@ public class SlaveLinkCheckerTest {
         final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, limits,DocumentReferenceTaskType.CHECK_LINK, "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
-                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
+                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null,new ReferenceOwner("unknown","unknwon","unknown"));
 
         slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
 
@@ -78,7 +75,7 @@ public class SlaveLinkCheckerTest {
         final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl+"-some-extra-nonsense", new ProcessingJobLimits(), DocumentReferenceTaskType.CHECK_LINK, "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
-                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
+                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null,new ReferenceOwner("unknown","unknwon","unknown"));
 
         slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
 

@@ -21,8 +21,9 @@ import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
+import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
@@ -48,8 +49,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
         ));
     }
 
-    //private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
-    Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * A factory object which build different types of httpRetrieveResponse objects.
@@ -87,7 +87,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
 
     public void notifyMeOnOpen() {
-        LOG.info(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, "Circuit Breaker"), "The slave processing circuit breaker is now open, and will not close for one minute. Killing current actor.");
+        LOG.warn(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                "The slave processing circuit breaker is now open, and will not close for one minute. Slave worker suicides now with poison pill.");
         SlaveMetrics.Worker.Slave.forcedSelfDestructCounter.inc();
         getSelf().tell(PoisonPill.getInstance(), ActorRef.noSender());
     }
@@ -136,19 +137,21 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
             response = executeRetrieval(task);
 
-            if ( response!=null ) {
+            if (response != null) {
                 doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == RetrievingState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
                         response, task.getDocumentReferenceTask(), task.getIpAddress());
-                LOG.info(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()), "Retrieval of {} finished and the temporary file is stored on disk at {}", task.getUrl(), taskWithProcessingConfig.getDownloadPath());
+                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                        "Retrieval url finished with success and the temporary file is stored on disk at {}", taskWithProcessingConfig.getDownloadPath());
             } else {
-                LOG.info("Response object is null");
+                LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                        "Retrieval url failed in an unexpected way. This might be a bug in harvester slave code.");
             }
 
         } catch (Exception e) {
             doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), ProcessingState.ERROR,
                     response, task.getDocumentReferenceTask(), task.getIpAddress());
-
-            LOG.error(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()), "Exception during retrieval. The http retrieve response could not be created. Probable cause : wrong configuration argument in the slave. The actual message : {}", e.getMessage());
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "Exception during retrieval. The http retrieve response could not be created. Probable cause : wrong configuration argument in the slave.", e);
         } finally {
             downloadTimerContext.stop();
             sender.tell(doneDownloadMessage, getSelf());
@@ -169,7 +172,9 @@ public class RetrieveAndProcessActor extends UntypedActor {
                         processingResultTuple.getMediaMetaInfoTuple().getTextMetaInfo());
 
             } catch (Exception e) {
-                LOG.error(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()), "Exception during processing. The actual message : {}", e.getMessage());
+                LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                        "Exception during processing. :  "+e.getLocalizedMessage(), e);
+
                 doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
                         null,
                         null,
@@ -180,8 +185,9 @@ public class RetrieveAndProcessActor extends UntypedActor {
             }
         } else {
             // We can skip processing altogether.
-            LOG.error(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()), "The task processing stage was skipped because the retrieval stage failed.");
-            LOG.info("response state is {}, response log {}", response.getState(), response.getLog());
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "Processing stage skipped because retrieval involved only link checking or finished with non-complete state : "+response.getState()+" and reason "+response.getLog());
+
             doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
                     null,
                     null,
@@ -270,14 +276,15 @@ public class RetrieveAndProcessActor extends UntypedActor {
      */
     private final ProcessingResultTuple executeProcessing(final HttpRetrieveResponse response, final RetrieveUrl task) throws Exception {
         return slaveProcessor.process(task.getDocumentReferenceTask(), taskWithProcessingConfig.getDownloadPath(), response.getUrl().toURI().toASCIIString(), response.getContent(), responseTypeFromTaskType(task.getDocumentReferenceTask().getTaskType()),
-                taskWithProcessingConfig.getProcessingSource());
+                task.getReferenceOwner()
+        );
     }
 
     private long computeMaximumRetrievalAndProcessingDurationInMinutes(RetrieveUrl retrieveUrl) {
         long duration;
         try {
             duration = Duration.create(retrieveUrl.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + retrieveUrl.getLimits().getProcessingTerminationThresholdTimeLimitInMillis(), TimeUnit.MILLISECONDS).toMinutes();
-        } catch ( Exception e) {
+        } catch (Exception e) {
             ProcessingJobLimits lm = new ProcessingJobLimits();
             duration = Duration.create(lm.getRetrievalTerminationThresholdTimeLimitInMillis() + lm.getProcessingTerminationThresholdTimeLimitInMillis(), TimeUnit.MILLISECONDS).toMinutes();
         }

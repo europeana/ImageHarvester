@@ -5,12 +5,10 @@ import java.io.Serializable;
 public class RetrieveUrlWithProcessingConfig implements Serializable {
     private final RetrieveUrl retrieveUrl;
     private final String downloadPath;
-    private final String processingSource;
 
-    public RetrieveUrlWithProcessingConfig(RetrieveUrl retrieveUrl, String downloadPath, String processingSource) {
+    public RetrieveUrlWithProcessingConfig(RetrieveUrl retrieveUrl, String downloadPath) {
         this.retrieveUrl = retrieveUrl;
         this.downloadPath = downloadPath;
-        this.processingSource = processingSource;
     }
 
     public RetrieveUrl getRetrieveUrl() {
@@ -19,9 +17,5 @@ public class RetrieveUrlWithProcessingConfig implements Serializable {
 
     public String getDownloadPath() {
         return downloadPath;
-    }
-
-    public String getProcessingSource() {
-        return processingSource;
     }
 }

@@ -3,6 +3,7 @@ package eu.europeana.harvester.cluster.domain.messages;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
+import eu.europeana.harvester.domain.ReferenceOwner;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -54,9 +55,14 @@ public class RetrieveUrl implements Serializable {
      */
     private final DocumentReferenceTaskType taskType;
 
+    /**
+     * The owner references of the url of the task. Important for logging & monitoring purposes.
+     */
+    private final ReferenceOwner referenceOwner;
+
     public RetrieveUrl(final String id, final String url,final DocumentReferenceTaskType taskType, final ProcessingJobLimits limits, final String jobId,
                        final String referenceId, final Map<String, String> headers,
-                       final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress) {
+                       final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress,final ReferenceOwner referenceOwner) {
         this.id = id;
         this.url = url;
         this.taskType = taskType;
@@ -66,11 +72,12 @@ public class RetrieveUrl implements Serializable {
         this.headers = headers;
         this.documentReferenceTask = documentReferenceTask;
         this.ipAddress = ipAddress;
+        this.referenceOwner = referenceOwner;
     }
 
     public RetrieveUrl(final String url, final ProcessingJobLimits limits,DocumentReferenceTaskType taskType, final String jobId,
                        final String referenceId, final Map<String, String> headers,
-                       final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress) {
+                       final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress,final ReferenceOwner referenceOwner) {
         this.id = UUID.randomUUID().toString();
         this.url = url;
         this.limits = limits;
@@ -80,6 +87,7 @@ public class RetrieveUrl implements Serializable {
         this.headers = headers;
         this.documentReferenceTask = documentReferenceTask;
         this.ipAddress = ipAddress;
+        this.referenceOwner = referenceOwner;
     }
 
     public String getUrl() {
@@ -139,5 +147,9 @@ public class RetrieveUrl implements Serializable {
 
     public DocumentReferenceTaskType getTaskType() {
         return taskType;
+    }
+
+    public ReferenceOwner getReferenceOwner() {
+        return referenceOwner;
     }
 }

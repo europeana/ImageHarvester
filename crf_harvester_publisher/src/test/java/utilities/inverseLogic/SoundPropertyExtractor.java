@@ -1,7 +1,7 @@
 package utilities.inverseLogic;
 
 
-import crf_faketags.extractor.TagEncoding;
+import eu.europeana.crf_faketags.extractor.TagEncoding;
 
 public class SoundPropertyExtractor {
     //public static final Integer mask = (1 << 25) - 1;

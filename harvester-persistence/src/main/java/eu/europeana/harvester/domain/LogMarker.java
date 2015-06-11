@@ -11,4 +11,10 @@ public class LogMarker {
     public static final String EUROPEANA_URL = "europeana_url";
     public static final String EUROPEANA_PROCESSING_JOB_TASK_TYPE = "europeana_processing_job_task_type";
 
+    /**
+     * The component that is the source of the log message. Examples : slave master, slave worker, slave downloader, slave processor etc.
+     */
+    public static final String EUROPEANA_COMPONENT = "europeana_component";
+    public static final String EUROPEANA_COMPONENT_PROCESS = "europeana_component_process";
+
 }

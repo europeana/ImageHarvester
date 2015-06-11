@@ -13,6 +13,7 @@ import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
 import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
+import eu.europeana.harvester.domain.ReferenceOwner;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
@@ -69,13 +70,14 @@ public class AccountantAllTasksActor extends UntypedActor {
 
             if (message instanceof GetTask) {
                 final String taskID = ((GetTask) message).getTaskID();
+                ReferenceOwner referenceOwner = null;
                 if (allTasks.containsKey(taskID)) {
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
-
+                    referenceOwner = retrieveUrl.getReferenceOwner();
                     getSender().tell(retrieveUrl, getSelf());
                     return;
                 }
-                RetrieveUrl retrieveUrl = new RetrieveUrl("",  new ProcessingJobLimits(), null, "", "", null, null, "");
+                RetrieveUrl retrieveUrl = new RetrieveUrl("",  new ProcessingJobLimits(), null, "", "", null, null, "",referenceOwner);
                 getSender().tell(retrieveUrl, getSelf());
                 return;
             }
@@ -218,7 +220,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final int exceptionLimit = m.getExceptionLimit();
                 final String taskID = m.getTaskID();
 
-                RetrieveUrl retrieveUrl = new RetrieveUrl("", "", null, new ProcessingJobLimits(), "", "", null, null, "");
+                RetrieveUrl retrieveUrl = new RetrieveUrl("", "", null, new ProcessingJobLimits(), "", "", null, null, "",new ReferenceOwner("unknown","unknown","unknown"));
                 List<String> tasksFromIP = null;
 
                 final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));

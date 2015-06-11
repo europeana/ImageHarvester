@@ -1,10 +1,7 @@
 package eu.europeana.harvester.cluster.slave.downloading;
 
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ProcessingJobLimits;
-import eu.europeana.harvester.domain.ProcessingJobSubTask;
-import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
@@ -63,7 +60,7 @@ public class SlaveDownloaderTest {
                         "source-reference-1",
                         Collections.<ProcessingJobSubTask>emptyList()
                 ),
-                null
+                null,new ReferenceOwner("unknown","unknwon","unknown")
         );
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
@@ -91,7 +88,7 @@ public class SlaveDownloaderTest {
         final RetrieveUrl task = new RetrieveUrl(image1GitHubUrl, limits, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
-                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
+                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null,new ReferenceOwner("unknown","unknwon","unknown"));
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
@@ -114,7 +111,7 @@ public class SlaveDownloaderTest {
                 "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
-                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
+                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null,new ReferenceOwner("unknown","unknwon","unknown"));
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
@@ -141,7 +138,7 @@ public class SlaveDownloaderTest {
                 "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
-                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
+                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null,new ReferenceOwner("unknown","unknwon","unknown"));
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
@@ -166,7 +163,7 @@ public class SlaveDownloaderTest {
         final RetrieveUrl task = new RetrieveUrl(image1GitHubUrl, limits,DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, "jobid-1",
                 "referenceid-1", Collections.singletonMap("Content-Length", "1399538"),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
-                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
+                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null,new ReferenceOwner("unknown","unknwon","unknown"));
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
@@ -192,7 +189,7 @@ public class SlaveDownloaderTest {
         final RetrieveUrl task = new RetrieveUrl(image1GitHubUrl, limits,DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, "jobid-1",
                 "referenceid-1", Collections.singletonMap("Content-Length", "1399537"),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
-                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null);
+                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null,new ReferenceOwner("unknown","unknwon","unknown"));
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 

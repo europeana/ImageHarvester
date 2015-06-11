@@ -77,9 +77,9 @@ public class RetrieveAndProcessActorTests {
         final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
-                        "source-reference-1", subTasks), null);
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
 
-        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId(),"Testing actor");
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
     /*
      * Wrap the whole test procedure within a testkit
      * initializer if you want to receive actor replies

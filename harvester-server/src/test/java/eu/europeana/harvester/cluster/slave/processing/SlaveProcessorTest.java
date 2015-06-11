@@ -89,7 +89,7 @@ public class SlaveProcessorTest {
                                                  "jobid-1",
                                                  "referenceid-1", Collections.<String, String>emptyMap(),
                                                  taskDocumentReference,
-                                                 null);
+                                                 null,new ReferenceOwner("unknown","unknwon","unknown"));
 
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
@@ -271,7 +271,7 @@ public class SlaveProcessorTest {
                                                                      fileUrl,
                                                                      Files.toByteArray(new File(PATH_DOWNLOADED + Text2)),
                                                                      ResponseType.DISK_STORAGE,
-                                                                     "");
+                                                                     new ReferenceOwner("unknown","unknwon","unknown"));
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNull(results.getImageColorMetaInfo());

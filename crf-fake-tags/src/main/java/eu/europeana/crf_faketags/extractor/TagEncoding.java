@@ -1,4 +1,4 @@
-package crf_faketags.extractor;
+package eu.europeana.crf_faketags.extractor;
 
 public enum TagEncoding {
     TAG_TYPE(28, 3),

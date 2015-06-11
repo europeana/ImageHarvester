@@ -1,8 +1,8 @@
 package utilities.inverseLogic;
 
 
-import crf_faketags.extractor.MediaTypeEncoding;
-import crf_faketags.extractor.TagEncoding;
+import eu.europeana.crf_faketags.extractor.MediaTypeEncoding;
+import eu.europeana.crf_faketags.extractor.TagEncoding;
 
 import java.util.HashMap;
 import java.util.Map;

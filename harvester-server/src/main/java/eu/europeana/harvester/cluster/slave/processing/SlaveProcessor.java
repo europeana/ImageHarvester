@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Ref;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,7 @@ public class SlaveProcessor {
     }
 
     public ProcessingResultTuple process(final ProcessingJobTaskDocumentReference task, String originalFilePath, String originalFileUrl, byte[] originalFileContent,
-                                         ResponseType responseType, String processingProcessId) throws Exception {
+                                         ResponseType responseType, ReferenceOwner referenceOwner) throws Exception {
 
         // (1) Locate tasks
         final ProcessingJobSubTask metaExtractionProcessingTask = locateMetaInfoExtractionProcessingTask(task);
@@ -50,7 +51,7 @@ public class SlaveProcessor {
         // (2) Execute tasks
         final MediaMetaInfoTuple mediaMetaInfoTuple = (metaExtractionProcessingTask != null) ? extractMetaInfo(originalFilePath, originalFileUrl, responseType, metaExtractionProcessingTask) : null;
         final ImageMetaInfo imageColorMetaInfo = (colorExtractionProcessingTask != null) ? extractColor(originalFilePath) : null;
-        final Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent, processingProcessId, thumbnailGenerationProcessingTasks);
+        final Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent, referenceOwner, thumbnailGenerationProcessingTasks);
 
 
         // (3) Post task execution
@@ -78,7 +79,7 @@ public class SlaveProcessor {
                 SlaveMetrics.Worker.Slave.Processing.originalCachingCounter.inc();
                 final Timer.Context originalCachingDurationContext = SlaveMetrics.Worker.Slave.Processing.originalCachingDuration.time();
                 try {
-                    final MediaFile mediaFile = generateOriginal(originalFilePath, originalFileUrl, originalFileContent, processingProcessId, mediaMetaInfoTuple.getImageMetaInfo());
+                    final MediaFile mediaFile = generateOriginal(originalFilePath, originalFileUrl, originalFileContent, referenceOwner, mediaMetaInfoTuple.getImageMetaInfo());
                     mediaStorageClient.createOrModify(mediaFile);
                 } finally {
                     originalCachingDurationContext.stop();
@@ -160,20 +161,20 @@ public class SlaveProcessor {
         }
     }
 
-    private final MediaFile generateOriginal(final String originalFilePath, final String originalFileUrl, final byte[] originalFileContent, final String processingProcessId, final ImageMetaInfo imageMetaInfo) throws NoSuchAlgorithmException {
+    private final MediaFile generateOriginal(final String originalFilePath, final String originalFileUrl, final byte[] originalFileContent, final ReferenceOwner referenceOwner, final ImageMetaInfo imageMetaInfo) throws NoSuchAlgorithmException {
 
         if (originalFilePath == null || originalFileUrl == null || originalFileContent == null)
             throw new IllegalArgumentException("Cannot generate media file as all must be non-null : filepath, url & content");
         if (imageMetaInfo == null)
             throw new IllegalArgumentException("Cannot generate media file from null image meta info");
 
-        return MediaFile.createMinimalMediaFileWithSizeType("ORIGINAL", processingProcessId, originalFilePath,
+        return MediaFile.createMinimalMediaFileWithSizeType("ORIGINAL", referenceOwner.getExecutionId(), originalFilePath,
                 originalFileUrl, DateTime.now(), originalFileContent, imageMetaInfo.getMimeType(),
                 originalFileContent.length);
 
     }
 
-    private final Map<ProcessingJobSubTask, MediaFile> generateThumbnails(final String originalFilePath, final String originalFileUrl, final byte[] originalFileContent, final String processingProcessId, final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks) throws Exception {
+    private final Map<ProcessingJobSubTask, MediaFile> generateThumbnails(final String originalFilePath, final String originalFileUrl, final byte[] originalFileContent, final ReferenceOwner referenceOwner, final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks) throws Exception {
         final Map<ProcessingJobSubTask, MediaFile> results = new HashMap<ProcessingJobSubTask, MediaFile>();
         for (final ProcessingJobSubTask thumbnailGenerationTask : thumbnailGenerationProcessingTasks) {
             if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
@@ -182,7 +183,7 @@ public class SlaveProcessor {
                 try {
                     final GenericSubTaskConfiguration config = thumbnailGenerationTask.getConfig();
                     final MediaFile thumbnailMediaFile = thumbnailGenerator.createMediaFileWithThumbnail(config.getThumbnailConfig().getHeight(),
-                            config.getThumbnailConfig().getWidth(), processingProcessId, originalFileUrl,
+                            config.getThumbnailConfig().getWidth(), referenceOwner.getExecutionId(), originalFileUrl,
                             originalFileContent, originalFilePath);
                     results.put(thumbnailGenerationTask, thumbnailMediaFile);
                 } finally {
