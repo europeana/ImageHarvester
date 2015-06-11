@@ -1,8 +1,6 @@
 package eu.europeana.harvester.cluster.master.loaders;
 
 import akka.actor.*;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
@@ -12,6 +10,9 @@ import eu.europeana.harvester.db.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +33,7 @@ public class JobLoaderExecutorActor extends UntypedActor {
 
     }
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
 
     /**
@@ -93,7 +94,8 @@ public class JobLoaderExecutorActor extends UntypedActor {
                                   final MachineResourceReferenceDao machineResourceReferenceDao,
                                   final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions,
                                   final Map<String, Integer> ipDistribution) {
-        LOG.info("JobLoaderMasterActor constructor");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                "The loader executor is constructed");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;
@@ -120,7 +122,8 @@ public class JobLoaderExecutorActor extends UntypedActor {
                         sourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
 
             } catch (Exception e) {
-                LOG.error("Error in LoadJobs: " + e.getMessage());
+                LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                        "Exception while loading jobs",e);
             }
             context.stop();
             self().tell(PoisonPill.getInstance(), ActorRef.noSender());

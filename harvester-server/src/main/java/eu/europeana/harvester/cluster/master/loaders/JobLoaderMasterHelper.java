@@ -14,6 +14,8 @@ import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 
@@ -26,8 +28,10 @@ import java.util.concurrent.TimeUnit;
 public class JobLoaderMasterHelper  {
 
 
-    public static Map<String, Integer> getIPDistribution( MachineResourceReferenceDao machineResourceReferenceDao, LoggingAdapter LOG ) {
-        LOG.info("Trying to load the IP distribution...");
+    public static Map<String, Integer> getIPDistribution( MachineResourceReferenceDao machineResourceReferenceDao, Logger LOG ) {
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                "Trying to load the IP distribution...");
+
         Page pg = new Page(0, 100000);
         List<MachineResourceReference> machines = machineResourceReferenceDao.getAllMachineResourceReferences(pg);
         Map<String, Integer> ipDistribution = new HashMap<>();
@@ -35,14 +39,14 @@ public class JobLoaderMasterHelper  {
         for (MachineResourceReference machine : machines)
             ipDistribution.put(machine.getIp(), 0);
 
-        LOG.info("IP distribution: ");
-        for (Map.Entry<String, Integer> ip : ipDistribution.entrySet()) {
-            LOG.info("{}: {}", ip.getKey(), ip.getValue());
-            //machineResourceReferenceDao.createOrModify(new MachineResourceReference(ip.getKey()), WriteConcern.NORMAL);
-        }
-
-        LOG.info("Nr. of machines: {}", ipDistribution.size());
-        LOG.info("End of IP distribution");
+//        LOG.info("IP distribution: ");
+//        for (Map.Entry<String, Integer> ip : ipDistribution.entrySet()) {
+//            LOG.info("{}: {}", ip.getKey(), ip.getValue());
+//            //machineResourceReferenceDao.createOrModify(new MachineResourceReference(ip.getKey()), WriteConcern.NORMAL);
+//        }
+//
+//        LOG.info("Nr. of machines: {}", ipDistribution.size());
+//        LOG.info("End of IP distribution");
         return ipDistribution;
     }
 
@@ -52,7 +56,7 @@ public class JobLoaderMasterHelper  {
     public static void updateLists(ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao,
                              SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                              SourceDocumentReferenceDao sourceDocumentReferenceDao,
-                             ActorRef accountantActor, LoggingAdapter LOG) {
+                             ActorRef accountantActor, Logger LOG) {
         try {
             checkForPausedJobs(clusterMasterConfig, processingJobDao, accountantActor, LOG);
             checkForResumedJobs(clusterMasterConfig, processingJobDao, sourceDocumentReferenceDao, sourceDocumentProcessingStatisticsDao, accountantActor, LOG);
@@ -67,8 +71,9 @@ public class JobLoaderMasterHelper  {
      * Checks if any job was stopped by a client.
      */
     private static void checkForPausedJobs( ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao, ActorRef accountantActor,
-                                     LoggingAdapter LOG  ) {
-        LOG.info("========= Looking for paused jobs from MongoDB ========");
+                                            Logger LOG  ) {
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                "Looking for paused job in database to resume");
         final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
         final List<ProcessingJob> all = processingJobDao.getJobsWithState(JobState.PAUSE, page);
 
@@ -86,8 +91,9 @@ public class JobLoaderMasterHelper  {
      */
     private static void checkForResumedJobs(ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao,
                                      SourceDocumentReferenceDao sourceDocumentReferenceDao, SourceDocumentProcessingStatisticsDao sourceDocumentProcessingDao,
-                                     ActorRef accountantActor, LoggingAdapter LOG) {
-        LOG.info("======== Looking for resumed jobs from MongoDB ========");
+                                     ActorRef accountantActor, Logger LOG) {
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                "Looking for resumed job in database to resume");
         final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
         final List<ProcessingJob> all = processingJobDao.getJobsWithState(JobState.RESUME, page);
 
@@ -117,7 +123,8 @@ public class JobLoaderMasterHelper  {
             try {
                 isLoaded = (Boolean) Await.result(future, timeout.duration());
             } catch (Exception e) {
-                LOG.error("Error in checkForResumedJobs->IsJobLoaded: {}", e);
+                LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                        "Error in checkForResumedJobs->IsJobLoaded",e);
             }
 
             if (isLoaded) {
@@ -135,7 +142,7 @@ public class JobLoaderMasterHelper  {
      */
     private static void addJob(final ProcessingJob job, final Map<String, SourceDocumentReference> resources,
                         ProcessingJobDao processingJobDao, SourceDocumentProcessingStatisticsDao sourceDocumentProcessingDao,
-                        ClusterMasterConfig clusterMasterConfig, ActorRef accountantActor, LoggingAdapter LOG ) {
+                        ClusterMasterConfig clusterMasterConfig, ActorRef accountantActor, Logger LOG ) {
         final List<ProcessingJobTaskDocumentReference> tasks = job.getTasks();
 
         final ProcessingJob newProcessingJob = job.withState(JobState.RUNNING);
@@ -150,7 +157,8 @@ public class JobLoaderMasterHelper  {
         }
 
         if (tasks.size() > 10)
-            LOG.info("Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
         accountantActor.tell(new AddTasksToJob(job.getId(), taskIDs), ActorRef.noSender() );
     }
@@ -164,7 +172,7 @@ public class JobLoaderMasterHelper  {
      */
     private static String processTask(final ProcessingJob job, final ProcessingJobTaskDocumentReference task,
                                final Map<String, SourceDocumentReference> resources, SourceDocumentProcessingStatisticsDao sourceDocumentProcessingDao,
-                               ActorRef accountantActor, LoggingAdapter LOG ) {
+                               ActorRef accountantActor, Logger LOG ) {
         final String sourceDocId = task.getSourceDocumentReferenceID();
 
         final SourceDocumentReference sourceDocumentReference = resources.get(sourceDocId);
@@ -184,7 +192,8 @@ public class JobLoaderMasterHelper  {
         try {
             tasksFromIP = (List<String>) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("Error in processTask->GetTasksFromIP: {}", e);
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "Error in processTask->GetTasksFromIP",e);
         }
 
         if (tasksFromIP == null) {
@@ -237,8 +246,9 @@ public class JobLoaderMasterHelper  {
      * Checks if any job was started but due to an issue of this node it has been abandoned.
      */
     public static void checkForAbandonedJobs(ProcessingJobDao processingJobDao, ClusterMasterConfig clusterMasterConfig,
-                                       LoggingAdapter LOG ) {
-        LOG.info("======== Looking for abandoned jobs from MongoDB ========");
+                                             Logger LOG ) {
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                "Checking for abandoned jobs in database");
         final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
         List<ProcessingJob> all;
         do {
@@ -259,7 +269,8 @@ public class JobLoaderMasterHelper  {
             }
         } while (all.size() != 0);
 
-        LOG.info("======== Done with abandoned jobs ========");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                "Done with checking for abandoned jobs in database");
     }
 
 }

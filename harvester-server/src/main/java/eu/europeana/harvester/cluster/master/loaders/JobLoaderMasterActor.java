@@ -16,6 +16,9 @@ import eu.europeana.harvester.db.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 public class JobLoaderMasterActor extends UntypedActor {
 
-    private final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * The cluster master is splitted into two separate actors.
@@ -101,7 +104,8 @@ public class JobLoaderMasterActor extends UntypedActor {
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
                                 final DefaultLimits defaultLimits,
                                 final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions) {
-        LOG.info("JobLoaderMasterActor constructor");
+        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                "The loader master is constructed");
 
         this.receiverActor = receiverActor;
         this.clusterMasterConfig = clusterMasterConfig;
@@ -136,11 +140,13 @@ public class JobLoaderMasterActor extends UntypedActor {
                     loaderActor.tell(message, ActorRef.noSender());
 
                 } catch (Exception e) {
-                    LOG.error("Error in LoadJobs: " + e.getMessage());
+                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                            "Exception while loading jobs", e);
                 }
 
             } else
-                LOG.info("LoaderActor still working");
+                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                        "Job loader still working");
 
             return;
         }
@@ -152,7 +158,9 @@ public class JobLoaderMasterActor extends UntypedActor {
                     TimeUnit.MINUTES), getSelf(), new LookInDB(), getContext().system().dispatcher(), getSelf());
         }
         if (message instanceof Clean) {
-            LOG.info("Clean JobLoaderMasterActor");
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "Clean JobLoaderMasterActor");
+
             JobLoaderMasterHelper.checkForAbandonedJobs(processingJobDao, clusterMasterConfig, LOG);
             this.ipDistribution = JobLoaderMasterHelper.getIPDistribution(machineResourceReferenceDao, LOG);
 

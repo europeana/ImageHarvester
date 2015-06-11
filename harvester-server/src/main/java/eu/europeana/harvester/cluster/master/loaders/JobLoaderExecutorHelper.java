@@ -4,16 +4,21 @@ import akka.actor.ActorRef;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
+import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
+import eu.europeana.harvester.cluster.master.MasterMetrics;
 import eu.europeana.harvester.db.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.ProcessingJobDao;
 import eu.europeana.harvester.db.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.logging.LoggingComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
 
@@ -25,8 +30,6 @@ import java.util.concurrent.TimeUnit;
 
 public class JobLoaderExecutorHelper  {
 
-
-
     /**
      * Checks if there were added any new jobs in the db
      */
@@ -34,7 +37,7 @@ public class JobLoaderExecutorHelper  {
                                        HashMap<String, Boolean> ipsWithJobs , ActorRef accountantActor,ProcessingJobDao processingJobDao,
                                        SourceDocumentReferenceDao sourceDocumentReferenceDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                        final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                                       LoggingAdapter LOG) {
+                                       Logger LOG) {
         final int taskSize = getAllTasks(accountantActor, LOG);
 
         if (taskSize < clusterMasterConfig.getMaxTasksInMemory()) {
@@ -49,17 +52,19 @@ public class JobLoaderExecutorHelper  {
             }
 
 
-            LOG.info("========== Looking for new jobs from MongoDB ==========");
-            Long start = System.currentTimeMillis();
-            LOG.info("#IPs with tasks: temp {}, all: {}", tempDistribution.size(), ipDistribution.size());
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "#IPs with tasks: temp "+tempDistribution.size()+", all: "+ipDistribution.size());
 
-
+            final Timer.Context loadJobTasksFromDBDuration = MasterMetrics.Master.loadJobTasksFromDBDuration.time();
             final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
             final List<ProcessingJob> all =
                     processingJobDao.getDiffusedJobsWithState(JobState.READY, page, tempDistribution, ipsWithJobs);
-            LOG.info("Done with loading jobs in {} seconds. Creating tasks from {} jobs.",
-                    (System.currentTimeMillis() - start) / 1000.0, all.size());
-            start = System.currentTimeMillis();
+            loadJobTasksFromDBDuration.stop();
+
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "Done with loading jobs. Creating tasks from "+all.size()+" jobs.");
+
+            final Timer.Context loadJobResourcesFromDBDuration = MasterMetrics.Master.loadJobResourcesFromDBDuration.time();
 
             final List<String> resourceIds = new ArrayList<>();
             for (final ProcessingJob job : all) {
@@ -76,8 +81,10 @@ public class JobLoaderExecutorHelper  {
             for (SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
                 resources.put(sourceDocumentReference.getId(), sourceDocumentReference);
             }
-            LOG.info("Done with loading resources in {} seconds. Creating tasks from {} resources.",
-                    (System.currentTimeMillis() - start) / 1000.0, resources.size());
+            loadJobResourcesFromDBDuration.stop();
+
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "Done with loading {} resources.",resources.size());
 
             int i = 0;
             for (final ProcessingJob job : all) {
@@ -85,18 +92,20 @@ public class JobLoaderExecutorHelper  {
 
                     i++;
                     if (i >= 500) {
-                        LOG.info("Done with another 500 jobs out of {}", all.size());
+                        LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                                "Done with another 500 jobs out of {}", all.size());
                         i = 0;
                     }
                     addJob(job, resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
                             accountantActor, LOG);
 
                 } catch (Exception e) {
-                    LOG.error("JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());
+                    LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                            "JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());
                 }
             }
-
-            LOG.info("Checking IPs with no jobs in database");
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "Checking IPs with no jobs in database");
 
             ArrayList<String> noJobsIPs = new ArrayList<>();
             List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0, 10000));
@@ -105,7 +114,9 @@ public class JobLoaderExecutorHelper  {
                 if (!entry.getValue()) {
                     noJobsIPs.add(entry.getKey());
                     ipDistribution.remove(entry.getKey());
-                    LOG.info("Found IP with no loaded tasks from DB: {}, removing it from IP distribution", entry.getKey());
+                    LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                            "Found IP with no loaded tasks from DB: {}, removing it from IP distribution", entry.getKey());
+
                     for (MachineResourceReference machine : ips) {
                         if (machine.getIp() == entry.getKey()) {
                             machineResourceReferenceDao.delete(machine.getId());
@@ -124,7 +135,9 @@ public class JobLoaderExecutorHelper  {
             }
 
             if (noJobsIPs.size() > 0) {
-                LOG.info("Found {} IPs with no jobs loaded from the database, removing them if no jobs in progress", noJobsIPs.size());
+                LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                        "Found {} IPs with no jobs loaded from the database, removing them if no jobs in progress", noJobsIPs.size());
+
                 accountantActor.tell(new CleanIPs(noJobsIPs), ActorRef.noSender());
             }
 
@@ -132,27 +145,29 @@ public class JobLoaderExecutorHelper  {
     }
 
 
-    private static int getAllTasks(ActorRef accountantActor, LoggingAdapter LOG) {
+    private static int getAllTasks(ActorRef accountantActor, Logger LOG) {
         final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
         final Future<Object> future = Patterns.ask(accountantActor, new GetNumberOfTasks(), timeout);
         int tasks = 0;
         try {
             tasks = (int) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("getAllTasks Error: {}", e);
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "Exception while getting all tasks", e);
         }
 
         return tasks;
     }
 
-    private static ArrayList<String> getOverLoadedIPList(int threshold, ActorRef accountantActor, LoggingAdapter LOG) {
+    private static ArrayList<String> getOverLoadedIPList(int threshold, ActorRef accountantActor, Logger LOG) {
         final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(30, TimeUnit.SECONDS));
         final Future<Object> future = Patterns.ask(accountantActor, new GetOverLoadedIPs(threshold), timeout);
         ArrayList<String> ips = null;
         try {
             ips = (ArrayList<String>) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("OverloadedIPs Error: {}", e);
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "OverloadedIPs", e);
         }
 
         return ips;
@@ -167,7 +182,7 @@ public class JobLoaderExecutorHelper  {
     private static void addJob(final ProcessingJob job, final Map<String, SourceDocumentReference> resources,
                                final ClusterMasterConfig clusterMasterConfig, final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                               final ActorRef accountantActor, LoggingAdapter LOG) {
+                               final ActorRef accountantActor, Logger LOG) {
         final List<ProcessingJobTaskDocumentReference> tasks = job.getTasks();
 
         final ProcessingJob newProcessingJob = job.withState(JobState.RUNNING);
@@ -182,7 +197,8 @@ public class JobLoaderExecutorHelper  {
         }
 
         if (tasks.size() > 10)
-            LOG.info("Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
+            LOG.info(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
         accountantActor.tell(new AddTasksToJob(job.getId(), taskIDs), ActorRef.noSender());
     }
@@ -197,7 +213,7 @@ public class JobLoaderExecutorHelper  {
     private static String processTask(final ProcessingJob job, final ProcessingJobTaskDocumentReference task,
                                final Map<String, SourceDocumentReference> resources,
                                SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                               ActorRef accountantActor, LoggingAdapter LOG) {
+                               ActorRef accountantActor, Logger LOG) {
         final String sourceDocId = task.getSourceDocumentReferenceID();
 
         final SourceDocumentReference sourceDocumentReference = resources.get(sourceDocId);
@@ -217,7 +233,8 @@ public class JobLoaderExecutorHelper  {
         try {
             tasksFromIP = (List<String>) Await.result(future, timeout.duration());
         } catch (Exception e) {
-            LOG.error("Error in processTask->GetTasksFromIP: {}", e);
+            LOG.error(LoggingComponent.appendAppFields(LOG, LoggingComponent.Master.TASKS_LOADER),
+                    "Error in processTask->GetTasksFromIP", e);
         }
 
         if (tasksFromIP == null) {
