@@ -39,6 +39,7 @@ public class MigratorHarvesterDaoTest {
 
     private static final ProcessingJobCreationOptions falseOption = new ProcessingJobCreationOptions(false);
     private static final ReferenceOwner owner = new ReferenceOwner();
+    private final static String migrationBatchId = "migration-test-batch";
 
     @Before
     public void setUp() throws UnknownHostException {
@@ -64,7 +65,7 @@ public class MigratorHarvesterDaoTest {
 
     @Test
     public void test_SourceDocumentReferences_EmptyList() throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
-        harvesterDao.saveSourceDocumentReferences(Collections.EMPTY_LIST);
+        harvesterDao.saveSourceDocumentReferences(Collections.EMPTY_LIST,migrationBatchId);
         assertEquals (0, dataStore.getCount(SourceDocumentReference.class));
     }
 
@@ -73,7 +74,7 @@ public class MigratorHarvesterDaoTest {
         final SourceDocumentReference sourceDocumentReference =
                 new SourceDocumentReference(owner, URLSourceType.ISSHOWNBY, "http://www.google.com",
                                             null, null, null, null, true);
-        harvesterDao.saveSourceDocumentReferences(Arrays.asList(sourceDocumentReference));
+        harvesterDao.saveSourceDocumentReferences(Arrays.asList(sourceDocumentReference),migrationBatchId);
         assertEquals (1, dataStore.getCount(sourceDocumentReference));
     }
 
@@ -95,7 +96,7 @@ public class MigratorHarvesterDaoTest {
         sourceDocumentReferences.add(new SourceDocumentReference(owner, null, "http://www.facebook.com", null, null,
                                                                  null, null, true));
 
-        harvesterDao.saveSourceDocumentReferences(sourceDocumentReferences);
+        harvesterDao.saveSourceDocumentReferences(sourceDocumentReferences,migrationBatchId);
         assertEquals(4, dataStore.getCount(SourceDocumentReference.class));
 
         for (final SourceDocumentReference reference: sourceDocumentReferences) {
@@ -107,7 +108,7 @@ public class MigratorHarvesterDaoTest {
 
     @Test
     public void test_ProcessJobs_EmptyList() {
-        harvesterDao.saveProcessingJobs(Collections.EMPTY_LIST);
+        harvesterDao.saveProcessingJobs(Collections.EMPTY_LIST,migrationBatchId);
         assertEquals(0, dataStore.getCount(ProcessingJob.class));
     }
 
@@ -117,7 +118,7 @@ public class MigratorHarvesterDaoTest {
                                                                             .edmObjectUrlJobs("http://www.google.com",
                                                                                               owner, falseOption).get(0)
                                                                             .getProcessingJob());
-        harvesterDao.saveProcessingJobs(processingJobList);
+        harvesterDao.saveProcessingJobs(processingJobList,migrationBatchId);
         assertEquals (1, dataStore.getCount(processingJobList.get(0)));
     }
 
@@ -132,7 +133,7 @@ public class MigratorHarvesterDaoTest {
         processingJobList.add(ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.yahoo.com", owner, falseOption).get(0)
                                                  .getProcessingJob());
 
-        harvesterDao.saveProcessingJobs(processingJobList);
+        harvesterDao.saveProcessingJobs(processingJobList,migrationBatchId);
         assertEquals(3, dataStore.getCount(ProcessingJob.class));
 
         for (final ProcessingJob job: processingJobList) {

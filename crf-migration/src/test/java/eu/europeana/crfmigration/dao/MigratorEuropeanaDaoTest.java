@@ -14,7 +14,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static utils.MigratorUtils.*;
+import static utils.MigratorUtils.PATH_PREFIX;
 
 /**
  * Created by salexandru on 02.06.2015.
@@ -23,7 +23,7 @@ public class MigratorEuropeanaDaoTest {
     private final static MigratorConfig migratorConfig = MigratorUtils.createMigratorConfig("config-files/migration.conf");
 
     private final static Date dateFilter = DateTime.parse("2014-08-15T00:00:00.000Z").toDate();
-
+    private final static String migrationBatchId = "migration-test-batch";
     private MongoDBUtils mongoDBUtils;
     private MigratorEuropeanaDao europeanaDao;
 
@@ -42,21 +42,21 @@ public class MigratorEuropeanaDaoTest {
 
     @Test
     public void test_GenerateCursor_NoFiltering() {
-        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(null);
+        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(null,migrationBatchId);
         assertEquals(new BasicDBObject(), cursor.getQuery());
     }
 
     @Test
     public void test_GenerateCursor_DateFiltering() {
-        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
+        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter,migrationBatchId);
         assertEquals (new BasicDBObject("timestampUpdated", new BasicDBObject("$gt", dateFilter)), cursor.getQuery());
     }
 
     @Test
     public void test_RetrieveData_NoFiltering_BatchSizeAllDB() {
-        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(null);
+        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(null,migrationBatchId);
         final DBCollection mongo = mongoDBUtils.connectToSource().getCollection("record");
-        final Map<String, String> records = europeanaDao.retrieveRecordsIdsFromCursor(cursor, mongo.find().size());
+        final Map<String, String> records = europeanaDao.retrieveRecordsIdsFromCursor(cursor, mongo.find().size(),migrationBatchId);
 
         assertEquals (mongo.find().size(), records.size());
         for (final Map.Entry<String, String> record: records.entrySet()) {
@@ -70,9 +70,9 @@ public class MigratorEuropeanaDaoTest {
     @Test
     public void test_RetrieveData_DateFiltering() {
         final BasicDBObject query = new BasicDBObject("timestampUpdated", new BasicDBObject("$gt", dateFilter));
-        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter);
+        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter,migrationBatchId);
         final DBCollection mongo = mongoDBUtils.connectToSource().getCollection("record");
-        final Map<String, String> records = europeanaDao.retrieveRecordsIdsFromCursor(cursor, mongo.find(query).size());
+        final Map<String, String> records = europeanaDao.retrieveRecordsIdsFromCursor(cursor, mongo.find(query).size(),migrationBatchId);
 
         assertEquals(mongo.find(query).size(), records.size());
         for (final Map.Entry<String, String> record: records.entrySet()) {
@@ -86,7 +86,7 @@ public class MigratorEuropeanaDaoTest {
 
     @Test
     public void test_RetrieveSourceDocumentReferences_EmptyRecords() {
-        assertTrue(europeanaDao.retrieveAggregationEDMInformation(Collections.<String, String>emptyMap()).isEmpty());
+        assertTrue(europeanaDao.retrieveAggregationEDMInformation(Collections.<String, String>emptyMap(),migrationBatchId).isEmpty());
     }
 
     @Test
@@ -96,7 +96,7 @@ public class MigratorEuropeanaDaoTest {
         final Map<String, String> record = new HashMap<>();
         record.put(recordId, collectionName);
 
-        final List<EuropeanaEDMObject> edmObjects = europeanaDao.retrieveAggregationEDMInformation(record);
+        final List<EuropeanaEDMObject> edmObjects = europeanaDao.retrieveAggregationEDMInformation(record,migrationBatchId);
 
         assertEquals (1, edmObjects.size());
 
@@ -109,9 +109,9 @@ public class MigratorEuropeanaDaoTest {
 
     @Test
     public void test_RetrieveSourceDocumentReferences_ManyRecords() {
-        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(null);
-        final Map<String, String> records= europeanaDao.retrieveRecordsIdsFromCursor(cursor, 10);
-        final List<EuropeanaEDMObject> edmObjects = europeanaDao.retrieveAggregationEDMInformation(records);
+        final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(null,migrationBatchId);
+        final Map<String, String> records= europeanaDao.retrieveRecordsIdsFromCursor(cursor, 10,migrationBatchId);
+        final List<EuropeanaEDMObject> edmObjects = europeanaDao.retrieveAggregationEDMInformation(records,migrationBatchId);
 
         final DBCollection aggregationColl = mongoDBUtils.connectToSource().getCollection("Aggregation");
 

@@ -1,6 +1,6 @@
 package eu.europeana.crfmigration.logging;
 
-import eu.europeana.harvester.domain.LogMarker;
+import eu.europeana.harvester.logging.LogMarker;
 import eu.europeana.harvester.domain.ReferenceOwner;
 
 import java.util.HashMap;

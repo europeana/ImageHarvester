@@ -1,6 +1,5 @@
 package eu.europeana.harvester.logging;
 
-import eu.europeana.harvester.domain.LogMarker;
 import eu.europeana.harvester.domain.ReferenceOwner;
 
 import java.util.HashMap;

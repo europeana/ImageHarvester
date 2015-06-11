@@ -3,7 +3,7 @@ package eu.europeana.harvester.cluster.slave.downloading;
 import com.ning.http.client.*;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.LogMarker;
+import eu.europeana.harvester.logging.LogMarker;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.utils.NetUtils;
