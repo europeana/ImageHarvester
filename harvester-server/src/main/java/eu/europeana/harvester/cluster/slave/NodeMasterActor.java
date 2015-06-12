@@ -1,8 +1,6 @@
 package eu.europeana.harvester.cluster.slave;
 
 import akka.actor.*;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.db.MediaStorageClient;
@@ -263,7 +261,7 @@ public class NodeMasterActor extends UntypedActor {
         else  {
                 final Long currentTime = System.currentTimeMillis();
                 final int diff = Math.round ( ((currentTime - lastRequest)/1000) );
-                if(diff > 10 && messages.size() < nodeMasterConfig.getTaskNrLimit() ) {
+                if(diff > 5 && messages.size() < nodeMasterConfig.getTaskNrLimit() ) {
                     sentRequest = true;
                     //self().tell(new RequestTasks(), ActorRef.noSender());
                     masterSender.tell(new RequestTasks(), nodeSupervisor);
