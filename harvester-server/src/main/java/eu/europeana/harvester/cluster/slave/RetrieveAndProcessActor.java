@@ -163,6 +163,12 @@ public class RetrieveAndProcessActor extends UntypedActor {
             ProcessingResultTuple processingResultTuple;
             try {
                 processingResultTuple = executeProcessing(response, task);
+
+                if (processingResultTuple == null)
+                    throw new IllegalStateException("Unexpected processingResultTuple with value null. Probable cause : bug in slave code.");
+                if (processingResultTuple.getMediaMetaInfoTuple() == null)
+                    throw new IllegalStateException("Unexpected processingResultTuple.mediaMetaInfoTuple with value null. Probable cause : bug in slave code.");
+
                 doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
                         processingResultTuple.getMediaMetaInfoTuple().getImageMetaInfo(),
                         processingResultTuple.getMediaMetaInfoTuple().getAudioMetaInfo(),
@@ -171,7 +177,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
             } catch (Exception e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                        "Exception during processing. :  "+e.getLocalizedMessage(), e);
+                        "Exception during processing. :  " + e.getLocalizedMessage(), e);
 
                 doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
                         null,
@@ -184,7 +190,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
         } else {
             // We can skip processing altogether.
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                    "Processing stage skipped because retrieval involved only link checking or finished with non-complete state : "+response.getState()+" and reason "+response.getLog());
+                    "Processing stage skipped because retrieval involved only link checking or finished with non-complete state : " + response.getState() + " and reason " + response.getLog());
 
             doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
                     null,

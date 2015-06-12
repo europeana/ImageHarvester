@@ -3,34 +3,38 @@ package eu.europeana.harvester.cluster.slave.downloading;
 import com.ning.http.client.*;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.logging.LogMarker;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
+import eu.europeana.harvester.logging.LoggingComponent;
 import eu.europeana.harvester.utils.NetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import static net.logstash.logback.marker.Markers.append;
 
 public class SlaveDownloader {
 
     private Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
-//    public SlaveDownloader() {
-//
-//    }
-
-    public void downloadAndStoreInHttpRetrieveResponse(final HttpRetrieveResponse httpRetrieveResponse, final RetrieveUrl task) {
+    public HttpRetrieveResponse downloadAndStoreInHttpRetrieveResponse(final HttpRetrieveResponse httpRetrieveResponse, final RetrieveUrl task) {
 
         if ((task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) &&
-        (task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD)) {
-            throw new IllegalArgumentException("The downloader can handle only condition & unconditional downloads. Cannot handle "+task.getDocumentReferenceTask().getTaskType());
+                (task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD)) {
+            throw new IllegalArgumentException("The downloader can handle only condition & unconditional downloads. Cannot handle " + task.getDocumentReferenceTask().getTaskType());
+        }
+
+        if (task.getUrl() == null || "".equalsIgnoreCase(task.getUrl())) {
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "Retrieval url failed because the downloader cannot retrieve null or 'empty string' url.");
+            httpRetrieveResponse.setState(RetrievingState.ERROR);
+            httpRetrieveResponse.setLog("Retrieval url failed because the downloader cannot retrieve null or 'empty string' url.");
+            return httpRetrieveResponse;
         }
 
         final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(new AsyncHttpClientConfig.Builder()
@@ -63,7 +67,6 @@ public class SlaveDownloader {
                     httpRetrieveResponse.setLog("Download aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
                     return STATE.ABORT;
                 }
-
 
 
                     /* We don't care what kind of status code it has at this moment as we will decide what to
@@ -102,7 +105,7 @@ public class SlaveDownloader {
                     if (existingContentLength != null && downloadContentLength != null && existingContentLength.equalsIgnoreCase(downloadContentLength)) {
                         // Same content length response headers => abort
                         httpRetrieveResponse.setState(RetrievingState.COMPLETED);
-                        httpRetrieveResponse.setLog("Conditional download aborted as existing Content-Length == "+existingContentLength+" and download Content-Length == "+downloadContentLength);
+                        httpRetrieveResponse.setLog("Conditional download aborted as existing Content-Length == " + existingContentLength + " and download Content-Length == " + downloadContentLength);
                         return STATE.ABORT;
                     }
                 }
@@ -142,18 +145,31 @@ public class SlaveDownloader {
             public Integer onCompleted() throws Exception {
 
                 // Mark it as completed only when the previous state was processing. Otherwise it finished with a non-error state that must be kept.
-                if (httpRetrieveResponse.getState() == RetrievingState.PROCESSING) httpRetrieveResponse.setState(RetrievingState.COMPLETED);
+                if (httpRetrieveResponse.getState() == RetrievingState.PROCESSING)
+                    httpRetrieveResponse.setState(RetrievingState.COMPLETED);
                 httpRetrieveResponse.setRetrievalDurationInMilliSecs(System.currentTimeMillis() - connectionSetupStartTimestamp);
                 try {
                     httpRetrieveResponse.close();
                 } catch (IOException e1) {
-                    LOG.info(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"Failed to close the response, caused by : " + e1.getMessage());
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                            "Failed to close the download response. This might be a bug in harvester slave code.", e1);
                 }
                 return 0;
             }
 
             @Override
             public void onThrowable(Throwable e) {
+
+                // Remove the possibly incomplete file stored on disk
+                try {
+                    final File retrievalFileStorage = Paths.get(httpRetrieveResponse.getAbsolutePath()).toFile();
+                    if (retrievalFileStorage.exists()) {
+                        retrievalFileStorage.delete();
+                    }
+                } catch (Exception e1) {
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                            "Cleaning of the incomplete download result file failed in an unexpected way. This might be a bug in harvester slave code.", e1);
+                }
 
                 httpRetrieveResponse.setState(RetrievingState.ERROR);
 
@@ -165,38 +181,39 @@ public class SlaveDownloader {
                     httpRetrieveResponse.setLog("Download aborted as it's duration " + downloadDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + " ms");
                 }
 
-
                 // Check if it was aborted because of conditional download with with same headers.
                 if (httpRetrieveResponse.getState() == RetrievingState.COMPLETED && task.getDocumentReferenceTask().getTaskType() == DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) {
                     // We don't set any exception as the download was aborted for a legitimate reason.
-                    cleanup(httpRetrieveResponse, asyncHttpClient, httpRetrieveResponse.getException());
-                }
-                else {
+                    cleanup(httpRetrieveResponse,task, asyncHttpClient, httpRetrieveResponse.getException());
+                } else {
                     // We set the exception as the download was aborted because of a problem.
-                    cleanup(httpRetrieveResponse, asyncHttpClient, e);
+                    cleanup(httpRetrieveResponse,task, asyncHttpClient, e);
                 }
             }
         });
 
         try {
-            Integer r = downloadListener.get(1, TimeUnit.DAYS /* This timout should never be reached. There are other timeouts used internally that will expire much quicker. */);
-            LOG.debug(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"Download finished with status {}", r);
+            Integer r = downloadListener.get(1, TimeUnit.DAYS /* This timeout should never be reached. There are other timeouts used internally that will expire much quicker. */);
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "Download finished with status {}", r);
 
         } catch (Exception e) {
-            cleanup(httpRetrieveResponse, asyncHttpClient, e);
+            cleanup(httpRetrieveResponse,task, asyncHttpClient, e);
 
         } finally {
-            cleanup(httpRetrieveResponse, asyncHttpClient, httpRetrieveResponse.getException());
+            cleanup(httpRetrieveResponse,task, asyncHttpClient, httpRetrieveResponse.getException());
             asyncHttpClient.close();
+            return httpRetrieveResponse;
         }
     }
 
-    private void cleanup(final HttpRetrieveResponse httpRetrieveResponse, final AsyncHttpClient asyncHttpClient, final Throwable e) {
+    private void cleanup(final HttpRetrieveResponse httpRetrieveResponse,final RetrieveUrl task, final AsyncHttpClient asyncHttpClient, final Throwable e) {
         if (httpRetrieveResponse != null) httpRetrieveResponse.setException(e);
         try {
             if (httpRetrieveResponse != null) httpRetrieveResponse.close();
         } catch (IOException e1) {
-            LOG.error("Failed to close the response, caused by : " + e1.getMessage());
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "Failed to execute the final cleanup of the async downloader ", e1);
         }
     }
 

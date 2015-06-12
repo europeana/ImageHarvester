@@ -153,6 +153,25 @@ public class SlaveDownloaderTest {
 
     }
 
+    @Test
+    public void cannotDownloadNullUrlUnconditionallyWithDefaultLimits() throws Exception {
+        final SlaveDownloader slaveDownloader = new SlaveDownloader();
+        final HttpRetrieveResponse response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, pathOnDisk);
+
+        final ProcessingJobLimits limits = new ProcessingJobLimits();
+
+        final RetrieveUrl task = new RetrieveUrl(null /* IT SHOULD FAIL BECAUSE OF THIS */, limits,DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                "jobid-1",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                        "source-reference-1", Collections.<ProcessingJobSubTask>emptyList()), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
+
+        assertEquals(RetrievingState.ERROR, response.getState());
+
+    }
+
 
     @Test
     public void canDownloadConditionallyAndSkipDownloadWhenSameContentLengthResponseHeaderEntry() throws Exception {
