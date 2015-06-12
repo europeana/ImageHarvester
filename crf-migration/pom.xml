@@ -76,6 +76,12 @@
 
         <dependency>
             <groupId>eu.europeana</groupId>
+            <artifactId>harvester-server</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>eu.europeana</groupId>
             <artifactId>JobCreator</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
