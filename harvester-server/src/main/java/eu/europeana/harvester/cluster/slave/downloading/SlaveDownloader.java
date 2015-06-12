@@ -163,7 +163,7 @@ public class SlaveDownloader {
                 // Remove the possibly incomplete file stored on disk
                 try {
                     final File retrievalFileStorage = Paths.get(httpRetrieveResponse.getAbsolutePath()).toFile();
-                    if (retrievalFileStorage.exists() && retrievalFileStorage.length() == 0) {
+                    if (retrievalFileStorage.exists()) {
                         retrievalFileStorage.delete();
                     }
                 } catch (Exception e1) {
