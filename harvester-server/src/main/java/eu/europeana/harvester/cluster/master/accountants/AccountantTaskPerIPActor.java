@@ -109,14 +109,19 @@ public class AccountantTaskPerIPActor extends UntypedActor {
 
 
     private void cleanIPs(ArrayList<String> IPsToCheck) {
+        ArrayList<String> toBeDeleted = new ArrayList<>();
         for (final Map.Entry<String, List<String>> task : tasksPerIP.entrySet()) {
             if (IPsToCheck.contains(task.getKey()) && !checkTaskStates(task.getValue())) {
                 String IP = task.getKey();
-                tasksPerIP.remove(IP);
+                //tasksPerIP.remove(IP);
+                toBeDeleted.add(IP);
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
                         "Removing IP {} from monitored for tasks ", IP);
             }
         }
+        for ( final String IP : toBeDeleted )
+            tasksPerIP.remove(IP);
+
         return;
     }
 
