@@ -2,10 +2,8 @@ package eu.europeana.harvester.cluster;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.Props;
 import akka.routing.FromConfig;
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
@@ -25,10 +23,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jclouds.openstack.swift.v1.SwiftApi;
+import org.jclouds.openstack.swift.v1.features.ContainerApi;
+import org.jclouds.openstack.swift.v1.features.ObjectApi;
 
 import java.io.File;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +40,13 @@ public class Slave {
     private final String[] args;
 
     private ActorSystem system;
+
+    private static final String containerName = "swiftUnitTesting";
+    private ObjectApi objectApi;
+    private SwiftApi  swiftApi;
+    private ContainerApi containerApi;
+
+
 
     public Slave(String[] args) {
         this.args = args;
@@ -117,8 +124,22 @@ public class Slave {
         MediaStorageClient mediaStorageClient = null;
         try {
             mediaStorageClient = new MediaStorageClientImpl(mediaStorageClientConfig);
-        } catch (UnknownHostException e) {
-            LOG.error("Error: connection failed to media-storage");
+//            SwiftConfiguration swiftConfiguration = new SwiftConfiguration("https://auth.hydranodes.de:5000/v2.0",
+//            "d35f3a21-cf35-48a0-a035-99bfc2252528.swift.tenant@a9s.eu",
+//                    "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu",
+//                    "78ae7i9XO3O7CcdkDa87", containerName, "hydranodes");
+//            mediaStorageClient = new SwiftMediaStorageClientImpl(swiftConfiguration);
+//            swiftApi = ContextBuilder.newBuilder("swift")
+//                    .credentials(swiftConfiguration.getIdentity(), swiftConfiguration.getPassword())
+//                    .endpoint(swiftConfiguration.getAuthUrl()).buildApi(SwiftApi.class);
+//
+//            containerApi = swiftApi.getContainerApi(swiftConfiguration.getRegionName());
+//            objectApi = swiftApi.getObjectApi(swiftConfiguration.getRegionName(), swiftConfiguration.getContainerName());
+//            containerApi.get(swiftConfiguration.getContainerName());
+
+        } catch (Exception e) {
+            LOG.error("Error: connection failed to media-storage " + e.getMessage());
+            e.printStackTrace();
             System.exit(-1);
         }
 

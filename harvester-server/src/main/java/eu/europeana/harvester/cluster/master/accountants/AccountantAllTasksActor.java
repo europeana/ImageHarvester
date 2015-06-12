@@ -2,8 +2,6 @@ package eu.europeana.harvester.cluster.master.accountants;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.TaskState;
@@ -228,49 +226,50 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final int exceptionLimit = m.getExceptionLimit();
                 final String taskID = m.getTaskID();
 
-                RetrieveUrl retrieveUrl = new RetrieveUrl("", "", null, new ProcessingJobLimits(), "", "", null, null, "",new ReferenceOwner("unknown","unknown","unknown"));
-                List<String> tasksFromIP = null;
-
-                final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-                final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
-
-                final Future<Object> future = Patterns.ask(accountantPerIP, new GetTasksFromIP(IP), timeout);
+                RetrieveUrl retrieveUrl = new RetrieveUrl("", "", null, new ProcessingJobLimits(), "", "", null, null, "",
+                        new ReferenceOwner("unknown","unknown","unknown"));
+//                List<String> tasksFromIP = null;
+//
+//                final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
+//                final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
+//
+//                final Future<Object> future = Patterns.ask(accountantPerIP, new GetTasksFromIP(IP), timeout);
+//
+//                try {
+//                    tasksFromIP = (List<String>) Await.result(future, timeout.duration());
+//                } catch (Exception e) {
+//                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
+//                            "Exception while waiting for answer for getting tasks per IP.", e);
+//                    // TODO : Evaluate if it is acceptable to hide the exception here.
+//                }
+//
+//
+//                try {
+//
+//
+//                    int nr = 0;
+//
+//                    if (tasksFromIP != null) {
+//                        for (final String task : tasksFromIP) {
+//                            if (allTasks.containsKey(task) && allTasks.get(task).getValue().equals(TaskState.DOWNLOADING)) {
+//                                nr += 1;
+//                            }
+//                        }
+//                    }
+//
+//
+//                    if ((!isException) && (nr >= defaultLimit)) {
+//                        getSender().tell(retrieveUrl, getSelf());
+//                        return;
+//                    }
+//
+//
+//                    if (isException && (nr > exceptionLimit)) {
+//                        getSender().tell(retrieveUrl, getSelf());
+//                        return;
+//                    }
 
                 try {
-                    tasksFromIP = (List<String>) Await.result(future, timeout.duration());
-                } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
-                            "Exception while waiting for answer for getting tasks per IP.", e);
-                    // TODO : Evaluate if it is acceptable to hide the exception here.
-                }
-
-
-                try {
-
-
-                    int nr = 0;
-
-                    if (tasksFromIP != null) {
-                        for (final String task : tasksFromIP) {
-                            if (allTasks.containsKey(task) && allTasks.get(task).getValue().equals(TaskState.DOWNLOADING)) {
-                                nr += 1;
-                            }
-                        }
-                    }
-
-
-                    if ((!isException) && (nr >= defaultLimit)) {
-                        getSender().tell(retrieveUrl, getSelf());
-                        return;
-                    }
-
-
-                    if (isException && (nr > exceptionLimit)) {
-                        getSender().tell(retrieveUrl, getSelf());
-                        return;
-                    }
-
-
                     TaskState state = TaskState.DONE;
 
 

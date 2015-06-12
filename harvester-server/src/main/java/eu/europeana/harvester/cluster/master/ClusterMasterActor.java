@@ -175,7 +175,7 @@ public class ClusterMasterActor extends UntypedActor {
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
                 defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
 
-        jobSenderActor = getContext().system().actorOf(Props.create(JobSenderActor.class, ipExceptions,
+        jobSenderActor = getContext().system().actorOf(Props.create(JobSenderActor.class, ipExceptions, ipsWithJobs,
         defaultLimits,cleanupInterval, jobLoaderActor,accountantActor, receiverActor), "jobSender");
 
         final Cluster cluster = Cluster.get(getContext().system());

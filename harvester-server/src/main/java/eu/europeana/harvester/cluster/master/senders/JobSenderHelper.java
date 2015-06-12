@@ -45,7 +45,11 @@ public class JobSenderHelper  {
             percentage = 0.0;
         }
 
+        //LOG.info ("creating bag of tasks");
+
         List<RetrieveUrl> tasksToSend = startTasks(defaultLimits, ipsWithJobs, accountantActor, ipExceptions, LOG);
+
+        //LOG.info ("taskstosend size"+tasksToSend.size());
 
 
         final BagOfTasks bagOfTasks = new BagOfTasks(tasksToSend);
@@ -73,6 +77,7 @@ public class JobSenderHelper  {
 
             List<String> IPs = new ArrayList(ipsWithJobs.keySet());
             Collections.shuffle(IPs);
+            //LOG.info ("IPs with jobs size "+IPs.size());
 
             for (final String IP : IPs) {
 
@@ -91,7 +96,8 @@ public class JobSenderHelper  {
                 }
 
 
-                if (tasksFromIP == null) {
+                if (tasksFromIP == null || tasksFromIP.size()==0) {
+                    //LOG.info ("tasksfromip is null or 0 elems for IP "+IP);
                     continue;
                 }
 
@@ -99,11 +105,18 @@ public class JobSenderHelper  {
 
 
                 // Starts tasks until we have resources or there are tasks to start. (mainly bandwidth)
-                while (tasksToSend.size() < maxToSend) {
-                    RetrieveUrl r = startOneDownload(tasksFromIP, IP, ipExceptions, defaultLimits, accountantActor, LOG);
-                    if (r!=null)
+
+                for (final String taskID : tasksFromIP) {
+                    RetrieveUrl r = startOneDownload(taskID, IP, ipExceptions, defaultLimits, accountantActor, LOG);
+
+                    if (r != null && (!r.getUrl().equals(""))) {
+                        //LOG.info("started one download for IP: " + IP + " and URL " + r.getUrl()+" for task ID "+taskID);
                         tasksToSend.add(r);
-               }
+                        if (tasksToSend.size() >= maxToSend)
+                            break;
+                    }
+                }
+
 
                 if ( tasksToSend.size() >= maxToSend ) break;
 
@@ -117,44 +130,40 @@ public class JobSenderHelper  {
 
     /**
      * Starts one download
-     * @param tasksFromIP a list of requests
+     * @param taskID a list of requests
      * @return - at success true at failure false
      */
-    private static RetrieveUrl startOneDownload(final List<String> tasksFromIP, final String IP, IPExceptions ipExceptions,
+    private static RetrieveUrl startOneDownload(String taskID, final String IP, IPExceptions ipExceptions,
                                      DefaultLimits defaultLimits, ActorRef accountantActor, Logger LOG) {
         RetrieveUrl retrieveUrl = null;
 
         if (! ipExceptions.getIgnoredIPs().contains(IP)) {
 
-            for (final String taskID : tasksFromIP) {
+            final boolean isException = ipExceptions.getIps().contains(IP);
+            final Long defaultLimit = defaultLimits.getDefaultMaxConcurrentConnectionsLimit();
+            final int exceptionLimit = ipExceptions.getMaxConcurrentConnectionsLimit();
 
 
-                final boolean isException = ipExceptions.getIps().contains(IP);
-                final Long defaultLimit = defaultLimits.getDefaultMaxConcurrentConnectionsLimit();
-                final int exceptionLimit = ipExceptions.getMaxConcurrentConnectionsLimit();
+            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
+            Future<Object> future;
 
 
-                final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-                Future<Object> future;
+            GetRetrieveUrl message = new GetRetrieveUrl(taskID, IP, isException, defaultLimit, exceptionLimit);
 
 
-                GetRetrieveUrl message = new GetRetrieveUrl(taskID, IP, isException, defaultLimit, exceptionLimit);
-
-
-                future = Patterns.ask(accountantActor, message , timeout);
-                try {
-                    retrieveUrl = (RetrieveUrl) Await.result(future, timeout.duration());
-                } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
-                            "Error at startOneDownload -> getTask", e);
-
-                }
-                if (retrieveUrl == null || retrieveUrl.getId().equals("")) {
-                    continue;
-                }
+            future = Patterns.ask(accountantActor, message , timeout);
+            try {
+                retrieveUrl = (RetrieveUrl) Await.result(future, timeout.duration());
+            } catch (Exception e) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
+                        "Error at startOneDownload -> getTask", e);
 
             }
+
+
         }
+
+        //LOG.info ("started one download returning "+retrieveUrl.getUrl()+ " for taski ID "+ taskID);
 
         return retrieveUrl ;
     }

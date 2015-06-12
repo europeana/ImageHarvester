@@ -19,6 +19,7 @@ import java.util.Map;
 
 import static org.jclouds.io.Payloads.newByteArrayPayload;
 
+
 /**
  * Created by salexandru on 03.06.2015.
  */
@@ -29,6 +30,7 @@ public class SwiftMediaStorageClientImpl implements MediaStorageClient {
         if (null == config) {
             throw new IllegalArgumentException("Config cannot be null");
         }
+
         final SwiftApi swiftApi = ContextBuilder.newBuilder("openstack-swift")
                                  .credentials(config.getIdentity(), config.getPassword())
                                  .endpoint(config.getAuthUrl())

@@ -67,11 +67,11 @@ public class JobSenderActor extends UntypedActor {
     /**
      * Maps each IP with a boolean which indicates if an IP has jobs in MongoDB or not.
      */
-    private final HashMap<String, Boolean> ipsWithJobs = new HashMap<>();
+    private final HashMap<String, Boolean> ipsWithJobs;
 
 
 
-    public JobSenderActor(final IPExceptions ipExceptions, final DefaultLimits defaultLimits,
+    public JobSenderActor(final IPExceptions ipExceptions, HashMap<String,Boolean> ipsWithJobs, final DefaultLimits defaultLimits,
                           final Integer cleanupInterval, final ActorRef jobLoaderActor,
                           final  ActorRef accountantActor, final ActorRef receiverActor
     ) {
@@ -85,6 +85,7 @@ public class JobSenderActor extends UntypedActor {
         this.accountantActor = accountantActor;
         this.jobLoaderActor = jobLoaderActor;
         this.receiverActor = receiverActor;
+        this.ipsWithJobs = ipsWithJobs;
 
 
 
@@ -95,6 +96,9 @@ public class JobSenderActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
 
         if(message instanceof RequestTasks) {
+
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
+                    "Received request for tasks from "+getSender());
 
             MasterMetrics.Master.sendJobSetToSlaveCounter.inc();
             final com.codahale.metrics.Timer.Context context = MasterMetrics.Master.sendJobSetToSlaveDuration.time();

@@ -118,7 +118,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         this.ipExceptions = ipExceptions;
 
         JobLoaderMasterHelper.checkForAbandonedJobs(processingJobDao, clusterMasterConfig, LOG);
-        JobLoaderMasterHelper.getIPDistribution(machineResourceReferenceDao, LOG);
+        ipDistribution = JobLoaderMasterHelper.getIPDistribution(machineResourceReferenceDao, LOG);
     }
 
     @Override
