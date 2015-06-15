@@ -1,6 +1,7 @@
 package eu.europeana.harvester.cluster.slave;
 
 import akka.actor.*;
+import com.codahale.metrics.Gauge;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.db.MediaStorageClient;
@@ -95,6 +96,14 @@ public class NodeMasterActor extends UntypedActor {
         this.mediaStorageClient = mediaStorageClient;
         this.maxSlaves = nodeMasterConfig.getNrOfDownloaderSlaves();
 
+        // Register the global gauges
+        SlaveMetrics.Worker.Master.activeWorkerSlavesCounter.registerHandler(new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return actors.size();
+            }
+        });
+
     }
 
     @Override
@@ -176,7 +185,7 @@ public class NodeMasterActor extends UntypedActor {
     private void onTerminatedReceived(Terminated message) {
         final Terminated t = message;
         ActorRef which = t.getActor();
-        removeActorFromReferenceArray(which);
+        this.actors.remove(which);
 
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                 "Slave master received worker termination message. Worker Actor {} terminated. Master stats : Messages {}. All ProcessorActors {}. ",t.getActor(),messages.size(),actors.size());
@@ -192,7 +201,7 @@ public class NodeMasterActor extends UntypedActor {
                 ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
                         httpRetrieveResponseFactory, mediaStorageClient, nodeMasterConfig.getColorMapPath()
                         );
-                addActorToReferenceArray(newActor);
+                this.actors.add(newActor);
                 context().watch(newActor);
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                         "Slave master starting new Worker Actor {} ",newActor);
@@ -228,7 +237,7 @@ public class NodeMasterActor extends UntypedActor {
                     ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
                             httpRetrieveResponseFactory, mediaStorageClient, nodeMasterConfig.getColorMapPath()
                             );
-                    addActorToReferenceArray(newActor);
+                    this.actors.add(newActor);
 
                     context().watch(newActor);
 
@@ -304,9 +313,8 @@ public class NodeMasterActor extends UntypedActor {
     private void onDoneProcessingReceived(Object message) {
         final DoneProcessing doneProcessing = (DoneProcessing)message;
         final String jobId = doneProcessing.getJobId();
-
-        removeActorFromReferenceArray(getSender());
-
+        this.actors.remove(getSender());
+        
         if(!jobsToStop.contains(jobId)) {
             masterReceiver.tell(message, getSelf());
 
@@ -344,16 +352,6 @@ public class NodeMasterActor extends UntypedActor {
             case RUNNING:
                 jobsToStop.remove(changeJobState.getJobId());
         }
-    }
-
-    private void addActorToReferenceArray(final ActorRef actorRef) {
-        this.actors.add(actorRef);
-        SlaveMetrics.Worker.Master.activeWorkerSlavesCounter.inc();
-    }
-
-    private void removeActorFromReferenceArray(final ActorRef actorRef) {
-        this.actors.remove(actorRef);
-        SlaveMetrics.Worker.Master.activeWorkerSlavesCounter.dec();
     }
 
     private void deleteFile(String fileName) {

@@ -1,9 +1,6 @@
 package eu.europeana.harvester.cluster.master;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
+import com.codahale.metrics.*;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
 
@@ -31,7 +28,6 @@ public class MasterMetrics {
 
 
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
-
 
     public static class Master {
         public static final String NAME = "MasterMetrics" + "." + "Master";
