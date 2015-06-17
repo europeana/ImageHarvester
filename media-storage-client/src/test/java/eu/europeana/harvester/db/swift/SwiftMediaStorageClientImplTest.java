@@ -1,7 +1,6 @@
 package eu.europeana.harvester.db.swift;
 
 import eu.europeana.harvester.domain.MediaFile;
-import org.apache.commons.io.FileUtils;
 import org.jclouds.ContextBuilder;
 import org.jclouds.openstack.swift.v1.SwiftApi;
 import org.jclouds.openstack.swift.v1.domain.SwiftObject;
@@ -18,6 +17,9 @@ import static org.junit.Assert.*;
 
 /**
  * Created by salexandru on 03.06.2015.
+ *
+ * This tests represent a philosophical statement.  Do not trust an implementation, not even yours.
+ * “A good programmer is someone who always looks both ways before crossing a one-way street.” (Doug Linder)
  */
 public class SwiftMediaStorageClientImplTest {
     private static final String containerName = "swiftUnitTesting";
