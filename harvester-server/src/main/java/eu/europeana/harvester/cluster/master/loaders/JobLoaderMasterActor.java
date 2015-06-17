@@ -93,6 +93,8 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     private long markLoad = 0;
 
+    private boolean haveLoader = false;
+
 
     public JobLoaderMasterActor(final ActorRef receiverActor, final ClusterMasterConfig clusterMasterConfig,
                                 final ActorRef accountantActor, final Map<Address, HashSet<ActorRef>> actorsPerAddress,
@@ -116,6 +118,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         this.defaultLimits = defaultLimits;
         this.ipsWithJobs = ipsWithJobs;
         this.ipExceptions = ipExceptions;
+        this.haveLoader = false;
 
         JobLoaderMasterHelper.checkForAbandonedJobs(processingJobDao, clusterMasterConfig, LOG);
         ipDistribution = JobLoaderMasterHelper.getIPDistribution(machineResourceReferenceDao, LOG);
@@ -126,7 +129,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         if (message instanceof LoadJobs) {
 
 
-            if (loaderActor == null ) {
+            if ( !haveLoader ) {
 
                 try {
 
@@ -136,6 +139,8 @@ public class JobLoaderMasterActor extends UntypedActor {
                     );
                     context().watch(loaderActor);
                     loaderActor.tell(message, ActorRef.noSender());
+                    haveLoader = true;
+                    LOG.info("Created loader actor "+loaderActor);
 
                 } catch (Exception e) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
@@ -167,7 +172,14 @@ public class JobLoaderMasterActor extends UntypedActor {
         }
 
         if (message instanceof Terminated) {
-            loaderActor = null;
+            if (((Terminated) message).getActor()==loaderActor) {
+                LOG.info("Got terminated for "+((Terminated) message).getActor()+", marking the loader as expired");
+                haveLoader = false;
+            } else {
+                LOG.info("Got terminated for "+((Terminated) message).getActor());
+            }
+            haveLoader = false;
+
         }
     }
 
