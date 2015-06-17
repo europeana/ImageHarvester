@@ -8,6 +8,10 @@
         <version>0.1-SNAPSHOT</version>
     </parent>
 
+    <properties>
+        <jclouds.version>1.9.0</jclouds.version>
+    </properties>
+
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>media-storage-client</artifactId>
@@ -34,6 +38,17 @@
 
 
     <dependencies>
+        <!-- jclouds OpenStack dependencies -->
+        <dependency>
+            <groupId>org.apache.jclouds.api</groupId>
+            <artifactId>openstack-swift</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.jclouds</groupId>
+            <artifactId>jclouds-core</artifactId>
+            <version>1.9.0</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -50,12 +65,13 @@
             <artifactId>commons-codec</artifactId>
             <version>1.9</version>
         </dependency>
-
+        <!--
         <dependency>
-            <groupId>org.apache.jclouds</groupId>
-            <artifactId>jclouds-all</artifactId>
-            <version>1.9.0</version>
+            <groupId>org.jclouds.api</groupId>
+            <artifactId>swift</artifactId>
+            <version>1.5.0-alpha.2</version>
         </dependency>
+        -->
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
@@ -67,13 +83,6 @@
             <artifactId>joda-time</artifactId>
             <version>2.3</version>
         </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-        </dependency>
-
     </dependencies>
 
 </project>
