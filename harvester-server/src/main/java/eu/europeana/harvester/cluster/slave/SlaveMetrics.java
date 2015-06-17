@@ -6,6 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
+import eu.europeana.harvester.monitoring.LazyGauge;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class SlaveMetrics {
 
             public static String NAME = Worker.NAME + "." + "Master";
 
-            public static final Counter activeWorkerSlavesCounter = METRIC_REGISTRY.counter(name(Master.NAME, "actors", "size"));
+            public static final LazyGauge activeWorkerSlavesCounter = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + "actors" + "." + "size");
 
             public static final Map<RetrievingState, Meter> doneDownloadStateCounters = new HashMap();
 
@@ -58,6 +59,7 @@ public class SlaveMetrics {
             public static final Meter doneDownloadTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_DOWNLOAD, TOTAL, COUNTER));
 
             public static final Map<ProcessingState, Meter> doneProcessingStateCounters = new HashMap();
+
             static {
                 for (final ProcessingState state : ProcessingState.values()) {
                     doneProcessingStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING, state.name(), COUNTER)));
