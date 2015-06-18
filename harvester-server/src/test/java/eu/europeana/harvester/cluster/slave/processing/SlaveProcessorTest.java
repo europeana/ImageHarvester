@@ -120,8 +120,11 @@ public class SlaveProcessorTest {
 
             int idx = 0;
             for (final ThumbnailType type: ThumbnailType.values()) {
+                if (type == ThumbnailType.SMALL) {
+                    continue;
+                }
                 if (thumbnail.getSize() == type.getWidth()) {
-                    assertArrayEquals(thumbnails[idx], thumbnail.getContent());
+                    assertArrayEquals(thumbnails[idx - 1], thumbnail.getContent());
                     break;
                 }
                 ++idx;
