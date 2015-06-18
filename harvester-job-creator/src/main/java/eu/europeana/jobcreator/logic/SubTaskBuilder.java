@@ -16,7 +16,6 @@ public class SubTaskBuilder {
      */
     public static final List<ProcessingJobSubTask> thumbnailGeneration() {
         return Arrays.asList(
-                new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(ThumbnailType.SMALL.getWidth(), ThumbnailType.SMALL.getHeight()))),
                 new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(ThumbnailType.MEDIUM.getWidth(), ThumbnailType.MEDIUM.getHeight()))),
                 new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(ThumbnailType.LARGE.getWidth(), ThumbnailType.LARGE.getHeight())))
         );

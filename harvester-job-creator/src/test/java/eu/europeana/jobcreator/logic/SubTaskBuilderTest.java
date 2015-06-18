@@ -19,16 +19,13 @@ public class SubTaskBuilderTest {
     public void test_thumbnailGeneration() {
         final List<ProcessingJobSubTask> subTasks = SubTaskBuilder.thumbnailGeneration();
 
-        assertEquals (3, subTasks.size());
+        assertEquals (2, subTasks.size());
         assertEquals (ProcessingJobSubTaskType.GENERATE_THUMBNAIL, subTasks.get(0).getTaskType());
         assertEquals (ProcessingJobSubTaskType.GENERATE_THUMBNAIL, subTasks.get(1).getTaskType());
-        assertEquals (ProcessingJobSubTaskType.GENERATE_THUMBNAIL, subTasks.get(2).getTaskType());
-        assertEquals ((Integer)ThumbnailType.SMALL.getHeight(), subTasks.get(0).getConfig().getThumbnailConfig().getHeight());
-        assertEquals ((Integer)ThumbnailType.SMALL.getWidth(), subTasks.get(0).getConfig().getThumbnailConfig().getWidth());
-        assertEquals ((Integer)ThumbnailType.MEDIUM.getHeight(), subTasks.get(1).getConfig().getThumbnailConfig().getHeight());
-        assertEquals ((Integer)ThumbnailType.MEDIUM.getWidth(), subTasks.get(1).getConfig().getThumbnailConfig().getWidth());
-        assertEquals ((Integer)ThumbnailType.LARGE.getHeight(), subTasks.get(2).getConfig().getThumbnailConfig().getHeight());
-        assertEquals ((Integer)ThumbnailType.LARGE.getWidth(), subTasks.get(2).getConfig().getThumbnailConfig().getWidth());
+        assertEquals ((Integer)ThumbnailType.MEDIUM.getHeight(), subTasks.get(0).getConfig().getThumbnailConfig().getHeight());
+        assertEquals ((Integer)ThumbnailType.MEDIUM.getWidth(), subTasks.get(0).getConfig().getThumbnailConfig().getWidth());
+        assertEquals ((Integer)ThumbnailType.LARGE.getHeight(), subTasks.get(1).getConfig().getThumbnailConfig().getHeight());
+        assertEquals ((Integer)ThumbnailType.LARGE.getWidth(), subTasks.get(1).getConfig().getThumbnailConfig().getWidth());
     }
 
     @Test

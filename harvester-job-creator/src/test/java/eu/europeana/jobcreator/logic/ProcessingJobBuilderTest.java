@@ -73,7 +73,7 @@ public class ProcessingJobBuilderTest {
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 0, 1, 3,
+        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 0, 1, 2,
                       ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
 
     }
@@ -86,7 +86,7 @@ public class ProcessingJobBuilderTest {
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 0, 1, 3,
+        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 0, 1, 2,
                       ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
     }
 
@@ -98,7 +98,7 @@ public class ProcessingJobBuilderTest {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption);
         assertEquals(urls.size(), jobs.size());
 
-        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 3, ProcessingJobSubTaskType.values());
+        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2, ProcessingJobSubTaskType.values());
     }
 
 
@@ -113,7 +113,7 @@ public class ProcessingJobBuilderTest {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption);
 
         assertEquals(urls.size(), jobs.size());
-        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 3,
+        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
                       ProcessingJobSubTaskType.values());
 
     }
@@ -132,7 +132,7 @@ public class ProcessingJobBuilderTest {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption);
 
         assertEquals(urls.size(), jobs.size());
-        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 3, ProcessingJobSubTaskType.values());
+        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2, ProcessingJobSubTaskType.values());
     }
 
     @Test
@@ -143,7 +143,7 @@ public class ProcessingJobBuilderTest {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, trueOption);
         assertEquals(urls.size(), jobs.size());
 
-        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,  1, 1, 3, ProcessingJobSubTaskType.values());
+        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,  1, 1, 2, ProcessingJobSubTaskType.values());
     }
 
     @Test
@@ -160,7 +160,7 @@ public class ProcessingJobBuilderTest {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, trueOption);
 
         assertEquals(urls.size(), jobs.size());
-        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 3, ProcessingJobSubTaskType.values());
+        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 2, ProcessingJobSubTaskType.values());
     }
 
     @Test
@@ -168,7 +168,7 @@ public class ProcessingJobBuilderTest {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,
                                                                                        falseOption);
         assertEquals(1, jobs.size());
-        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 3,
+        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
                       ProcessingJobSubTaskType.values());
     }
 
@@ -177,7 +177,7 @@ public class ProcessingJobBuilderTest {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,
                                                                                        trueOption);
         assertEquals(1, jobs.size());
-        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 3,
+        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 2,
                       ProcessingJobSubTaskType.values());
     }
 

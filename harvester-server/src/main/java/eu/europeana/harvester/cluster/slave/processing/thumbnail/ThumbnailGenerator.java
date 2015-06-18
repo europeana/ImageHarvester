@@ -37,21 +37,8 @@ public class ThumbnailGenerator {
 
 
         // Step 1 : compute the width & height of the new thumbnail
-        if (expectedHeight != ThumbnailType.SMALL.getHeight() && expectedWidth != ThumbnailType.MEDIUM.getWidth() && expectedWidth != ThumbnailType.LARGE.getWidth()) {
+        if (expectedWidth != ThumbnailType.MEDIUM.getWidth() && expectedWidth != ThumbnailType.LARGE.getWidth()) {
             throw new IllegalArgumentException("Cannot generate thumbnails from configuration tasks where height != "+ThumbnailType.SMALL.getHeight()+" or width != "+ThumbnailType.MEDIUM.getHeight() + " or width != "+ThumbnailType.LARGE.getHeight());
-        }
-
-        if (expectedHeight == ThumbnailType.SMALL.getHeight()) {
-            // Scenario 1 : The thumbnail generation task must make a thumbnail of height = 180 + proportional width
-            if (originalImageInfo.getHeight() < ThumbnailType.SMALL.getHeight()) {
-                // Use the original aspect ratio
-                thumbnailResizedToWidth = null;
-                thumbnailResizedToHeight = null;
-            } else {
-                // The height is 180 & the width will be adjusted automatically.
-                thumbnailResizedToWidth = null;
-                thumbnailResizedToHeight = ThumbnailType.SMALL.getHeight();
-            }
         }
 
         if (expectedWidth == ThumbnailType.MEDIUM.getWidth()) {
@@ -91,6 +78,7 @@ public class ThumbnailGenerator {
         }
 
         final ThumbnailType expectedThumbnailType = thumbnailTypeFromExpectedSize(expectedHeight,expectedWidth);
+
         if (expectedThumbnailType == null) throw new IllegalArgumentException("The expected thumbnail height "+expectedHeight+" or width "+expectedWidth+" do not match any of the hardcoded presets");
 
         return new MediaFile(currentProcessId, name, null, null, url,
@@ -101,7 +89,8 @@ public class ThumbnailGenerator {
 
     private final static ThumbnailType thumbnailTypeFromExpectedSize(final Integer expectedHeight,final Integer expectedWidth) {
         if (expectedHeight == ThumbnailType.SMALL.getHeight() && expectedWidth == ThumbnailType.SMALL.getWidth()) {
-            return ThumbnailType.SMALL;
+            return null;
+            //return ThumbnailType.SMALL;
         }
 
         if (expectedHeight == ThumbnailType.MEDIUM.getHeight() && expectedWidth == ThumbnailType.MEDIUM.getWidth()) {
