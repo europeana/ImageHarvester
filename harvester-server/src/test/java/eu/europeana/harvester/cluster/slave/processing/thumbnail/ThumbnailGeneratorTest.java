@@ -53,6 +53,7 @@ public class ThumbnailGeneratorTest {
         final Integer width = ThumbnailType.MEDIUM.getWidth();
         final Integer height = ThumbnailType.MEDIUM.getHeight();
 
+        System.out.println(getPath(Image2));
         final MediaFile thumbnail = new ThumbnailGenerator(PATH_COLORMAP)
                                             .createMediaFileWithThumbnail(height, width, "", getPath(Image2),
                                                                           imagesInBytes.get(Image2), getPath(Image2)

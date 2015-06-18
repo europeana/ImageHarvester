@@ -52,9 +52,10 @@ public class SlaveProcessorTest {
     private  List<ProcessingJobSubTask> subTasks;
     private SlaveProcessor slaveProcessor;
 
+    private static final ReferenceOwner owner = new ReferenceOwner("", "", "", "");
+
     private static final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION, null);
     private static final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION, null);
-    private static final ProcessingJobSubTask smallThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(180, 180)));
     private static final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(200, 200)));
     private static final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL, new GenericSubTaskConfiguration(new ThumbnailConfig(400, 400)));
 
@@ -98,7 +99,6 @@ public class SlaveProcessorTest {
 
     private void checkThumbnails (final String imageName, final Collection<MediaFile> genThumbnails, final String[] colorPalette) throws IOException {
         final byte[][] thumbnails = new byte[][] {
-             Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailSmall) : imagesInBytes.get(Image2ThumbnailSmall),
              Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailMedium) : imagesInBytes.get(Image2ThumbnailMedium),
              Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailLarge) : imagesInBytes.get(Image2ThumbnailLarge)
         };
@@ -139,7 +139,6 @@ public class SlaveProcessorTest {
 
         subTasks.add(metaInfoExtractionSubTask);
         subTasks.add(colorExtractionSubTask);
-        subTasks.add(smallThumbnailExtractionSubTask);
         subTasks.add(mediumThumbnailExtractionSubTask);
         subTasks.add(largeThumbnailExtractionSubTask);
 
@@ -150,13 +149,13 @@ public class SlaveProcessorTest {
                                                                     fileUrl,
                                                                     imagesInBytes.get(Image1),
                                                                     ResponseType.DISK_STORAGE,
-                                                                    null);
+                                                                    owner);
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNotNull(results.getImageColorMetaInfo());
         assertNotNull(results.getGeneratedThumbnails());
         assertFalse(new File(PATH_DOWNLOADED + Image1).exists());
-        assertEquals(3, results.getGeneratedThumbnails().size());
+        assertEquals(2, results.getGeneratedThumbnails().size());
         assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + Image1, PATH_COLORMAP).getPalette(),
                           results.getImageColorMetaInfo().getColorPalette());
 
@@ -171,7 +170,6 @@ public class SlaveProcessorTest {
         final String fileUrl = GitHubUrl_PREFIX + Image1;
 
         subTasks.add(colorExtractionSubTask);
-        subTasks.add(smallThumbnailExtractionSubTask);
         subTasks.add(mediumThumbnailExtractionSubTask);
         subTasks.add(largeThumbnailExtractionSubTask);
 
@@ -182,13 +180,13 @@ public class SlaveProcessorTest {
                                                                      fileUrl,
                                                                      imagesInBytes.get(Image1),
                                                                      ResponseType.DISK_STORAGE,
-                                                                     null);
+                                                                     owner);
 
         assertNull(results.getMediaMetaInfoTuple());
         assertNotNull(results.getImageColorMetaInfo());
         assertNotNull(results.getGeneratedThumbnails());
         assertFalse(new File(PATH_DOWNLOADED + Image1).exists());
-        assertEquals(3, results.getGeneratedThumbnails().size());
+        assertEquals(2, results.getGeneratedThumbnails().size());
         assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + Image1, PATH_COLORMAP).getPalette(),
                           results.getImageColorMetaInfo().getColorPalette());
 
@@ -202,7 +200,6 @@ public class SlaveProcessorTest {
 
         subTasks.add(metaInfoExtractionSubTask);
         subTasks.add(colorExtractionSubTask);
-        subTasks.add(smallThumbnailExtractionSubTask);
         subTasks.add(mediumThumbnailExtractionSubTask);
         subTasks.add(largeThumbnailExtractionSubTask);
 
@@ -212,7 +209,7 @@ public class SlaveProcessorTest {
                                                                      fileUrl,
                                                                      Files.toByteArray(new File(PATH_DOWNLOADED + Audio1)),
                                                                      ResponseType.DISK_STORAGE,
-                                                                     null);
+                                                                     owner);
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNull(results.getImageColorMetaInfo());
@@ -232,7 +229,6 @@ public class SlaveProcessorTest {
 
         subTasks.add(metaInfoExtractionSubTask);
         subTasks.add(colorExtractionSubTask);
-        subTasks.add(smallThumbnailExtractionSubTask);
         subTasks.add(mediumThumbnailExtractionSubTask);
         subTasks.add(largeThumbnailExtractionSubTask);
 
@@ -242,7 +238,7 @@ public class SlaveProcessorTest {
                                                                      fileUrl,
                                                                      Files.toByteArray(new File(PATH_DOWNLOADED + Video1)),
                                                                      ResponseType.DISK_STORAGE,
-                                                                     null);
+                                                                     owner);
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNull(results.getImageColorMetaInfo());
@@ -261,7 +257,6 @@ public class SlaveProcessorTest {
 
         subTasks.add(metaInfoExtractionSubTask);
         subTasks.add(colorExtractionSubTask);
-        subTasks.add(smallThumbnailExtractionSubTask);
         subTasks.add(mediumThumbnailExtractionSubTask);
         subTasks.add(largeThumbnailExtractionSubTask);
 

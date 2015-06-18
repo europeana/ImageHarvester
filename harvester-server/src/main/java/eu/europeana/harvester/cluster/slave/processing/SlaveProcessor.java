@@ -182,6 +182,7 @@ public class SlaveProcessor {
                 final Timer.Context thumbnailGenerationDurationContext = SlaveMetrics.Worker.Slave.Processing.thumbnailGenerationDuration.time();
                 try {
                     final GenericSubTaskConfiguration config = thumbnailGenerationTask.getConfig();
+
                     final MediaFile thumbnailMediaFile = thumbnailGenerator.createMediaFileWithThumbnail(config.getThumbnailConfig().getHeight(),
                             config.getThumbnailConfig().getWidth(), referenceOwner.getExecutionId(), originalFileUrl,
                             originalFileContent, originalFilePath);

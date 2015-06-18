@@ -13,6 +13,7 @@ import org.joda.time.DateTime;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
 
 public class ThumbnailGenerator {
