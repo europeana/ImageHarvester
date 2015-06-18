@@ -1,13 +1,5 @@
 #!/bin/sh
 
-echo "dummping all unsaved changes"
-git checkout $(git ls-files -m)
-echo "changeing branch to master"
-git checkout master
-#should be useless
-git checkout $(git ls-files -m)
-git pull
-
 mvn -Dmaven.test.skip=true clean install package -DskipTests
 cd ./harvester-persistence/
 mvn -Dmaven.test.skip=true clean install package -DskipTests                     

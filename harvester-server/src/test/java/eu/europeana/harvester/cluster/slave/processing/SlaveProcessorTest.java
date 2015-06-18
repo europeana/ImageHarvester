@@ -98,10 +98,9 @@ public class SlaveProcessorTest {
     }
 
     private void checkThumbnails (final String imageName, final Collection<MediaFile> genThumbnails, final String[] colorPalette) throws IOException {
-        final byte[][] thumbnails = new byte[][] {
-             Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailMedium) : imagesInBytes.get(Image2ThumbnailMedium),
-             Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailLarge) : imagesInBytes.get(Image2ThumbnailLarge)
-        };
+        final Map<ThumbnailType, byte[]> thumbnails = new HashMap<>();
+        thumbnails.put(ThumbnailType.MEDIUM, Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailMedium) : imagesInBytes.get(Image2ThumbnailMedium));
+        thumbnails.put(ThumbnailType.LARGE, Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailLarge) : imagesInBytes.get(Image2ThumbnailLarge));
 
         for (final MediaFile thumbnail: genThumbnails) {
             assertEquals (GitHubUrl_PREFIX + imageName,thumbnail.getOriginalUrl());
@@ -118,18 +117,16 @@ public class SlaveProcessorTest {
                 assertArrayEquals(colorPalette, colors.values().toArray());
             }
 
-            int idx = 0;
+
+            boolean ok = false;
             for (final ThumbnailType type: ThumbnailType.values()) {
-                if (type == ThumbnailType.SMALL) {
-                    continue;
-                }
                 if (thumbnail.getSize() == type.getWidth()) {
-                    assertArrayEquals(thumbnails[idx - 1], thumbnail.getContent());
+                    assertArrayEquals(thumbnails.get(type), thumbnail.getContent());
+                    ok = true;
                     break;
                 }
-                ++idx;
             }
-            if (idx == ThumbnailType.values().length) {
+            if (!ok) {
                 fail("No thumbnail type found for media file generated. Size: " + thumbnail.getSize());
             }
         }

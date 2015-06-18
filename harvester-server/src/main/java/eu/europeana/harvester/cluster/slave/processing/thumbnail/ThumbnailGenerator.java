@@ -39,7 +39,7 @@ public class ThumbnailGenerator {
 
         // Step 1 : compute the width & height of the new thumbnail
         if (expectedWidth != ThumbnailType.MEDIUM.getWidth() && expectedWidth != ThumbnailType.LARGE.getWidth()) {
-            throw new IllegalArgumentException("Cannot generate thumbnails from configuration tasks where height != "+ThumbnailType.SMALL.getHeight()+" or width != "+ThumbnailType.MEDIUM.getHeight() + " or width != "+ThumbnailType.LARGE.getHeight());
+            throw new IllegalArgumentException("Cannot generate thumbnails from configuration tasks where width != "+ThumbnailType.MEDIUM.getHeight() + " or width != "+ThumbnailType.LARGE.getHeight());
         }
 
         if (expectedWidth == ThumbnailType.MEDIUM.getWidth()) {
@@ -89,18 +89,10 @@ public class ThumbnailGenerator {
     }
 
     private final static ThumbnailType thumbnailTypeFromExpectedSize(final Integer expectedHeight,final Integer expectedWidth) {
-        if (expectedHeight == ThumbnailType.SMALL.getHeight() && expectedWidth == ThumbnailType.SMALL.getWidth()) {
-            return null;
-            //return ThumbnailType.SMALL;
-        }
-
-        if (expectedHeight == ThumbnailType.MEDIUM.getHeight() && expectedWidth == ThumbnailType.MEDIUM.getWidth()) {
-            return ThumbnailType.MEDIUM;
-        }
-
-
-        if (expectedHeight == ThumbnailType.LARGE.getHeight() && expectedWidth == ThumbnailType.LARGE.getWidth()) {
-            return ThumbnailType.LARGE;
+        for (final ThumbnailType type: ThumbnailType.values()) {
+            if (type.getHeight() == expectedHeight && type.getWidth() == expectedWidth) {
+                return type;
+            }
         }
 
         return null;

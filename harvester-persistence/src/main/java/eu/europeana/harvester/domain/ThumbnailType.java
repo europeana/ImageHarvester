@@ -1,7 +1,7 @@
 package eu.europeana.harvester.domain;
 
 public enum ThumbnailType {
-    SMALL(180,180),
+ //   SMALL(180,180),
     MEDIUM(200,200),
     LARGE(400,400);
 
