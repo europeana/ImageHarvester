@@ -3,6 +3,7 @@ package eu.europeana.harvester.cluster.master;
 import com.codahale.metrics.*;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
+import eu.europeana.harvester.monitoring.LazyGauge;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class MasterMetrics {
 
     public static final String DONE_DOWNLOAD = "doneDownload";
     public static final String DONE_PROCESSING = "doneProcessing";
+    public static final String JOBS_PERSISTENCE = "jobsPersistence";
 
 
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
@@ -36,6 +38,10 @@ public class MasterMetrics {
         public static final Timer loadJobFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_JOBS_FROM_DB, COUNTER));
         public static final Timer loadJobTasksFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_JOBS_TASKS_FROM_DB, COUNTER));
         public static final Timer loadJobResourcesFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_JOBS_RESOURCES_FROM_DB, COUNTER));
+
+        public static final LazyGauge jobsPersistenceReadyCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "READY"+"."+COUNTER);
+        public static final LazyGauge jobsPersistenceFinishedCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_SUCCESS"+"."+COUNTER);
+        public static final LazyGauge jobsPersistenceErrorCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_ERROR"+"."+COUNTER);
 
 
         public static final Map<RetrievingState, Meter> doneDownloadStateCounters = new HashMap();

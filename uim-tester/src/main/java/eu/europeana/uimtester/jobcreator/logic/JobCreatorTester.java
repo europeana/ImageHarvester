@@ -20,7 +20,14 @@ public class JobCreatorTester {
         this.harvesterClient = harvesterClient;
     }
 
-    public Iterable<com.google.code.morphia.Key<eu.europeana.harvester.domain.ProcessingJob>> createAndSendJobsFromSamples(final List<UIMTestSample> samples) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
+    // TODO : Implement
+    public void execute(final String inputFilePath,final String outputFilePath) {
+        // (1) read samples from input file
+        // (2) run the createAndSendJobsFromSamples
+        // (3) write the output to the output file
+    }
+
+    private Iterable<com.google.code.morphia.Key<eu.europeana.harvester.domain.ProcessingJob>> createAndSendJobsFromSamples(final List<UIMTestSample> samples) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
 
         final List<ProcessingJobTuple> generatedJobs =  generateJobs(samples);
         harvesterClient.createOrModifySourceDocumentReference(ProcessingJobTuple.sourceDocumentReferencesFromList(generatedJobs));

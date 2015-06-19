@@ -13,8 +13,11 @@ public class ProcessingJobReport {
         this.processingJobReportWriter = processingJobReportWriter;
     }
 
-    public void execute(final List<String> jobIds) {
+    // TODO : Implement
+    public void execute(final String inputFilePath,final String outputFilePath) {
+        final List<String> jobIds = null; // (1) read job ids from input file
         final List<ProcessingJobWithStatsAndResults> stats = processingJobReportRetriever.generateReportOnProcessingJobs(jobIds);
         processingJobReportWriter.writeToConsole(processingJobReportWriter.objectsToString(stats));
     }
+
 }

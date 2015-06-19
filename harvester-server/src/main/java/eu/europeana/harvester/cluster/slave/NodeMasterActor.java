@@ -314,7 +314,7 @@ public class NodeMasterActor extends UntypedActor {
         final DoneProcessing doneProcessing = (DoneProcessing)message;
         final String jobId = doneProcessing.getJobId();
         this.actors.remove(getSender());
-        
+
         if(!jobsToStop.contains(jobId)) {
             masterReceiver.tell(message, getSelf());
 
