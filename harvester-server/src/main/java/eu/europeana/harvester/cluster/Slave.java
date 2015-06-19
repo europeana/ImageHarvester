@@ -17,12 +17,15 @@ import eu.europeana.harvester.cluster.slave.SlaveMetrics;
 import eu.europeana.harvester.cluster.slave.validator.ImageMagicValidator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.mongo.MediaStorageClientImpl;
+import eu.europeana.harvester.db.swift.SwiftConfiguration;
+import eu.europeana.harvester.db.swift.SwiftMediaStorageClientImpl;
 import eu.europeana.harvester.domain.MediaStorageClientConfig;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import org.jclouds.ContextBuilder;
 import org.jclouds.openstack.swift.v1.SwiftApi;
 import org.jclouds.openstack.swift.v1.features.ContainerApi;
 import org.jclouds.openstack.swift.v1.features.ObjectApi;
@@ -124,18 +127,29 @@ public class Slave {
         MediaStorageClient mediaStorageClient = null;
         try {
             mediaStorageClient = new MediaStorageClientImpl(mediaStorageClientConfig);
-//            SwiftConfiguration swiftConfiguration = new SwiftConfiguration("https://auth.hydranodes.de:5000/v2.0",
-//            "d35f3a21-cf35-48a0-a035-99bfc2252528.swift.tenant@a9s.eu",
-//                    "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu",
-//                    "78ae7i9XO3O7CcdkDa87", containerName, "hydranodes");
-//            mediaStorageClient = new SwiftMediaStorageClientImpl(swiftConfiguration);
-//            swiftApi = ContextBuilder.newBuilder("swift")
-//                    .credentials(swiftConfiguration.getIdentity(), swiftConfiguration.getPassword())
-//                    .endpoint(swiftConfiguration.getAuthUrl()).buildApi(SwiftApi.class);
-//
-//            containerApi = swiftApi.getContainerApi(swiftConfiguration.getRegionName());
-//            objectApi = swiftApi.getObjectApi(swiftConfiguration.getRegionName(), swiftConfiguration.getContainerName());
-//            containerApi.get(swiftConfiguration.getContainerName());
+            SwiftConfiguration swiftConfiguration = new SwiftConfiguration("https://auth.hydranodes.de:5000/v2.0",
+            "d35f3a21-cf35-48a0-a035-99bfc2252528.swift.tenant@a9s.eu",
+                    "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu",
+                    "78ae7i9XO3O7CcdkDa87", containerName, "hydranodes");
+            mediaStorageClient = new SwiftMediaStorageClientImpl(swiftConfiguration);
+
+            // why is this here ?
+
+            swiftApi = ContextBuilder.newBuilder("openstack-swift")
+                    .credentials(swiftConfiguration.getIdentity(), swiftConfiguration.getPassword())
+                    .endpoint(swiftConfiguration.getAuthUrl()).buildApi(SwiftApi.class);
+
+            containerApi = swiftApi.getContainerApi(swiftConfiguration.getRegionName());
+
+            if (null == containerApi.get(containerName)) {
+                if (!containerApi.create(containerName)) {
+                    LOG.error ("Error: swift couldn't create  container " + containerName);
+                    System.exit(-1);
+                }
+            }
+
+            objectApi = swiftApi.getObjectApi(swiftConfiguration.getRegionName(), swiftConfiguration.getContainerName());
+            containerApi.get(swiftConfiguration.getContainerName());
 
         } catch (Exception e) {
             LOG.error("Error: connection failed to media-storage " + e.getMessage());
