@@ -141,13 +141,6 @@ public class Slave {
 
             containerApi = swiftApi.getContainerApi(swiftConfiguration.getRegionName());
 
-            if (null == containerApi.get(containerName)) {
-                if (!containerApi.create(containerName)) {
-                    LOG.error ("Error: swift couldn't create  container " + containerName);
-                    System.exit(-1);
-                }
-            }
-
             objectApi = swiftApi.getObjectApi(swiftConfiguration.getRegionName(), swiftConfiguration.getContainerName());
             containerApi.get(swiftConfiguration.getContainerName());
 
