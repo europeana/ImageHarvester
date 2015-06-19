@@ -1,13 +1,19 @@
 package eu.europeana.uimtester.jobcreator.logic;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import eu.europeana.harvester.client.HarvesterClient;
 import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
+import eu.europeana.uimtester.domain.UIMTesterFieldNames;
 import eu.europeana.uimtester.jobcreator.domain.UIMTestSample;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -15,16 +21,19 @@ import java.util.concurrent.TimeoutException;
 public class JobCreatorTester {
 
     private final HarvesterClient harvesterClient;
+    private final JobCreatorTesterOutputWriter writer;
 
-    public JobCreatorTester(HarvesterClient harvesterClient) {
+    public JobCreatorTester (HarvesterClient harvesterClient, JobCreatorTesterOutputWriter writer) {
         this.harvesterClient = harvesterClient;
+        this.writer = writer;
     }
 
-    // TODO : Implement
-    public void execute(final String inputFilePath,final String outputFilePath) {
-        // (1) read samples from input file
-        // (2) run the createAndSendJobsFromSamples
-        // (3) write the output to the output file
+    public void execute(final File inputFile) throws InterruptedException, IOException,
+                                                                           TimeoutException, ExecutionException {
+        final List<UIMTestSample> uimTestSamples = JobCreatorTesterInputLoader.loadSamplesFromConfig(ConfigFactory.parseFile(inputFile));
+        final Iterable<com.google.code.morphia.Key<eu.europeana.harvester.domain.ProcessingJob>> processingJob = createAndSendJobsFromSamples(uimTestSamples);
+
+        writer.write(processingJob);
     }
 
     private Iterable<com.google.code.morphia.Key<eu.europeana.harvester.domain.ProcessingJob>> createAndSendJobsFromSamples(final List<UIMTestSample> samples) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
