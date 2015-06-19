@@ -7,6 +7,7 @@ import org.jclouds.ContextBuilder;
 import org.jclouds.io.Payload;
 import org.jclouds.openstack.swift.v1.SwiftApi;
 import org.jclouds.openstack.swift.v1.domain.SwiftObject;
+import org.jclouds.openstack.swift.v1.features.ContainerApi;
 import org.jclouds.openstack.swift.v1.features.ObjectApi;
 import org.jclouds.openstack.swift.v1.options.PutOptions;
 
@@ -35,6 +36,14 @@ public class SwiftMediaStorageClientImpl implements MediaStorageClient {
                                  .credentials(config.getIdentity(), config.getPassword())
                                  .endpoint(config.getAuthUrl())
                                  .buildApi(SwiftApi.class);
+
+        final ContainerApi containerApi = swiftApi.getContainerApi(config.getContainerName());
+
+        if (null == containerApi.get(config.getContainerName())) {
+            if (!containerApi.create(config.getContainerName())) {
+                throw new RuntimeException ("swift cannot create container: " + config.getContainerName());
+            }
+        }
 
         objectApi = swiftApi.getObjectApi(config.getRegionName(), config.getContainerName());
 
