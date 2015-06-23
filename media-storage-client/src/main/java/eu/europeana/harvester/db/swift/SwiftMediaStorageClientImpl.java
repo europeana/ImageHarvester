@@ -37,7 +37,7 @@ public class SwiftMediaStorageClientImpl implements MediaStorageClient {
                                  .endpoint(config.getAuthUrl())
                                  .buildApi(SwiftApi.class);
 
-        final ContainerApi containerApi = swiftApi.getContainerApi(config.getContainerName());
+        final ContainerApi containerApi = swiftApi.getContainerApi(config.getRegionName());
 
         if (null == containerApi.get(config.getContainerName())) {
             if (!containerApi.create(config.getContainerName())) {
