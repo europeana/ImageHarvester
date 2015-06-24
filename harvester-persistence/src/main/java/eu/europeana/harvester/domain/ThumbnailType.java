@@ -20,4 +20,15 @@ public enum ThumbnailType {
     public int getHeight() {
         return height;
     }
+
+    public static ThumbnailType valueOf(int height) {
+        if (MEDIUM.getHeight() == height) {
+            return  MEDIUM;
+        }
+        else if (LARGE.getHeight() == height) {
+            return LARGE;
+        }
+
+        throw new IllegalArgumentException(height + " not a valid value for size");
+    }
 }

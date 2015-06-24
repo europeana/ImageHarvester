@@ -58,6 +58,18 @@
             <artifactId>JobCreator</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>eu.europeana</groupId>
+            <artifactId>media-storage-client</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <!--
+        <dependency>
+            <groupId>org.apache.jclouds</groupId>
+            <artifactId>jclouds-core</artifactId>
+            <version>1.9.0</version>
+        </dependency>
+        -->
     </dependencies>
 
 </project>

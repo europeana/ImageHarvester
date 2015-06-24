@@ -30,6 +30,9 @@ public class ProcessingJobReportRetriever {
             final Map<String, SourceDocumentProcessingStatistics> sourceDocumentReferenceIdToStatsMap = new HashMap();
             final Map<String, SourceDocumentReferenceMetaInfo> sourceDocumentReferenceIdToMetaInfoMap = new HashMap<>();
 
+            if (null == processingJob || null == processingJob.getAllReferencedSourceDocumentIds()) {
+                continue;
+            }
             for (final String referencedSourceDocumentId : processingJob.getAllReferencedSourceDocumentIds()) {
                 final SourceDocumentReference sourceDocumentReference = harvesterClient.retrieveSourceDocumentReferenceById(referencedSourceDocumentId);
                 sourceDocumentReferenceList.add(sourceDocumentReference);

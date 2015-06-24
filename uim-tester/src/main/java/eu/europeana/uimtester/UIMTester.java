@@ -7,6 +7,7 @@ import eu.europeana.harvester.client.HarvesterClient;
 import eu.europeana.harvester.client.HarvesterClientConfig;
 import eu.europeana.harvester.client.HarvesterClientImpl;
 import eu.europeana.harvester.db.mongo.*;
+import eu.europeana.harvester.db.swift.SwiftConfiguration;
 import eu.europeana.uimtester.domain.UIMTesterConfig;
 import eu.europeana.uimtester.jobcreator.logic.JobCreatorTester;
 import eu.europeana.uimtester.jobcreator.logic.JobCreatorTesterOutputWriter;
@@ -30,32 +31,42 @@ public class UIMTester {
     private final static String JobCreatorOptions = "job-creator";
     private final static String ReportProcessingOptions = "report-processing";
 
+    private final static String ContainerName = "swiftUnitTesting";
+
 
     private static void printHelp() {
         System.out.println ("How to used the program:");
         System.out.println ("<job-creator|report-processing> uim-tester.conf job-creator-input.conf job-creator-output.conf");
-        System.out.println ("report-processing uim-tester.conf job-creator-input.conf job-creator-output.conf moreLogInfo");
+        System.out.println ("report-processing moreLogInfo uim-tester.conf job-creator-input.conf job-creator-output.conf");
     }
 
     public static void main(String args[]) throws IOException, InterruptedException, TimeoutException,
                                                   ExecutionException {
 
         boolean printMore = false;
+        File uimTesterConfigFile = null;
+        File jobCreatorInput = null;
+        File jobCreatorOutput = null;
+
         if ((5 == args.length) && ReportProcessingOptions.equalsIgnoreCase(args[0])) {
-            if (!args[4].equalsIgnoreCase("moreLogInfo")) {
+            if (!args[1].equalsIgnoreCase("moreLogInfo")) {
                 printHelp();
                 System.exit(-1);
             }
-            else printMore = true;
+            printMore = true;
+            uimTesterConfigFile = new File(args[2]);
+            jobCreatorInput = new File(args[3]);
+            jobCreatorOutput = new File(args[4]);
         }
-        else if ( (4 != args.length) || !isAcceptableOption(args[0])) {
+        else if ( (4 == args.length) && isAcceptableOption(args[0])) {
+            uimTesterConfigFile = new File(args[1]);
+            jobCreatorInput = new File(args[2]);
+            jobCreatorOutput = new File(args[3]);
+        }
+        else {
             printHelp();
             System.exit(-1);
         }
-
-        final File uimTesterConfigFile = new File(args[1]);
-        final File jobCreatorInput = new File(args[2]);
-        final File jobCreatorOutput = new File(args[3]);
 
         if (!uimTesterConfigFile.canRead()) {
             System.out.println("Cannot read uim tester config file: " + uimTesterConfigFile.getAbsolutePath());
@@ -107,9 +118,17 @@ public class UIMTester {
                 break;
 
             case ReportProcessingOptions:
+                final SwiftConfiguration config = new SwiftConfiguration("https://auth.hydranodes.de:5000/v2.0",
+                                       "d35f3a21-cf35-48a0-a035-99bfc2252528.swift.tenant@a9s.eu",
+                                       "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu",
+                                       "78ae7i9XO3O7CcdkDa87",
+                                       ContainerName,
+                                       "hydranodes"
+                                     );
+
                 new ProcessingJobReport(new ProcessingJobReportRetriever(harvesterClient),
-                                        new ProcessingJobReportWriter(writer, printMore)
-                                       ).execute(args[2]);
+                                        new ProcessingJobReportWriter(writer, config, printMore)
+                                       ).execute(jobCreatorInput);
                 break;
 
             default:
