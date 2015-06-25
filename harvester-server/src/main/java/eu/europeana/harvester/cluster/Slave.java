@@ -16,6 +16,7 @@ import eu.europeana.harvester.cluster.slave.NodeSupervisor;
 import eu.europeana.harvester.cluster.slave.SlaveMetrics;
 import eu.europeana.harvester.cluster.slave.validator.ImageMagicValidator;
 import eu.europeana.harvester.db.MediaStorageClient;
+import eu.europeana.harvester.db.dummy.DummyMediaStorageClientImpl;
 import eu.europeana.harvester.db.mongo.MediaStorageClientImpl;
 import eu.europeana.harvester.db.swift.SwiftConfiguration;
 import eu.europeana.harvester.db.swift.SwiftMediaStorageClientImpl;
@@ -131,19 +132,10 @@ public class Slave {
             "d35f3a21-cf35-48a0-a035-99bfc2252528.swift.tenant@a9s.eu",
                     "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu",
                     "78ae7i9XO3O7CcdkDa87", containerName, "hydranodes");
-            mediaStorageClient = new SwiftMediaStorageClientImpl(swiftConfiguration);
+//            mediaStorageClient = new SwiftMediaStorageClientImpl(swiftConfiguration);
 
-            // why is this here ?
-
-            swiftApi = ContextBuilder.newBuilder("openstack-swift")
-                    .credentials(swiftConfiguration.getIdentity(), swiftConfiguration.getPassword())
-                    .endpoint(swiftConfiguration.getAuthUrl()).buildApi(SwiftApi.class);
-
-            containerApi = swiftApi.getContainerApi(swiftConfiguration.getRegionName());
-
-            objectApi = swiftApi.getObjectApi(swiftConfiguration.getRegionName(), swiftConfiguration.getContainerName());
-            containerApi.get(swiftConfiguration.getContainerName());
-
+            //does nothing implementation
+            mediaStorageClient = new DummyMediaStorageClientImpl();
         } catch (Exception e) {
             LOG.error("Error: connection failed to media-storage " + e.getMessage());
             e.printStackTrace();
