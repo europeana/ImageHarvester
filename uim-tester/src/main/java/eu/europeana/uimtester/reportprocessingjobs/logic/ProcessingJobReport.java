@@ -3,6 +3,7 @@ package eu.europeana.uimtester.reportprocessingjobs.logic;
 import eu.europeana.uimtester.reportprocessingjobs.domain.ProcessingJobWithStatsAndResults;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -19,16 +20,17 @@ public class ProcessingJobReport {
         this.processingJobReportWriter = processingJobReportWriter;
     }
 
-    public void execute (final String inputFilePath) throws IOException {
+    public void execute (final File inputFilePath) throws IOException {
+        if (null == inputFilePath) {
+            throw new IllegalArgumentException("inputFile is null");
+        }
         final List<String> jobIds = new LinkedList<>();
 
-        final BufferedReader reader = Files.newBufferedReader(Paths.get(inputFilePath), Charset.defaultCharset());
+        final BufferedReader reader = Files.newBufferedReader(inputFilePath.toPath(), Charset.defaultCharset());
 
         for (String line = reader.readLine(); null != line; line = reader.readLine()) {
             jobIds.add(line.trim());
         }
-
-        System.out.println(jobIds.toString());
 
         final List<ProcessingJobWithStatsAndResults> stats = processingJobReportRetriever.generateReportOnProcessingJobs(jobIds);
         processingJobReportWriter.write(processingJobReportWriter.objectsToString(stats));
