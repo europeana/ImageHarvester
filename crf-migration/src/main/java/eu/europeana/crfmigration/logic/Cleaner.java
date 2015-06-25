@@ -17,7 +17,7 @@ public class Cleaner {
     private DB db;
 
     public Cleaner(MongoConfig config) throws IOException {
-        final Mongo mongo = new Mongo(config.getHost(), config.getPort());
+        final Mongo mongo = new Mongo(config.getMongoServerAddressList());
 
         if (!config.getdBUsername().equals("")) {
             db = mongo.getDB("admin");

@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
  * Created by salexandru on 02.06.2015.
  */
 public class MigratorHarvesterDaoTest {
-    private final static MigratorConfig migratorConfig = MigratorUtils.createMigratorConfig("config-files/migration.conf");
+    private MigratorConfig migratorConfig;
 
     private MigratorHarvesterDao harvesterDao;
     private Datastore dataStore;
@@ -43,10 +43,10 @@ public class MigratorHarvesterDaoTest {
 
     @Before
     public void setUp() throws UnknownHostException {
-        final MorphiaDataStore morphiaDataStore =  new MorphiaDataStore(migratorConfig.getTargetMongoConfig().getHost(),
-                                          migratorConfig.getTargetMongoConfig().getPort(),
-                                          migratorConfig.getTargetMongoConfig().getdBName()
-                                        );
+        migratorConfig = MigratorUtils.createMigratorConfig("config-files/migration.conf");
+        final MorphiaDataStore morphiaDataStore =  new MorphiaDataStore(migratorConfig.getTargetMongoConfig().getMongoServerAddressList(),
+                                                                          migratorConfig.getTargetMongoConfig().getdBName()
+                                                                         );
 
         if (StringUtils.isNotEmpty(migratorConfig.getTargetMongoConfig().getdBUsername())) {
             morphiaDataStore.getMongo().getDB("admin").authenticate(migratorConfig.getTargetMongoConfig().getdBUsername(),

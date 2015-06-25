@@ -15,12 +15,14 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 import static utils.MigratorUtils.PATH_PREFIX;
+import static utils.MigratorUtils.createMigratorConfig;
 
 /**
  * Created by salexandru on 02.06.2015.
  */
 public class MigratorEuropeanaDaoTest {
-    private final static MigratorConfig migratorConfig = MigratorUtils.createMigratorConfig("config-files/migration.conf");
+    private MigratorConfig migratorConfig = null;
+
 
     private final static Date dateFilter = DateTime.parse("2014-08-15T00:00:00.000Z").toDate();
     private final static String migrationBatchId = "migration-test-batch";
@@ -29,6 +31,7 @@ public class MigratorEuropeanaDaoTest {
 
     @Before
     public void setUp() throws UnknownHostException {
+        migratorConfig = createMigratorConfig("config-files/migration.conf");
         mongoDBUtils = new MongoDBUtils(migratorConfig);
         mongoDBUtils.loadMongoData(PATH_PREFIX + "data-files/aggregation.json", "Aggregation");
         mongoDBUtils.loadMongoData(PATH_PREFIX + "data-files/record.json", "record");

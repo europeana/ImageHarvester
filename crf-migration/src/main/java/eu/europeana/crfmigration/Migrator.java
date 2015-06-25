@@ -43,7 +43,7 @@ public class Migrator {
         final List<ServerAddress> mongoServerAddresses = new LinkedList<>();
 
         for (final Config hostConfig: config.getConfigList("hosts")) {
-            mongoServerAddresses.add(new ServerAddress(config.getString("host"), config.getInt("port")));
+            mongoServerAddresses.add(new ServerAddress(hostConfig.getString("host"), hostConfig.getInt("port")));
         }
 
         return new MongoConfig(mongoServerAddresses,

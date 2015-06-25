@@ -1,9 +1,6 @@
 package utils;
 
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
-import com.mongodb.Mongo;
+import com.mongodb.*;
 import com.mongodb.util.JSON;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import org.joda.time.DateTime;
@@ -13,6 +10,7 @@ import org.json.simple.parser.JSONParser;
 import java.io.FileReader;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.fail;
 
@@ -26,15 +24,10 @@ public class MongoDBUtils {
         this.migratorConfig = migratorConfig;
     }
 
-    public Mongo connectToDB(final String host, final Integer port, final String userName, final String password) {
+    public Mongo connectToDB(final List<ServerAddress> serverAddressList, final String userName, final String password) {
         final Mongo mongo;
-        try {
-            mongo = new Mongo(host, port);
-        } catch (UnknownHostException e) {
-            fail("Cannot connect to mongo database. Unknown host: " + e.getMessage());
-            return null;
-        }
 
+        mongo = new Mongo(serverAddressList);
 
         if (!migratorConfig.getSourceMongoConfig().getdBUsername().equals("")) {
             final DB sourceDB = mongo.getDB("admin");
@@ -53,8 +46,7 @@ public class MongoDBUtils {
                 fail("Mongo Configuration cannot be null!");
             }
 
-            final Mongo sourceMongo = connectToDB(migratorConfig.getSourceMongoConfig().getHost(),
-                                                  migratorConfig.getSourceMongoConfig().getPort(),
+            final Mongo sourceMongo = connectToDB(migratorConfig.getSourceMongoConfig().getMongoServerAddressList(),
                                                   migratorConfig.getSourceMongoConfig().getdBUsername(),
                                                   migratorConfig.getSourceMongoConfig().getdBPassword());
 
@@ -62,8 +54,10 @@ public class MongoDBUtils {
             sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getdBName()).getCollection("Aggregation").drop();
 
 
-            final Mongo targetMongo = connectToDB(migratorConfig.getTargetMongoConfig().getHost(), migratorConfig.getTargetMongoConfig().getPort(),
-                                                  migratorConfig.getTargetMongoConfig().getdBUsername(), migratorConfig.getTargetMongoConfig().getdBPassword());
+            final Mongo targetMongo = connectToDB(migratorConfig.getTargetMongoConfig().getMongoServerAddressList(),
+                                                  migratorConfig.getTargetMongoConfig().getdBUsername(),
+                                                  migratorConfig.getTargetMongoConfig().getdBPassword()
+                                                 );
 
             targetMongo.getDB(migratorConfig.getTargetMongoConfig().getdBName()).getCollection("ProcessingJob").drop();
             targetMongo.getDB(migratorConfig.getTargetMongoConfig().getdBName()).getCollection("SourceDocumentReference").drop();
@@ -74,16 +68,14 @@ public class MongoDBUtils {
     }
 
     public DB connectToSource () {
-        return connectToDB(migratorConfig.getSourceMongoConfig().getHost(),
-                           migratorConfig.getSourceMongoConfig().getPort(),
+        return connectToDB(migratorConfig.getSourceMongoConfig().getMongoServerAddressList(),
                            migratorConfig.getSourceMongoConfig().getdBUsername(),
                            migratorConfig.getSourceMongoConfig().getdBPassword()
                           ).getDB(migratorConfig.getSourceMongoConfig().getdBName());
     }
 
     public DB connectToTarget () {
-        return connectToDB(migratorConfig.getTargetMongoConfig().getHost(),
-                           migratorConfig.getTargetMongoConfig().getPort(),
+        return connectToDB(migratorConfig.getTargetMongoConfig().getMongoServerAddressList(),
                            migratorConfig.getTargetMongoConfig().getdBUsername(),
                            migratorConfig.getTargetMongoConfig().getdBPassword()
                           ).getDB(migratorConfig.getTargetMongoConfig().getdBName());
@@ -94,8 +86,7 @@ public class MongoDBUtils {
             JSONParser parser = new JSONParser();
             JSONArray rootObject = (JSONArray) parser.parse(new FileReader(pathToJSONFile));
 
-            final Mongo sourceMongo = connectToDB(migratorConfig.getSourceMongoConfig().getHost(),
-                                                  migratorConfig.getSourceMongoConfig().getPort(),
+            final Mongo sourceMongo = connectToDB(migratorConfig.getSourceMongoConfig().getMongoServerAddressList(),
                                                   migratorConfig.getSourceMongoConfig().getdBUsername(),
                                                   migratorConfig.getSourceMongoConfig().getdBPassword());
             final DBCollection sourceDB = sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getdBName()).getCollection(collectionName);
