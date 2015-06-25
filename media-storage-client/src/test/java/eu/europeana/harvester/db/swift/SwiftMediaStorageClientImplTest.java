@@ -21,6 +21,7 @@ import static org.junit.Assert.*;
  * This tests represent a philosophical statement.  Do not trust an implementation, not even yours.
  * “A good programmer is someone who always looks both ways before crossing a one-way street.” (Doug Linder)
  */
+@Ignore
 public class SwiftMediaStorageClientImplTest {
     private static final String containerName = "swiftUnitTesting";
 
