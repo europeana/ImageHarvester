@@ -92,7 +92,7 @@ public class AccountantDispatcherActor extends UntypedActor {
             }
 
             if (message instanceof AddTask) {
-                final JobPriority prio = ((AddTask)message).getJobPriority();
+                final JobPriority prio = JobPriority.fromPriority(((AddTask)message).getJobPriority());
                 if ( prio == JobPriority.NORMAL )
                     accountantActor.forward(message,getContext());
                 else
@@ -101,7 +101,7 @@ public class AccountantDispatcherActor extends UntypedActor {
             }
 
             if (message instanceof AddTasksToJob) {
-                JobPriority prio = ((AddTasksToJob) message).getJobPriority();
+                JobPriority prio = JobPriority.fromPriority(((AddTasksToJob) message).getJobPriority());
                 if ( prio == JobPriority.NORMAL )
                     accountantActor.forward(message,getContext());
                 else

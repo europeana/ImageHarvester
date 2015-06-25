@@ -20,7 +20,7 @@ public class ProcessingJob {
 
     /** * The priority of the job; The higher the number the higher the priority.
      */
-    private final JobPriority priority;
+    private final int priority;
 
     /**
      * The expected start date.
@@ -55,7 +55,7 @@ public class ProcessingJob {
 
     public ProcessingJob() {
         this.id = null;
-        this.priority = null;
+        this.priority = 0;
         this.expectedStartDate = null;
         this.referenceOwner = null;
         this.tasks = null;
@@ -64,7 +64,7 @@ public class ProcessingJob {
         this.ipAddress = null;
     }
 
-    public ProcessingJob(final JobPriority priority, final Date expectedStartDate, final ReferenceOwner referenceOwner,
+    public ProcessingJob(final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner,
                          final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress) {
         this.priority = priority;
         this.ipAddress = ipAddress;
@@ -76,7 +76,7 @@ public class ProcessingJob {
         this.limits = new ProcessingJobLimits();
     }
 
-    public ProcessingJob(final JobPriority priority, final Date expectedStartDate, final ReferenceOwner referenceOwner,
+    public ProcessingJob(final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner,
                          final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress,ProcessingJobLimits limits) {
         this.priority = priority;
         this.ipAddress = ipAddress;
@@ -88,7 +88,7 @@ public class ProcessingJob {
         this.limits = limits;
     }
 
-    public ProcessingJob(final String id, final JobPriority priority, final Date expectedStartDate,
+    public ProcessingJob(final String id, final int priority, final Date expectedStartDate,
                          final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks,
                          final JobState state, String ipAddress,ProcessingJobLimits limits) {
         this.id = id;
@@ -105,7 +105,7 @@ public class ProcessingJob {
         return id;
     }
 
-    public JobPriority getPriority() {
+    public int getPriority() {
         return priority;
     }
 

@@ -139,7 +139,7 @@ public class JobLoaderMasterHelper  {
      *
      * @param job the ProcessingJob object
      */
-    private static void addJob(final ProcessingJob job, final JobPriority jobPriority, final Map<String, SourceDocumentReference> resources,
+    private static void addJob(final ProcessingJob job, final int jobPriority, final Map<String, SourceDocumentReference> resources,
                                final ClusterMasterConfig clusterMasterConfig, final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final ActorRef accountantActor, Logger LOG) {

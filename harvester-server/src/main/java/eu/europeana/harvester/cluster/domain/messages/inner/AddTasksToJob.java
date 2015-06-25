@@ -8,11 +8,11 @@ import java.util.List;
 public class AddTasksToJob implements Serializable {
 
     private final String jobID;
-    private final JobPriority jobPriority;
+    private final Integer jobPriority;
 
     private final List<String> taskIDs;
 
-    public AddTasksToJob(String jobID, JobPriority jobPriority, List<String> taskIDs) {
+    public AddTasksToJob(String jobID, Integer jobPriority, List<String> taskIDs) {
         this.jobID = jobID;
         this.jobPriority = jobPriority;
         this.taskIDs = taskIDs;
@@ -22,7 +22,7 @@ public class AddTasksToJob implements Serializable {
         return jobID;
     }
 
-    public JobPriority getJobPriority() { return jobPriority; }
+    public Integer getJobPriority() { return jobPriority; }
 
     public List<String> getTaskIDs() {
         return taskIDs;

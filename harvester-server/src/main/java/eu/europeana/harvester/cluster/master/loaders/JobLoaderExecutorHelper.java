@@ -94,7 +94,7 @@ public class JobLoaderExecutorHelper  {
                                 "Done with another 500 jobs out of {}", all.size());
                         i = 0;
                     }
-                    addJob(job, JobPriority.NORMAL, resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
+                    addJob(job, JobPriority.NORMAL.getPriority(), resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
                             accountantActor, LOG);
 
                 } catch (Exception e) {
@@ -177,7 +177,7 @@ public class JobLoaderExecutorHelper  {
      *
      * @param job the ProcessingJob object
      */
-    private static void addJob(final ProcessingJob job, final JobPriority jobPriority, final Map<String, SourceDocumentReference> resources,
+    private static void addJob(final ProcessingJob job, final Integer jobPriority, final Map<String, SourceDocumentReference> resources,
                                final ClusterMasterConfig clusterMasterConfig, final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final ActorRef accountantActor, Logger LOG) {
@@ -315,7 +315,7 @@ public class JobLoaderExecutorHelper  {
                                 "Done with another 500 jobs out of {}", all.size());
                         i = 0;
                     }
-                    addJob(job, JobPriority.FASTLANE, resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
+                    addJob(job, JobPriority.FASTLANE.getPriority(), resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
                             accountantActor, LOG);
 
                 } catch (Exception e) {
