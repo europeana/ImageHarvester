@@ -22,7 +22,7 @@ public class ProcessingJobReportWriter {
        this.writer = writer;
        this.printMore = printMore;
 
-       if (printMore) {
+       if (printMore && null != configuration) {
            swiftMediaStorage = new SwiftMediaStorageClientImpl(configuration);
        }
        else {
@@ -30,7 +30,7 @@ public class ProcessingJobReportWriter {
        }
     }
 
-    public String objectsToString(final List<ProcessingJobWithStatsAndResults> inputs){
+    public String objectsToString(final List<ProcessingJobWithStatsAndResults> inputs) {
         final StringBuilder output = new StringBuilder();
 
         output.append("processingJobStats = [\n");
@@ -73,26 +73,31 @@ public class ProcessingJobReportWriter {
             }
             output.append("\t\t]\n");
 
-            output.append("\t\t").append("metaInfoExistenceInSwift = [\n");
+            if (null != swiftMediaStorage) {
 
-            for (final Map.Entry<String, SourceDocumentReferenceMetaInfo> entry: input.getSourceDocumentReferenceIdTometaInfoMap().entrySet()) {
-                final SourceDocumentReferenceMetaInfo metaInfo = entry.getValue();
-                output.append("\t\t\t {\n");
-                if (null == metaInfo) {
-                    output.append("\t\t\t\t").append(" id = " + entry.getKey()).append("\n");
-                    output.append("\t\t\t\t").append(" info = \"metainfo is null\"").append("\n");
+                output.append("\t\t").append("metaInfoExistenceInSwift = [\n");
+
+                for (final Map.Entry<String, SourceDocumentReferenceMetaInfo> entry : input.getSourceDocumentReferenceIdTometaInfoMap()
+
+                                                                                           .entrySet()) {
+                    final SourceDocumentReferenceMetaInfo metaInfo = entry.getValue();
+                    output.append("\t\t\t {\n");
+                    if (null == metaInfo) {
+                        output.append("\t\t\t\t").append(" id = " + entry.getKey()).append("\n");
+                        output.append("\t\t\t\t").append(" info = \"metainfo is null\"").append("\n");
+                        output.append("\t\t\t }\n");
+                        continue;
+                    }
+                    String url = getMediaFileName(metaInfo);
+
+                    output.append("\t\t\t\t").append("id = " + metaInfo.getId()).append("\n");
+                    output.append("\t\t\t\t").append("mediaFileName = " + url).append("\n");
+                    output.append("\t\t\t\t").append("exists = " + swiftMediaStorage.checkIfExists(url)).append("\n");
                     output.append("\t\t\t }\n");
-                    continue;
                 }
-                String url = getMediaFileName(metaInfo);
 
-                output.append("\t\t\t\t").append("id = " + metaInfo.getId()).append("\n");
-                output.append("\t\t\t\t").append("mediaFileName = " + url).append("\n");
-                output.append("\t\t\t\t").append("exists = " + swiftMediaStorage.checkIfExists(url)).append("\n");
-                output.append("\t\t\t }\n");
+                output.append("\t\t ]\n");
             }
-
-            output.append("\t\t ]\n");
         }
 
         output.append("\t }\n");

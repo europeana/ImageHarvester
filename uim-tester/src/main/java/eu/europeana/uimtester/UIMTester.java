@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -31,9 +32,6 @@ public class UIMTester {
     private final static String JobCreatorOptions = "job-creator";
     private final static String ReportProcessingOptions = "report-processing";
 
-    private final static String ContainerName = "swiftUnitTesting";
-
-
     private static void printHelp() {
         System.out.println ("How to used the program:");
         System.out.println ("<job-creator|report-processing> uim-tester.conf job-creator-input.conf job-creator-output.conf");
@@ -42,7 +40,6 @@ public class UIMTester {
 
     public static void main(String args[]) throws IOException, InterruptedException, TimeoutException,
                                                   ExecutionException {
-
         boolean printMore = false;
         File uimTesterConfigFile = null;
         File jobCreatorInput = null;
@@ -85,7 +82,7 @@ public class UIMTester {
 
         final UIMTesterConfig uimTesterConfig = new UIMTesterConfig(uimTesterConfigFile);
 
-        final Mongo mongo = new Mongo(uimTesterConfig.getMongoHost(), uimTesterConfig.getMongoPort());
+        final Mongo mongo = new Mongo(uimTesterConfig.getServerAddressList());
 
         if (StringUtils.isNotEmpty(uimTesterConfig.getMongoDBUserName())) {
             final boolean auth =  mongo.getDB("admin").authenticate(uimTesterConfig.getMongoDBUserName(),
@@ -118,16 +115,9 @@ public class UIMTester {
                 break;
 
             case ReportProcessingOptions:
-                final SwiftConfiguration config = new SwiftConfiguration("https://auth.hydranodes.de:5000/v2.0",
-                                       "d35f3a21-cf35-48a0-a035-99bfc2252528.swift.tenant@a9s.eu",
-                                       "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu",
-                                       "78ae7i9XO3O7CcdkDa87",
-                                       ContainerName,
-                                       "hydranodes"
-                                     );
-
+                final SwiftConfiguration swiftConfiguration = uimTesterConfig.useSwift() ? uimTesterConfig.getSwiftConfiguration() : null;
                 new ProcessingJobReport(new ProcessingJobReportRetriever(harvesterClient),
-                                        new ProcessingJobReportWriter(writer, config, printMore)
+                                        new ProcessingJobReportWriter(writer, swiftConfiguration, printMore)
                                        ).execute(jobCreatorInput);
                 break;
 
