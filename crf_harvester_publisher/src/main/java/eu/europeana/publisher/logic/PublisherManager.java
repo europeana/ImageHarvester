@@ -45,18 +45,6 @@ public class PublisherManager {
     private final PublisherMetrics publisherMetrics;
 
     public PublisherManager(PublisherConfig config) throws UnknownHostException {
-        if (null == config) {
-            throw new IllegalArgumentException("config cannot be null");
-        }
-
-        if (config.getSolrURL().isEmpty() || config.getTargetMongoConfig().isEmpty()) {
-            throw new IllegalArgumentException("solr and target mongo configs cannot be empty");
-        }
-
-        if (config.getSolrURL().size() != config.getTargetMongoConfig().size()) {
-            throw new IllegalArgumentException("solr and target mongo configs must be of the same size");
-        }
-
         this.config = config;
         publisherMetrics = new PublisherMetrics();
 
@@ -64,48 +52,40 @@ public class PublisherManager {
 
         publisherHarvesterDaos = new LinkedList<>();
 
-        for (final MongoConfig target: config.getTargetMongoConfig()) {
+        for (final MongoConfig target : config.getTargetMongoConfig()) {
             publisherHarvesterDaos.add(new PublisherHarvesterDao(target));
         }
 
         solrWriters = new LinkedList<>();
 
-        for (final String url: config.getSolrURL()) {
+        for (final String url : config.getSolrURL()) {
             solrWriters.add(new SOLRWriter(url));
         }
 
 
-        Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.metricRegistry)
-                .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS).build();
+        ////        Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.metricRegistry)
+        ////                .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
+        ////                .convertRatesTo(TimeUnit.SECONDS)
+        ////                .convertDurationsTo(TimeUnit.MILLISECONDS).build();
+        //
+        //        reporter.start(20, TimeUnit.SECONDS);
 
-        reporter.start(20, TimeUnit.SECONDS);
-
-        if (null == config.getGraphiteConfig() || config.getGraphiteConfig().getServer().trim().isEmpty()) {
-            return;
-        }
-
-        final InetSocketAddress addr = new InetSocketAddress(config.getGraphiteConfig().getServer(),
-                config.getGraphiteConfig().getPort());
-        Graphite graphite = new Graphite(addr);
-        GraphiteReporter reporter2 = GraphiteReporter.forRegistry(PublisherMetrics.metricRegistry)
-                .prefixedWith(config.getGraphiteConfig().getMasterId())
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS).filter(MetricFilter.ALL)
-                .build(graphite);
-        reporter2.start(20, TimeUnit.SECONDS);
+        //      final InetSocketAddress addr = new InetSocketAddress(config.getGraphiteConfig().getServer(),
+        //             config.getGraphiteConfig().getPort());
+        //       Graphite graphite = new Graphite(addr);
+        //        GraphiteReporter reporter2 = GraphiteReporter.forRegistry(PublisherMetrics.metricRegistry)
+        //                .prefixedWith(config.getGraphiteConfig().getMasterId())
+        //                .convertRatesTo(TimeUnit.SECONDS)
+        //                .convertDurationsTo(TimeUnit.MILLISECONDS).filter(MetricFilter.ALL)
+        //                .build(graphite);
+        //        reporter2.start(20, TimeUnit.SECONDS);
+        //    }
     }
 
     public void start() throws IOException, SolrServerException, InterruptedException {
         try {
-            publisherMetrics.startTotalTimer();
             startPublisher();
-            publisherMetrics.stopTotalTimer();
         } finally {
-            for (final Timer.Context context : publisherMetrics.getTimerContexts()) {
-                context.close();
-            }
         }
     }
 
