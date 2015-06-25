@@ -9,6 +9,7 @@ import org.jclouds.openstack.swift.v1.features.ObjectApi;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.io.IOException;
 
