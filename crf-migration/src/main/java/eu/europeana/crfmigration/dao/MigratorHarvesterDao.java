@@ -26,14 +26,14 @@ public class MigratorHarvesterDao {
     public MigratorHarvesterDao (MongoConfig mongoConfig) throws UnknownHostException {
 
         final MorphiaDataStore datastore =
-                new MorphiaDataStore(mongoConfig.getMongoServerAddressList(), mongoConfig.getdBName());
+                new MorphiaDataStore(mongoConfig.getMongoServerAddressList(), mongoConfig.getDbName());
 
 
-        if (StringUtils.isNotEmpty(mongoConfig.getdBUsername())  &&
-                StringUtils.isNotEmpty(mongoConfig.getdBPassword())) {
+        if (StringUtils.isNotEmpty(mongoConfig.getUsername())  &&
+                StringUtils.isNotEmpty(mongoConfig.getPassword())) {
 
-            final Boolean auth = datastore.getMongo().getDB("admin").authenticate(mongoConfig.getdBUsername(),
-                    mongoConfig.getdBPassword()
+            final Boolean auth = datastore.getMongo().getDB("admin").authenticate(mongoConfig.getUsername(),
+                    mongoConfig.getPassword()
                             .toCharArray());
 
             if (!auth) {

@@ -41,12 +41,12 @@ public class MigratorHarvesterDaoTest {
     public void setUp() throws UnknownHostException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/migration.conf");
         final MorphiaDataStore morphiaDataStore =  new MorphiaDataStore(migratorConfig.getTargetMongoConfig().getMongoServerAddressList(),
-                                                                          migratorConfig.getTargetMongoConfig().getdBName()
+                                                                          migratorConfig.getTargetMongoConfig().getDbName()
                                                                          );
 
-        if (StringUtils.isNotEmpty(migratorConfig.getTargetMongoConfig().getdBUsername())) {
-            morphiaDataStore.getMongo().getDB("admin").authenticate(migratorConfig.getTargetMongoConfig().getdBUsername(),
-                                                                    migratorConfig.getTargetMongoConfig().getdBPassword().toCharArray());
+        if (StringUtils.isNotEmpty(migratorConfig.getTargetMongoConfig().getUsername())) {
+            morphiaDataStore.getMongo().getDB("admin").authenticate(migratorConfig.getTargetMongoConfig().getUsername(),
+                                                                    migratorConfig.getTargetMongoConfig().getPassword().toCharArray());
         }
         dataStore = morphiaDataStore.getDatastore();
 

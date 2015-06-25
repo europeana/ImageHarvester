@@ -19,10 +19,10 @@ public class Cleaner {
     public Cleaner(MongoConfig config) throws IOException {
         final Mongo mongo = new Mongo(config.getMongoServerAddressList());
 
-        if (!config.getdBUsername().equals("")) {
+        if (!config.getUsername().equals("")) {
             db = mongo.getDB("admin");
-            final Boolean auth = db.authenticate(config.getdBUsername(),
-                    config.getdBPassword().toCharArray());
+            final Boolean auth = db.authenticate(config.getUsername(),
+                    config.getPassword().toCharArray());
             if (!auth) {
                 LOG.error("Mongo auth error");
                 System.exit(-1);
@@ -31,7 +31,7 @@ public class Cleaner {
             }
         }
 
-        db = mongo.getDB(config.getdBName());
+        db = mongo.getDB(config.getDbName());
     }
 
     /**

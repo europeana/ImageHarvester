@@ -19,17 +19,13 @@ import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.dummy.DummyMediaStorageClientImpl;
 import eu.europeana.harvester.db.mongo.MediaStorageClientImpl;
 import eu.europeana.harvester.db.swift.SwiftConfiguration;
-import eu.europeana.harvester.db.swift.SwiftMediaStorageClientImpl;
 import eu.europeana.harvester.domain.MediaStorageClientConfig;
+import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jclouds.ContextBuilder;
-import org.jclouds.openstack.swift.v1.SwiftApi;
-import org.jclouds.openstack.swift.v1.features.ContainerApi;
-import org.jclouds.openstack.swift.v1.features.ObjectApi;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -46,9 +42,6 @@ public class Slave {
     private ActorSystem system;
 
     private static final String containerName = "swiftUnitTesting";
-    private ObjectApi objectApi;
-    private SwiftApi  swiftApi;
-    private ContainerApi containerApi;
 
 
 
@@ -81,8 +74,8 @@ public class Slave {
             System.exit(-1);
         }
 
-        final Config config = ConfigFactory.parseFileAnySyntax(configFile,
-                        ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
+        final Config config = ConfigFactory.parseFileAnySyntax(configFile, ConfigParseOptions.defaults()
+                                                                                             .setSyntax(ConfigSyntax.CONF));
 
         final ExecutorService bossPool = Executors.newCachedThreadPool();
         final ExecutorService workerPool = Executors.newCachedThreadPool();
@@ -114,16 +107,12 @@ public class Slave {
         final NodeMasterConfig nodeMasterConfig = new NodeMasterConfig(nrOfDownloaderSlaves, nrOfExtractorSlaves,
                 nrOfPingerSlaves, nrOfRetries, taskNrLimit, pathToSave, responseType, source, colorMapPath);
 
-        final String mediaStorageHost = config.getString("media-storage.host");
-        final Integer mediaStoragePort = config.getInt("media-storage.port");
-        final String mediaStorageDBName = config.getString("media-storage.dbName");
         final String mediaStorageNameSpace = config.getString("media-storage.nameSpace");
-        final String mediaStorageUsername = config.getString("media-storage.username");
-        final String mediaStoragePassword = config.getString("media-storage.password");
 
         final MediaStorageClientConfig mediaStorageClientConfig =
-                new MediaStorageClientConfig(mediaStorageHost, mediaStoragePort,
-                        mediaStorageUsername, mediaStoragePassword, mediaStorageDBName, mediaStorageNameSpace);
+                new MediaStorageClientConfig(MongoConfig.valueOf(config.getConfig("media-storage")),
+                                             mediaStorageNameSpace
+                                            );
 
         MediaStorageClient mediaStorageClient = null;
         try {

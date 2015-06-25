@@ -44,7 +44,7 @@ public class PublisherMetrics  {
 
                 public static TimerMap solrCheckIdsDurationDuration = new TimerMap(name(Solr.NAME, "solrCheckIds"));
 
-                
+
             }
         }
 

@@ -24,21 +24,7 @@ public class MediaStorageClientImpl implements MediaStorageClient {
     private final GridFS gridFS;
 
     public MediaStorageClientImpl(MediaStorageClientConfig config) throws UnknownHostException {
-        DB db;
-        final Mongo mongo = new Mongo(config.getHost(), config.getPort());
-
-        if(!config.getUsername().equals("")) {
-            db = mongo.getDB("admin");
-            final Boolean auth = db.authenticate(config.getUsername(), config.getPassword().toCharArray());
-            if (!auth) {
-                System.out.println("Mongo auth error");
-                System.exit(-1);
-            }
-        }
-
-        db = mongo.getDB(config.getDbName());
-
-        gridFS = new GridFS(db, config.getNamespaceName());
+        gridFS = new GridFS(config.getMongoConfig().connectToDB(), config.getNamespaceName());
     }
 
     public MediaStorageClientImpl(GridFS gridFS) {

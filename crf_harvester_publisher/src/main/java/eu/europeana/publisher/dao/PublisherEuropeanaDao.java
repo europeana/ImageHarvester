@@ -35,7 +35,7 @@ public class PublisherEuropeanaDao {
 
         mongoDB = mongoConfig.connectToDB();
 
-        final Datastore dataStore = new Morphia().createDatastore(mongoConfig.connectToMongo(), mongoConfig.getdBName());
+        final Datastore dataStore = new Morphia().createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
     }
 
