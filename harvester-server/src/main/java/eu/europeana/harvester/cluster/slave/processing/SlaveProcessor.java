@@ -80,7 +80,8 @@ public class SlaveProcessor {
                 final Timer.Context originalCachingDurationContext = SlaveMetrics.Worker.Slave.Processing.originalCachingDuration.time();
                 try {
                     final MediaFile mediaFile = generateOriginal(originalFilePath, originalFileUrl, originalFileContent, referenceOwner, mediaMetaInfoTuple.getImageMetaInfo());
-                    mediaStorageClient.createOrModify(mediaFile);
+                    // TODO : uncomment when SWIFT issue is solved
+                    // mediaStorageClient.createOrModify(mediaFile);
                 } finally {
                     originalCachingDurationContext.stop();
                     Files.deleteIfExists(Paths.get(originalFilePath));
