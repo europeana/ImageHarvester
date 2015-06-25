@@ -3,8 +3,10 @@ package eu.europeana.harvester.db;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.ServerAddress;
 
 import java.net.UnknownHostException;
+import java.util.List;
 
 /**
  * Wrapper around the morphia datastore that simplifies the creation of the stores.
@@ -19,6 +21,12 @@ public class MorphiaDataStore {
         mongo = new MongoClient(host, port);
         morphia = new Morphia();
         datastore = morphia.createDatastore(mongo, dbName);
+    }
+
+    public MorphiaDataStore(final List<ServerAddress> serverAddressList, String dbName) {
+       mongo = new MongoClient(serverAddressList);
+       morphia = new Morphia();
+       datastore = morphia.createDatastore(mongo, dbName);
     }
 
     public MongoClient getMongo() {

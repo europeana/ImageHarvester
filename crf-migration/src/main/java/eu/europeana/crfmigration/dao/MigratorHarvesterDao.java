@@ -26,7 +26,7 @@ public class MigratorHarvesterDao {
     public MigratorHarvesterDao (MongoConfig mongoConfig) throws UnknownHostException {
 
         final MorphiaDataStore datastore =
-                new MorphiaDataStore(mongoConfig.getHost(), mongoConfig.getPort(),mongoConfig.getdBName());
+                new MorphiaDataStore(mongoConfig.getMongoServerAddressList(), mongoConfig.getdBName());
 
 
         if (StringUtils.isNotEmpty(mongoConfig.getdBUsername())  &&
@@ -44,7 +44,6 @@ public class MigratorHarvesterDao {
         harvesterClient = new HarvesterClientImpl(datastore, new HarvesterClientConfig(WriteConcern.SAFE));
 
     }
-
 
     public void saveSourceDocumentReferences(final List<SourceDocumentReference> sourceDocumentReferences,final String migratingBatchId) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         try{
@@ -67,6 +66,5 @@ public class MigratorHarvesterDao {
                     "Finished saving {} jobs", jobs.size());
         }
     }
-
 }
 

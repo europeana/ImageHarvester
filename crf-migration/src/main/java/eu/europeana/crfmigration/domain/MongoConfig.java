@@ -1,16 +1,13 @@
 package eu.europeana.crfmigration.domain;
 
+import com.mongodb.ServerAddress;
+
+import java.util.List;
+
 public class MongoConfig {
 
-    /**
-     * MongoDB host.
-     */
-    private final String host;
+    private final List<ServerAddress> mongoServerAddressList;
 
-    /**
-     * MongoDB port.
-     */
-    private final Integer port;
 
     /**
      * The DB name.
@@ -28,21 +25,15 @@ public class MongoConfig {
     private final String dBPassword;
 
 
-    public MongoConfig(String host, Integer port, String dBName, String dBUsername, String dBPassword) {
-        this.host = host;
-        this.port = port;
+    public MongoConfig(List<ServerAddress> mongoServerAddressList, String dBName, String dBUsername, String dBPassword) {
+        this.mongoServerAddressList = mongoServerAddressList;
         this.dBName = dBName;
         this.dBUsername = dBUsername;
         this.dBPassword = dBPassword;
     }
 
-    public String getHost() {
-        return host;
-    }
 
-    public Integer getPort() {
-        return port;
-    }
+
 
     public String getdBName() {
         return dBName;
@@ -54,5 +45,9 @@ public class MongoConfig {
 
     public String getdBPassword() {
         return dBPassword;
+    }
+
+    public List<ServerAddress> getMongoServerAddressList () {
+        return mongoServerAddressList;
     }
 }

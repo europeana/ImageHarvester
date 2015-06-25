@@ -22,7 +22,7 @@ public class MigratorEuropeanaDao {
     public MigratorEuropeanaDao(MongoConfig mongoConfig) throws UnknownHostException {
         this.mongoConfig = mongoConfig;
 
-        mongo = new Mongo(mongoConfig.getHost(), mongoConfig.getPort());
+        mongo = new Mongo(mongoConfig.getMongoServerAddressList());
 
         if (StringUtils.isNotEmpty(mongoConfig.getdBUsername()) && StringUtils.isNotEmpty(mongoConfig.getdBPassword())) {
             final DB authDB = mongo.getDB("admin");

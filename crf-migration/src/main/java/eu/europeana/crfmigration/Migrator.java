@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.mongodb.ServerAddress;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
@@ -23,7 +24,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
@@ -33,6 +37,20 @@ public class Migrator {
 
     public Migrator(Date dateFilter) {
         this.dateFilter = dateFilter;
+    }
+
+    private MongoConfig readMongoConfig (final Config config) throws UnknownHostException {
+        final List<ServerAddress> mongoServerAddresses = new LinkedList<>();
+
+        for (final Config hostConfig: config.getConfigList("hosts")) {
+            mongoServerAddresses.add(new ServerAddress(config.getString("host"), config.getInt("port")));
+        }
+
+        return new MongoConfig(mongoServerAddresses,
+                               config.getString("dbName"),
+                               config.getString("username"),
+                               config.getString("password")
+                              );
     }
 
     public void start() throws IOException {
@@ -50,17 +68,10 @@ public class Migrator {
         final Config config = ConfigFactory.parseFileAnySyntax(configFile,
                 ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
 
-        final String sourceHost = config.getString("sourceMongo.host");
-        final Integer sourcePort = config.getInt("sourceMongo.port");
-        final String sourceDBName = config.getString("sourceMongo.dbName");
-        final String sourceDBUsername = config.getString("sourceMongo.username");
-        final String sourceDBPassword = config.getString("sourceMongo.password");
 
-        final String targetHost = config.getString("targetMongo.host");
-        final Integer targetPort = config.getInt("targetMongo.port");
-        final String targetDBName = config.getString("targetMongo.dbName");
-        final String targetDBUsername = config.getString("targetMongo.username");
-        final String targetDBPassword = config.getString("targetMongo.password");
+        final MongoConfig sourceMongoConfig = readMongoConfig(config.getConfig("sourceMongo"));
+        final MongoConfig targetMongoConfig = readMongoConfig(config.getConfig("targetMongo"));
+
 
         final String graphiteMasterId = config.getString("metrics.masterID");
         final String graphiteServer = config.getString("metrics.graphiteServer");
@@ -68,8 +79,8 @@ public class Migrator {
 
         final int batch = config.getInt("config.batch");
 
-        final MongoConfig sourceMongoConfig = new MongoConfig(sourceHost, sourcePort, sourceDBName, sourceDBUsername, sourceDBPassword);
-        final MongoConfig targetMongoConfig = new MongoConfig(targetHost, targetPort, targetDBName, targetDBUsername, targetDBPassword);
+
+
 
         final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(graphiteServer, graphiteMasterId, graphitePort);
 
