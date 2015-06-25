@@ -1,10 +1,11 @@
 package eu.europeana.publisher.domain;
 
+import eu.europeana.harvester.domain.MongoConfig;
 import org.joda.time.DateTime;
 
+import java.util.List;
+
 public class PublisherConfig {
-    private final MongoConfig sourceMongoConfig;
-    private final MongoConfig targetMongoConfig;
     private final GraphiteReporterConfig graphiteConfig;
 
     /**
@@ -16,25 +17,27 @@ public class PublisherConfig {
     private final String startTimestampFile;
 
     /**
-     * The URL of the Solr instance.
-     * e.g.: http://IP:Port/solr
-     */
-    private final String solrURL;
-
-    /**
      * Batch of documents to update.
      */
     private final Integer batch;
 
-    public PublisherConfig (MongoConfig sourceMongoConfig, MongoConfig targetMongoConfig,
-                            GraphiteReporterConfig graphiteConfig, DateTime startTimestamp,
-                            String startTimestampFile, String solrURL, Integer batch) {
+
+    private final List<MongoConfig> targetMongoConfigs;
+    private final DateTime sleepSecondsAfterEmptyBatch;
+    private final List<String> solrUrls;
+
+    private final MongoConfig sourceMongoConfig;
+
+    public PublisherConfig (MongoConfig sourceMongoConfig, List<MongoConfig> targetMongoConfigs,
+                            GraphiteReporterConfig graphiteConfig, DateTime startTimestamp, String startTimestampFile,
+                            DateTime sleepSecondsAfterEmptyBatch, List<String> solrURLs, Integer batch) {
         this.sourceMongoConfig = sourceMongoConfig;
-        this.targetMongoConfig = targetMongoConfig;
+        this.targetMongoConfigs = targetMongoConfigs;
         this.graphiteConfig = graphiteConfig;
         this.startTimestamp = startTimestamp;
         this.startTimestampFile = startTimestampFile;
-        this.solrURL = solrURL;
+        this.sleepSecondsAfterEmptyBatch = sleepSecondsAfterEmptyBatch;
+        this.solrUrls = solrURLs;
         this.batch = batch;
     }
 
@@ -42,8 +45,8 @@ public class PublisherConfig {
         return sourceMongoConfig;
     }
 
-    public MongoConfig getTargetMongoConfig () {
-        return targetMongoConfig;
+    public List<MongoConfig> getTargetMongoConfig () {
+        return targetMongoConfigs;
     }
 
     public GraphiteReporterConfig getGraphiteConfig () {
@@ -58,11 +61,15 @@ public class PublisherConfig {
         return startTimestampFile;
     }
 
-    public String getSolrURL () {
-        return solrURL;
+    public List<String> getSolrURL () {
+        return solrUrls;
     }
 
     public Integer getBatch () {
         return batch;
+    }
+
+    public DateTime getSleepSecondsAfterEmptyBatch () {
+        return sleepSecondsAfterEmptyBatch;
     }
 }

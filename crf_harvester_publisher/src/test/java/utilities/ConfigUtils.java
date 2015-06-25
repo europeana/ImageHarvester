@@ -69,7 +69,7 @@ public class ConfigUtils {
 
         return new PublisherConfig(sourceConfig, targetConfig,
                                    graphiteReporterConfig, startTimestamp,
-                                   startTimestampFile, solrURL, batch
+                                   startTimestampFile, sleepSecondsAfterEmptyBatch, solrURL, batch
         );
 
     }

@@ -8,7 +8,7 @@ import com.typesafe.config.ConfigSyntax;
 import eu.europeana.crfmigration.dao.MigratorEuropeanaDao;
 import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.MigratorConfig;
-import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.crfmigration.logic.MigrationManager;
 
 import java.io.File;

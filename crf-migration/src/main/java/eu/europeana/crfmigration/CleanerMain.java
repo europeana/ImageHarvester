@@ -5,7 +5,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
-import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.crfmigration.logic.Cleaner;
 
 import java.io.File;

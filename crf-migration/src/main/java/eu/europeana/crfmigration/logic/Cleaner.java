@@ -1,7 +1,7 @@
 package eu.europeana.crfmigration.logic;
 
 import com.mongodb.*;
-import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.harvester.domain.MongoConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

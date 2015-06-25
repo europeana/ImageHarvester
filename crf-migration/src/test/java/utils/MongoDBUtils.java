@@ -8,7 +8,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 

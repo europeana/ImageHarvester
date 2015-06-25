@@ -7,7 +7,6 @@ import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import utils.MigratorUtils;
 import utils.MongoDBUtils;
 
 import java.net.UnknownHostException;

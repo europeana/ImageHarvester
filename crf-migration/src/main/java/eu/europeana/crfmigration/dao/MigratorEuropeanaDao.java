@@ -2,7 +2,7 @@ package eu.europeana.crfmigration.dao;
 
 import com.mongodb.*;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
-import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.crfmigration.logic.MigrationMetrics;
 import eu.europeana.harvester.domain.ReferenceOwner;

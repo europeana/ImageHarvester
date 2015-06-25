@@ -2,23 +2,19 @@ package eu.europeana.crfmigration.dao;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
-import com.mongodb.DBObject;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import eu.europeana.harvester.db.MorphiaDataStore;
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 import eu.europeana.harvester.domain.URLSourceType;
-import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import utils.MigratorUtils;
-import utils.MongoDBUtils;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;

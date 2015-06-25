@@ -48,46 +48,9 @@ public class PublisherDaemon implements Daemon {
         final Config config = ConfigFactory.parseFileAnySyntax(configFile,
                 ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
 
-        DateTime startTimestamp = null;
-        try {
-            startTimestamp = DateTime.parse(config.getString("criteria.startTimestamp"));
-        }
-        catch (ConfigException.Null e) {
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                    "Start timestamp is null. Defaulting to 1 Jan 1970..");
-        }
 
 
-        String startTimestampFile = null;
-        try {
-            startTimestampFile = config.getString("criteria.startTimestampFile");
-            if (null != startTimestampFile) {
-                String file = FileUtils.readFileToString(new File(startTimestampFile), Charset.forName("UTF-8").name());
-                if (StringUtils.isEmpty(file)) {
-                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                            "Start timestamp file is null. Defaulting to 1 Jan 1970..");
-                }
-                else {
-                    startTimestamp = DateTime.parse(file.trim());
-                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                            "Start timestamp {} loaded from file.",startTimestamp);
-                }
-            }
-            else {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                        "Start timestamp is null. Defaulting to 1 Jan 1970..");
-            }
-        }
-        catch (ConfigException.Null e) {
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                    "Start timestamp is null. Defaulting to 1 Jan 1970..");
-        }
-        catch (FileNotFoundException e) {
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                    "Start timestamp file does not exist. Defaulting to 1 Jan 1970..");
-        }
-
-        publisher = new Publisher(startTimestamp,startTimestampFile,config);
+        publisher = new Publisher(config);
     }
 
     @Override

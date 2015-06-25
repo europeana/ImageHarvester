@@ -4,7 +4,6 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import com.mongodb.ServerAddress;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
@@ -13,7 +12,7 @@ import eu.europeana.crfmigration.dao.MigratorEuropeanaDao;
 import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.GraphiteReporterConfig;
 import eu.europeana.crfmigration.domain.MigratorConfig;
-import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.crfmigration.logic.MigrationManager;
 import eu.europeana.crfmigration.logic.MigrationMetrics;
@@ -24,10 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
@@ -39,19 +35,6 @@ public class Migrator {
         this.dateFilter = dateFilter;
     }
 
-    private MongoConfig readMongoConfig (final Config config) throws UnknownHostException {
-        final List<ServerAddress> mongoServerAddresses = new LinkedList<>();
-
-        for (final Config hostConfig: config.getConfigList("hosts")) {
-            mongoServerAddresses.add(new ServerAddress(hostConfig.getString("host"), hostConfig.getInt("port")));
-        }
-
-        return new MongoConfig(mongoServerAddresses,
-                               config.getString("dbName"),
-                               config.getString("username"),
-                               config.getString("password")
-                              );
-    }
 
     public void start() throws IOException {
         LOG.info("Migrator starting ");
@@ -69,8 +52,8 @@ public class Migrator {
                 ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
 
 
-        final MongoConfig sourceMongoConfig = readMongoConfig(config.getConfig("sourceMongo"));
-        final MongoConfig targetMongoConfig = readMongoConfig(config.getConfig("targetMongo"));
+        final MongoConfig sourceMongoConfig = MongoConfig.valueOf(config.getConfig("sourceMongo"));
+        final MongoConfig targetMongoConfig = MongoConfig.valueOf(config.getConfig("targetMongo"));
 
 
         final String graphiteMasterId = config.getString("metrics.masterID");

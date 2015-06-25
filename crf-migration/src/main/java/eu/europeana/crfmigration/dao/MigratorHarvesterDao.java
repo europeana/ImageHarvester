@@ -2,7 +2,7 @@ package eu.europeana.crfmigration.dao;
 
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
-import eu.europeana.crfmigration.domain.MongoConfig;
+import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.harvester.client.HarvesterClientConfig;
 import eu.europeana.harvester.client.HarvesterClientImpl;

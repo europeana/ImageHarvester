@@ -1,5 +1,7 @@
 package eu.europeana.crfmigration.domain;
 
+import eu.europeana.harvester.domain.MongoConfig;
+
 public class MigratorConfig {
 
     private final MongoConfig sourceMongoConfig;
