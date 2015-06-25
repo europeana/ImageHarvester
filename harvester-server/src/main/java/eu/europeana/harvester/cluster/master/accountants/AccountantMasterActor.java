@@ -3,8 +3,7 @@ package eu.europeana.harvester.cluster.master.accountants;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
+import eu.europeana.harvester.cluster.domain.messages.inner.GetListOfIPs;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
@@ -28,7 +27,7 @@ public class AccountantMasterActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         try {
 
-            if (message instanceof GetNumberOfIPs) {
+            if ( message instanceof GetListOfIPs) {
                 accountantTasksPerIPActor.forward(message, getContext());
                 return;
             }
@@ -78,10 +77,6 @@ public class AccountantMasterActor extends UntypedActor {
                 return;
             }
 
-            if (message instanceof GetNumberOfParallelDownloadsPerIP) {
-                accountantAllTasksActor.forward(message,getContext());
-                return;
-            }
 
             if (message instanceof ModifyState) {
                 accountantAllTasksActor.forward(message,getContext());

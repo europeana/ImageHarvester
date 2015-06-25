@@ -2,6 +2,7 @@ package eu.europeana.harvester.db.interfaces;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
+import eu.europeana.harvester.domain.JobPriority;
 import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.Page;
 import eu.europeana.harvester.domain.ProcessingJob;
@@ -92,6 +93,6 @@ public interface ProcessingJobDao {
      * @param page     an object which contains the number of records needed and the offset.
      * @return - list of ProcessingJobs
      */
-    public List<ProcessingJob> getDiffusedJobsWithState(JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs);
+    public List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs);
 
 }

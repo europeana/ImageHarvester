@@ -1,24 +1,23 @@
 package eu.europeana.harvester.cluster.domain.messages.inner;
 
 import java.io.Serializable;
-import java.util.List;
 
 public class AddTasksToIP implements Serializable {
 
     private final String IP;
 
-    private final List<String> tasks;
+    private final String task;
 
-    public AddTasksToIP(String ip, List<String> tasks) {
+    public AddTasksToIP(String ip, String task) {
         IP = ip;
-        this.tasks = tasks;
+        this.task = task;
     }
 
     public String getIP() {
         return IP;
     }
 
-    public List<String> getTasks() {
-        return tasks;
+    public String getTask() {
+        return task;
     }
 }

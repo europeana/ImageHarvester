@@ -4,6 +4,7 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
+import eu.europeana.harvester.domain.JobPriority;
 import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.Page;
 import eu.europeana.harvester.domain.ProcessingJob;
@@ -106,11 +107,12 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
     }
 
     @Override
-    public List<ProcessingJob> getDiffusedJobsWithState(JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs) {
+    public List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs) {
         final List<ProcessingJob> processingJobs = new ArrayList<>();
 
         for(Map.Entry<String, Integer> ip: ipDistribution.entrySet()) {
             final Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
+            query.criteria("priority").equal(jobPriority);
             query.criteria("state").equal(jobState);
             query.criteria("ipAddress").equal(ip.getKey());
             query.limit(page.getLimit());
@@ -127,5 +129,8 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
         return processingJobs;
     }
+
+
+
 
 }

@@ -1,7 +1,6 @@
 package eu.europeana.harvester.cluster.master.loaders;
 
 import akka.actor.ActorRef;
-import akka.actor.Address;
 import akka.actor.Terminated;
 import akka.actor.UntypedActor;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
@@ -19,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -43,11 +41,6 @@ public class JobLoaderMasterActor extends UntypedActor {
      */
     private ActorRef accountantActor;
 
-    /**
-     * A map with all system addresses which maps each address with a list of actor refs.
-     * This is needed if we want to clean them or if we want to broadcast a message.
-     */
-    private final Map<Address, HashSet<ActorRef>> actorsPerAddress;
 
     /**
      * ProcessingJob DAO object which lets us to read and store data to and from the database.
@@ -97,8 +90,7 @@ public class JobLoaderMasterActor extends UntypedActor {
 
 
     public JobLoaderMasterActor(final ActorRef receiverActor, final ClusterMasterConfig clusterMasterConfig,
-                                final ActorRef accountantActor, final Map<Address, HashSet<ActorRef>> actorsPerAddress,
-                                final ProcessingJobDao processingJobDao,
+                                final ActorRef accountantActor, final ProcessingJobDao processingJobDao,
                                 final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                 final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
@@ -110,7 +102,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         this.receiverActor = receiverActor;
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;
-        this.actorsPerAddress = actorsPerAddress;
+
         this.processingJobDao = processingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;

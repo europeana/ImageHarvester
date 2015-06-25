@@ -110,50 +110,89 @@ public class AccountantAllTasksActor extends UntypedActor {
                 return;
             }
 
-            if (message instanceof GetNumberOfParallelDownloadsPerIP) {
-                final String IP = ((GetNumberOfParallelDownloadsPerIP) message).getIP();
-
-                List<String> tasksFromIP = null; // to be received
-
-                final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-                final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
-
-                final Future<Object> future = Patterns.ask(accountantPerIP, new GetTasksFromIP(IP), timeout);
-
-                try {
-                    tasksFromIP = (List<String>) Await.result(future, timeout.duration());
-                } catch (Exception e) {
-                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
-                            "Error while waiting to receive tasks per IP.",e);
-                    // TODO : Evaluate if it is acceptable to hide the exception here.
-                }
-
-
-                if (tasksFromIP == null) {
-                    getSender().tell(0l, getSelf());
-                    return;
-                }
-
-                Integer nr = 0;
-                for (final String taskID : tasksFromIP) {
-                    if (allTasks.containsKey(taskID) && allTasks.get(taskID).getValue().equals(TaskState.DOWNLOADING)) {
-                        nr += 1;
-                    }
-                }
-
-                getSender().tell(nr, getSelf());
-                return;
-            }
+//            if (message instanceof GetNumberOfParallelDownloadsPerIP) {
+//                final String IP = ((GetNumberOfParallelDownloadsPerIP) message).getIP();
+//
+//                List<String> tasksFromIP = null; // to be received
+//
+//                final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
+//                final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
+//
+//                final Future<Object> future = Patterns.ask(accountantPerIP, new GetTasksFromIP(IP), timeout);
+//
+//                try {
+//                    tasksFromIP = (List<String>) Await.result(future, timeout.duration());
+//                } catch (Exception e) {
+//                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
+//                            "Error while waiting to receive tasks per IP.",e);
+//                    // TODO : Evaluate if it is acceptable to hide the exception here.
+//                }
+//
+//
+//                if (tasksFromIP == null) {
+//                    getSender().tell(0l, getSelf());
+//                    return;
+//                }
+//
+//                Integer nr = 0;
+//                for (final String taskID : tasksFromIP) {
+//                    if (allTasks.containsKey(taskID) && allTasks.get(taskID).getValue().equals(TaskState.DOWNLOADING)) {
+//                        nr += 1;
+//                    }
+//                }
+//
+//                getSender().tell(nr, getSelf());
+//                return;
+//            }
 
             if (message instanceof ModifyState) {
                 final String taskID = ((ModifyState) message).getTaskID();
-                final TaskState state = ((ModifyState) message).getState();
 
                 if (allTasks.containsKey(taskID)) {
+                    final String jobID = ((ModifyState) message).getJobId();
+                    final String IP = ((ModifyState) message).getIP();
+                    final TaskState state = ((ModifyState) message).getState();
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
                     allTasks.put(taskID, new Pair<>(retrieveUrl, state));
                     if ( state==TaskState.DOWNLOADING || state==TaskState.PROCESSING)
                         allTasksTimer.put(taskID, new Long(System.currentTimeMillis()));
+
+                    if ( state==TaskState.DONE ) {
+                        // we check if all tasks from that job are done
+                        // if true, remove the job
+                        List<String> tasks = new ArrayList<>();
+                        final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
+                        final ActorRef accountantJobs = getContext().actorFor("../accountantPerJob");
+                        Future<Object> future = Patterns.ask(accountantJobs, new GetTasksFromJob(jobID), timeout);
+                        try {
+                            tasks = (List<String>) Await.result(future, timeout.duration());
+                        } catch (Exception e) {
+                            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+                                    "Error at markDone->ModifyState.", e);
+                            // TODO : Investigate if it make sense to hide the exception here.
+                        }
+
+                        boolean foundTask = false ;
+                        for ( String task: tasks) {
+                            if ( allTasks.get(task).getValue() != TaskState.DONE )
+                                foundTask = true;
+                        }
+                        // ModifyState with task status done should be called from a future, so we bang back the answer
+                        getSender().tell(new Boolean(foundTask), ActorRef.noSender());
+                        // at this moment, if foundTask is false, it means all tasks from that specific job are done
+                        // we signal that back to the asker and remove the job and it's subsequent tasks
+                        if (!foundTask) {
+                            final ActorRef accountantIP = getContext().actorFor("../accountantPerJob");
+                            accountantJobs.tell(new RemoveJob(jobID, ""), ActorRef.noSender());
+                            accountantIP.tell(new RemoveTaskFromIP(taskID, IP), ActorRef.noSender());
+                            for (String task : tasks) {
+                                allTasks.remove(task);
+                                allTasksTimer.remove(taskID);
+                            }
+                        }
+
+
+                    }
                 }
                 return;
             }
@@ -163,6 +202,10 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final Pair<RetrieveUrl, TaskState> taskWithState = ((AddTask) message).getTaskWithState();
 
                 allTasks.put(taskID, taskWithState);
+                final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
+                final RetrieveUrl retrieveUrl = taskWithState.getKey();
+                accountantPerIP.tell( new AddTasksToIP(retrieveUrl.getIpAddress(), retrieveUrl.getId()), ActorRef.noSender());
+
                 return;
             }
 

@@ -5,6 +5,7 @@ import akka.actor.UntypedActor;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.TaskState;
+import eu.europeana.harvester.cluster.domain.messages.inner.GetListOfIPs;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
@@ -32,6 +33,11 @@ public class AccountantTaskPerIPActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
         try {
+
+            if ( message instanceof GetListOfIPs ) {
+                getSender().tell(tasksPerIP.keySet(), ActorRef.noSender());
+                return;
+            }
             if (message instanceof CheckIPsWithJobs) {
                 final Double percentage = checkIPsWithJobs(((CheckIPsWithJobs) message).getIpsWithJobs());
                 getSender().tell(percentage, getSelf());
@@ -51,9 +57,15 @@ public class AccountantTaskPerIPActor extends UntypedActor {
 
             if (message instanceof AddTasksToIP) {
                 final String IP = ((AddTasksToIP) message).getIP();
-                final List<String> taskIDs = ((AddTasksToIP) message).getTasks();
+                final String taskID = ((AddTasksToIP) message).getTask();
+                List<String> tasks = tasksPerIP.get(IP);
+                if (tasks ==null)
+                    tasks = new ArrayList<>();
 
-                tasksPerIP.put(IP, taskIDs);
+                tasks.add(taskID);
+
+                tasksPerIP.put(IP, tasks);
+
                 return;
             }
 

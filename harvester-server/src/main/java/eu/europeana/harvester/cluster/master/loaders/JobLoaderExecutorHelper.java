@@ -56,7 +56,7 @@ public class JobLoaderExecutorHelper  {
             final Timer.Context loadJobTasksFromDBDuration = MasterMetrics.Master.loadJobTasksFromDBDuration.time();
             final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
             final List<ProcessingJob> all =
-                    processingJobDao.getDiffusedJobsWithState(JobState.READY, page, tempDistribution, ipsWithJobs);
+                    processingJobDao.getDiffusedJobsWithState(JobPriority.NORMAL, JobState.READY, page, tempDistribution, ipsWithJobs);
             loadJobTasksFromDBDuration.stop();
 
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
@@ -94,7 +94,7 @@ public class JobLoaderExecutorHelper  {
                                 "Done with another 500 jobs out of {}", all.size());
                         i = 0;
                     }
-                    addJob(job, resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
+                    addJob(job, JobPriority.NORMAL, resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
                             accountantActor, LOG);
 
                 } catch (Exception e) {
@@ -177,7 +177,7 @@ public class JobLoaderExecutorHelper  {
      *
      * @param job the ProcessingJob object
      */
-    private static void addJob(final ProcessingJob job, final Map<String, SourceDocumentReference> resources,
+    private static void addJob(final ProcessingJob job, final JobPriority jobPriority, final Map<String, SourceDocumentReference> resources,
                                final ClusterMasterConfig clusterMasterConfig, final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final ActorRef accountantActor, Logger LOG) {
@@ -198,7 +198,7 @@ public class JobLoaderExecutorHelper  {
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
-        accountantActor.tell(new AddTasksToJob(job.getId(), taskIDs), ActorRef.noSender());
+        accountantActor.tell(new AddTasksToJob(job.getId(), jobPriority, taskIDs), ActorRef.noSender());
     }
 
     /**
@@ -225,28 +225,7 @@ public class JobLoaderExecutorHelper  {
                 job.getId(), task.getSourceDocumentReferenceID(),
                 getHeaders(task.getTaskType(), sourceDocumentReference, sourceDocumentProcessingStatisticsDao ), task, ipAddress,sourceDocumentReference.getReferenceOwner());
 
-        List<String> tasksFromIP = null;
-        final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
-        final Future<Object> future = Patterns.ask(accountantActor, new GetTasksFromIP(ipAddress), timeout);
-        try {
-            tasksFromIP = (List<String>) Await.result(future, timeout.duration());
-        } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields( LoggingComponent.Master.TASKS_LOADER),
-                    "Error in processTask->GetTasksFromIP", e);
-        }
-
-        if (tasksFromIP == null) {
-            tasksFromIP = new ArrayList<>();
-        } else {
-            if (tasksFromIP.contains(retrieveUrl.getId())) {
-                return null;
-            }
-        }
-        tasksFromIP.add(retrieveUrl.getId());
-
-
-        accountantActor.tell(new AddTasksToIP(ipAddress, tasksFromIP), ActorRef.noSender());
-        accountantActor.tell(new AddTask(retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender());
+        accountantActor.tell(new AddTask(job.getPriority(), retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender());
 
         return retrieveUrl.getId();
     }
@@ -280,6 +259,74 @@ public class JobLoaderExecutorHelper  {
 
         return headers;
     }
+
+
+
+
+    /**
+     * Checks if there were added any new jobs in the db
+     */
+    public static void checkForNewFastLaneJobs(ClusterMasterConfig clusterMasterConfig, Map<String, Integer> ipDistribution,
+                                       HashMap<String, Boolean> ipsWithJobs , ActorRef accountantActor,ProcessingJobDao processingJobDao,
+                                       SourceDocumentReferenceDao sourceDocumentReferenceDao, MachineResourceReferenceDao machineResourceReferenceDao,
+                                       final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                                       Logger LOG) {
+
+
+
+            final Timer.Context loadJobTasksFromDBDuration = MasterMetrics.Master.loadFastLaneJobTasksFromDBDuration.time();
+            final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
+            final List<ProcessingJob> all =
+                    processingJobDao.getDiffusedJobsWithState(JobPriority.FASTLANE, JobState.READY, page, ipDistribution, ipsWithJobs);
+            loadJobTasksFromDBDuration.stop();
+
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                    "Done with loading fastlane jobs. Creating tasks from "+all.size()+" jobs.");
+
+            final Timer.Context loadJobResourcesFromDBDuration = MasterMetrics.Master.loadFastLaneJobResourcesFromDBDuration.time();
+
+            final List<String> resourceIds = new ArrayList<>();
+            for (final ProcessingJob job : all) {
+                if (job == null || job.getTasks() == null) {
+                    continue;
+                }
+                for (final ProcessingJobTaskDocumentReference task : job.getTasks()) {
+                    final String resourceId = task.getSourceDocumentReferenceID();
+                    resourceIds.add(resourceId);
+                }
+            }
+            final List<SourceDocumentReference> sourceDocumentReferences = sourceDocumentReferenceDao.read(resourceIds);
+            final Map<String, SourceDocumentReference> resources = new HashMap<>();
+            for (SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
+                resources.put(sourceDocumentReference.getId(), sourceDocumentReference);
+            }
+            loadJobResourcesFromDBDuration.stop();
+
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                    "Done with loading {} resources.",resources.size());
+
+            int i = 0;
+            for (final ProcessingJob job : all) {
+                try {
+
+                    i++;
+                    if (i >= 500) {
+                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                                "Done with another 500 jobs out of {}", all.size());
+                        i = 0;
+                    }
+                    addJob(job, JobPriority.FASTLANE, resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
+                            accountantActor, LOG);
+
+                } catch (Exception e) {
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                            "JobLoaderMasterActor, while loading job: {} -> {}", job.getId(), e.getMessage());
+                }
+            }
+
+
+    }
+
 
 
 }

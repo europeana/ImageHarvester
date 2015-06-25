@@ -4,26 +4,29 @@ import akka.actor.ActorRef;
 import akka.actor.Address;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import akka.pattern.Patterns;
+import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
-import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
-import eu.europeana.harvester.cluster.domain.messages.DownloadConfirmation;
-import eu.europeana.harvester.cluster.domain.messages.StartedTask;
+import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
 import eu.europeana.harvester.cluster.master.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
+import eu.europeana.harvester.domain.JobState;
+import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.logging.LoggingComponent;
-import org.apache.james.mime4j.dom.datetime.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
+import scala.concurrent.Await;
+import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
 
-import java.util.HashSet;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ReceiverMasterActor extends UntypedActor {
 
@@ -39,23 +42,6 @@ public class ReceiverMasterActor extends UntypedActor {
      */
     private ActorRef accountantActor;
 
-    /**
-     * A map with all system addresses which maps each address with a list of actor refs.
-     * This is needed if we want to clean them or if we want to broadcast a message.
-     */
-    private final Map<Address, HashSet<ActorRef>> actorsPerAddress;
-
-    /**
-     * A map with all system addresses which maps each address with a set of tasks.
-     * This is needed to restore the tasks if a system crashes.
-     */
-    private final Map<Address, HashSet<String>> tasksPerAddress;
-
-    /**
-     * A map with all sent but not confirmed tasks which maps these tasks with a datetime object.
-     * It's needed to restore all the tasks which are not confirmed after a given period of time.
-     */
-    private final Map<String, DateTime> tasksPerTime;
 
     /**
      * ProcessingJob DAO object which lets us to read and store data to and from the database.
@@ -77,9 +63,11 @@ public class ReceiverMasterActor extends UntypedActor {
      */
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
-    private ActorRef receiverJobDumper;
+    //private ActorRef receiverJobDumper;
     private ActorRef receiverStatisticsDumper;
     private ActorRef receiverMetaInfoDumper;
+
+    private ActorRef monitoringActor;
 
     /**
      * ONLY FOR DEBUG
@@ -93,9 +81,7 @@ public class ReceiverMasterActor extends UntypedActor {
 
     public ReceiverMasterActor(final ClusterMasterConfig clusterMasterConfig,
                                final ActorRef accountantActor,
-                               final Map<Address, HashSet<ActorRef>> actorsPerAddress,
-                               final Map<Address, HashSet<String>> tasksPerAddress,
-                               final Map<String, DateTime> tasksPerTime,
+                               final ActorRef monitoringActor,
                                final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final SourceDocumentReferenceDao sourceDocumentReferenceDao,
@@ -106,9 +92,7 @@ public class ReceiverMasterActor extends UntypedActor {
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;
-        this.actorsPerAddress = actorsPerAddress;
-        this.tasksPerAddress = tasksPerAddress;
-        this.tasksPerTime = tasksPerTime;
+        this.monitoringActor = monitoringActor;
         this.processingJobDao = processingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
@@ -122,8 +106,8 @@ public class ReceiverMasterActor extends UntypedActor {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverMasterActor prestart");
 
-        receiverJobDumper = getContext().system().actorOf(Props.create(ReceiverJobDumperActor.class, clusterMasterConfig,
-                accountantActor,  processingJobDao), "jobDumper");
+//        receiverJobDumper = getContext().system().actorOf(Props.create(ReceiverJobDumperActor.class, clusterMasterConfig,
+//                accountantActor,  processingJobDao), "jobDumper");
 
         receiverStatisticsDumper = getContext().system().actorOf(Props.create(ReceiverStatisticsDumperActor.class, clusterMasterConfig,
                 sourceDocumentProcessingStatisticsDao,  sourceDocumentReferenceDao), "statisticsDumper");
@@ -141,7 +125,7 @@ public class ReceiverMasterActor extends UntypedActor {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverMasterActor prestart");
 
-        getContext().system().stop(receiverJobDumper);
+        //getContext().system().stop(receiverJobDumper);
         getContext().system().stop(receiverMetaInfoDumper);
         getContext().system().stop(receiverStatisticsDumper);
     }
@@ -160,7 +144,7 @@ public class ReceiverMasterActor extends UntypedActor {
         }
         if(message instanceof DownloadConfirmation) {
             final DownloadConfirmation downloadConfirmation = (DownloadConfirmation) message;
-            accountantActor.tell(new ModifyState(downloadConfirmation.getTaskID(), TaskState.PROCESSING), getSelf());
+            accountantActor.tell(new ModifyState(downloadConfirmation.getTaskID(),"", "", TaskState.PROCESSING), getSelf());
             MasterMetrics.Master.doneDownloadStateCounters.get(downloadConfirmation.getState()).mark();
             MasterMetrics.Master.doneDownloadTotalCounter.mark();
 
@@ -186,17 +170,18 @@ public class ReceiverMasterActor extends UntypedActor {
      * @param actorRef reference to an actor from the actor system
      */
     private void addAddress(final Address address, final ActorRef actorRef) {
-        if(actorsPerAddress.containsKey(address)) {
-            final HashSet<ActorRef> actorRefs = actorsPerAddress.get(address);
-            actorRefs.add(actorRef);
-
-            actorsPerAddress.put(address, actorRefs);
-        } else {
-            final HashSet<ActorRef> actorRefs = new HashSet<>();
-            actorRefs.add(actorRef);
-
-            actorsPerAddress.put(address, actorRefs);
-        }
+//        if(actorsPerAddress.containsKey(address)) {
+//            final HashSet<ActorRef> actorRefs = actorsPerAddress.get(address);
+//            actorRefs.add(actorRef);
+//
+//            actorsPerAddress.put(address, actorRefs);
+//        } else {
+//            final HashSet<ActorRef> actorRefs = new HashSet<>();
+//            actorRefs.add(actorRef);
+//
+//            actorsPerAddress.put(address, actorRefs);
+//        }
+        monitoringActor.tell(new AddAddressToMonitor(address, actorRef), ActorRef.noSender());
     }
 
     /**
@@ -205,19 +190,20 @@ public class ReceiverMasterActor extends UntypedActor {
      * @param startedTask started task
      */
     private void addTask(final Address address, final StartedTask startedTask) {
-        tasksPerTime.remove(startedTask.getTaskID());
-
-        if(tasksPerAddress.containsKey(address)) {
-            final HashSet<String> tasks = tasksPerAddress.get(address);
-            tasks.add(startedTask.getTaskID());
-
-            tasksPerAddress.put(address, tasks);
-        } else {
-            final HashSet<String> tasks = new HashSet<>();
-            tasks.add(startedTask.getTaskID());
-
-            tasksPerAddress.put(address, tasks);
-        }
+//        tasksPerTime.remove(startedTask.getTaskID());
+//
+//        if(tasksPerAddress.containsKey(address)) {
+//            final HashSet<String> tasks = tasksPerAddress.get(address);
+//            tasks.add(startedTask.getTaskID());
+//
+//            tasksPerAddress.put(address, tasks);
+//        } else {
+//            final HashSet<String> tasks = new HashSet<>();
+//            tasks.add(startedTask.getTaskID());
+//
+//            tasksPerAddress.put(address, tasks);
+//        }
+        monitoringActor.tell(new AddTaskToMonitor(address,startedTask.getTaskID()), ActorRef.noSender());
     }
 
     /**
@@ -226,13 +212,16 @@ public class ReceiverMasterActor extends UntypedActor {
      * @param processing response object
      */
     private void removeTask(final Address address, final DoneProcessing processing) {
-        if(tasksPerAddress.containsKey(address)) {
-            final HashSet<String> tasks = tasksPerAddress.get(address);
-            tasks.remove(processing.getTaskID());
-
-            tasksPerAddress.put(address, tasks);
-        }
+//        if(tasksPerAddress.containsKey(address)) {
+//            final HashSet<String> tasks = tasksPerAddress.get(address);
+//            tasks.remove(processing.getTaskID());
+//
+//            tasksPerAddress.put(address, tasks);
+//        }
+        monitoringActor.tell(new RemoveTaskFromMonitor(address,processing.getTaskID()), ActorRef.noSender());
     }
+
+
 
     /**
      * Marks task as done and save it's statistics in the DB.
@@ -243,11 +232,31 @@ public class ReceiverMasterActor extends UntypedActor {
 
         try {
             // save the data in Mongo
-            receiverJobDumper.tell(msg,ActorRef.noSender());
+            //receiverJobDumper.tell(msg,ActorRef.noSender());
             receiverMetaInfoDumper.tell(msg, ActorRef.noSender());
             receiverStatisticsDumper.tell(msg, ActorRef.noSender());
             //update accountant
-            accountantActor.tell(new ModifyState(msg.getTaskID(), TaskState.DONE), getSelf());
+            //accountantActor.tell(new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(), TaskState.DONE), getSelf());
+            Boolean haveTasks = true;
+
+            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
+
+            Future<Object> future = Patterns.ask(accountantActor, new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(), TaskState.DONE), timeout);
+            try {
+                haveTasks = (Boolean) Await.result(future, timeout.duration());
+            } catch (Exception e) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+                        "Error at markDone->ModifyState.", e);
+                // TODO : Investigate if it make sense to hide the exception here.
+            }
+
+            // if at this moment haveTasks is false, it means that we exhausted all tasks for that specific job
+            // so we can mark it as finished in the DB
+            if(!haveTasks) {
+                final ProcessingJob processingJob = processingJobDao.read(msg.getJobId());
+                final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
+                processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
+            }
 
             if ((ProcessingState.SUCCESS).equals(msg.getProcessingState())) {
 

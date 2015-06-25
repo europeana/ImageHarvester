@@ -129,7 +129,7 @@ public class JobLoaderMasterHelper  {
             if (isLoaded) {
                 accountantActor.tell(new ResumeTasks(job.getId()), ActorRef.noSender());
             } else {
-                addJob(job, resources, processingJobDao, sourceDocumentProcessingDao,clusterMasterConfig, accountantActor, LOG );
+                addJob(job, job.getPriority(), resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingDao, accountantActor, LOG );
             }
         }
     }
@@ -139,9 +139,10 @@ public class JobLoaderMasterHelper  {
      *
      * @param job the ProcessingJob object
      */
-    private static void addJob(final ProcessingJob job, final Map<String, SourceDocumentReference> resources,
-                        ProcessingJobDao processingJobDao, SourceDocumentProcessingStatisticsDao sourceDocumentProcessingDao,
-                        ClusterMasterConfig clusterMasterConfig, ActorRef accountantActor, Logger LOG ) {
+    private static void addJob(final ProcessingJob job, final JobPriority jobPriority, final Map<String, SourceDocumentReference> resources,
+                               final ClusterMasterConfig clusterMasterConfig, final ProcessingJobDao processingJobDao,
+                               final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                               final ActorRef accountantActor, Logger LOG) {
         final List<ProcessingJobTaskDocumentReference> tasks = job.getTasks();
 
         final ProcessingJob newProcessingJob = job.withState(JobState.RUNNING);
@@ -149,7 +150,7 @@ public class JobLoaderMasterHelper  {
 
         final List<String> taskIDs = new ArrayList<>();
         for (final ProcessingJobTaskDocumentReference task : tasks) {
-            final String ID = processTask(job, task, resources, sourceDocumentProcessingDao, accountantActor, LOG);
+            final String ID = processTask(job, task, resources, sourceDocumentProcessingStatisticsDao, accountantActor,   LOG);
             if (ID != null) {
                 taskIDs.add(ID);
             }
@@ -159,7 +160,7 @@ public class JobLoaderMasterHelper  {
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
-        accountantActor.tell(new AddTasksToJob(job.getId(), taskIDs), ActorRef.noSender() );
+        accountantActor.tell(new AddTasksToJob(job.getId(), jobPriority, taskIDs), ActorRef.noSender());
     }
 
     /**
@@ -170,8 +171,9 @@ public class JobLoaderMasterHelper  {
      * @return generated task ID
      */
     private static String processTask(final ProcessingJob job, final ProcessingJobTaskDocumentReference task,
-                               final Map<String, SourceDocumentReference> resources, SourceDocumentProcessingStatisticsDao sourceDocumentProcessingDao,
-                               ActorRef accountantActor, Logger LOG ) {
+                                      final Map<String, SourceDocumentReference> resources,
+                                      SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                                      ActorRef accountantActor, Logger LOG) {
         final String sourceDocId = task.getSourceDocumentReferenceID();
 
         final SourceDocumentReference sourceDocumentReference = resources.get(sourceDocId);
@@ -183,33 +185,13 @@ public class JobLoaderMasterHelper  {
 
         final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), job.getLimits(), task.getTaskType(),
                 job.getId(), task.getSourceDocumentReferenceID(),
-                getHeaders(task.getTaskType(), sourceDocumentReference, sourceDocumentProcessingDao ), task, ipAddress,sourceDocumentReference.getReferenceOwner());
+                getHeaders(task.getTaskType(), sourceDocumentReference, sourceDocumentProcessingStatisticsDao ), task, ipAddress,sourceDocumentReference.getReferenceOwner());
 
-        List<String> tasksFromIP = null;
-        final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
-        final Future<Object> future = Patterns.ask(accountantActor, new GetTasksFromIP(ipAddress), timeout);
-        try {
-            tasksFromIP = (List<String>) Await.result(future, timeout.duration());
-        } catch (Exception e) {
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                    "Error in processTask->GetTasksFromIP",e);
-        }
-
-        if (tasksFromIP == null) {
-            tasksFromIP = new ArrayList<>();
-        } else {
-            if (tasksFromIP.contains(retrieveUrl.getId())) {
-                return null;
-            }
-        }
-        tasksFromIP.add(retrieveUrl.getId());
-
-
-        accountantActor.tell(new AddTasksToIP(ipAddress, tasksFromIP), ActorRef.noSender());
-        accountantActor.tell(new AddTask(retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender() );
+        accountantActor.tell(new AddTask(job.getPriority(), retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender());
 
         return retrieveUrl.getId();
     }
+
 
     /**
      * Returns the headers of a source document if we already retrieved that at least once.

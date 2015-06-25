@@ -1,5 +1,7 @@
 package eu.europeana.harvester.cluster.domain.messages.inner;
 
+import eu.europeana.harvester.domain.JobPriority;
+
 import java.io.Serializable;
 
 public class GetRetrieveUrl implements Serializable{
@@ -9,13 +11,15 @@ public class GetRetrieveUrl implements Serializable{
     private final boolean isException;
     private final Long defaultLimit;
     private final int exceptionLimit;
+    private final JobPriority jobPriority;
 
-    public GetRetrieveUrl ( String taskID, String IP, boolean isException, Long defaultLimit, int exceptionLimit) {
+    public GetRetrieveUrl ( JobPriority jobPriority, String taskID, String IP, boolean isException, Long defaultLimit, int exceptionLimit) {
         this.IP = IP;
         this.isException = isException;
         this.defaultLimit = defaultLimit;
         this.exceptionLimit = exceptionLimit;
         this.taskID = taskID;
+        this.jobPriority = jobPriority;
     }
 
     public String getIP() {
@@ -38,7 +42,10 @@ public class GetRetrieveUrl implements Serializable{
         return exceptionLimit;
     }
 
+    public JobPriority getJobPriority() { return jobPriority; }
+
     public String toString() {
         return "IP: "+IP+", taskID: "+taskID;
     }
+
 }

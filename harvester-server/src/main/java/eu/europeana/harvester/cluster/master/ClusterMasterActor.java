@@ -16,7 +16,7 @@ import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.*;
-import eu.europeana.harvester.cluster.master.accountants.AccountantMasterActor;
+import eu.europeana.harvester.cluster.master.accountants.AccountantDispatcherActor;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
 import eu.europeana.harvester.cluster.master.senders.JobSenderActor;
@@ -60,6 +60,11 @@ public class ClusterMasterActor extends UntypedActor {
      * A wrapper class for all important data (ips, loaded jobs, jobs in progress etc.)
      */
     private ActorRef accountantActor;
+
+    /**
+     * A wrapper class for all monitoring data
+     */
+    private ActorRef monitoringActor;
 
     /**
      * Contains all the configuration needed by this actor.
@@ -163,15 +168,17 @@ public class ClusterMasterActor extends UntypedActor {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor prestart");
 
-        accountantActor = getContext().system().actorOf(Props.create(AccountantMasterActor.class), "accountant");
+        monitoringActor = getContext().system().actorOf(Props.create(ClusterMasterMonitoringActor.class), "monitoring");
+
+        accountantActor = getContext().system().actorOf(Props.create(AccountantDispatcherActor.class), "accountant");
 
         receiverActor = getContext().system().actorOf(Props.create(ReceiverMasterActor.class, clusterMasterConfig,
-                accountantActor, actorsPerAddress, tasksPerAddress, tasksPerTime, processingJobDao,
+                accountantActor, monitoringActor, processingJobDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao
         ), "receiver");
 
         jobLoaderActor = getContext().system().actorOf(Props.create(JobLoaderMasterActor.class, receiverActor,
-                clusterMasterConfig, accountantActor, actorsPerAddress, processingJobDao,
+                clusterMasterConfig, accountantActor, processingJobDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
                 defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
 
@@ -196,6 +203,7 @@ public class ClusterMasterActor extends UntypedActor {
         getContext().system().stop(jobLoaderActor);
         getContext().system().stop(receiverActor);
         getContext().system().stop(accountantActor);
+        getContext().system().stop(monitoringActor);
     }
 
     @Override
@@ -307,19 +315,20 @@ public class ClusterMasterActor extends UntypedActor {
 
     // TODO : Refactor this as it polutes the logstash index.
     private void monitor() {
-        LOG.info("Active nodes: {}", tasksPerAddress.size());
-        LOG.info("Actors per node: ");
-        for(final Map.Entry<Address, HashSet<ActorRef>> elem : actorsPerAddress.entrySet()) {
-            LOG.info("Address: {}", elem.getKey());
-            for(final ActorRef actor : elem.getValue()) {
-                LOG.info("\t{}", actor);
-            }
-        }
-
-        LOG.info("Tasks: ");
-        for(final Map.Entry<Address, HashSet<String>> elem : tasksPerAddress.entrySet()) {
-            LOG.info("Address: {}, nr of requests: {}", elem.getKey(), elem.getValue().size());
-        }
+//        LOG.info("Active nodes: {}", tasksPerAddress.size());
+//        LOG.info("Actors per node: ");
+//        for(final Map.Entry<Address, HashSet<ActorRef>> elem : actorsPerAddress.entrySet()) {
+//            LOG.info("Address: {}", elem.getKey());
+//            for(final ActorRef actor : elem.getValue()) {
+//                LOG.info("\t{}", actor);
+//            }
+//        }
+//
+//        LOG.info("Tasks: ");
+//        for(final Map.Entry<Address, HashSet<String>> elem : tasksPerAddress.entrySet()) {
+//            LOG.info("Address: {}, nr of requests: {}", elem.getKey(), elem.getValue().size());
+//        }
+        monitoringActor.tell(new Monitor(), ActorRef.noSender());
     }
 
 

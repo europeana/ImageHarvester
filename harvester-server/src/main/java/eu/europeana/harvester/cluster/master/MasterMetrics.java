@@ -23,6 +23,9 @@ public class MasterMetrics {
     public static final String LOAD_JOBS_FROM_DB = "loadJobsFromDB";
     public static final String LOAD_JOBS_TASKS_FROM_DB = "loadJobsTasksFromDB";
     public static final String LOAD_JOBS_RESOURCES_FROM_DB = "loadJobsResourcesFromDB";
+    public static final String LOAD_FASTLANEJOBS_FROM_DB = "loadFastLaneJobsFromDB";
+    public static final String LOAD_FASTLANEJOBS_TASKS_FROM_DB = "loadFastLaneJobsTasksFromDB";
+    public static final String LOAD_FASTLANEJOBS_RESOURCES_FROM_DB = "loadFastLaneJobsResourcesFromDB";
 
     public static final String DONE_DOWNLOAD = "doneDownload";
     public static final String DONE_PROCESSING = "doneProcessing";
@@ -36,8 +39,12 @@ public class MasterMetrics {
         public static final Timer sendJobSetToSlaveDuration = METRIC_REGISTRY.timer(name(Master.NAME, SEND_JOBS_SET_TO_SLAVE, DURATION));
         public static final Counter sendJobSetToSlaveCounter = METRIC_REGISTRY.counter(name(Master.NAME, SEND_JOBS_SET_TO_SLAVE, COUNTER));
         public static final Timer loadJobFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_JOBS_FROM_DB, COUNTER));
+
         public static final Timer loadJobTasksFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_JOBS_TASKS_FROM_DB, COUNTER));
         public static final Timer loadJobResourcesFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_JOBS_RESOURCES_FROM_DB, COUNTER));
+
+        public static final Timer loadFastLaneJobTasksFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_FASTLANEJOBS_TASKS_FROM_DB, COUNTER));
+        public static final Timer loadFastLaneJobResourcesFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_FASTLANEJOBS_RESOURCES_FROM_DB, COUNTER));
 
         public static final LazyGauge jobsPersistenceReadyCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "READY"+"."+COUNTER);
         public static final LazyGauge jobsPersistenceFinishedCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_SUCCESS"+"."+COUNTER);

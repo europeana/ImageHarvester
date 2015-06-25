@@ -2,8 +2,6 @@ package eu.europeana.harvester.cluster.master.accountants;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.TaskState;
@@ -84,18 +82,18 @@ public class AccountantTasksPerJobActor extends UntypedActor {
             if (message instanceof RemoveJob) {
 
                 final String jobID = ((RemoveJob) message).getJobID();
-                final String IP = ((RemoveJob) message).getIP();
-                final ActorRef accountantAll = getContext().actorFor("../accountantAll");
-                final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
-
-                List<String> tasks = tasksPerJob.get(jobID);
-
-                if(tasks != null) {
-                    for (final String taskID : tasks) {
-                        accountantAll.tell(new RemoveTask(taskID), getSelf());
-                        accountantPerIP.tell(new RemoveTaskFromIP(taskID, IP), getSelf());
-                    }
-                }
+//                final String IP = ((RemoveJob) message).getIP();
+//                final ActorRef accountantAll = getContext().actorFor("../accountantAll");
+//                final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
+//
+//                List<String> tasks = tasksPerJob.get(jobID);
+//
+//                if(tasks != null) {
+//                    for (final String taskID : tasks) {
+//                        accountantAll.tell(new RemoveTask(taskID), getSelf());
+//                        accountantPerIP.tell(new RemoveTaskFromIP(taskID, IP), getSelf());
+//                    }
+//                }
 
 
                 tasksPerJob.remove(jobID);

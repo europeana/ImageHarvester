@@ -118,6 +118,9 @@ public class JobLoaderExecutorActor extends UntypedActor {
             final Timer.Context context = MasterMetrics.Master.loadJobFromDBDuration.time();
             try {
 
+                JobLoaderExecutorHelper.checkForNewFastLaneJobs(clusterMasterConfig, ipDistribution, ipsWithJobs, accountantActor, processingJobDao,
+                        sourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
+
                 JobLoaderExecutorHelper.checkForNewJobs(clusterMasterConfig, ipDistribution, ipsWithJobs, accountantActor, processingJobDao,
                         sourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
 

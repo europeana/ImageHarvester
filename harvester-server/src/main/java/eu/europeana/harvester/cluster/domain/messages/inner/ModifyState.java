@@ -8,17 +8,24 @@ public class ModifyState implements Serializable {
 
     private final String taskID;
 
+    private final String jobId;
+
+    private final String IP;
+
     private final TaskState state;
 
-    public ModifyState(String taskID, TaskState state) {
+    public ModifyState(String taskID, String jobId, String IP, TaskState state) {
         this.taskID = taskID;
+        this.jobId = jobId;
+        this.IP = IP;
         this.state = state;
     }
 
     public String getTaskID() {
         return taskID;
     }
-
+    public String getJobId() { return jobId;}
+    public String getIP() { return IP; }
     public TaskState getState() {
         return state;
     }
