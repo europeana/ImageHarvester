@@ -38,6 +38,11 @@
 
 
     <dependencies>
+        <dependency>
+            <groupId>eu.europeana</groupId>
+            <artifactId>harvester-persistence</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
         <!-- jclouds OpenStack dependencies -->
         <dependency>
             <groupId>org.apache.jclouds.api</groupId>

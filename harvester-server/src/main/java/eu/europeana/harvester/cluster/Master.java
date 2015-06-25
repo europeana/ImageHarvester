@@ -9,8 +9,6 @@ import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
-import com.mongodb.DB;
-import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -27,6 +25,7 @@ import eu.europeana.harvester.cluster.master.ClusterMasterActor;
 import eu.europeana.harvester.cluster.master.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
+import eu.europeana.harvester.domain.MongoConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.Duration;
@@ -124,26 +123,14 @@ class Master {
                 defaultMaxConcurrentConnectionsLimit, minDistanceInMillisBetweenTwoRequest,
                 connectionTimeoutInMillis, maxNrOfRedirects, minTasksPerIPPercentage);
 
-        Datastore datastore = null;
+        MongoConfig mongoConfig = null;
         try {
-            MongoClient mongo = new MongoClient(config.getString("mongo.host"), config.getInt("mongo.port"));
-            Morphia morphia = new Morphia();
-            String dbName = config.getString("mongo.dbName");
-
-            if(!config.getString("mongo.username").equals("")) {
-                final DB db = mongo.getDB("admin");
-                final Boolean auth = db.authenticate(config.getString("mongo.username"),
-                        config.getString("mongo.password").toCharArray());
-                if(!auth) {
-                    LOG.error("Mongo auth error");
-                    System.exit(-1);
-                }
-            }
-
-            datastore = morphia.createDatastore(mongo, dbName);
+            mongoConfig = MongoConfig.valueOf(config.getConfig("mongo"));
         } catch (UnknownHostException e) {
-            LOG.error(e.getMessage());
+           LOG.error(e);
         }
+
+        final Datastore datastore = new Morphia().createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());
 
         final ProcessingJobDao processingJobDao = new ProcessingJobDaoImpl(datastore);
         final MachineResourceReferenceDao machineResourceReferenceDao = new MachineResourceReferenceDaoImpl(datastore);

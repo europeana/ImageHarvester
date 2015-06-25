@@ -24,15 +24,15 @@ public class MigratorEuropeanaDao {
 
         mongo = new Mongo(mongoConfig.getMongoServerAddressList());
 
-        if (StringUtils.isNotEmpty(mongoConfig.getdBUsername()) && StringUtils.isNotEmpty(mongoConfig.getdBPassword())) {
+        if (StringUtils.isNotEmpty(mongoConfig.getUsername()) && StringUtils.isNotEmpty(mongoConfig.getPassword())) {
             final DB authDB = mongo.getDB("admin");
-            final Boolean auth = authDB.authenticate(mongoConfig.getdBUsername(),
-                    mongoConfig.getdBPassword().toCharArray());
+            final Boolean auth = authDB.authenticate(mongoConfig.getUsername(),
+                    mongoConfig.getPassword().toCharArray());
             if (!auth) {
                 throw new MongoException("Cannot authenticate to mongo database");
             }
         }
-        database = mongo.getDB(mongoConfig.getdBName());
+        database = mongo.getDB(mongoConfig.getDbName());
     }
 
     public final Map<String, String> retrieveRecordsIdsFromCursor(final DBCursor recordCursor,int batchSize,final String migratingBatchId) {

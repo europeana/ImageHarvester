@@ -120,7 +120,7 @@ public class PublisherEuropeanaDaoTest {
     @Test
     public void test_extracMetaInfo() {
         final Datastore datastore = new Morphia().createDatastore(connectToDB(publisherConfig.getSourceMongoConfig()).getMongo(),
-                                                                  publisherConfig.getSourceMongoConfig().getdBName()
+                                                                  publisherConfig.getSourceMongoConfig().getDbName()
                                                                  );
 
         final SourceDocumentReferenceMetaInfoDao metaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(datastore);

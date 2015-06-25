@@ -8,7 +8,6 @@ import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 import eu.europeana.publisher.domain.HarvesterDocument;
-import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -27,7 +26,7 @@ public class PublisherHarvesterDao {
             throw new IllegalArgumentException ("mongoConfig cannot be null");
         }
 
-        final Datastore dataStore = new Morphia().createDatastore(mongoConfig.connectToMongo(), mongoConfig.getdBName());
+        final Datastore dataStore = new Morphia().createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());
         webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(dataStore);
     }
 

@@ -18,24 +18,24 @@ public class MongoConfig {
     /**
      * The DB name.
      */
-    private final String dBName;
+    private final String dbName;
 
     /**
      * The username of the  DB if it is secured.
      */
-    private final String dBUsername;
+    private final String username;
 
     /**
      * The password of the DB if it is secured.
      */
-    private final String dBPassword;
+    private final String password;
 
 
-    public MongoConfig(List<ServerAddress> mongoServerAddressList, String dBName, String dBUsername, String dBPassword) {
+    public MongoConfig(List<ServerAddress> mongoServerAddressList, String dbName, String username, String password) {
         this.mongoServerAddressList = mongoServerAddressList;
-        this.dBName = dBName;
-        this.dBUsername = dBUsername;
-        this.dBPassword = dBPassword;
+        this.dbName = dbName;
+        this.username = username;
+        this.password = password;
     }
 
     public static MongoConfig valueOf(final Config config) throws UnknownHostException {
@@ -46,9 +46,9 @@ public class MongoConfig {
         }
 
         return new MongoConfig(serverAddresses,
-                               config.getString("dBName"),
-                               config.getString("dBUsername"),
-                               config.getString("dBPassword")
+                               config.getString("dbName"),
+                               config.getString("username"),
+                               config.getString("password")
                              );
     }
 
@@ -56,8 +56,8 @@ public class MongoConfig {
     public Mongo connectToMongo() {
        final Mongo mongo = new Mongo(mongoServerAddressList);
 
-        if (StringUtils.isNotEmpty(dBUsername)) {
-           if (!mongo.getDB("admin").authenticate(dBUsername, dBPassword.toCharArray())) {
+        if (StringUtils.isNotEmpty(username)) {
+           if (!mongo.getDB("admin").authenticate(username, password.toCharArray())) {
                return null;
            }
         }
@@ -67,22 +67,22 @@ public class MongoConfig {
 
     public DB connectToDB () {
         final Mongo mongo = connectToMongo();
-       return null != mongo ? mongo.getDB(dBName) : null;
+       return null != mongo ? mongo.getDB(dbName) : null;
     }
 
 
 
 
-    public String getdBName() {
-        return dBName;
+    public String getDbName () {
+        return dbName;
     }
 
-    public String getdBUsername() {
-        return dBUsername;
+    public String getUsername () {
+        return username;
     }
 
-    public String getdBPassword() {
-        return dBPassword;
+    public String getPassword () {
+        return password;
     }
 
     public List<ServerAddress> getMongoServerAddressList () {
