@@ -54,6 +54,8 @@ public class SOLRWriter {
         return server;
     }
 
+    public String getSolrUrl() {return solrUrl;}
+
     /**
      * Updates a list of documents with new fields/properties
      *

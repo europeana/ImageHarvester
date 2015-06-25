@@ -23,14 +23,14 @@ public class PublisherConfig {
 
 
     private final List<MongoConfig> targetMongoConfigs;
-    private final DateTime sleepSecondsAfterEmptyBatch;
+    private final Long sleepSecondsAfterEmptyBatch;
     private final List<String> solrUrls;
 
     private final MongoConfig sourceMongoConfig;
 
     public PublisherConfig (MongoConfig sourceMongoConfig, List<MongoConfig> targetMongoConfigs,
                             GraphiteReporterConfig graphiteConfig, DateTime startTimestamp, String startTimestampFile,
-                            DateTime sleepSecondsAfterEmptyBatch, List<String> solrURLs, Integer batch) {
+                            Long sleepSecondsAfterEmptyBatch, List<String> solrURLs, Integer batch) {
         this.sourceMongoConfig = sourceMongoConfig;
         this.targetMongoConfigs = targetMongoConfigs;
         this.graphiteConfig = graphiteConfig;
@@ -69,7 +69,7 @@ public class PublisherConfig {
         return batch;
     }
 
-    public DateTime getSleepSecondsAfterEmptyBatch () {
+    public Long getSleepSecondsAfterEmptyBatch () {
         return sleepSecondsAfterEmptyBatch;
     }
 }

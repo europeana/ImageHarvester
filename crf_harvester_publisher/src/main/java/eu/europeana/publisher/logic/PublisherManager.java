@@ -6,6 +6,7 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.mongodb.DBCursor;
+import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.publisher.dao.PublisherEuropeanaDao;
 import eu.europeana.publisher.dao.PublisherHarvesterDao;
 import eu.europeana.publisher.dao.SOLRWriter;
@@ -24,6 +25,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -36,21 +38,42 @@ public class PublisherManager {
 
     private final PublisherConfig config;
 
-    private final SOLRWriter solrWriter;
+    private final List<SOLRWriter> solrWriters;
     private PublisherEuropeanaDao publisherEuropeanaDao;
-    private PublisherHarvesterDao publisherHarvesterDao;
+    private final List<PublisherHarvesterDao> publisherHarvesterDaos;
 
     private final PublisherMetrics publisherMetrics;
 
     public PublisherManager(PublisherConfig config) throws UnknownHostException {
+        if (null == config) {
+            throw new IllegalArgumentException("config cannot be null");
+        }
+
+        if (config.getSolrURL().isEmpty() || config.getTargetMongoConfig().isEmpty()) {
+            throw new IllegalArgumentException("solr and target mongo configs cannot be empty");
+        }
+
+        if (config.getSolrURL().size() != config.getTargetMongoConfig().size()) {
+            throw new IllegalArgumentException("solr and target mongo configs must be of the same size");
+        }
+
         this.config = config;
         publisherMetrics = new PublisherMetrics();
 
         publisherEuropeanaDao = new PublisherEuropeanaDao(config.getSourceMongoConfig());
-        publisherHarvesterDao = new PublisherHarvesterDao(config.getTargetMongoConfig());
 
+        publisherHarvesterDaos = new LinkedList<>();
 
-        solrWriter = new SOLRWriter(config.getSolrURL());
+        for (final MongoConfig target: config.getTargetMongoConfig()) {
+            publisherHarvesterDaos.add(new PublisherHarvesterDao(target));
+        }
+
+        solrWriters = new LinkedList<>();
+
+        for (final String url: config.getSolrURL()) {
+            solrWriters.add(new SOLRWriter(url));
+        }
+
 
         Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.metricRegistry)
                 .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
@@ -74,7 +97,7 @@ public class PublisherManager {
         reporter2.start(20, TimeUnit.SECONDS);
     }
 
-    public void start() throws IOException, SolrServerException {
+    public void start() throws IOException, SolrServerException, InterruptedException {
         try {
             publisherMetrics.startTotalTimer();
             startPublisher();
@@ -86,7 +109,26 @@ public class PublisherManager {
         }
     }
 
-    private void startPublisher() throws SolrServerException, IOException {
+    private List<HarvesterDocument> filterDocumentIds(List<HarvesterDocument> retreivedDocuments, final String publishingBatchId) {
+
+        int size = -1;
+
+        for (final SOLRWriter solrWriter: solrWriters) {
+            retreivedDocuments = solrWriter.filterDocumentIds(retreivedDocuments, publishingBatchId);
+
+            if (-1 == size) {
+                size = retreivedDocuments.size();
+            }
+            else if (size != retreivedDocuments.size()) {
+                LOG.error ("Solr at url "  + solrWriter.getSolrUrl() + " is inconsistent with other solrs");
+                System.exit(-1);
+            }
+        }
+
+        return retreivedDocuments;
+    }
+
+    private void startPublisher() throws SolrServerException, IOException, InterruptedException {
         DateTime currentTimestamp = config.getStartTimestamp();
         final DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
@@ -104,10 +146,11 @@ public class PublisherManager {
                     "Retrieved CRF documents with meta info {}", retrievedDocs.size());
 
             if (null == retrievedDocs || retrievedDocs.isEmpty()) {
-                break;
+                LOG.error ("received null or empty documents from source mongo. Sleeping " + config.getSleepSecondsAfterEmptyBatch());
+                TimeUnit.SECONDS.sleep(config.getSleepSecondsAfterEmptyBatch());
             }
 
-            retrievedDocs = solrWriter.filterDocumentIds(retrievedDocs,publishingBatchId);
+            retrievedDocs = filterDocumentIds(retrievedDocs, publishingBatchId);
 
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                     "Retrieved CRF documents after SOLR filtering {}", retrievedDocs.size());
@@ -115,8 +158,8 @@ public class PublisherManager {
             final List<CRFSolrDocument> solrDocuments = FakeTagExtractor.extractTags(retrievedDocs,publishingBatchId);
 
 
-            if (null != solrDocuments && !solrDocuments.isEmpty() && solrWriter.updateDocuments(solrDocuments,publishingBatchId)) {
-                publisherHarvesterDao.writeMetaInfos(retrievedDocs);
+            if (null != solrDocuments && !solrDocuments.isEmpty() && updateDocuments(solrDocuments,publishingBatchId)) {
+                writeMetaInfos(retrievedDocs);
             } else {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                         "There was a problem with writing this batch to solr. No metainfo was written to mongo. Maybe documents where empty ?");
@@ -134,6 +177,23 @@ public class PublisherManager {
 
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                 "Finished publishing all data");
+    }
+
+    private void writeMetaInfos (List<HarvesterDocument> retrievedDocs) {
+        for (final PublisherHarvesterDao dao: publisherHarvesterDaos) {
+            dao.writeMetaInfos(retrievedDocs);
+        }
+    }
+
+    private boolean updateDocuments (List<CRFSolrDocument> solrDocuments, String publishingBatchId) throws IOException {
+        for (final SOLRWriter solrWriter: solrWriters) {
+            if (!solrWriter.updateDocuments(solrDocuments, publishingBatchId)) {
+                LOG.error ("Failed to write documents to solr. BatchID " + publishingBatchId);
+                System.exit(-1);
+            }
+        }
+
+        return true;
     }
 
     private DateTime updateTimestamp(final DateTime currentTime, final Collection<HarvesterDocument> documents) throws

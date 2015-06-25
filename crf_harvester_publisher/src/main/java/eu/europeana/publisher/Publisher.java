@@ -76,7 +76,7 @@ public class Publisher {
         return startTimestamp;
     }
 
-    public void start() throws IOException, SolrServerException {
+    public void start() throws IOException, SolrServerException, InterruptedException {
         final String graphiteMasterId = config.getString("metrics.masterID");
         final String graphiteServer = config.getString("metrics.graphiteServer");
         final Integer graphitePort = config.getInt("metrics.graphitePort");
@@ -96,10 +96,10 @@ public class Publisher {
         final DateTime startTimestamp = readStartTimestamp();
         final String startTimestampFilename = config.getString("criteria.startTimestampFile");
 
-        DateTime sleepSecondsAfterEmptyBatch = null;
+        Long sleepSecondsAfterEmptyBatch = null;
 
         try {
-           sleepSecondsAfterEmptyBatch = DateTime.parse(config.getString("criteria.sleepSecondsAfterEmptyBatch"));
+           sleepSecondsAfterEmptyBatch = config.getLong("criteria.sleepSecondsAfterEmptyBatch");
         }
         catch (IllegalArgumentException e) {
            LOG.error("Error reading sleepSecondsAfterEmptyBatch", e);

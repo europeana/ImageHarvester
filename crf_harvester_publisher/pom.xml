@@ -78,6 +78,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>eu.europeana</groupId>
+            <artifactId>harvester-persistence</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>commons-daemon</groupId>
             <artifactId>commons-daemon</artifactId>
             <version>1.0.15</version>
