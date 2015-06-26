@@ -4,29 +4,21 @@ import akka.actor.ActorRef;
 import akka.actor.Address;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import akka.pattern.Patterns;
-import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.*;
+import eu.europeana.harvester.cluster.domain.messages.inner.MarkJobAsDone;
 import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
 import eu.europeana.harvester.cluster.master.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
-import eu.europeana.harvester.domain.JobState;
-import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
-import scala.concurrent.Await;
-import scala.concurrent.Future;
-import scala.concurrent.duration.Duration;
-
-import java.util.concurrent.TimeUnit;
 
 public class ReceiverMasterActor extends UntypedActor {
 
@@ -63,7 +55,7 @@ public class ReceiverMasterActor extends UntypedActor {
      */
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
-    //private ActorRef receiverJobDumper;
+    private ActorRef receiverJobDumper;
     private ActorRef receiverStatisticsDumper;
     private ActorRef receiverMetaInfoDumper;
 
@@ -106,13 +98,13 @@ public class ReceiverMasterActor extends UntypedActor {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverMasterActor prestart");
 
-//        receiverJobDumper = getContext().system().actorOf(Props.create(ReceiverJobDumperActor.class, clusterMasterConfig,
-//                accountantActor,  processingJobDao), "jobDumper");
+        receiverJobDumper = getContext().actorOf(Props.create(ReceiverJobDumperActor.class, clusterMasterConfig,
+                accountantActor,  processingJobDao), "jobDumper");
 
-        receiverStatisticsDumper = getContext().system().actorOf(Props.create(ReceiverStatisticsDumperActor.class, clusterMasterConfig,
+        receiverStatisticsDumper = getContext().actorOf(Props.create(ReceiverStatisticsDumperActor.class, clusterMasterConfig,
                 sourceDocumentProcessingStatisticsDao,  sourceDocumentReferenceDao), "statisticsDumper");
 
-        receiverMetaInfoDumper = getContext().system().actorOf(Props.create(ReceiverMetaInfoDumperActor.class, clusterMasterConfig,
+        receiverMetaInfoDumper = getContext().actorOf(Props.create(ReceiverMetaInfoDumperActor.class, clusterMasterConfig,
                 accountantActor,  sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");
 
 
@@ -125,7 +117,7 @@ public class ReceiverMasterActor extends UntypedActor {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverMasterActor prestart");
 
-        //getContext().system().stop(receiverJobDumper);
+        getContext().system().stop(receiverJobDumper);
         getContext().system().stop(receiverMetaInfoDumper);
         getContext().system().stop(receiverStatisticsDumper);
     }
@@ -162,6 +154,11 @@ public class ReceiverMasterActor extends UntypedActor {
             MasterMetrics.Master.doneProcessingTotalCounter.mark();
             return;
         }
+
+            if (message instanceof MarkJobAsDone ) {
+                receiverJobDumper.tell(message,ActorRef.noSender());
+
+            }
     }
 
     /**
@@ -236,27 +233,29 @@ public class ReceiverMasterActor extends UntypedActor {
             receiverMetaInfoDumper.tell(msg, ActorRef.noSender());
             receiverStatisticsDumper.tell(msg, ActorRef.noSender());
             //update accountant
-            //accountantActor.tell(new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(), TaskState.DONE), getSelf());
-            Boolean haveTasks = true;
+            accountantActor.tell(new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(), TaskState.DONE), getSelf());
 
-            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
 
-            Future<Object> future = Patterns.ask(accountantActor, new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(), TaskState.DONE), timeout);
-            try {
-                haveTasks = (Boolean) Await.result(future, timeout.duration());
-            } catch (Exception e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-                        "Error at markDone->ModifyState.", e);
-                // TODO : Investigate if it make sense to hide the exception here.
-            }
-
-            // if at this moment haveTasks is false, it means that we exhausted all tasks for that specific job
-            // so we can mark it as finished in the DB
-            if(!haveTasks) {
-                final ProcessingJob processingJob = processingJobDao.read(msg.getJobId());
-                final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
-                processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
-            }
+//            Boolean haveTasks = true;
+//
+//            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
+//
+//            Future<Object> future = Patterns.ask(accountantActor, new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(), TaskState.DONE), timeout);
+//            try {
+//                haveTasks = (Boolean) Await.result(future, timeout.duration());
+//            } catch (Exception e) {
+//                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+//                        "Error at markDone->ModifyState.", e);
+//                // TODO : Investigate if it make sense to hide the exception here.
+//            }
+//
+//            // if at this moment haveTasks is false, it means that we exhausted all tasks for that specific job
+//            // so we can mark it as finished in the DB
+//            if(!haveTasks) {
+//                final ProcessingJob processingJob = processingJobDao.read(msg.getJobId());
+//                final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
+//                processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
+//            }
 
             if ((ProcessingState.SUCCESS).equals(msg.getProcessingState())) {
 

@@ -179,7 +179,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                                 foundTask = true;
                         }
                         // ModifyState with task status done should be called from a future, so we bang back the answer
-                        getSender().tell(new Boolean(foundTask), ActorRef.noSender());
+                        getSender().tell(new MarkJobAsDone(jobID), ActorRef.noSender());
                         // at this moment, if foundTask is false, it means all tasks from that specific job are done
                         // we signal that back to the asker and remove the job and it's subsequent tasks
                         if (!foundTask) {

@@ -60,11 +60,17 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
 
     @Override
     public List<SourceDocumentReference> read(List<String> ids) {
-        final Query<SourceDocumentReference> query = datastore.createQuery(SourceDocumentReference.class)
-                .field("_id").hasAnyOf(ids).retrievedFields(true,"id","referenceOwner","urlSourceType","url","ipAddress","lastStatsId","redirectPathDepth","redirectionPath","active")
-                .hintIndex("_id_");
-        if(query == null) {return new ArrayList<>(0);}
-        return query.asList();
+        if(ids.size()==0)
+            return new ArrayList<>(0);
+        else {
+            final Query<SourceDocumentReference> query = datastore.createQuery(SourceDocumentReference.class)
+                    .field("_id").hasAnyOf(ids).retrievedFields(true, "id", "referenceOwner", "urlSourceType", "url", "ipAddress", "lastStatsId", "redirectPathDepth", "redirectionPath", "active")
+                    .hintIndex("_id_");
+            if (query == null) {
+                return new ArrayList<>(0);
+            }
+            return query.asList();
+        }
     }
 
     @Override

@@ -38,6 +38,8 @@ public class JobLoaderExecutorHelper  {
                                        Logger LOG) {
         final int taskSize = getAllTasks(accountantActor, LOG);
 
+        LOG.info("Starting normal job loading, tasksize = "+taskSize);
+
         if (taskSize < clusterMasterConfig.getMaxTasksInMemory()) {
             //don't load for IPs that are overloaded
             ArrayList<String> noLoadIPs = getOverLoadedIPList(1000, accountantActor, LOG);
@@ -60,7 +62,7 @@ public class JobLoaderExecutorHelper  {
             loadJobTasksFromDBDuration.stop();
 
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                    "Done with loading jobs. Creating tasks from "+all.size()+" jobs.");
+                    "Done with loading normal priority jobs. Creating tasks from "+all.size()+" jobs.");
 
             final Timer.Context loadJobResourcesFromDBDuration = MasterMetrics.Master.loadJobResourcesFromDBDuration.time();
 
@@ -105,39 +107,39 @@ public class JobLoaderExecutorHelper  {
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Checking IPs with no jobs in database");
 
-            ArrayList<String> noJobsIPs = new ArrayList<>();
-            List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0, 10000));
-
-            for (Map.Entry<String, Boolean> entry : ipsWithJobs.entrySet()) {
-                if (!entry.getValue()) {
-                    noJobsIPs.add(entry.getKey());
-                    ipDistribution.remove(entry.getKey());
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                            "Found IP with no loaded tasks from DB: {}, removing it from IP distribution", entry.getKey());
-
-                    for (MachineResourceReference machine : ips) {
-                        if (machine.getIp() == entry.getKey()) {
-                            machineResourceReferenceDao.delete(machine.getId());
-                            ips.remove(machine);
-                        }
-                    }
-
-                }
-            }
-
-
-            for (MachineResourceReference machine : ips) {
-                if (!ipDistribution.containsKey(machine.getIp())) {
-                    ipDistribution.put(machine.getIp(), 0);
-                }
-            }
-
-            if (noJobsIPs.size() > 0) {
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                        "Found {} IPs with no jobs loaded from the database, removing them if no jobs in progress", noJobsIPs.size());
-
-                accountantActor.tell(new CleanIPs(noJobsIPs), ActorRef.noSender());
-            }
+//            ArrayList<String> noJobsIPs = new ArrayList<>();
+//            List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0, 10000));
+//
+//            for (Map.Entry<String, Boolean> entry : ipsWithJobs.entrySet()) {
+//                if (!entry.getValue()) {
+//                    noJobsIPs.add(entry.getKey());
+//                    ipDistribution.remove(entry.getKey());
+//                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                            "Found IP with no loaded tasks from DB: {}, removing it from IP distribution", entry.getKey());
+//
+//                    for (MachineResourceReference machine : ips) {
+//                        if (machine.getIp() == entry.getKey()) {
+//                            machineResourceReferenceDao.delete(machine.getId());
+//                            ips.remove(machine);
+//                        }
+//                    }
+//
+//                }
+//            }
+//
+//
+//            for (MachineResourceReference machine : ips) {
+//                if (!ipDistribution.containsKey(machine.getIp())) {
+//                    ipDistribution.put(machine.getIp(), 0);
+//                }
+//            }
+//
+//            if (noJobsIPs.size() > 0) {
+//                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                        "Found {} IPs with no jobs loaded from the database, removing them if no jobs in progress", noJobsIPs.size());
+//
+//                accountantActor.tell(new CleanIPs(noJobsIPs), ActorRef.noSender());
+//            }
 
         }
     }
@@ -264,7 +266,7 @@ public class JobLoaderExecutorHelper  {
 
 
     /**
-     * Checks if there were added any new jobs in the db
+     * Checks if there were added any new fast lane jobs in the db
      */
     public static void checkForNewFastLaneJobs(ClusterMasterConfig clusterMasterConfig, Map<String, Integer> ipDistribution,
                                        HashMap<String, Boolean> ipsWithJobs , ActorRef accountantActor,ProcessingJobDao processingJobDao,
