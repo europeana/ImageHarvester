@@ -163,6 +163,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                         List<String> tasks = new ArrayList<>();
                         final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
                         final ActorRef accountantJobs = getContext().actorFor("../accountantPerJob");
+
                         Future<Object> future = Patterns.ask(accountantJobs, new GetTasksFromJob(jobID), timeout);
                         try {
                             tasks = (List<String>) Await.result(future, timeout.duration());

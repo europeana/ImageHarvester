@@ -18,9 +18,10 @@ public class AccountantMasterActor extends UntypedActor {
     private ActorRef accountantTasksPerJobActor;
 
     public AccountantMasterActor (){
-        this.accountantAllTasksActor = getContext().system().actorOf(Props.create(AccountantAllTasksActor.class), "accountantAll");
-        this.accountantTasksPerIPActor = getContext().system().actorOf(Props.create(AccountantTaskPerIPActor.class), "accountantPerIP");
-        this.accountantTasksPerJobActor = getContext().system().actorOf(Props.create(AccountantTasksPerJobActor.class), "accountantPerJob");
+        this.accountantAllTasksActor = getContext().actorOf(Props.create(AccountantAllTasksActor.class), "accountantAll");
+        this.accountantTasksPerIPActor = getContext().actorOf(Props.create(AccountantTaskPerIPActor.class), "accountantPerIP");
+        this.accountantTasksPerJobActor = getContext().actorOf(Props.create(AccountantTasksPerJobActor.class), "accountantPerJob");
+        LOG.info("Created accountant master "+getSelf().toString());
     }
 
     @Override

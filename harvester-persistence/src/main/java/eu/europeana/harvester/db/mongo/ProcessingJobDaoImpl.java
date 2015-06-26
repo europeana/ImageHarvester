@@ -112,7 +112,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
         for(Map.Entry<String, Integer> ip: ipDistribution.entrySet()) {
             final Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
-            query.criteria("priority").equal(jobPriority);
+            query.criteria("priority").equal(jobPriority.getPriority());
             query.criteria("state").equal(jobState);
             query.criteria("ipAddress").equal(ip.getKey());
             query.limit(page.getLimit());

@@ -14,13 +14,13 @@ public enum JobPriority {
     FASTLANE(1);
 
 
-    private final int priority;
+    private final Integer priority;
 
     private JobPriority(int priority) {
         this.priority = priority;
     }
 
-    public int getPriority() {
+    public Integer getPriority() {
         return priority;
     }
 

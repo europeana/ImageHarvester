@@ -14,10 +14,7 @@ import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class AccountantTaskPerIPActor extends UntypedActor {
@@ -35,7 +32,7 @@ public class AccountantTaskPerIPActor extends UntypedActor {
         try {
 
             if ( message instanceof GetListOfIPs ) {
-                getSender().tell(tasksPerIP.keySet(), ActorRef.noSender());
+                getSender().tell(new ArrayList<>(tasksPerIP.keySet()), ActorRef.noSender());
                 return;
             }
             if (message instanceof CheckIPsWithJobs) {
