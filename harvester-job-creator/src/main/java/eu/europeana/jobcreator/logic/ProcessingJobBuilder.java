@@ -48,7 +48,7 @@ public class ProcessingJobBuilder {
         subTasks.addAll(SubTaskBuilder.colourExtraction());
         subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
 
-        final ProcessingJob processingJob = new ProcessingJob(ProcessingJobPriority.MEDIUM.getPriority(), new Date(), owner,
+        final ProcessingJob processingJob = new ProcessingJob(JobPriority.NORMAL.getPriority(), new Date(), owner,
                 Arrays.asList(
                         new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
                                 sourceDocumentReference.getId(),
@@ -87,7 +87,7 @@ public class ProcessingJobBuilder {
             subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
             subTasks.addAll(SubTaskBuilder.metaExtraction());
 
-            final ProcessingJob processingJob = new ProcessingJob(ProcessingJobPriority.MEDIUM.getPriority(), new Date(), owner,
+            final ProcessingJob processingJob = new ProcessingJob(JobPriority.NORMAL.getPriority(), new Date(), owner,
                     Arrays.asList(
                             new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
                                     sourceDocumentReference.getId(),
@@ -124,7 +124,7 @@ public class ProcessingJobBuilder {
         subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
         subTasks.addAll(SubTaskBuilder.metaExtraction());
 
-        final ProcessingJob processingJob = new ProcessingJob(ProcessingJobPriority.MEDIUM.getPriority(), new Date(), owner,
+        final ProcessingJob processingJob = new ProcessingJob(JobPriority.NORMAL.getPriority(), new Date(), owner,
                 Arrays.asList(
                         new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
                                 sourceDocumentReference.getId(),
@@ -155,7 +155,7 @@ public class ProcessingJobBuilder {
         final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.ISSHOWNAT, url,
                 null, null, null, null, true);
 
-        final ProcessingJob processingJob = new ProcessingJob(ProcessingJobPriority.MEDIUM.getPriority(), new Date(), owner,
+        final ProcessingJob processingJob = new ProcessingJob(JobPriority.NORMAL.getPriority(), new Date(), owner,
                 Arrays.asList(
                         new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
                                 sourceDocumentReference.getId(),
