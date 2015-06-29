@@ -38,6 +38,6 @@ public class HarvesterDocument {
     }
 
     public HarvesterDocument withSourceDocumentReferenceMetaInfo(final SourceDocumentReferenceMetaInfo newSourceDocumentReferenceMetaInfo) {
-        return new HarvesterDocument(sourceDocumentReferenceId, updatedAt, referenceOwner, sourceDocumentReferenceMetaInfo);
+        return new HarvesterDocument(sourceDocumentReferenceId, updatedAt, referenceOwner, newSourceDocumentReferenceMetaInfo);
     }
 }

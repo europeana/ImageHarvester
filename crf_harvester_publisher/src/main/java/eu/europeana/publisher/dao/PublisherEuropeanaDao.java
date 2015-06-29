@@ -11,11 +11,14 @@ import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.logic.PublisherMetrics;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.*;
+
+import com.codahale.metrics.Timer.Context;
 
 /**
  * Created by salexandru on 03.06.2015.
@@ -53,6 +56,9 @@ public class PublisherEuropeanaDao {
         final Map<String, HarvesterDocument> incompleteHarvesterDocuments = retrieveHarvesterDocumentsWithoutMetaInfo(cursor, batchSize);
         final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(incompleteHarvesterDocuments.keySet());
 
+        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsStatistics.inc(incompleteHarvesterDocuments.size());
+        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsMetaInfo.inc(metaInfos.size());
+
 
         for (final SourceDocumentReferenceMetaInfo metaInfo: metaInfos) {
             final String id = metaInfo.getId();
@@ -63,30 +69,45 @@ public class PublisherEuropeanaDao {
     }
 
     private Map<String, HarvesterDocument> retrieveHarvesterDocumentsWithoutMetaInfo(final DBCursor cursor, final int batchSize) {
-        final Map<String, HarvesterDocument> documentStatistics = new HashMap<>();
+        final Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetDocStatisticsDuration.time();
+        try {
+            final Map<String, HarvesterDocument> documentStatistics = new HashMap<>();
 
-        for (int count = 0; cursor.hasNext() && count < batchSize; ++count) {
-            final BasicDBObject item = (BasicDBObject)cursor.next();
-            final DateTime updatedAt = new DateTime(item.getDate("updatedAt"));
-            final String sourceDocumentReferenceId = item.getString("sourceDocumentReferenceId");
-            final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
+            for (int count = 0; cursor.hasNext() && count < batchSize; ++count) {
+                final BasicDBObject item = (BasicDBObject) cursor.next();
+                final DateTime updatedAt = new DateTime(item.getDate("updatedAt"));
+                final String sourceDocumentReferenceId = item.getString("sourceDocumentReferenceId");
+                final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
 
-            final String providerId = referenceOwnerTemp.getString("providerId");
-            final String collectionId = referenceOwnerTemp.getString("collectionId");
-            final String recordId = referenceOwnerTemp.getString("recordId");
-            final String executionId = referenceOwnerTemp.getString("executionId");
+                final String providerId = referenceOwnerTemp.getString("providerId");
+                final String collectionId = referenceOwnerTemp.getString("collectionId");
+                final String recordId = referenceOwnerTemp.getString("recordId");
+                final String executionId = referenceOwnerTemp.getString("executionId");
 
-            documentStatistics.put(sourceDocumentReferenceId, new HarvesterDocument(sourceDocumentReferenceId, updatedAt, new ReferenceOwner(providerId,collectionId,recordId,executionId),null));
+                documentStatistics.put(sourceDocumentReferenceId,
+                                       new HarvesterDocument(sourceDocumentReferenceId, updatedAt,
+                                                             new ReferenceOwner(providerId, collectionId, recordId,
+                                                                                executionId), null));
+            }
+
+            return documentStatistics;
         }
-
-        return documentStatistics;
+        finally {
+           context.close();
+        }
     }
 
     public List<SourceDocumentReferenceMetaInfo> retrieveMetaInfo(final Collection<String> sourceDocumentReferenceIds) {
-        if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
-            return Collections.EMPTY_LIST;
+        final Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetMetaInfoDuration.time();
+        try {
+            if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
+                return Collections.EMPTY_LIST;
+            }
+            return sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceIds);
         }
-        return sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceIds);
+        finally {
+            context.close();
+        }
     }
 
     public DBCursor buildCursorForDocumentStatistics (final DateTime dateFilter) {

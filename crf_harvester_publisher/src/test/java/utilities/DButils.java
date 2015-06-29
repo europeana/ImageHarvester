@@ -3,10 +3,11 @@ package utilities;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.Mongo;
 import com.mongodb.util.JSON;
-import eu.europeana.publisher.domain.MongoConfig;
-import org.apache.commons.lang3.StringUtils;
+import eu.europeana.harvester.domain.MongoConfig;
+import eu.europeana.publisher.Publisher;
+import eu.europeana.publisher.domain.DBTargetConfig;
+import eu.europeana.publisher.domain.PublisherConfig;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrInputDocument;
@@ -16,7 +17,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
@@ -26,50 +26,24 @@ import static org.junit.Assert.fail;
  * Created by salexandru on 09.06.2015.
  */
 public class DButils {
-    public static DB connectToDB (final MongoConfig mongoConfig) {
-        final Mongo mongo;
-        final String host = mongoConfig.getHost();
-        final Integer port =mongoConfig.getPort();
-        final String userName = mongoConfig.getdBUsername();
-        final String password = mongoConfig.getdBPassword();
-        final String dbName   = mongoConfig.getdBName();
-
+    public static  void cleanMongoDatabase(final PublisherConfig config) {
         try {
-            mongo = new Mongo(host, port);
-        } catch (UnknownHostException e) {
-            fail("Cannot connect to mongo database. Unkown host: " + e.getMessage());
-            return null;
-        }
-
-
-        if (StringUtils.isNotEmpty(userName)) {
-            final DB sourceDB = mongo.getDB("admin");
-            final Boolean auth = sourceDB.authenticate(userName, password.toCharArray());
-            if (!auth) {
-                fail("Mongo source auth error");
-            }
-        }
-
-        return mongo.getDB(dbName);
-    }
-
-
-    public static  void cleanMongoDatabase(final MongoConfig sourceConfig, final MongoConfig targetConfig) {
-        try {
-            if (null == sourceConfig || null == targetConfig) {
+            if (null == config || null == config.getSourceMongoConfig() || null == config.getTargetDBConfig()) {
                 fail("Mongo Configs cannot be null!");
             }
 
-            final DB sourceMongo = connectToDB(sourceConfig);
+            final DB sourceMongo = config.getSourceMongoConfig().connectToDB();
 
             sourceMongo.getCollection("SourceDocumentProcessingStatistics").drop();
             sourceMongo.getCollection("SourceDocumentReferenceMetaInfo").drop();
 
+            for (final DBTargetConfig targetConfig: config.getTargetDBConfig()) {
 
-            final DB targetMongo = connectToDB(targetConfig);
+                final DB targetMongo = targetConfig.getMongoConfig().connectToDB();
 
-            targetMongo.getCollection("WebResourceMetaInfo").drop();
-            targetMongo.getCollection("WebResource").drop();
+                targetMongo.getCollection("WebResourceMetaInfo").drop();
+                targetMongo.getCollection("WebResource").drop();
+            }
 
         } catch (Exception e) {
             fail("Clean Mongo Database has failed with Exception: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
@@ -96,7 +70,7 @@ public class DButils {
             JSONParser parser = new JSONParser();
             JSONArray rootObject = (JSONArray) parser.parse(new FileReader(pathToJSONFile));
 
-            final DB sourceMongo = connectToDB(sourceMongoConfig);
+            final DB sourceMongo = sourceMongoConfig.connectToDB();
             final DBCollection sourceDB = sourceMongo.getCollection(collectionName);
             for (final Object object : rootObject) {
                 final DBObject dbObject = (DBObject) JSON.parse(object.toString());

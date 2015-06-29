@@ -14,13 +14,13 @@ import org.unitils.reflectionassert.ReflectionAssert;
 import utilities.ConfigUtils;
 import utilities.DButils;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static utilities.DButils.connectToDB;
 import static utilities.DButils.loadMongoData;
 
 /**
@@ -31,8 +31,7 @@ public class PublisherHarvesterDaoTest {
     private static final String DATA_PATH_PREFIX = "./src/test/resources/data-files/";
     private static final String CONFIG_PATH_PREFIX = "./src/test/resources/config-files/";
 
-    private static final PublisherConfig publisherConfig = ConfigUtils.createPublisherConfig(CONFIG_PATH_PREFIX +
-                                                                                                     "publisher.conf");
+    private PublisherConfig publisherConfig;
 
     private PublisherHarvesterDao harvesterDao;
     private List<WebResourceMetaInfo> correctMetaInfos;
@@ -41,8 +40,9 @@ public class PublisherHarvesterDaoTest {
     private WebResourceMetaInfoDao webResourceMetaInfoDao;
 
     @Before
-    public void setUp() throws UnknownHostException {
-        harvesterDao = new PublisherHarvesterDao(publisherConfig.getTargetMongoConfig());
+    public void setUp() throws IOException {
+        publisherConfig = ConfigUtils.createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
+        harvesterDao = new PublisherHarvesterDao(publisherConfig.getTargetDBConfig().get(0));
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
@@ -67,15 +67,15 @@ public class PublisherHarvesterDaoTest {
         }
 
         webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(
-            new Morphia().createDatastore(connectToDB(publisherConfig.getTargetMongoConfig()).getMongo(),
-                                          publisherConfig.getTargetMongoConfig().getdBName()
+            new Morphia().createDatastore(publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToMongo(),
+                                          publisherConfig.getTargetDBConfig().get(0).getMongoConfig().getDbName()
                                          )
         );
     }
 
     @After
     public void tearDown() {
-        DButils.cleanMongoDatabase(publisherConfig.getSourceMongoConfig(), publisherConfig.getTargetMongoConfig());
+        DButils.cleanMongoDatabase(publisherConfig);
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -86,15 +86,13 @@ public class PublisherHarvesterDaoTest {
     @Test
     public void test_Save_NullElements() {
         harvesterDao.writeMetaInfos(null);
-        assertEquals(0, DButils.connectToDB(publisherConfig.getTargetMongoConfig()).getCollection("WebResourceMetaInfo")
-                               .count());
+        assertEquals(0, publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB().getCollection("WebResourceMetaInfo").count());
     }
 
     @Test
     public void test_Save_EmptyElements() {
         harvesterDao.writeMetaInfos(Collections.EMPTY_LIST);
-        assertEquals(0, DButils.connectToDB(publisherConfig.getTargetMongoConfig())
-                               .getCollection("WebResourceMetaInfo").count());
+        assertEquals(0, publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB().getCollection("WebResourceMetaInfo").count());
     }
 
     @Test

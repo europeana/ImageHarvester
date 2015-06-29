@@ -14,10 +14,10 @@ public class TimerMap {
        this.id = id;
     }
 
-    public Timer time(final String id) {
+    public Timer.Context time(final String id) {
         final String metricName = name(this.id, id, PublisherMetrics.DURATION);
 
-        return PublisherMetrics.METRIC_REGISTRY.timer(metricName);
+        return PublisherMetrics.METRIC_REGISTRY.timer(metricName).time();
     }
 }
 

@@ -22,30 +22,26 @@ public class PublisherConfig {
     private final Integer batch;
 
 
-    private final List<MongoConfig> targetMongoConfigs;
+    private final List<DBTargetConfig> targetMongoConfigs;
     private final Long sleepSecondsAfterEmptyBatch;
-    private final List<String> solrUrls;
 
     private final MongoConfig sourceMongoConfig;
 
-    public PublisherConfig (MongoConfig sourceMongoConfig, List<MongoConfig> targetMongoConfigs,
+    public PublisherConfig (MongoConfig sourceMongoConfig, List<DBTargetConfig> targetMongoConfigs,
                             GraphiteReporterConfig graphiteConfig, DateTime startTimestamp, String startTimestampFile,
-                            Long sleepSecondsAfterEmptyBatch, List<String> solrURLs, Integer batch) {
+                            Long sleepSecondsAfterEmptyBatch, Integer batch) {
         this.sourceMongoConfig = sourceMongoConfig;
         this.targetMongoConfigs = targetMongoConfigs;
         this.graphiteConfig = graphiteConfig;
         this.startTimestamp = startTimestamp;
         this.startTimestampFile = startTimestampFile;
         this.sleepSecondsAfterEmptyBatch = sleepSecondsAfterEmptyBatch;
-        this.solrUrls = solrURLs;
         this.batch = batch;
     }
 
-    public MongoConfig getSourceMongoConfig () {
-        return sourceMongoConfig;
-    }
+    public MongoConfig getSourceMongoConfig() {return sourceMongoConfig;}
 
-    public List<MongoConfig> getTargetMongoConfig () {
+    public List<DBTargetConfig> getTargetDBConfig () {
         return targetMongoConfigs;
     }
 
@@ -59,10 +55,6 @@ public class PublisherConfig {
 
     public String getStartTimestampFile () {
         return startTimestampFile;
-    }
-
-    public List<String> getSolrURL () {
-        return solrUrls;
     }
 
     public Integer getBatch () {

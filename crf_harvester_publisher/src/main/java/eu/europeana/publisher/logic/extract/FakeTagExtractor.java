@@ -9,6 +9,7 @@ import eu.europeana.publisher.SkippedRecords;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.logging.LoggingComponent;
+import eu.europeana.publisher.logic.PublisherMetrics;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public class FakeTagExtractor {
             if (null == metaInfo.getAudioMetaInfo() && null == metaInfo.getImageMetaInfo() &&
                     null == metaInfo.getVideoMetaInfo() && null == metaInfo.getTextMetaInfo()) {
 
+                PublisherMetrics.Publisher.Batch.totalNumberOfDocumentsWithoutMetaInfo.inc();
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR, publishingBatchId, null, document.getReferenceOwner()),
                         "MetaInfo missing from CRF entry. Skipping generating any tags.");
                 continue;
@@ -50,9 +52,11 @@ public class FakeTagExtractor {
             }
 
             if (null == mimeTypeCode) {
+                PublisherMetrics.Publisher.Batch.totalNumberOfInvalidMimetypes.inc();
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR, publishingBatchId, null, document.getReferenceOwner()),
                         "Mime-Type is missing (is null) for CRF entry with meta-info ID {} . No Mime-Type tags will be generated.", ID);
             } else if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
+                PublisherMetrics.Publisher.Batch.totalNumberOfInvalidMimetypes.inc();
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR, publishingBatchId, null, document.getReferenceOwner()),
                         "Mime-Type is text/html for CRF entry with meta-info ID {}. The entire CRF entry will be skipped..", ID);
                 continue;

@@ -3,6 +3,7 @@ package eu.europeana.publisher.dao;
 import com.mongodb.DBCursor;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logic.extract.FakeTagExtractor;
@@ -34,8 +35,7 @@ public class SOLRWriterTest {
     private static final String DATA_PATH_PREFIX = "./src/test/resources/data-files/";
     private static final String CONFIG_PATH_PREFIX = "./src/test/resources/config-files/";
 
-    private static final PublisherConfig publisherConfig = ConfigUtils
-            .createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
+    private PublisherConfig publisherConfig;
 
     private static final String testBatchId = "tst-batch";
     private SOLRWriter solrWriter;
@@ -44,10 +44,12 @@ public class SOLRWriterTest {
 
 
     @Before
-    public void setUp() throws UnknownHostException {
-        solrWriter = new SOLRWriter(publisherConfig.getSolrURL());
+    public void setUp() throws IOException {
+        publisherConfig = ConfigUtils
+                                  .createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
+        solrWriter = new SOLRWriter(publisherConfig.getTargetDBConfig().get(0));
 
-        DButils.loadSOLRData(DATA_PATH_PREFIX + "solrData.json", publisherConfig.getSolrURL());
+        DButils.loadSOLRData(DATA_PATH_PREFIX + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json",
                 "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json",
@@ -73,8 +75,8 @@ public class SOLRWriterTest {
 
     @After
     public void tearDown() {
-        DButils.cleanMongoDatabase(publisherConfig.getSourceMongoConfig(), publisherConfig.getTargetMongoConfig());
-        // DButils.cleanSolrDatabase(publisherConfig.getSolrURL());
+        DButils.cleanMongoDatabase(publisherConfig);
+        DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -84,7 +86,7 @@ public class SOLRWriterTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EmptySolrUrl() {
-        new SOLRWriter("\t\t\n\r");
+        new SOLRWriter(new DBTargetConfig(null, "\t\t\t\n\r", ""));
     }
 
     @Test
@@ -126,7 +128,7 @@ public class SOLRWriterTest {
 
     @Test
     public void test_UpdateDocuments() throws IOException, SolrServerException {
-        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
 
 
@@ -147,7 +149,7 @@ public class SOLRWriterTest {
     @Test
     @Ignore
     public void test_UpdateDocuments_PreserveFields_SimpleData() throws IOException, SolrServerException {
-        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
 
         query.setQuery("*:*");
@@ -181,7 +183,7 @@ public class SOLRWriterTest {
         setUpSolrSpecialCase();
 
 
-        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
 
         query.setQuery("*:*");
@@ -209,9 +211,9 @@ public class SOLRWriterTest {
     }
 
     private void setUpSolrSpecialCase() throws UnknownHostException {
-        solrWriter = new SOLRWriter(publisherConfig.getSolrURL());
+        solrWriter = new SOLRWriter(publisherConfig.getTargetDBConfig().get(0));
 
-        DButils.loadSOLRData(DATA_PATH_PREFIX + "solrSpecialCase/solrData.json", publisherConfig.getSolrURL());
+        DButils.loadSOLRData(DATA_PATH_PREFIX + "solrSpecialCase/solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "solrSpecialCase/jobStatistics.json",
                 "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "solrSpecialCase/metaInfo.json",

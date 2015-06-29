@@ -3,6 +3,7 @@ package eu.europeana.publisher;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import eu.europeana.harvester.domain.MongoConfig;
+import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.GraphiteReporterConfig;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logging.LoggingComponent;
@@ -17,7 +18,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -83,33 +83,38 @@ public class Publisher {
 
         final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(graphiteServer, graphiteMasterId, graphitePort);
 
-        final MongoConfig sourceMongoConfig = MongoConfig.valueOf(config.getConfig("sourceMongoConfig"));
-        final List<MongoConfig> targetMongoConfigs = new LinkedList<>();
-        final List<String> solrUrls = new ArrayList<>();
+        final MongoConfig sourceDBConfig = MongoConfig.valueOf(config.getConfig("sourceMongo"));
+        final List<DBTargetConfig> targetDBConfigs = new LinkedList<>();
         for (final Config target: config.getConfigList("targets")) {
-            targetMongoConfigs.add(MongoConfig.valueOf(target.getConfig("mongo")));
-            solrUrls.add(config.getString("solrUrl"));
+            targetDBConfigs.add(DBTargetConfig.valueOf(target));
         }
 
         final Integer batch = config.getInt("config.batch");
 
         final DateTime startTimestamp = readStartTimestamp();
-        final String startTimestampFilename = config.getString("criteria.startTimestampFile");
+        String startTimestampFilename = null;
+
+        try {
+            startTimestampFilename = config.getString("criteria.startTimestampFile");
+        }
+        catch(ConfigException.Null e) {
+
+        }
 
         Long sleepSecondsAfterEmptyBatch = null;
 
         try {
-           sleepSecondsAfterEmptyBatch = config.getLong("criteria.sleepSecondsAfterEmptyBatch");
+            sleepSecondsAfterEmptyBatch = config.getLong("criteria.sleepSecondsAfterEmptyBatch");
         }
-        catch (IllegalArgumentException e) {
-           LOG.error("Error reading sleepSecondsAfterEmptyBatch", e);
+        catch (ConfigException.Null e) {
+            LOG.error("Error reading sleepSecondsAfterEmptyBatch", e);
         }
-
-        final PublisherConfig publisherConfig = new PublisherConfig(sourceMongoConfig, targetMongoConfigs,
+        final PublisherConfig publisherConfig = new PublisherConfig(sourceDBConfig,
+                                                                    targetDBConfigs,
                                                                     graphiteReporterConfig,
                                                                     startTimestamp, startTimestampFilename,
                                                                     sleepSecondsAfterEmptyBatch,
-                                                                    solrUrls, batch
+                                                                    batch
                                                                    );
 
 

@@ -22,6 +22,7 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
 
@@ -34,17 +35,29 @@ public class PublisherManagerTests {
 
     @After
     public void tearDown() {
-      cleanMongoDatabase(publisherConfig.getSourceMongoConfig(), publisherConfig.getTargetMongoConfig());
-      cleanSolrDatabase(publisherConfig.getSolrURL());
+      cleanMongoDatabase(publisherConfig);
+      cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
     }
 
 
 
     private void runPublisher(final PublisherConfig publisherConfig) {
         try {
-            new PublisherManager(publisherConfig).start();
-        } catch (Exception e) {
-            fail("SolrServerException: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()) + "\n");
+            final ExecutorService service = Executors.newSingleThreadExecutor();
+
+            final Future<Void> f = service.submit(new Callable<Void>() {
+                @Override
+                public Void call () throws Exception {
+                    new PublisherManager(publisherConfig).start();
+                    return null;
+                }
+            });
+            f.get(5, TimeUnit.SECONDS);
+
+        } catch (InterruptedException | ExecutionException e) {
+            fail("Failed to execute: " + e.getMessage());
+        } catch (TimeoutException e) {
+           System.out.println("Future timed out");
         }
     }
 
@@ -54,17 +67,19 @@ public class PublisherManagerTests {
         publisherConfig = createPublisherConfig("src/test/resources/config-files/validData/publisher.conf");
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData(pathToData + "solrData.json", publisherConfig.getSolrURL());
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json",
+                      "SourceDocumentReferenceMetaInfo");
+        loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
 
         runPublisher(publisherConfig);
 
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
+        final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
                 .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
-                .getCollection("WebResourceMetaInfo");
+        final DBCollection targetMetaInfoDB = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB
+                                                                                                                  ()
+                                                             .getCollection("WebResourceMetaInfo");
 
 
         final BasicDBObject keys = new BasicDBObject();
@@ -76,7 +91,7 @@ public class PublisherManagerTests {
 
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
@@ -96,14 +111,14 @@ public class PublisherManagerTests {
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData (pathToData + "solrData.json", publisherConfig.getSolrURL());
+        loadSOLRData (pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
 
         runPublisher(publisherConfig);
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
-                .getCollection("SourceDocumentReferenceMetaInfo");
+        final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
+                                                             .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
+        final DBCollection targetMetaInfoDB = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB()
                 .getCollection("WebResourceMetaInfo");
 
         final BasicDBObject findQuery = new BasicDBObject();
@@ -126,7 +141,7 @@ public class PublisherManagerTests {
         final DBCursor targetResults = targetMetaInfoDB.find(new BasicDBObject()).sort(new BasicDBObject("_id", 1));
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
@@ -146,14 +161,14 @@ public class PublisherManagerTests {
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData (pathToData + "solrData.json", publisherConfig.getSolrURL());
+        loadSOLRData (pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
 
         runPublisher(publisherConfig);
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
+        final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
                 .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
+        final DBCollection targetMetaInfoDB = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB()
                 .getCollection("WebResourceMetaInfo");
 
 
@@ -166,7 +181,7 @@ public class PublisherManagerTests {
 
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
@@ -185,15 +200,16 @@ public class PublisherManagerTests {
                                                         "/publisher.conf");
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData (pathToData + "solrData.json", publisherConfig.getSolrURL());
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json",
+                      "SourceDocumentReferenceMetaInfo");
+        loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
 
         runPublisher(publisherConfig);
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
+        final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
                 .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
+        final DBCollection targetMetaInfoDB = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB()
                 .getCollection("WebResourceMetaInfo");
 
 
@@ -214,7 +230,7 @@ public class PublisherManagerTests {
 
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
@@ -235,15 +251,15 @@ public class PublisherManagerTests {
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData (pathToData + "solrData.json", publisherConfig.getSolrURL());
+        loadSOLRData (pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
 
         runPublisher(publisherConfig);
 
-        final DBCollection sourceMetaInfoDB = connectToDB(publisherConfig.getSourceMongoConfig())
+        final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
                                                           .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = connectToDB(publisherConfig.getTargetMongoConfig())
+        final DBCollection targetMetaInfoDB = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB()
                                                           .getCollection("WebResourceMetaInfo");
 
         final BasicDBObject keys = new BasicDBObject();
@@ -255,7 +271,7 @@ public class PublisherManagerTests {
 
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
-        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getSolrURL());
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");

@@ -17,6 +17,7 @@ import org.junit.Test;
 import utilities.ConfigUtils;
 import utilities.DButils;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +26,6 @@ import java.util.List;
 import org.unitils.reflectionassert.ReflectionAssert;
 
 import static org.junit.Assert.*;
-import static utilities.DButils.connectToDB;
 import static utilities.DButils.loadMongoData;
 
 /**
@@ -35,13 +35,14 @@ public class PublisherEuropeanaDaoTest {
     private static final String DATA_PATH_PREFIX = "./src/test/resources/data-files/";
     private static final String CONFIG_PATH_PREFIX = "./src/test/resources/config-files/";
 
-    private static final PublisherConfig publisherConfig = ConfigUtils.createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
+    private  PublisherConfig publisherConfig;
 
     private PublisherEuropeanaDao europeanaDao;
 
 
     @Before
-    public void setUp() throws UnknownHostException {
+    public void setUp() throws IOException {
+        publisherConfig = ConfigUtils.createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
         europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
@@ -51,7 +52,7 @@ public class PublisherEuropeanaDaoTest {
 
     @After
     public void tearDown() {
-        DButils.cleanMongoDatabase(publisherConfig.getSourceMongoConfig(), publisherConfig.getTargetMongoConfig());
+        DButils.cleanMongoDatabase(publisherConfig);
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -119,7 +120,7 @@ public class PublisherEuropeanaDaoTest {
 
     @Test
     public void test_extracMetaInfo() {
-        final Datastore datastore = new Morphia().createDatastore(connectToDB(publisherConfig.getSourceMongoConfig()).getMongo(),
+        final Datastore datastore = new Morphia().createDatastore(publisherConfig.getSourceMongoConfig().connectToMongo(),
                                                                   publisherConfig.getSourceMongoConfig().getDbName()
                                                                  );
 
@@ -144,8 +145,8 @@ public class PublisherEuropeanaDaoTest {
 
 
     private void checkDocuments (final DBCursor cursor, final int batchSize, final DateTime filter) {
-        final DBCollection jobStatistics = DButils.connectToDB(publisherConfig.getSourceMongoConfig()).getCollection("SourceDocumentProcessingStatistics");
-        final DBCollection metaInfos = DButils.connectToDB(publisherConfig.getSourceMongoConfig()).getCollection("SourceDocumentReferenceMetaInfo");
+        final DBCollection jobStatistics = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentProcessingStatistics");
+        final DBCollection metaInfos = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentReferenceMetaInfo");
         while (cursor.hasNext()) {
             final List<HarvesterDocument> documents = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, batchSize);
 

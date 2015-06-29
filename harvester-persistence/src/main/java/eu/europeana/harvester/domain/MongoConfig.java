@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 public class MongoConfig {
 
@@ -70,9 +71,6 @@ public class MongoConfig {
        return null != mongo ? mongo.getDB(dbName) : null;
     }
 
-
-
-
     public String getDbName () {
         return dbName;
     }
@@ -88,4 +86,5 @@ public class MongoConfig {
     public List<ServerAddress> getMongoServerAddressList () {
         return mongoServerAddressList;
     }
+
 }
