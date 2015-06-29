@@ -14,9 +14,9 @@ import java.util.List;
  */
 public class SourceDocumentReference {
 
-    public final static String idFromUrl(final String url) {
+    public final static String idFromUrl(final String url,final String recordId) {
         final HashCode hc = hf.newHasher()
-                .putString(url, Charsets.UTF_8)
+                .putString(new StringBuilder().append(url).append("-").append(recordId), Charsets.UTF_8)
                 .hash();
         return hc.toString();
     }
@@ -83,7 +83,7 @@ public class SourceDocumentReference {
                                    final String url, final String ipAddress, final String lastStatsId,
                                    final Long redirectPathDepth, final List<String> redirectionPath,
                                    final Boolean active) {
-        this.id = SourceDocumentReference.idFromUrl(url);
+        this.id = SourceDocumentReference.idFromUrl(url,referenceOwner.getRecordId());
         this.referenceOwner = referenceOwner;
         this.urlSourceType = urlSourceType;
         this.url = url;
@@ -121,20 +121,8 @@ public class SourceDocumentReference {
         return url;
     }
 
-    public String getIPAddress() {
-        return ipAddress;
-    }
-
     public String getLastStatsId() {
         return lastStatsId;
-    }
-
-    public Long getRedirectPathDepth() {
-        return redirectPathDepth;
-    }
-
-    public List<String> getRedirectionPath() {
-        return redirectionPath;
     }
 
     public Boolean getActive() {return active;}
