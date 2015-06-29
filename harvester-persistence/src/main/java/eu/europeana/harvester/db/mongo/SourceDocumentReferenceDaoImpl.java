@@ -90,16 +90,6 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
     }
 
     @Override
-    public SourceDocumentReference findByUrl(String url) {
-        final HashFunction hf = Hashing.md5();
-        final String id = hf.newHasher()
-                .putString(url, Charsets.UTF_8)
-                .hash().toString();
-
-        return read(id);
-    }
-
-    @Override
     public List<SourceDocumentReference> findByRecordID(String recordID) {
         final Query<SourceDocumentReference> query = datastore.find(SourceDocumentReference.class, "referenceOwner.recordId", recordID);
         if(query == null) {return new ArrayList<>(0);}

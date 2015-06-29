@@ -74,14 +74,6 @@ public interface SourceDocumentReferenceDao {
     public WriteResult delete(String id);
 
     /**
-     * Searches for a SourceDocumentReference object by an id and returns it
-     *
-     * @param url http url
-     * @return found MachineResourceReference object
-     */
-    public SourceDocumentReference findByUrl(String url);
-
-    /**
      * Searches for SourceDocumentReferences which has referenceOwner.recordId equal with the given ID.
      *
      * @param recordID resources record ID

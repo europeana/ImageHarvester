@@ -65,8 +65,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
      * @param msg - the message from the slave actor with url, jobId and other statistics
      */
     private void saveStatistics(DoneProcessing msg) {
-        final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.findByUrl(msg.getUrl());
-
+        final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.read(msg.getReferenceId());
 
         final String docId = finishedDocument.getId();
         //LOG.info("save statistics for document with ID: {}",docId);
