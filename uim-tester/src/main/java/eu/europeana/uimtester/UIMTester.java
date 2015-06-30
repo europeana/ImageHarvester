@@ -95,7 +95,7 @@ public class UIMTester {
             }
         }
 
-        final Datastore dataStore = new Morphia().createDatastore(mongo, uimTesterConfig.getMongoDBName());
+        final Datastore dataStore = new Morphia().createDatastore(mongo, uimTesterConfig.getMongoDBName(),uimTesterConfig.getMongoDBUserName(),uimTesterConfig.getMongoDBPassword().toCharArray());
         final HarvesterClient harvesterClient =
                 new HarvesterClientImpl(new ProcessingJobDaoImpl(dataStore),
                                         new MachineResourceReferenceDaoImpl(dataStore),
