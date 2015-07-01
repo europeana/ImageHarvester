@@ -63,7 +63,7 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
 
             final DoneProcessing doneProcessing = (DoneProcessing) message;
 
-            final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.findByUrl(doneProcessing.getUrl());
+            final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.read(doneProcessing.getReferenceId());
 
 
             final String docId = finishedDocument.getId();

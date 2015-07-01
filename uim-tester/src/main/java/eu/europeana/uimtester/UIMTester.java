@@ -42,9 +42,10 @@ public class UIMTester {
                                                   ExecutionException {
         boolean printMore = false;
         File uimTesterConfigFile = null;
-        File jobCreatorInput = null;
-        File jobCreatorOutput = null;
+        File uimTesterInput = null;
+        File uimTesterOutput = null;
 
+        // (1) Load various command line arguments
         if ((5 == args.length) && ReportProcessingOptions.equalsIgnoreCase(args[0])) {
             if (!args[1].equalsIgnoreCase("moreLogInfo")) {
                 printHelp();
@@ -52,34 +53,39 @@ public class UIMTester {
             }
             printMore = true;
             uimTesterConfigFile = new File(args[2]);
-            jobCreatorInput = new File(args[3]);
-            jobCreatorOutput = new File(args[4]);
+            uimTesterInput = new File(args[3]);
+            uimTesterOutput = new File(args[4]);
         }
         else if ( (4 == args.length) && isAcceptableOption(args[0])) {
             uimTesterConfigFile = new File(args[1]);
-            jobCreatorInput = new File(args[2]);
-            jobCreatorOutput = new File(args[3]);
+            uimTesterInput = new File(args[2]);
+            uimTesterOutput = new File(args[3]);
         }
         else {
             printHelp();
             System.exit(-1);
         }
 
+        // (2) Make sure the appropriate files are present
+        if (!uimTesterOutput.exists()) uimTesterOutput.createNewFile();
+
+        // (3) Check that all required conditions are met
         if (!uimTesterConfigFile.canRead()) {
             System.out.println("Cannot read uim tester config file: " + uimTesterConfigFile.getAbsolutePath());
             System.exit(-1);
         }
 
-        if (!jobCreatorInput.canRead()) {
-            System.out.println("Cannot read from the job creator input file: " + jobCreatorInput.getAbsolutePath());
+        if (!uimTesterInput.canRead()) {
+            System.out.println("Cannot read from the job creator input file: " + uimTesterInput.getAbsolutePath());
             System.exit(-1);
         }
 
-        if (!jobCreatorOutput.canWrite()) {
-            System.out.println("Cannot write to the job creator output file: " + jobCreatorOutput.getAbsolutePath());
+        if (!uimTesterOutput.canWrite()) {
+            System.out.println("Cannot write to the job creator output file: " + uimTesterOutput.getAbsolutePath());
             System.exit(-1);
         }
 
+        // (4) Setup dependencies and start
         final UIMTesterConfig uimTesterConfig = new UIMTesterConfig(uimTesterConfigFile);
 
         final Mongo mongo = new Mongo(uimTesterConfig.getServerAddressList());
@@ -95,7 +101,7 @@ public class UIMTester {
             }
         }
 
-        final Datastore dataStore = new Morphia().createDatastore(mongo, uimTesterConfig.getMongoDBName());
+        final Datastore dataStore = new Morphia().createDatastore(mongo, uimTesterConfig.getMongoDBName(),uimTesterConfig.getMongoDBUserName(),uimTesterConfig.getMongoDBPassword().toCharArray());
         final HarvesterClient harvesterClient =
                 new HarvesterClientImpl(new ProcessingJobDaoImpl(dataStore),
                                         new MachineResourceReferenceDaoImpl(dataStore),
@@ -105,20 +111,20 @@ public class UIMTester {
                                         new HarvesterClientConfig(uimTesterConfig.getWriteConcern())
                                        );
 
-        final Writer writer = Files.newBufferedWriter(jobCreatorOutput.toPath(), Charset.defaultCharset());
+        final Writer writer = Files.newBufferedWriter(uimTesterOutput.toPath(), Charset.defaultCharset());
 
         switch (args[0]) {
             case JobCreatorOptions:
                 new JobCreatorTester(harvesterClient,
                                      new JobCreatorTesterOutputWriter(writer)
-                                    ).execute(jobCreatorInput);
+                                    ).execute(uimTesterInput);
                 break;
 
             case ReportProcessingOptions:
                 final SwiftConfiguration swiftConfiguration = uimTesterConfig.useSwift() ? uimTesterConfig.getSwiftConfiguration() : null;
                 new ProcessingJobReport(new ProcessingJobReportRetriever(harvesterClient),
                                         new ProcessingJobReportWriter(writer, swiftConfiguration, printMore)
-                                       ).execute(jobCreatorInput);
+                                       ).execute(uimTesterInput);
                 break;
 
             default:
@@ -126,7 +132,7 @@ public class UIMTester {
                 System.exit(-1);
         }
 
-        System.out.println ("everything was dumped into: " + jobCreatorOutput.getAbsolutePath());
+        System.out.println ("everything was dumped into: " + uimTesterOutput.getAbsolutePath());
     }
 
     private static boolean isAcceptableOption (String arg) {

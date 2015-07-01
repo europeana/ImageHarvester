@@ -2,10 +2,6 @@ package eu.europeana.harvester.domain;
 
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.Property;
-import com.google.common.base.Charsets;
-import com.google.common.hash.HashCode;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 
 import java.util.Date;
 import java.util.Map;

@@ -143,6 +143,7 @@ public class SlaveLinkChecker {
             cleanup(httpRetrieveResponse, asyncHttpClient, e);
         } finally {
             cleanup(httpRetrieveResponse, asyncHttpClient, httpRetrieveResponse.getException());
+            asyncHttpClient.close();
         }
     }
 
@@ -154,7 +155,7 @@ public class SlaveLinkChecker {
             LOG.error("Failed to close the response, caused by : " + e1.getMessage());
         }
 
-        // if (asyncHttpClient != null && !asyncHttpClient.isClosed()) asyncHttpClient.close();
+        //if (asyncHttpClient != null && !asyncHttpClient.isClosed()) asyncHttpClient.close();
     }
 
 }

@@ -17,7 +17,6 @@ import com.typesafe.config.ConfigSyntax;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
-import eu.europeana.harvester.cluster.domain.PingMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.CheckForTaskTimeout;
 import eu.europeana.harvester.cluster.domain.messages.LoadJobs;
 import eu.europeana.harvester.cluster.domain.messages.Monitor;
@@ -79,11 +78,6 @@ class Master {
 
         final ClusterMasterConfig clusterMasterConfig = new ClusterMasterConfig(jobsPerIP, maxTasksInMemory,
                 receiveTimeoutInterval, responseTimeoutFromSlaveInMillis, WriteConcern.NONE);
-
-        final PingMasterConfig pingMasterConfig =
-                new PingMasterConfig(config.getInt("ping.timePeriod"), config.getInt("ping.nrOfPings"),
-                        Duration.millis(config.getInt("akka.cluster.receiveTimeoutInterval")),
-                        config.getInt("ping.timeoutInterval"), WriteConcern.NONE);
 
         Slf4jReporter reporter = Slf4jReporter.forRegistry(MasterMetrics.METRIC_REGISTRY)
                 .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))

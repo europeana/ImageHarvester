@@ -150,8 +150,8 @@ public class HarvesterClientImpl implements HarvesterClient {
 
 
     @Override
-    public SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url) {
-        return sourceDocumentReferenceDao.read(SourceDocumentReference.idFromUrl(url));
+    public SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url,String recordId) {
+        return sourceDocumentReferenceDao.read(SourceDocumentReference.idFromUrl(url,recordId));
     }
 
     @Override
