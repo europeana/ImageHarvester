@@ -66,7 +66,7 @@ public interface HarvesterClient {
     /**
      * Not implemented yet.
      */
-    public List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state);
+    public List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) throws Exception;
 
     public SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url,String recordId);
 
