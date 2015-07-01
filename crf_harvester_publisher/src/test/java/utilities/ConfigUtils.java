@@ -70,13 +70,17 @@ public class ConfigUtils {
             LOG.error("Error reading sleepSecondsAfterEmptyBatch", e);
         }
 
+        int delayInSecondsForRemainingRecordsStatistics =
+                config.hasPath("delayInMinutesForRemainingRecordsStatistics") ?
+                        config.getInt("delayInMinutesForRemainingRecordsStatistics") :
+                        10;
         return  new PublisherConfig(sourceDBConfig,
                                     targetDBConfigs,
                                     graphiteReporterConfig,
                                     startTimestamp, startTimestampFilename,
                                     sleepSecondsAfterEmptyBatch,
-                                    batch
-                                   );
+                                    batch,
+                                    delayInSecondsForRemainingRecordsStatistics);
     }
 
     private static DateTime readStartTimestamp(final Config config) throws IOException {

@@ -19,7 +19,9 @@ public class PublisherConfig {
     /**
      * Batch of documents to update.
      */
-    private final Integer batch;
+    private final int batch;
+
+    private final int delayInSecondsForRemainingRecordsStatistics;
 
 
     private final List<DBTargetConfig> targetMongoConfigs;
@@ -29,7 +31,7 @@ public class PublisherConfig {
 
     public PublisherConfig (MongoConfig sourceMongoConfig, List<DBTargetConfig> targetMongoConfigs,
                             GraphiteReporterConfig graphiteConfig, DateTime startTimestamp, String startTimestampFile,
-                            Long sleepSecondsAfterEmptyBatch, Integer batch) {
+                            Long sleepSecondsAfterEmptyBatch, int batch, int delayInSecondsForRemainingRecordsStatistics) {
         this.sourceMongoConfig = sourceMongoConfig;
         this.targetMongoConfigs = targetMongoConfigs;
         this.graphiteConfig = graphiteConfig;
@@ -37,6 +39,7 @@ public class PublisherConfig {
         this.startTimestampFile = startTimestampFile;
         this.sleepSecondsAfterEmptyBatch = sleepSecondsAfterEmptyBatch;
         this.batch = batch;
+        this.delayInSecondsForRemainingRecordsStatistics = delayInSecondsForRemainingRecordsStatistics;
     }
 
     public MongoConfig getSourceMongoConfig() {return sourceMongoConfig;}
@@ -63,5 +66,9 @@ public class PublisherConfig {
 
     public Long getSleepSecondsAfterEmptyBatch () {
         return sleepSecondsAfterEmptyBatch;
+    }
+
+    public int getDelayInSecondsForRemainingRecordsStatistics () {
+        return delayInSecondsForRemainingRecordsStatistics;
     }
 }

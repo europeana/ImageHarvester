@@ -1,6 +1,7 @@
 package eu.europeana.publisher.logic;
 
 import com.codahale.metrics.*;
+import eu.europeana.harvester.monitoring.LazyGauge;
 import scala.io.BytePickle;
 
 import java.util.Collection;
@@ -65,6 +66,7 @@ public class PublisherMetrics  {
                 public static final TimerMap solrUpdateDocumentsDuration = new TimerMap(name(Solr.NAME, "updateDocuments"));
                 public static final Counter totalNumberOfDocumentsWrittenToSolr = METRIC_REGISTRY.counter(name(Solr.NAME, TOTAL, "numberOfDocumentsWrittenToSolr", COUNTER));
 
+
             }
         }
 
@@ -73,12 +75,13 @@ public class PublisherMetrics  {
 
             public static final Timer loopBatchDuration = METRIC_REGISTRY.timer(name(Batch.NAME, "loopBatch", DURATION));
             public static final Counter totalNumberOfInvalidMimetypes = METRIC_REGISTRY.counter(name(Batch.NAME, TOTAL,
-                                                                                               "numberOfInvalidMimetypes",
-                                                                                               COUNTER));
+                                                                                                     "numberOfInvalidMimetypes",
+                                                                                                     COUNTER));
             public static final Counter totalNumberOfDocumentsWithoutMetaInfo = METRIC_REGISTRY.counter(name(Batch.NAME, TOTAL, "numberOfDocumentsWithoutMetaInfo", COUNTER));
 
 
             public static final Counter totalNumberOfDocumentsProcessed = METRIC_REGISTRY.counter(name(Batch.NAME, TOTAL, "numberOfDocumentsProcessed", COUNTER));
+            public static final LazyGauge numberOfRemaningDocumentsToProcess = new LazyGauge(METRIC_REGISTRY, name(Batch.NAME, "numberOfRemaningDocumentsToProcess"));
         }
     }
 }

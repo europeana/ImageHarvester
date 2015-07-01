@@ -21,7 +21,7 @@ public class ProcessingJobStateStatistics extends UntypedActor {
 
     private Cancellable schedule;
     private final int numberOfSecondsToDelay;
-    private final SourceDocumentProcessingStatisticsDao processingStatistics;
+    private final ComputeProcessingJobStateStatistics computeProcessingJobStateStatistics;
 
     public ProcessingJobStateStatistics (SourceDocumentProcessingStatisticsDao processingStatistics,
                                          int numberOfSecondsToDelay) {
@@ -34,7 +34,31 @@ public class ProcessingJobStateStatistics extends UntypedActor {
         }
 
         this.numberOfSecondsToDelay = numberOfSecondsToDelay;
-        this.processingStatistics = processingStatistics;
+        computeProcessingJobStateStatistics = new ComputeProcessingJobStateStatistics(processingStatistics);
+
+        MasterMetrics.Master.jobsPersistenceErrorCount.registerHandler(new Gauge<Integer>() {
+
+            @Override
+            public Integer getValue () {
+                return computeProcessingJobStateStatistics.getNumberOfJobsWithError().intValue();
+            }
+        });
+
+        MasterMetrics.Master.jobsPersistenceFinishedWithSuccessCount.registerHandler(new Gauge<Integer>() {
+
+            @Override
+            public Integer getValue () {
+                return computeProcessingJobStateStatistics.getNumberOfJobsSuccessfulyFinished().intValue();
+            }
+        });
+
+        MasterMetrics.Master.jobsPersistenceReadyCount.registerHandler(new Gauge<Integer>() {
+
+            @Override
+            public Integer getValue () {
+                return computeProcessingJobStateStatistics.getNumberOfJobsReady().intValue();
+            }
+        });
     }
 
 
@@ -54,34 +78,9 @@ public class ProcessingJobStateStatistics extends UntypedActor {
     @Override
     public void onReceive (Object message) throws Exception {
         if (message instanceof GetProcessingJobStatistics) {
-           logStatistics();
+           computeProcessingJobStateStatistics.run();
            schedule = scheduleOnce();
         }
-    }
-
-    private void logStatistics () {
-        final Map<ProcessingState, Integer> statistics = processingStatistics.countNumberOfDocumentsWithState();
-
-        MasterMetrics.Master.jobsPersistenceReadyCount.registerHandler(new Gauge<Integer>() {
-            @Override
-            public Integer getValue () {
-                return statistics.get(ProcessingState.READY);
-            }
-        });
-
-        MasterMetrics.Master.jobsPersistenceFinishedWithSuccessCount.registerHandler(new Gauge<Integer>() {
-            @Override
-            public Integer getValue () {
-                return statistics.get(ProcessingState.SUCCESS);
-            }
-        });
-
-        MasterMetrics.Master.jobsPersistenceErrorCount.registerHandler(new Gauge<Integer>() {
-            @Override
-            public Integer getValue () {
-                return statistics.get(ProcessingState.ERROR);
-            }
-        });
     }
 
     private Cancellable scheduleOnce() {

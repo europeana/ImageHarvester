@@ -1,10 +1,12 @@
 package eu.europeana.publisher.logic;
 
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import eu.europeana.publisher.dao.PublisherEuropeanaDao;
 import eu.europeana.publisher.dao.PublisherHarvesterDao;
@@ -16,6 +18,7 @@ import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.extract.FakeTagExtractor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.maven.plugin.surefire.runorder.ThreadedExecutionScheduler;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
@@ -28,7 +31,10 @@ import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * It's responsible for the whole publishing process. It's the engine of the
@@ -46,11 +52,11 @@ public class PublisherManager {
     private DateTime currentTimestamp;
     private DBCursor cursor;
 
-    private final PublisherMetrics publisherMetrics;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
 
     public PublisherManager(PublisherConfig config) throws UnknownHostException {
         this.config = config;
-        publisherMetrics = new PublisherMetrics();
 
         publisherEuropeanaDao = new PublisherEuropeanaDao(config.getSourceMongoConfig());
 
@@ -86,11 +92,34 @@ public class PublisherManager {
         reporter2.start(20, TimeUnit.SECONDS);
     }
 
+
+
     public void start() throws IOException, SolrServerException, InterruptedException {
        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                  "Starting publishing process. The minimal timestamp is {}", config.getStartTimestamp());
 
         cursor =  publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
+
+        final AtomicLong numberOfDocumentToProcess = new AtomicLong();
+        final Runnable runGauge = new Runnable() {
+            @Override
+            public void run () {
+               numberOfDocumentToProcess.set(publisherEuropeanaDao.countNumberOfDocumentUpdatedBefore(currentTimestamp));
+            }
+        };
+
+
+        runGauge.run();
+
+        PublisherMetrics.Publisher.Batch.numberOfRemaningDocumentsToProcess.registerHandler(new Gauge<Long>() {
+            @Override
+            public Long getValue () {
+                return numberOfDocumentToProcess.longValue();
+            }
+        });
+
+        scheduler.schedule(runGauge, config.getDelayInSecondsForRemainingRecordsStatistics(), TimeUnit.MINUTES
+                          );
 
         while (true) {
             final Timer.Context context = PublisherMetrics.Publisher.Batch.loopBatchDuration.time();

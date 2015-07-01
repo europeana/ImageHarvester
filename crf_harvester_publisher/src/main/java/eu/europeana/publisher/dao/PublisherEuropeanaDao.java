@@ -8,6 +8,7 @@ import com.mongodb.DBCursor;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.MongoConfig;
+import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.publisher.domain.HarvesterDocument;
@@ -108,6 +109,24 @@ public class PublisherEuropeanaDao {
         finally {
             context.close();
         }
+    }
+
+    /**
+     *  @deprecated "This is a time consuming operation. Use it with great care!"
+     *
+     *  @param dateFilter -- the date to filter the documents. If null returns the number of documents from the
+     *                    SourceDocumentProcessingStatistics collection
+     *  @return - the number of documents for which updatedAt < dateFilter
+     */
+    @Deprecated
+    public long countNumberOfDocumentUpdatedBefore(final DateTime dateFilter) {
+        final BasicDBObject findQuery = new BasicDBObject();
+
+        if (null != dateFilter) {
+            findQuery.put("updatedAt", new BasicDBObject("$lt", dateFilter.toDate()));
+        }
+
+        return mongoDB.getCollection("SourceDocumentProcessingStatistics").count(findQuery);
     }
 
     public DBCursor buildCursorForDocumentStatistics (final DateTime dateFilter) {

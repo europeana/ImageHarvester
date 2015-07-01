@@ -17,16 +17,9 @@ public class LazyGauge {
         this.name = name;
     }
 
-    public boolean registerHandler(final Gauge<Integer> handler) {
+    public <T> boolean registerHandler(final Gauge<T> handler) {
         if (gauge == null) {
-            gauge = metricRegistry.register(metricRegistry.
-                            name(LazyGauge.class, name),
-                    new Gauge<Integer>() {
-                        @Override
-                        public Integer getValue() {
-                            return handler.getValue();
-                        }
-                    });
+            gauge = metricRegistry.register(metricRegistry.name(LazyGauge.class, name), handler);
             return true;
         } else {
             return false;

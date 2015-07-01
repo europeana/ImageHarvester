@@ -109,13 +109,20 @@ public class Publisher {
         catch (ConfigException.Null e) {
             LOG.error("Error reading sleepSecondsAfterEmptyBatch", e);
         }
+
+        int delayInMinutesForRemainingRecordsStatistics =
+                config.hasPath("delayInMinutesForRemainingRecordsStatistics") ?
+                config.getInt("delayInMinutesForRemainingRecordsStatistics") :
+                10;
+
         final PublisherConfig publisherConfig = new PublisherConfig(sourceDBConfig,
                                                                     targetDBConfigs,
                                                                     graphiteReporterConfig,
                                                                     startTimestamp, startTimestampFilename,
                                                                     sleepSecondsAfterEmptyBatch,
-                                                                    batch
-                                                                   );
+                                                                    batch,
+                                                                    delayInMinutesForRemainingRecordsStatistics
+                                                                  );
 
 
 
