@@ -22,7 +22,7 @@ import eu.europeana.harvester.cluster.domain.messages.CheckForTaskTimeout;
 import eu.europeana.harvester.cluster.domain.messages.LoadJobs;
 import eu.europeana.harvester.cluster.domain.messages.Monitor;
 import eu.europeana.harvester.cluster.master.ClusterMasterActor;
-import eu.europeana.harvester.cluster.master.MasterMetrics;
+import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.MongoConfig;

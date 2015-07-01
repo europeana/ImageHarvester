@@ -2,10 +2,12 @@ package eu.europeana.harvester.db.interfaces;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
+import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DAO for CRUD with source_document_processing_stats collection
@@ -78,4 +80,13 @@ public interface SourceDocumentProcessingStatisticsDao {
      * @return - a list of SourceDocumentProcessingStatistics objects
      */
     public List<SourceDocumentProcessingStatistics> findByRecordID(String recordID);
+
+    /**
+     *  @deprecated "This is a time consuming operation. Use it with great care!"
+     *
+     *  For every document that has the {@link ProcessingState} ERROR, SUCCESS or READY  count the number of documents.
+     *  @return - a mapping between the {@link ProcessingState} and the number of documents that have that state
+     */
+    @Deprecated
+    Map<ProcessingState, Integer> countNumberOfDocumentsWithState();
 }

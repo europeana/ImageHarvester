@@ -1,4 +1,4 @@
-package eu.europeana.harvester.cluster.master;
+package eu.europeana.harvester.cluster.master.metrics;
 
 import com.codahale.metrics.*;
 import eu.europeana.harvester.domain.ProcessingState;
@@ -47,7 +47,7 @@ public class MasterMetrics {
         public static final Timer loadFastLaneJobResourcesFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_FASTLANEJOBS_RESOURCES_FROM_DB, COUNTER));
 
         public static final LazyGauge jobsPersistenceReadyCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "READY"+"."+COUNTER);
-        public static final LazyGauge jobsPersistenceFinishedCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_SUCCESS"+"."+COUNTER);
+        public static final LazyGauge jobsPersistenceFinishedWithSuccessCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_SUCCESS"+"."+COUNTER);
         public static final LazyGauge jobsPersistenceErrorCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_ERROR"+"."+COUNTER);
 
 

@@ -7,7 +7,7 @@ import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.Clean;
 import eu.europeana.harvester.cluster.domain.messages.RequestTasks;
-import eu.europeana.harvester.cluster.master.MasterMetrics;
+import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

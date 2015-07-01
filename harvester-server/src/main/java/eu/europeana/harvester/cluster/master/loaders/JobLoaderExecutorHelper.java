@@ -9,7 +9,7 @@ import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
-import eu.europeana.harvester.cluster.master.MasterMetrics;
+import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;

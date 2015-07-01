@@ -2,15 +2,12 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
-import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
+import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
+import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * MongoDB DAO implementation for CRUD with source_document_processing_stats collection
@@ -83,6 +80,35 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
         if(query == null) {return new ArrayList<>(0);}
 
         return query.asList();
+    }
+
+    @Override
+    public Map<ProcessingState, Integer> countNumberOfDocumentsWithState () {
+        final DBCollection collection = datastore.getCollection(SourceDocumentProcessingStatistics.class);
+
+        final BasicDBList matchElements = new BasicDBList();
+
+        matchElements.add(new BasicDBObject("state", ProcessingState.ERROR));
+        matchElements.add(new BasicDBObject("state", ProcessingState.SUCCESS));
+        matchElements.add(new BasicDBObject("state", ProcessingState.ERROR));
+
+
+        final DBObject matchQuery = new BasicDBObject("$match", new BasicDBObject("$or", matchElements));
+
+        final DBObject groupStateElements = new BasicDBObject();
+
+        groupStateElements.put("_id", "$state");
+        groupStateElements.put("count", new BasicDBObject("$sum", 1));
+
+        final DBObject groupQuery = new BasicDBObject("$group", groupStateElements);
+
+        final Map<ProcessingState, Integer> results = new HashMap<>(ProcessingState.values().length, 1);
+
+        for (final DBObject object: collection.aggregate(matchQuery, groupQuery).results()) {
+           results.put(ProcessingState.valueOf((String) object.get("_id")), (Integer)object.get("count"));
+        }
+
+        return results;
     }
 
 }

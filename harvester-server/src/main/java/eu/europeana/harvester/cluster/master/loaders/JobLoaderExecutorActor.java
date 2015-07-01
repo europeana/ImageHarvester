@@ -5,7 +5,7 @@ import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.LoadJobs;
-import eu.europeana.harvester.cluster.master.MasterMetrics;
+import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;

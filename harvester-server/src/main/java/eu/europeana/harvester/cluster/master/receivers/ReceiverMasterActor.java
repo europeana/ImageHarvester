@@ -9,7 +9,7 @@ import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.domain.messages.inner.MarkJobAsDone;
 import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
-import eu.europeana.harvester.cluster.master.MasterMetrics;
+import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
