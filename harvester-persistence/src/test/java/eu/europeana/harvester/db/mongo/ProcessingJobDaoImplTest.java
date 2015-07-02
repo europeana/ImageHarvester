@@ -217,7 +217,7 @@ public class ProcessingJobDaoImplTest {
 
         for (final ProcessingJob job: processingJobDao.deactivateJobs(referenceOwners[0])) {
             assertEquals (JobState.PAUSE, job.getState());
-            assertEquals (JobState.PAUSE, processingJobDao.read(job.getId()));
+            assertEquals (JobState.PAUSE, processingJobDao.read(job.getId()).getState());
         }
     }
 
