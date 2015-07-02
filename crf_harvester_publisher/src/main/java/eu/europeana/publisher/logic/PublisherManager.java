@@ -105,6 +105,7 @@ public class PublisherManager {
             @Override
             public void run () {
                numberOfDocumentToProcess.set(publisherEuropeanaDao.countNumberOfDocumentUpdatedBefore(currentTimestamp));
+                LOG.error("Number of Remaining documents to process is: " + numberOfDocumentToProcess.toString());
             }
         };
 
