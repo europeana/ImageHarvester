@@ -18,6 +18,7 @@ import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.master.accountants.AccountantDispatcherActor;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
+import eu.europeana.harvester.cluster.master.metrics.ProcessingJobStateStatistics;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
 import eu.europeana.harvester.cluster.master.senders.JobSenderActor;
 import eu.europeana.harvester.db.interfaces.*;
@@ -65,6 +66,12 @@ public class ClusterMasterActor extends UntypedActor {
      * A wrapper class for all monitoring data
      */
     private ActorRef monitoringActor;
+
+    /**
+     *   every  X seconds computes the number of documents from Mongo which have
+     *   the state ERROR, SUCCESS or READY
+     */
+    private ActorRef processingJobStateStatisticsActor;
 
     /**
      * Contains all the configuration needed by this actor.
@@ -129,6 +136,8 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private final Integer cleanupInterval;
 
+    private final Integer delayForCountingTheStateOfDocuments;
+
     /**
      * Maps each IP with a boolean which indicates if an IP has jobs in MongoDB or not.
      */
@@ -136,15 +145,16 @@ public class ClusterMasterActor extends UntypedActor {
 
 
 
-    public ClusterMasterActor(final ClusterMasterConfig clusterMasterConfig, final IPExceptions ipExceptions,
-                              final ProcessingJobDao processingJobDao,
-                              final MachineResourceReferenceDao machineResourceReferenceDao,
-                              final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                              final SourceDocumentReferenceDao sourceDocumentReferenceDao,
-                              final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
-                              final DefaultLimits defaultLimits,
-                              final Integer cleanupInterval
-                              ) {
+    public ClusterMasterActor (final ClusterMasterConfig clusterMasterConfig,
+                               final IPExceptions ipExceptions,
+                               final ProcessingJobDao processingJobDao,
+                               final MachineResourceReferenceDao machineResourceReferenceDao,
+                               final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                               final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                               final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
+                               final DefaultLimits defaultLimits,
+                               final Integer cleanupInterval,
+                               final Integer delayForCountingTheStateOfDocuments) {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor constructor");
 
@@ -157,6 +167,7 @@ public class ClusterMasterActor extends UntypedActor {
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
         this.defaultLimits = defaultLimits;
         this.cleanupInterval = cleanupInterval;
+        this.delayForCountingTheStateOfDocuments = delayForCountingTheStateOfDocuments;
 
         this.actorsPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<ActorRef>>());
         this.tasksPerAddress = Collections.synchronizedMap(new HashMap<Address, HashSet<String>>());
@@ -181,6 +192,13 @@ public class ClusterMasterActor extends UntypedActor {
                 clusterMasterConfig, accountantActor, processingJobDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
                 defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
+
+        processingJobStateStatisticsActor = getContext().system().actorOf(Props.create(ProcessingJobStateStatistics.class,
+                                                                                        sourceDocumentProcessingStatisticsDao,
+                                                                                        delayForCountingTheStateOfDocuments
+                                                                                       ),
+                                                                           "processingJobStateStatistics"
+                                                                          );
 
         jobSenderActor = getContext().system().actorOf(Props.create(JobSenderActor.class, ipExceptions, ipsWithJobs,
         defaultLimits,cleanupInterval, jobLoaderActor,accountantActor, receiverActor), "jobSender");

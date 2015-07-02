@@ -105,8 +105,9 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
         final Map<ProcessingState, Long> results = new HashMap<>(ProcessingState.values().length, 1);
 
         for (final DBObject object: collection.aggregate(matchQuery, groupQuery).results()) {
-            final Object count = object.get("count");
-            results.put(ProcessingState.valueOf((String) object.get("_id")), (Long)object.get("count"));
+            long count = ((Number)object.get("count")).longValue();
+
+            results.put(ProcessingState.valueOf((String) object.get("_id")), count);
         }
 
         return results;

@@ -7,6 +7,7 @@ import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**

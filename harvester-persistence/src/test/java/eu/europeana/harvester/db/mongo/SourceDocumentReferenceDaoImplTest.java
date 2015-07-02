@@ -34,6 +34,15 @@ public class SourceDocumentReferenceDaoImplTest {
             Morphia morphia = new Morphia();
             String dbName = "europeana";
 
+            String username = "harvester_persistency";
+            String password = "Nhck0zCfcu0M6kK";
+
+            boolean auth = mongo.getDB("admin").authenticate(username, password.toCharArray());
+
+            if (!auth) {
+                fail("couldn't authenticate " + username + " against admin db");
+            }
+
             datastore = morphia.createDatastore(mongo, dbName);
         } catch (UnknownHostException e) {
             LOG.error(e.getMessage());

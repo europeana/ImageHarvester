@@ -15,7 +15,13 @@ public class ComputeProcessingJobStateStatistics implements Runnable {
 
     private final SourceDocumentProcessingStatisticsDao processingStatistics;
 
-    public ComputeProcessingJobStateStatistics (SourceDocumentProcessingStatisticsDao processingStatistics) {this.processingStatistics = processingStatistics;}
+    public ComputeProcessingJobStateStatistics (final SourceDocumentProcessingStatisticsDao processingStatistics) {
+        if (null == processingStatistics)  {
+            throw new IllegalArgumentException("SourceDocumentProcessingStatisticsDao cannot be null");
+        }
+
+        this.processingStatistics = processingStatistics;
+    }
 
     @Override
     public synchronized void run () {
