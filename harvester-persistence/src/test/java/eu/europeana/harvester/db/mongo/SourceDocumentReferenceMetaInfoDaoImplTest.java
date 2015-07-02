@@ -33,7 +33,7 @@ public class SourceDocumentReferenceMetaInfoDaoImplTest {
         try {
             MongoClient mongo = new MongoClient("localhost", 27017);
             Morphia morphia = new Morphia();
-            String dbName = "europeana";
+            String dbName = "harvester_persistency";
 
             String username = "harvester_persistency";
             String password = "Nhck0zCfcu0M6kK";
