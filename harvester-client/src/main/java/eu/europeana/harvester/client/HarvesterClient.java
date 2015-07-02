@@ -19,7 +19,7 @@ public interface HarvesterClient {
      *
      * @param sourceDocumentReferences contains basic information about a source document
      */
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(final
+    Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(final
                                                                                                                 Collection<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
 
     /**
@@ -28,7 +28,7 @@ public interface HarvesterClient {
      * @param processingJobs contains a list of jobs
      * @return the processing job
      */
-    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(Collection<ProcessingJob> processingJobs);
+    Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(Collection<ProcessingJob> processingJobs);
 
     /**
      * Sends to the master a new processing job.
@@ -36,7 +36,7 @@ public interface HarvesterClient {
      * @param processingJob contains a single job
      * @return the processing job
      */
-    public com.google.code.morphia.Key<ProcessingJob> createOrModify(ProcessingJob processingJob);
+    com.google.code.morphia.Key<ProcessingJob> createOrModify(ProcessingJob processingJob);
 
     /**
      * Stops a working or standby job.
@@ -44,7 +44,7 @@ public interface HarvesterClient {
      * @param jobId the unique id of the job
      * @return the updated job
      */
-    public ProcessingJob stopJob(String jobId);
+    ProcessingJob stopJob(String jobId);
 
     /**
      * Starts a stopped job.
@@ -52,7 +52,7 @@ public interface HarvesterClient {
      * @param jobId the unique id of the job
      * @return the updated job
      */
-    public ProcessingJob startJob(String jobId);
+    ProcessingJob startJob(String jobId);
 
 
     /**
@@ -61,24 +61,24 @@ public interface HarvesterClient {
      * @param jobId the unique id of the job
      * @return the job
      */
-    public ProcessingJob retrieveProcessingJob(String jobId);
+     ProcessingJob retrieveProcessingJob(String jobId);
 
     /**
      * Not implemented yet.
      */
-    public List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) throws Exception;
+    List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) throws Exception;
 
-    public SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url,String recordId);
+    SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url,String recordId);
 
-    public SourceDocumentReference retrieveSourceDocumentReferenceById(String id);
+    SourceDocumentReference retrieveSourceDocumentReferenceById(String id);
 
-        public SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url);
+    SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url);
 
-    public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
+    void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
 
-    public void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId);
+    void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId);
 
-    public SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId);
+    SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId);
 
         /**
          * Updates specific sourceDocumentReferenceMetaInfo document.
@@ -86,6 +86,8 @@ public interface HarvesterClient {
          * @param sourceDocumentReferenceMetaInfo
          * @return
          */
-    public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo);
+    boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo);
+
+    List<ProcessingJob> deactivateJobs (final ReferenceOwner owner);
 }
 

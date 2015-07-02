@@ -7,6 +7,7 @@ import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -67,7 +68,8 @@ public class HarvesterClientImpl implements HarvesterClient {
                 harvesterClientConfig);
     }
 
-    public HarvesterClientImpl(ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
+    public HarvesterClientImpl(ProcessingJobDao processingJobDao,
+                               MachineResourceReferenceDao machineResourceReferenceDao,
                                SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao, HarvesterClientConfig harvesterClientConfig) {
@@ -139,7 +141,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) throws Exception {
-        throw new Exception("Not implemented yet");
+        throw new NotImplementedException();
     }
 
     @Override
@@ -190,6 +192,11 @@ public class HarvesterClientImpl implements HarvesterClient {
     @Override
     public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo) {
         return sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo, WriteConcern.NORMAL);
+    }
+
+    @Override
+    public List<ProcessingJob> deactivateJobs (final ReferenceOwner owner) {
+        return processingJobDao.deactivateJobs(owner);
     }
 
     @Override

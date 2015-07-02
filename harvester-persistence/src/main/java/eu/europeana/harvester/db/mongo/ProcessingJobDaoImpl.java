@@ -2,12 +2,10 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
+import com.google.code.morphia.query.UpdateOperations;
 import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
-import eu.europeana.harvester.domain.JobPriority;
-import eu.europeana.harvester.domain.JobState;
-import eu.europeana.harvester.domain.Page;
-import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.harvester.domain.*;
 
 import java.util.*;
 
@@ -128,6 +126,39 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
         }
 
         return processingJobs;
+    }
+
+    @Override
+    public List<ProcessingJob> deactivateJobs (final ReferenceOwner owner) {
+        if (null == owner || (owner.equals(new ReferenceOwner()))) {
+            throw new IllegalArgumentException("The reference owner cannot be null and must have at least one field not null");
+        }
+
+        final Query<ProcessingJob> query = datastore.createQuery(ProcessingJob.class);
+
+        if (null != owner.getCollectionId()) {
+            query.criteria("referenceOwner.collectionId").equal(owner.getCollectionId());
+        }
+
+        if (null != owner.getRecordId()) {
+            query.criteria("referenceOwner.recordId").equal(owner.getRecordId());
+        }
+
+        if (null != owner.getProviderId()) {
+            query.criteria("referenceOwner.providerId").equal(owner.getProviderId());
+        }
+
+        if (null != owner.getExecutionId()) {
+            query.criteria("referenceOwner.providerId").equal(owner.getExecutionId());
+        }
+
+        final UpdateOperations<ProcessingJob> updateOperations = datastore.createUpdateOperations(ProcessingJob.class);
+
+        updateOperations.set("state", JobState.PAUSE.name());
+
+        datastore.update(query, updateOperations);
+
+        return query.asList();
     }
 
 

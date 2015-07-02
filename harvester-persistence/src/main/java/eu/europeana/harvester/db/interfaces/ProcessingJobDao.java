@@ -2,10 +2,7 @@ package eu.europeana.harvester.db.interfaces;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
-import eu.europeana.harvester.domain.JobPriority;
-import eu.europeana.harvester.domain.JobState;
-import eu.europeana.harvester.domain.Page;
-import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.harvester.domain.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +21,7 @@ public interface ProcessingJobDao {
      *                      operation
      * @return returns if the operation was successful
      */
-    public boolean create(ProcessingJob processingJob, WriteConcern writeConcern);
+     boolean create(ProcessingJob processingJob, WriteConcern writeConcern);
 
     /**
      * Creates or (if existing) modifies the ProcessingJobs objects
@@ -34,7 +31,7 @@ public interface ProcessingJobDao {
      *                       operation
      * @return returns if the operation was successful
      */
-    public com.google.code.morphia.Key<ProcessingJob> createOrModify(ProcessingJob processingJobs, WriteConcern writeConcern);
+     com.google.code.morphia.Key<ProcessingJob> createOrModify(ProcessingJob processingJobs, WriteConcern writeConcern);
 
     /**
      * Creates or (if existing) modifies the ProcessingJobs objects
@@ -44,7 +41,7 @@ public interface ProcessingJobDao {
      *                       operation
      * @return returns if the operation was successful
      */
-    public Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(Collection<ProcessingJob> processingJobs, WriteConcern writeConcern);
+     Iterable<com.google.code.morphia.Key<ProcessingJob>> createOrModify(Collection<ProcessingJob> processingJobs, WriteConcern writeConcern);
 
     /**
      * Reads and returns a ProcessingJob object
@@ -52,7 +49,7 @@ public interface ProcessingJobDao {
      * @param id the unique id of the record
      * @return - found ProcessingJob object, it can be null
      */
-    public ProcessingJob read(String id);
+     ProcessingJob read(String id);
 
     /**
      * Updates a ProcessingJob record
@@ -62,7 +59,7 @@ public interface ProcessingJobDao {
      *                      operation
      * @return - success or failure
      */
-    public boolean update(ProcessingJob processingJob, WriteConcern writeConcern);
+     boolean update(ProcessingJob processingJob, WriteConcern writeConcern);
 
     /**
      * Deletes a record from DB
@@ -70,7 +67,7 @@ public interface ProcessingJobDao {
      * @param id the unique id of the record
      * @return - an object which contains all information about this operation
      */
-    public WriteResult delete(String id);
+     WriteResult delete(String id);
 
     /**
      * Returns all the jobs from the DB with a specified state.
@@ -79,12 +76,12 @@ public interface ProcessingJobDao {
      * @param page     an object which contains the number of records needed and the offset.
      * @return - list of ProcessingJobs
      */
-    public List<ProcessingJob> getJobsWithState(JobState jobState, Page page);
+     List<ProcessingJob> getJobsWithState(JobState jobState, Page page);
 
     /**
      * @return a map which maps each IP address with the number of processingJobs from that IP address
      */
-    public Map<String, Integer> getIpDistribution();
+     Map<String, Integer> getIpDistribution();
 
     /**
      * Returns all the jobs from the DB with a specified state, but it's careful to return jobs from different ips.
@@ -93,6 +90,7 @@ public interface ProcessingJobDao {
      * @param page     an object which contains the number of records needed and the offset.
      * @return - list of ProcessingJobs
      */
-    public List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs);
+     List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs);
 
+    List<ProcessingJob> deactivateJobs (final ReferenceOwner owner);
 }

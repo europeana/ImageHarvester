@@ -9,6 +9,7 @@ import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.unitils.reflectionassert.ReflectionAssert;
@@ -25,10 +26,12 @@ public class ProcessingJobDaoImplTest {
     private static final Logger LOG = LogManager.getLogger(ProcessingJobDaoImplTest.class.getName());
 
     private ProcessingJobDao processingJobDao;
+    private List<String> ids;
 
     @Before
     public void setUp() throws Exception {
         Datastore datastore = null;
+        ids = new ArrayList<>();
 
         try {
             MongoClient mongo = new MongoClient("localhost", 27017);
@@ -50,6 +53,13 @@ public class ProcessingJobDaoImplTest {
         }
 
         processingJobDao = new ProcessingJobDaoImpl(datastore);
+    }
+
+    @After
+    public void tearDown() {
+        for (final String id: ids) {
+            processingJobDao.delete(id);
+        }
     }
 
     @Test
@@ -188,6 +198,27 @@ public class ProcessingJobDaoImplTest {
         assertNotNull(allJobs);
 
         processingJobDao.delete(processingJob.getId());
+    }
+
+    @Test
+    public void testUpdateDocuments() throws Exception {
+        final ReferenceOwner[] referenceOwners = new ReferenceOwner[] {new ReferenceOwner("1", "1", "1", "1"),
+                                                                       new ReferenceOwner("2", "1", "2", "3")
+                                                                      };
+        final Random random = new Random();
+        for (int i = 0; i < 50; ++i) {
+            final String id = UUID.randomUUID().toString();
+            ids.add(id);
+            final ProcessingJob processingJob =
+                    new ProcessingJob(id, 1, new Date(), referenceOwners[random.nextInt(2)], null, JobState.READY, "", null);
+
+            processingJobDao.create(processingJob, WriteConcern.NONE);
+        }
+
+        for (final ProcessingJob job: processingJobDao.deactivateJobs(referenceOwners[0])) {
+            assertEquals (JobState.PAUSE, job.getState());
+            assertEquals (JobState.PAUSE, processingJobDao.read(job.getId()));
+        }
     }
 
 }
