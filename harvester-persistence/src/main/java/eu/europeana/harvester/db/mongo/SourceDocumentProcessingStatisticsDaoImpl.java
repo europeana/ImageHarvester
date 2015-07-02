@@ -88,12 +88,13 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
 
         final BasicDBList matchElements = new BasicDBList();
 
-        matchElements.add(new BasicDBObject("state", ProcessingState.ERROR));
-        matchElements.add(new BasicDBObject("state", ProcessingState.SUCCESS));
-        matchElements.add(new BasicDBObject("state", ProcessingState.ERROR));
+        matchElements.add(new BasicDBObject("state", ProcessingState.ERROR.name()));
+        matchElements.add(new BasicDBObject("state", ProcessingState.SUCCESS.name()));
+        matchElements.add(new BasicDBObject("state", ProcessingState.READY.name()));
 
 
         final DBObject matchQuery = new BasicDBObject("$match", new BasicDBObject("$or", matchElements));
+
 
         final DBObject groupStateElements = new BasicDBObject();
 
@@ -105,6 +106,7 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
         final Map<ProcessingState, Long> results = new HashMap<>(ProcessingState.values().length, 1);
 
         for (final DBObject object: collection.aggregate(matchQuery, groupQuery).results()) {
+            System.out.print(object);
             long count = ((Number)object.get("count")).longValue();
 
             results.put(ProcessingState.valueOf((String) object.get("_id")), count);

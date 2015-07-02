@@ -10,6 +10,7 @@ import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.unitils.reflectionassert.ReflectionAssert;
@@ -34,14 +35,10 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
             Morphia morphia = new Morphia();
             String dbName = "harvester_persistency";
 
-            String username = "harvester_persistency";
-            String password = "Nhck0zCfcu0M6kK";
+            String username = "";
+            String password = "";
 
-            boolean auth = mongo.getDB("admin").authenticate(username, password.toCharArray());
 
-            if (!auth) {
-                fail("couldn't authenticate " + username + " against admin db");
-            }
 
             datastore = morphia.createDatastore(mongo, dbName);
         } catch (UnknownHostException e) {
@@ -50,6 +47,7 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
 
         sourceDocumentProcessingStatisticsDao = new SourceDocumentProcessingStatisticsDaoImpl(datastore);
     }
+
 
     @Test
     public void test_CreateOrModify_NullCollection() {
@@ -177,33 +175,44 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
 
     @Test
     public void testAggregateCount() throws Exception {
+        final List<String> ids = new ArrayList<>();
        for (int i = 0; i < 50; ++i) {
+           final String id = UUID.randomUUID().toString();
+           ids.add(id);
            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                   new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, ProcessingState.READY, new ReferenceOwner("1", "1", "1"),
+                   new SourceDocumentProcessingStatistics(id, new Date(), new Date(), true, null, ProcessingState.READY, new ReferenceOwner("1", "1", "1"),
                                                           null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
            sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
        }
 
         for (int i = 0; i < 100; ++i) {
+            final String id = UUID.randomUUID().toString();
+            ids.add(id);
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                    new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, ProcessingState.ERROR, new ReferenceOwner("1", "1", "1"),
+                    new SourceDocumentProcessingStatistics(id,new Date(), new Date(), true, null, ProcessingState.ERROR, new ReferenceOwner("1", "1", "1"),
                                                            null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
             sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
         }
 
         for (int i = 0; i < 10; ++i) {
+            final String id = UUID.randomUUID().toString();
+            ids.add(id);
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                    new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, ProcessingState.SUCCESS, new ReferenceOwner("1", "1", "1"),
+                    new SourceDocumentProcessingStatistics(id,new Date(), new Date(), true, null, ProcessingState.SUCCESS, new ReferenceOwner("1", "1", "1"),
                                                            null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
             sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
         }
 
         final Map<ProcessingState, Long> counts = sourceDocumentProcessingStatisticsDao.countNumberOfDocumentsWithState();
 
+        for (final String id: ids) {
+            sourceDocumentProcessingStatisticsDao.delete(id);
+        }
+
         assertEquals (3, counts.size());
         assertEquals (50L, counts.get(ProcessingState.READY).longValue());
-        assertEquals (100L, counts.get(ProcessingState.READY).longValue());
-        assertEquals (10L, counts.get(ProcessingState.READY).longValue());
+        assertEquals (100L, counts.get(ProcessingState.ERROR).longValue());
+        assertEquals (10L, counts.get(ProcessingState.SUCCESS).longValue());
     }
 
 }
