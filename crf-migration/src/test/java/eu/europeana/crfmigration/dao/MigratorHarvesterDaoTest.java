@@ -4,10 +4,7 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import eu.europeana.harvester.db.MorphiaDataStore;
-import eu.europeana.harvester.domain.ProcessingJob;
-import eu.europeana.harvester.domain.ReferenceOwner;
-import eu.europeana.harvester.domain.SourceDocumentReference;
-import eu.europeana.harvester.domain.URLSourceType;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
 import org.apache.commons.lang3.StringUtils;
@@ -112,7 +109,7 @@ public class MigratorHarvesterDaoTest {
     public void test_ProcessJobs_OneElement() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJob> processingJobList = Arrays.asList(ProcessingJobBuilder
                                                                             .edmObjectUrlJobs("http://www.google.com",
-                                                                                              owner, falseOption).get(0)
+                                                                                              owner, JobPriority.NORMAL.getPriority(), falseOption).get(0)
                                                                             .getProcessingJob());
         harvesterDao.saveProcessingJobs(processingJobList,migrationBatchId);
         assertEquals (1, dataStore.getCount(processingJobList.get(0)));
@@ -122,11 +119,11 @@ public class MigratorHarvesterDaoTest {
     public void test_ProcessJobs_ManyElements() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJob> processingJobList = new ArrayList<>();
 
-        processingJobList.add(ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner, falseOption).get(0)
+        processingJobList.add(ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(), falseOption).get(0)
                                                  .getProcessingJob());
-        processingJobList.add(ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.skype.com", owner, falseOption).get(0)
+        processingJobList.add(ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.skype.com", owner,JobPriority.NORMAL.getPriority(), falseOption).get(0)
                                                  .getProcessingJob());
-        processingJobList.add(ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.yahoo.com", owner, falseOption).get(0)
+        processingJobList.add(ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.yahoo.com", owner,JobPriority.NORMAL.getPriority(), falseOption).get(0)
                                                  .getProcessingJob());
 
         harvesterDao.saveProcessingJobs(processingJobList,migrationBatchId);

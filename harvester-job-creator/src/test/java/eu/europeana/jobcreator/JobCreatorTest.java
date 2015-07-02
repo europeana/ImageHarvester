@@ -32,7 +32,7 @@ public class JobCreatorTest {
 
     @Test (expected = IllegalArgumentException.class)
     public void test_AllArgumentNull() throws MalformedURLException, UnknownHostException {
-        JobCreator.createJobs(null, null, null, null, null, null, null, null);
+        JobCreator.createJobs(null, null, null, null, null, null, null, null,JobPriority.NORMAL.getPriority());
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -42,9 +42,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmObjectTasks_WithoutOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner, falseOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    url, null, null, null
+                                                                    url, null, null, null,JobPriority.NORMAL.getPriority()
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -52,9 +52,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmObjectTasks_DefaultOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner, falseOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    url, null, null, null, falseOption
+                                                                    url, null, null, null,JobPriority.NORMAL.getPriority(), falseOption
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -62,9 +62,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmObjectTasks_ForceUnconditionalDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner, trueOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), trueOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    url, null, null, null, trueOption
+                                                                    url, null, null, null,JobPriority.NORMAL.getPriority(), trueOption
                                                                    );
 
         checkEquals(expectedJobs, jobs);
@@ -72,9 +72,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmHasViewUrls_WithoutOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, urls, null, null
+                                                                    null, urls, null, null,JobPriority.NORMAL.getPriority()
                                                                    );
 
         checkEquals(expectedJobs, jobs);
@@ -82,9 +82,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmHasViewUrls_DefaultOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, urls, null, null, falseOption
+                                                                    null, urls, null, null,JobPriority.NORMAL.getPriority(), falseOption
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -92,9 +92,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmHasViewUrls_ForceUnconditionalDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, trueOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), trueOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, urls, null, null, trueOption
+                                                                    null, urls, null, null,JobPriority.NORMAL.getPriority(), trueOption
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -102,9 +102,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmIsShownByUrl_WithoutOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner, falseOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, null, url, null
+                                                                    null, null, url, null,JobPriority.NORMAL.getPriority()
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -112,9 +112,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmIsShownByUrl_DefaultOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner, falseOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, null, url, null, falseOption
+                                                                    null, null, url, null,JobPriority.NORMAL.getPriority(), falseOption
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -122,9 +122,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmIsShownByUrl_ForceUnconditionalDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner, trueOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), trueOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, null, url, null, trueOption
+                                                                    null, null, url, null,JobPriority.NORMAL.getPriority(), trueOption
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -135,9 +135,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmIsShownAtUrl_WithoutOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner, falseOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, null, null, url
+                                                                    null, null, null, url,JobPriority.NORMAL.getPriority()
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -145,9 +145,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmIsShownAtUrl_DefaultOptions() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner, falseOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, null, null, url, falseOption
+                                                                    null, null, null, url,JobPriority.NORMAL.getPriority(), falseOption
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -155,9 +155,9 @@ public class JobCreatorTest {
 
     @Test
     public void test_edmIsShownAtUrl_ForceUnconditionalDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner, trueOption);
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), trueOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, null, null, url, trueOption
+                                                                    null, null, null, url,JobPriority.NORMAL.getPriority(), trueOption
                                                                    );
 
         checkEquals (expectedJobs, jobs);
@@ -166,13 +166,13 @@ public class JobCreatorTest {
     @Test
     public void test_AllTasks() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> expectedJobs = new ArrayList<>();
-        expectedJobs.addAll(ProcessingJobBuilder.edmObjectUrlJobs(url, owner, falseOption));
-        expectedJobs.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption));
-        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner, falseOption));
-        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner, falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
 
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    url, urls, url, url
+                                                                    url, urls, url, url,JobPriority.NORMAL.getPriority()
                                                                    );
         checkEquals(expectedJobs, jobs);
     }
@@ -180,11 +180,11 @@ public class JobCreatorTest {
     @Test
     public void test_EdmObject_EdmHasViews() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> expectedJobs = new ArrayList<>();
-        expectedJobs.addAll(ProcessingJobBuilder.edmObjectUrlJobs(url, owner, falseOption));
-        expectedJobs.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption));
 
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    url, urls, null, null
+                                                                    url, urls, null, null,JobPriority.NORMAL.getPriority()
                                                                    );
         checkEquals(expectedJobs, jobs);
     }
@@ -192,11 +192,11 @@ public class JobCreatorTest {
     @Test
     public void test_EdmIsShownBy_EdmIsShownAt() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> expectedJobs = new ArrayList<>();
-        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner, falseOption));
-        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner, falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
 
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, null, url, url
+                                                                    null, null, url, url,JobPriority.NORMAL.getPriority()
                                                                    );
         checkEquals(expectedJobs, jobs);
     }
@@ -204,12 +204,12 @@ public class JobCreatorTest {
     @Test
     public void test_EdmObject_EdmHasViews_EdmIsShownBy() throws MalformedURLException, UnknownHostException {
         final List<ProcessingJobTuple> expectedJobs = new ArrayList<>();
-        expectedJobs.addAll(ProcessingJobBuilder.edmObjectUrlJobs(url, owner, falseOption));
-        expectedJobs.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption));
-        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner, falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption));
+        expectedJobs.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
 
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    url, urls, url, null
+                                                                    url, urls, url, null,JobPriority.NORMAL.getPriority()
                                                                    );
         checkEquals(expectedJobs, jobs);
     }

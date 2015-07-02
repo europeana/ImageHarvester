@@ -27,47 +27,47 @@ public class ProcessingJobBuilderTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EdmObj_NullOption() throws MalformedURLException, UnknownHostException {
-        ProcessingJobBuilder.edmObjectUrlJobs("", owner, null);
+        ProcessingJobBuilder.edmObjectUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EdmHasView_NullOption() throws MalformedURLException, UnknownHostException {
-        ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(""), owner, null);
+        ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(""), owner,JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EdmIsShownBy_NullOption() throws MalformedURLException, UnknownHostException {
-        ProcessingJobBuilder.edmIsShownByUrlJobs("", owner, null);
+        ProcessingJobBuilder.edmIsShownByUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EdmIsShownAt_NullOption() throws MalformedURLException, UnknownHostException {
-        ProcessingJobBuilder.edmIsShownAtUrlJobs("", owner, null);
+        ProcessingJobBuilder.edmIsShownAtUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = MalformedURLException.class)
     public void test_EdmObj_InvalidUrl() throws MalformedURLException, UnknownHostException {
-        ProcessingJobBuilder.edmObjectUrlJobs(UUID.randomUUID().toString(), owner, falseOption);
+        ProcessingJobBuilder.edmObjectUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
     @Test(expected = MalformedURLException.class)
     public void test_EdmHasView_InvalidUrl() throws MalformedURLException, UnknownHostException {
-        ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(UUID.randomUUID().toString()), owner, falseOption);
+        ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(UUID.randomUUID().toString()), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
     @Test(expected = MalformedURLException.class)
     public void test_EdmIsShownBy_InvalidUrl() throws MalformedURLException, UnknownHostException {
-        ProcessingJobBuilder.edmIsShownByUrlJobs(UUID.randomUUID().toString(), owner, falseOption);
+        ProcessingJobBuilder.edmIsShownByUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
     @Test(expected = MalformedURLException.class)
     public void test_EdmIsShownAt_InvalidUrl() throws MalformedURLException, UnknownHostException {
-        ProcessingJobBuilder.edmIsShownAtUrlJobs(UUID.randomUUID().toString(), owner, falseOption);
+        ProcessingJobBuilder.edmIsShownAtUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
     @Test
     public void test_EdmObj_ValidUrl_DefaultOption() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                     falseOption);
 
         assertEquals(1, jobs.size());
@@ -80,7 +80,7 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void test_EdmObj_ValidUrl_ForceUnconditionalDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                     trueOption);
 
         assertEquals(1, jobs.size());
@@ -95,7 +95,7 @@ public class ProcessingJobBuilderTest {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
         assertEquals(urls.size(), jobs.size());
 
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2, ProcessingJobSubTaskType.values());
@@ -110,7 +110,7 @@ public class ProcessingJobBuilderTest {
         urls.add("http://www.facebook.com");
 
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
 
         assertEquals(urls.size(), jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
@@ -129,7 +129,7 @@ public class ProcessingJobBuilderTest {
         urls.add("http://www.w3schools.com/");
         urls.add("http://www.skype.com");
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, falseOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
 
         assertEquals(urls.size(), jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2, ProcessingJobSubTaskType.values());
@@ -140,7 +140,7 @@ public class ProcessingJobBuilderTest {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, trueOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), trueOption);
         assertEquals(urls.size(), jobs.size());
 
         validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,  1, 1, 2, ProcessingJobSubTaskType.values());
@@ -157,7 +157,7 @@ public class ProcessingJobBuilderTest {
         urls.add("http://www.w3schools.com/");
         urls.add("http://www.skype.com");
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, trueOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), trueOption);
 
         assertEquals(urls.size(), jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 2, ProcessingJobSubTaskType.values());
@@ -165,7 +165,7 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void testEdmIsShownBy_ValidUrl_DefaultOption() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                        falseOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
@@ -174,7 +174,7 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void testEdmIsShownBy_ValidUrl_ForceUnconditionalDownload() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                        trueOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 2,
@@ -184,7 +184,7 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void testEdmIsShownAt_ValidUrl_DefaultOption() throws MalformedURLException, UnknownHostException  {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.google.com", owner,
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                        falseOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CHECK_LINK, 0, 0, 0);
@@ -192,7 +192,7 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void testEdmIsShownAt_ValidUrl_ForceUnconditionalDownload() throws MalformedURLException, UnknownHostException  {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.google.com", owner, trueOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(), trueOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CHECK_LINK, 0, 0, 0);
     }

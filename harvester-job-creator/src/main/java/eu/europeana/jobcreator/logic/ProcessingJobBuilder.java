@@ -36,7 +36,7 @@ public class ProcessingJobBuilder {
      * @throws MalformedURLException
      * @throws UnknownHostException
      */
-    public static final List<ProcessingJobTuple> edmObjectUrlJobs(final String url, final ReferenceOwner owner, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+    public static final List<ProcessingJobTuple> edmObjectUrlJobs(final String url, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -48,7 +48,7 @@ public class ProcessingJobBuilder {
         subTasks.addAll(SubTaskBuilder.colourExtraction());
         subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
 
-        final ProcessingJob processingJob = new ProcessingJob(JobPriority.NORMAL.getPriority(), new Date(), owner,
+        final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
                 Arrays.asList(
                         new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
                                 sourceDocumentReference.getId(),
@@ -70,7 +70,7 @@ public class ProcessingJobBuilder {
      * @throws MalformedURLException
      * @throws UnknownHostException
      */
-    public static final List<ProcessingJobTuple> edmHasViewUrlsJobs(final List<String> urls, final ReferenceOwner owner, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+    public static final List<ProcessingJobTuple> edmHasViewUrlsJobs(final List<String> urls, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -87,7 +87,7 @@ public class ProcessingJobBuilder {
             subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
             subTasks.addAll(SubTaskBuilder.metaExtraction());
 
-            final ProcessingJob processingJob = new ProcessingJob(JobPriority.NORMAL.getPriority(), new Date(), owner,
+            final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
                     Arrays.asList(
                             new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
                                     sourceDocumentReference.getId(),
@@ -111,7 +111,7 @@ public class ProcessingJobBuilder {
      * @throws MalformedURLException
      * @throws UnknownHostException
      */
-    public static final List<ProcessingJobTuple> edmIsShownByUrlJobs(final String url, final ReferenceOwner owner, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+    public static final List<ProcessingJobTuple> edmIsShownByUrlJobs(final String url, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -124,7 +124,7 @@ public class ProcessingJobBuilder {
         subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
         subTasks.addAll(SubTaskBuilder.metaExtraction());
 
-        final ProcessingJob processingJob = new ProcessingJob(JobPriority.NORMAL.getPriority(), new Date(), owner,
+        final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
                 Arrays.asList(
                         new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
                                 sourceDocumentReference.getId(),
@@ -147,7 +147,7 @@ public class ProcessingJobBuilder {
      * @throws MalformedURLException
      * @throws UnknownHostException
      */
-    public static final List<ProcessingJobTuple> edmIsShownAtUrlJobs(final String url, final ReferenceOwner owner, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+    public static final List<ProcessingJobTuple> edmIsShownAtUrlJobs(final String url, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -155,7 +155,7 @@ public class ProcessingJobBuilder {
         final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.ISSHOWNAT, url,
                 null, null, null, null, true);
 
-        final ProcessingJob processingJob = new ProcessingJob(JobPriority.NORMAL.getPriority(), new Date(), owner,
+        final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
                 Arrays.asList(
                         new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
                                 sourceDocumentReference.getId(),

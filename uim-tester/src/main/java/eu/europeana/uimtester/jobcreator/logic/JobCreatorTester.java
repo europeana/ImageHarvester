@@ -1,11 +1,10 @@
 package eu.europeana.uimtester.jobcreator.logic;
 
-import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import eu.europeana.harvester.client.HarvesterClient;
+import eu.europeana.harvester.domain.JobPriority;
 import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
-import eu.europeana.uimtester.domain.UIMTesterFieldNames;
 import eu.europeana.uimtester.jobcreator.domain.UIMTestSample;
 
 import java.io.File;
@@ -13,7 +12,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -54,7 +52,8 @@ public class JobCreatorTester {
                     testSample.getEdmObjectUrl(),
                     testSample.getEdmHasViewUrls(),
                     testSample.getEdmIsShownByUrl(),
-                    testSample.getEdmIsShownAtUrl()
+                    testSample.getEdmIsShownAtUrl(),
+                    JobPriority.FASTLANE.getPriority()
             ));
         }
         return generatedJobs;
