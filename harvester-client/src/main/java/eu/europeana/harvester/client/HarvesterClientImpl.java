@@ -7,7 +7,6 @@ import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -139,8 +138,8 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) {
-        throw new NotImplementedException();
+    public List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) throws Exception {
+        throw new Exception("Not implemented yet");
     }
 
     @Override
