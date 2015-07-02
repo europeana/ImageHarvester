@@ -36,27 +36,27 @@ public class ProcessingJobStateStatistics extends UntypedActor {
         this.numberOfSecondsToDelay = numberOfSecondsToDelay;
         computeProcessingJobStateStatistics = new ComputeProcessingJobStateStatistics(processingStatistics);
 
-        MasterMetrics.Master.jobsPersistenceErrorCount.registerHandler(new Gauge<Integer>() {
+        MasterMetrics.Master.jobsPersistenceErrorCount.registerHandler(new Gauge<Long>() {
 
             @Override
-            public Integer getValue () {
-                return computeProcessingJobStateStatistics.getNumberOfJobsWithError().intValue();
+            public Long getValue () {
+                return computeProcessingJobStateStatistics.getNumberOfJobsWithError();
             }
         });
 
-        MasterMetrics.Master.jobsPersistenceFinishedWithSuccessCount.registerHandler(new Gauge<Integer>() {
+        MasterMetrics.Master.jobsPersistenceFinishedWithSuccessCount.registerHandler(new Gauge<Long>() {
 
             @Override
-            public Integer getValue () {
-                return computeProcessingJobStateStatistics.getNumberOfJobsSuccessfulyFinished().intValue();
+            public Long getValue () {
+                return computeProcessingJobStateStatistics.getNumberOfJobsSuccessfulyFinished();
             }
         });
 
-        MasterMetrics.Master.jobsPersistenceReadyCount.registerHandler(new Gauge<Integer>() {
+        MasterMetrics.Master.jobsPersistenceReadyCount.registerHandler(new Gauge<Long>() {
 
             @Override
-            public Integer getValue () {
-                return computeProcessingJobStateStatistics.getNumberOfJobsReady().intValue();
+            public Long getValue () {
+                return computeProcessingJobStateStatistics.getNumberOfJobsReady();
             }
         });
     }

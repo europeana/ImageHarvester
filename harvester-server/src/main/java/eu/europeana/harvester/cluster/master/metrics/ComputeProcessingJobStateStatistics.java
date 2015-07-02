@@ -4,38 +4,37 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDa
 import eu.europeana.harvester.domain.ProcessingState;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by salexandru on 01.07.2015.
  */
 public class ComputeProcessingJobStateStatistics implements Runnable {
-    private AtomicLong numberOfJobsReady = new AtomicLong();
-    private AtomicLong numberOfJobsSuccessfulyFinished = new AtomicLong();
-    private AtomicLong numberOfJobsWithError = new AtomicLong();
+    private long numberOfJobsReady;
+    private long numberOfJobsSuccessfulyFinished;
+    private long numberOfJobsWithError;
 
     private final SourceDocumentProcessingStatisticsDao processingStatistics;
 
     public ComputeProcessingJobStateStatistics (SourceDocumentProcessingStatisticsDao processingStatistics) {this.processingStatistics = processingStatistics;}
 
     @Override
-    public void run () {
-        final Map<ProcessingState, Integer> results = processingStatistics.countNumberOfDocumentsWithState();
+    public synchronized void run () {
+        final Map<ProcessingState, Long> results = processingStatistics.countNumberOfDocumentsWithState();
 
-        numberOfJobsReady.set(results.get(ProcessingState.READY));
-        numberOfJobsSuccessfulyFinished.set(results.get(ProcessingState.SUCCESS));
-        numberOfJobsWithError.set(results.get(ProcessingState.ERROR));
+        numberOfJobsReady = results.get(ProcessingState.READY);
+        numberOfJobsSuccessfulyFinished = results.get(ProcessingState.SUCCESS);
+        numberOfJobsWithError = results.get(ProcessingState.ERROR);
     }
 
-    public Long getNumberOfJobsReady () {
-        return numberOfJobsReady.longValue();
+    public synchronized long getNumberOfJobsReady () {
+        return numberOfJobsReady;
     }
 
-    public Long getNumberOfJobsSuccessfulyFinished () {
-        return numberOfJobsSuccessfulyFinished.longValue();
+    public synchronized long getNumberOfJobsSuccessfulyFinished () {
+        return numberOfJobsSuccessfulyFinished;
     }
 
-    public Long getNumberOfJobsWithError () {
-        return numberOfJobsWithError.longValue();
+    public synchronized long getNumberOfJobsWithError () {
+        return numberOfJobsWithError;
     }
 }

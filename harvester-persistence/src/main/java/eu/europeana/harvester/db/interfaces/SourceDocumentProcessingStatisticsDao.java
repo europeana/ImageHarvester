@@ -88,5 +88,5 @@ public interface SourceDocumentProcessingStatisticsDao {
      *  @return - a mapping between the {@link ProcessingState} and the number of documents that have that state
      */
     @Deprecated
-    Map<ProcessingState, Integer> countNumberOfDocumentsWithState();
+    Map<ProcessingState, Long> countNumberOfDocumentsWithState();
 }

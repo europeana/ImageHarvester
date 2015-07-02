@@ -83,7 +83,7 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     }
 
     @Override
-    public Map<ProcessingState, Integer> countNumberOfDocumentsWithState () {
+    public Map<ProcessingState, Long> countNumberOfDocumentsWithState () {
         final DBCollection collection = datastore.getCollection(SourceDocumentProcessingStatistics.class);
 
         final BasicDBList matchElements = new BasicDBList();
@@ -102,10 +102,11 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
 
         final DBObject groupQuery = new BasicDBObject("$group", groupStateElements);
 
-        final Map<ProcessingState, Integer> results = new HashMap<>(ProcessingState.values().length, 1);
+        final Map<ProcessingState, Long> results = new HashMap<>(ProcessingState.values().length, 1);
 
         for (final DBObject object: collection.aggregate(matchQuery, groupQuery).results()) {
-           results.put(ProcessingState.valueOf((String) object.get("_id")), (Integer)object.get("count"));
+            final Object count = object.get("count");
+            results.put(ProcessingState.valueOf((String) object.get("_id")), (Long)object.get("count"));
         }
 
         return results;
