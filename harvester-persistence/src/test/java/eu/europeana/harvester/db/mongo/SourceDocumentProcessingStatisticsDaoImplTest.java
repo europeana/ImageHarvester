@@ -175,4 +175,35 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
         assertNull(sourceDocumentProcessingStatisticsFromRead);
     }
 
+    @Test
+    public void testAggregateCount() throws Exception {
+       for (int i = 0; i < 50; ++i) {
+           final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
+                   new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, ProcessingState.READY, new ReferenceOwner("1", "1", "1"),
+                                                          null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
+           sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
+       }
+
+        for (int i = 0; i < 100; ++i) {
+            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
+                    new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, ProcessingState.ERROR, new ReferenceOwner("1", "1", "1"),
+                                                           null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
+            sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
+        }
+
+        for (int i = 0; i < 10; ++i) {
+            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
+                    new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, ProcessingState.SUCCESS, new ReferenceOwner("1", "1", "1"),
+                                                           null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
+            sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
+        }
+
+        final Map<ProcessingState, Long> counts = sourceDocumentProcessingStatisticsDao.countNumberOfDocumentsWithState();
+
+        assertEquals (3, counts.size());
+        assertEquals (50L, counts.get(ProcessingState.READY).longValue());
+        assertEquals (100L, counts.get(ProcessingState.READY).longValue());
+        assertEquals (10L, counts.get(ProcessingState.READY).longValue());
+    }
+
 }
