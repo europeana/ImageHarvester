@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Created by salexandru on 01.07.2015.
  */
-public class ComputeProcessingJobStateStatistics implements Runnable {
+public class ComputeProcessingJobStateStatistics {
     private long numberOfJobsReady;
     private long numberOfJobsSuccessfullyFinished;
     private long numberOfJobsWithError;
@@ -23,9 +23,12 @@ public class ComputeProcessingJobStateStatistics implements Runnable {
         this.processingStatistics = processingStatistics;
     }
 
-    @Override
     public synchronized void run () {
         final Map<ProcessingState, Long> results = processingStatistics.countNumberOfDocumentsWithState();
+        
+        if (null == results || results.isEmpty()) {
+            return;
+        }
 
         numberOfJobsReady = results.get(ProcessingState.READY);
         numberOfJobsSuccessfullyFinished = results.get(ProcessingState.SUCCESS);
