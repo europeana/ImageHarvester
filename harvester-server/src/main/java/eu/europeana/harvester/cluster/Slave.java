@@ -17,7 +17,6 @@ import eu.europeana.harvester.cluster.slave.SlaveMetrics;
 import eu.europeana.harvester.cluster.slave.validator.ImageMagicValidator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.dummy.DummyMediaStorageClientImpl;
-import eu.europeana.harvester.db.mongo.MediaStorageClientImpl;
 import eu.europeana.harvester.db.swift.SwiftConfiguration;
 import eu.europeana.harvester.domain.MediaStorageClientConfig;
 import eu.europeana.harvester.domain.MongoConfig;
@@ -116,7 +115,7 @@ public class Slave {
 
         MediaStorageClient mediaStorageClient = null;
         try {
-            mediaStorageClient = new MediaStorageClientImpl(mediaStorageClientConfig);
+            //mediaStorageClient = new MediaStorageClientImpl(mediaStorageClientConfig);
             SwiftConfiguration swiftConfiguration = new SwiftConfiguration("https://auth.hydranodes.de:5000/v2.0",
             "d35f3a21-cf35-48a0-a035-99bfc2252528.swift.tenant@a9s.eu",
                     "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu",
