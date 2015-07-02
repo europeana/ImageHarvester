@@ -10,7 +10,7 @@ import java.util.Map;
  */
 public class ComputeProcessingJobStateStatistics implements Runnable {
     private long numberOfJobsReady;
-    private long numberOfJobsSuccessfulyFinished;
+    private long numberOfJobsSuccessfullyFinished;
     private long numberOfJobsWithError;
 
     private final SourceDocumentProcessingStatisticsDao processingStatistics;
@@ -28,7 +28,7 @@ public class ComputeProcessingJobStateStatistics implements Runnable {
         final Map<ProcessingState, Long> results = processingStatistics.countNumberOfDocumentsWithState();
 
         numberOfJobsReady = results.get(ProcessingState.READY);
-        numberOfJobsSuccessfulyFinished = results.get(ProcessingState.SUCCESS);
+        numberOfJobsSuccessfullyFinished = results.get(ProcessingState.SUCCESS);
         numberOfJobsWithError = results.get(ProcessingState.ERROR);
     }
 
@@ -36,8 +36,8 @@ public class ComputeProcessingJobStateStatistics implements Runnable {
         return numberOfJobsReady;
     }
 
-    public synchronized long getNumberOfJobsSuccessfulyFinished () {
-        return numberOfJobsSuccessfulyFinished;
+    public synchronized long getNumberOfJobsSuccessfullyFinished () {
+        return numberOfJobsSuccessfullyFinished;
     }
 
     public synchronized long getNumberOfJobsWithError () {

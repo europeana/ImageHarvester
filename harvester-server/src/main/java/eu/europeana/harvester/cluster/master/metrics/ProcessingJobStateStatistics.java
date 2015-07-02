@@ -5,7 +5,6 @@ import akka.actor.UntypedActor;
 import com.codahale.metrics.Gauge;
 import eu.europeana.harvester.cluster.domain.messages.GetProcessingJobStatistics;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.domain.ProcessingState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
@@ -47,7 +46,7 @@ public class ProcessingJobStateStatistics extends UntypedActor {
 
             @Override
             public Long getValue () {
-                return computeProcessingJobStateStatistics.getNumberOfJobsSuccessfulyFinished();
+                return computeProcessingJobStateStatistics.getNumberOfJobsSuccessfullyFinished();
             }
         });
 
