@@ -221,6 +221,7 @@ public class ClusterMasterActor extends UntypedActor {
         getContext().system().stop(receiverActor);
         getContext().system().stop(accountantActor);
         getContext().system().stop(monitoringActor);
+        getContext().system().stop(processingJobStateStatisticsActor);
     }
 
     @Override
