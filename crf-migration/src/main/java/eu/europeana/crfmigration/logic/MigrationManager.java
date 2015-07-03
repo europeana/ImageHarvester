@@ -6,6 +6,7 @@ import eu.europeana.crfmigration.dao.MigratorEuropeanaDao;
 import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
 import eu.europeana.crfmigration.logging.LoggingComponent;
+import eu.europeana.harvester.domain.JobPriority;
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 import eu.europeana.jobcreator.JobCreator;
@@ -133,7 +134,7 @@ public class MigrationManager {
                                 edmObject.getReferenceOwner().getProviderId(),
                                 edmObject.getReferenceOwner().getRecordId(),
                                 edmObject.getReferenceOwner().getExecutionId(),
-                                edmObject.getEdmObject(), edmObject.getEdmHasViews(), edmObject.getEdmIsShownBy(), edmObject.getEdmIsShownAt()));
+                                edmObject.getEdmObject(), edmObject.getEdmHasViews(), edmObject.getEdmIsShownBy(), edmObject.getEdmIsShownAt(), JobPriority.NORMAL.getPriority()));
             } catch (UnknownHostException e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB,migratingBatchId,null,null),
                         "Exception while converting record.",e);

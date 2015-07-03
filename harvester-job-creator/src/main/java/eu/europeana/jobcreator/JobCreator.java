@@ -1,9 +1,9 @@
 package eu.europeana.jobcreator;
 
+import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
-import eu.europeana.harvester.domain.ReferenceOwner;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -37,9 +37,10 @@ public class JobCreator {
                                                             final String edmObjectUrl,
                                                             final List<String> edmHasViewUrls,
                                                             final String edmIsShownByUrl,
-                                                            final String edmIsShownAtUrl
-    ) throws UnknownHostException, MalformedURLException {
-        return createJobs(collectionId, providerId, recordId, executionId, edmObjectUrl, edmHasViewUrls, edmIsShownByUrl, edmIsShownAtUrl, new ProcessingJobCreationOptions(false));
+                                                            final String edmIsShownAtUrl,
+                                                            final Integer priority
+                                                            ) throws UnknownHostException, MalformedURLException {
+        return createJobs(collectionId, providerId, recordId, executionId, edmObjectUrl, edmHasViewUrls, edmIsShownByUrl, edmIsShownAtUrl, priority, new ProcessingJobCreationOptions(false));
     }
 
     /**
@@ -65,6 +66,7 @@ public class JobCreator {
                                                             final List<String> edmHasViewUrls,
                                                             final String edmIsShownByUrl,
                                                             final String edmIsShownAtUrl,
+                                                            final Integer priority,
                                                             final ProcessingJobCreationOptions options) throws UnknownHostException, MalformedURLException {
 
         if (null == collectionId || null == providerId || null == recordId) {
@@ -79,19 +81,19 @@ public class JobCreator {
         final ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId, executionId);
 
         if (null != edmObjectUrl) {
-            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner, options));
+            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner,priority, options));
         }
 
         if (null != edmHasViewUrls && !edmHasViewUrls.isEmpty()) {
-            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner, options));
+            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner,priority, options));
         }
 
         if (null != edmIsShownByUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner,priority, options));
         }
 
         if (null != edmIsShownAtUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner,priority, options));
 
         }
 
