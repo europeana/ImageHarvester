@@ -18,7 +18,7 @@ import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.master.accountants.AccountantDispatcherActor;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
-import eu.europeana.harvester.cluster.master.metrics.ProcessingJobStateStatistics;
+import eu.europeana.harvester.cluster.master.metrics.ProcessingJobStateStatisticsActor;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
 import eu.europeana.harvester.cluster.master.senders.JobSenderActor;
 import eu.europeana.harvester.db.interfaces.*;
@@ -193,12 +193,10 @@ public class ClusterMasterActor extends UntypedActor {
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
                 defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
 
-        processingJobStateStatisticsActor = getContext().system().actorOf(Props.create(ProcessingJobStateStatistics.class,
-                                                                                        sourceDocumentProcessingStatisticsDao,
-                                                                                        delayForCountingTheStateOfDocuments
-                                                                                       ),
-                                                                           "processingJobStateStatistics"
-                                                                          );
+        processingJobStateStatisticsActor = getContext().system().actorOf(Props.create(ProcessingJobStateStatisticsActor.class,
+                                                                                       sourceDocumentProcessingStatisticsDao,
+                                                                                       delayForCountingTheStateOfDocuments),
+                                                                          "processingJobStateStatistics");
 
         jobSenderActor = getContext().system().actorOf(Props.create(JobSenderActor.class, ipExceptions, ipsWithJobs,
         defaultLimits,cleanupInterval, jobLoaderActor,accountantActor, receiverActor), "jobSender");

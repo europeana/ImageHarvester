@@ -26,7 +26,7 @@ public class ComputeProcessingJobStateStatistics {
         this.numberOfJobsWithError = 0;
     }
 
-    public synchronized void run () {
+    public void run () {
         final Map<ProcessingState, Long> results = processingStatistics.countNumberOfDocumentsWithState();
         
         if (null == results || results.isEmpty()) {
@@ -38,15 +38,15 @@ public class ComputeProcessingJobStateStatistics {
         numberOfJobsWithError = results.containsKey(ProcessingState.ERROR) ? results.get(ProcessingState.ERROR) : numberOfJobsWithError;
     }
 
-    public synchronized long getNumberOfJobsReady () {
+    public long getNumberOfJobsReady () {
         return numberOfJobsReady;
     }
 
-    public synchronized long getNumberOfJobsSuccessfullyFinished () {
+    public long getNumberOfJobsSuccessfullyFinished () {
         return numberOfJobsSuccessfullyFinished;
     }
 
-    public synchronized long getNumberOfJobsWithError () {
+    public long getNumberOfJobsWithError () {
         return numberOfJobsWithError;
     }
 }

@@ -14,15 +14,15 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by salexandru on 29.06.2015.
  */
-public class ProcessingJobStateStatistics extends UntypedActor {
+public class ProcessingJobStateStatisticsActor extends UntypedActor {
     private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private Cancellable schedule;
     private final int numberOfSecondsToDelay;
     private final ComputeProcessingJobStateStatistics computeProcessingJobStateStatistics;
 
-    public ProcessingJobStateStatistics (SourceDocumentProcessingStatisticsDao processingStatistics,
-                                         int numberOfSecondsToDelay) {
+    public ProcessingJobStateStatisticsActor (SourceDocumentProcessingStatisticsDao processingStatistics,
+                                              int numberOfSecondsToDelay) {
         if (numberOfSecondsToDelay <= 0) {
             throw new IllegalArgumentException("delay cannot be a negative number of zero");
         }
