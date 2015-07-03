@@ -5,8 +5,6 @@ import akka.actor.UntypedActor;
 import com.codahale.metrics.Gauge;
 import eu.europeana.harvester.cluster.domain.messages.GetProcessingJobStatistics;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
 
 import java.util.concurrent.TimeUnit;
@@ -15,18 +13,12 @@ import java.util.concurrent.TimeUnit;
  * Created by salexandru on 29.06.2015.
  */
 public class ProcessingJobStateStatisticsActor extends UntypedActor {
-    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
-
     private Cancellable schedule;
-    private final int numberOfSecondsToDelay;
+    private final org.joda.time.Duration numberOfSecondsToDelay;
     private final ComputeProcessingJobStateStatistics computeProcessingJobStateStatistics;
 
     public ProcessingJobStateStatisticsActor (SourceDocumentProcessingStatisticsDao processingStatistics,
-                                              int numberOfSecondsToDelay) {
-        if (numberOfSecondsToDelay <= 0) {
-            throw new IllegalArgumentException("delay cannot be a negative number of zero");
-        }
-
+                                              org.joda.time.Duration numberOfSecondsToDelay) {
         if (null == processingStatistics) {
             throw new IllegalArgumentException("the dao for processingStatistics cannot be null");
         }
@@ -82,11 +74,11 @@ public class ProcessingJobStateStatisticsActor extends UntypedActor {
     }
 
     private Cancellable scheduleOnce() {
-       return scheduleOnce(numberOfSecondsToDelay);
+       return scheduleOnce(numberOfSecondsToDelay.getStandardSeconds());
     }
 
-    private Cancellable scheduleOnce(int delayInSeconds) {
-        return getContext().system().scheduler().scheduleOnce(Duration.create(delayInSeconds, TimeUnit.MILLISECONDS),
+    private Cancellable scheduleOnce(long delayInSeconds) {
+        return getContext().system().scheduler().scheduleOnce(Duration.create(delayInSeconds, TimeUnit.SECONDS),
                                                               getSelf(),
                                                               new GetProcessingJobStatistics(),
                                                               getContext().dispatcher(),
