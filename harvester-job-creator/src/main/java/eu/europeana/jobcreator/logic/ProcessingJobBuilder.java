@@ -54,8 +54,7 @@ public class ProcessingJobBuilder {
                                 sourceDocumentReference.getId(),
                                 subTasks)
                 ),
-                JobState.READY, Utils.ipAddressOf(url)
-        );
+                JobState.READY, Utils.ipAddressOf(url), true);
 
         return Arrays.asList(
                 new ProcessingJobTuple(processingJob, sourceDocumentReference));
@@ -93,8 +92,7 @@ public class ProcessingJobBuilder {
                                     sourceDocumentReference.getId(),
                                     subTasks)
                     ),
-                    JobState.READY, Utils.ipAddressOf(url)
-            );
+                    JobState.READY, Utils.ipAddressOf(url), true);
 
             results.add(
                     new ProcessingJobTuple(processingJob, sourceDocumentReference));
@@ -130,8 +128,7 @@ public class ProcessingJobBuilder {
                                 sourceDocumentReference.getId(),
                                 subTasks)
                 ),
-                JobState.READY, Utils.ipAddressOf(url)
-        );
+                JobState.READY, Utils.ipAddressOf(url), true);
 
         return Arrays.asList(
                 new ProcessingJobTuple(processingJob, sourceDocumentReference));
@@ -161,8 +158,7 @@ public class ProcessingJobBuilder {
                                 sourceDocumentReference.getId(),
                                 new ArrayList())
                 ),
-                JobState.READY, Utils.ipAddressOf(url)
-        );
+                JobState.READY, Utils.ipAddressOf(url), true);
 
         return Arrays.asList(
                 new ProcessingJobTuple(processingJob, sourceDocumentReference));

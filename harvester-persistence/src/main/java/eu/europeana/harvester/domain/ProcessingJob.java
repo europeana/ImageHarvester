@@ -48,6 +48,8 @@ public class ProcessingJob {
      */
     private final String ipAddress;
 
+    private final Boolean active;
+
     /**
      * The hard limits on the retrieval & processing stages of the job.
      */
@@ -62,12 +64,14 @@ public class ProcessingJob {
         this.state = null;
         this.limits = new ProcessingJobLimits();
         this.ipAddress = null;
+        this.active = null;
     }
 
-    public ProcessingJob(final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner,
-                         final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress) {
+    public ProcessingJob (final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress,
+                          Boolean active) {
         this.priority = priority;
         this.ipAddress = ipAddress;
+        this.active = active;
         this.id = UUID.randomUUID().toString();
         this.expectedStartDate = expectedStartDate;
         this.referenceOwner = referenceOwner;
@@ -76,10 +80,11 @@ public class ProcessingJob {
         this.limits = new ProcessingJobLimits();
     }
 
-    public ProcessingJob(final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner,
-                         final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress,ProcessingJobLimits limits) {
+    public ProcessingJob (final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress,
+                          Boolean active, ProcessingJobLimits limits) {
         this.priority = priority;
         this.ipAddress = ipAddress;
+        this.active = active;
         this.id = UUID.randomUUID().toString();
         this.expectedStartDate = expectedStartDate;
         this.referenceOwner = referenceOwner;
@@ -88,9 +93,8 @@ public class ProcessingJob {
         this.limits = limits;
     }
 
-    public ProcessingJob(final String id, final int priority, final Date expectedStartDate,
-                         final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks,
-                         final JobState state, String ipAddress,ProcessingJobLimits limits) {
+    public ProcessingJob (final String id, final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks,
+                          final JobState state, String ipAddress, Boolean active, ProcessingJobLimits limits) {
         this.id = id;
         this.priority = priority;
         this.expectedStartDate = expectedStartDate;
@@ -99,6 +103,7 @@ public class ProcessingJob {
         this.state = state;
         this.ipAddress = ipAddress;
         this.limits = limits;
+        this.active = active;
     }
 
     public String getId() {
@@ -135,12 +140,16 @@ public class ProcessingJob {
     }
 
     public ProcessingJob withState(JobState state) {
-        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress, limits);
+        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress, active,
+                                 limits);
     }
 
     public ProcessingJob withLimits(ProcessingJobLimits limits) {
-        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress, limits);
+        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress, active,
+                                 limits);
     }
+
+    public Boolean getActive() {return  active;}
 
     public List<String> getAllReferencedSourceDocumentIds() {
         final List<String> results = new ArrayList<String>();
