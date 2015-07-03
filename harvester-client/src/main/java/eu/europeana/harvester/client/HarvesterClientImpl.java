@@ -196,7 +196,19 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public List<ProcessingJob> deactivateJobs (final ReferenceOwner owner) {
-        return processingJobDao.deactivateJobs(owner);
+        final List<ProcessingJob> processingJobs = processingJobDao.deactivateJobs(owner);
+
+        if (processingJobs.isEmpty()) return  processingJobs;
+
+        final List<String> sourceDocumentReferenceIds = new ArrayList<>(processingJobs.size());
+
+        for (final SourceDocumentReference documentReference: sourceDocumentReferenceDao.deactivateDocuments(owner)) {
+           sourceDocumentReferenceIds.add(documentReference.getId());
+        }
+
+        sourceDocumentProcessingStatisticsDao.deactivateDocuments(sourceDocumentReferenceIds).clear();
+
+        return processingJobs;
     }
 
     @Override

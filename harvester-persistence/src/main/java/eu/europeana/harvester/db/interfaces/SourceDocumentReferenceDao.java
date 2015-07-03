@@ -2,6 +2,7 @@ package eu.europeana.harvester.db.interfaces;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
+import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 
 import java.util.Collection;
@@ -20,7 +21,7 @@ public interface SourceDocumentReferenceDao {
      *                                operation
      * @return returns if the operation was successful
      */
-    public boolean create(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern);
+     boolean create(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern);
 
     /**
      * Modifies an existing SourceDocumentReference record, if it doesn't exists then creates it.
@@ -29,14 +30,14 @@ public interface SourceDocumentReferenceDao {
      * @param writeConcern            describes the guarantee that MongoDB provides when reporting on the success of a write
      *                                operation
      */
-    public void createOrModify(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern);
+     void createOrModify(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern);
 
     /**
      * Modifies an existing SourceDocumentReference record, if it doesn't exists then creates it.
      *  @param sourceDocumentReferences modified or new objects
      * @param writeConcern             describes the guarantee that MongoDB provides when reporting on the success of a write
      */
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModify(Collection
+     Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModify(Collection
                                                                                                  <SourceDocumentReference> sourceDocumentReferences, WriteConcern writeConcern);
 
     /**
@@ -45,7 +46,7 @@ public interface SourceDocumentReferenceDao {
      * @param id the unique id of the record
      * @return - found SourceDocumentReference object, it can be null
      */
-    public SourceDocumentReference read(String id);
+     SourceDocumentReference read(String id);
 
     /**
      * Reads and returns a list of SourceDocumentReference objects
@@ -53,7 +54,7 @@ public interface SourceDocumentReferenceDao {
      * @param ids the unique ids of the records
      * @return - found SourceDocumentReference object, it can be null
      */
-    public List<SourceDocumentReference> read(List<String> ids);
+     List<SourceDocumentReference> read(List<String> ids);
 
     /**
      * Updates a SourceDocumentReference record
@@ -63,7 +64,7 @@ public interface SourceDocumentReferenceDao {
      *                                operation
      * @return - success or failure
      */
-    public boolean update(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern);
+     boolean update(SourceDocumentReference sourceDocumentReference, WriteConcern writeConcern);
 
     /**
      * Deletes a record from DB
@@ -71,7 +72,7 @@ public interface SourceDocumentReferenceDao {
      * @param id the unique id of the record
      * @return - an object which contains all information about this operation
      */
-    public WriteResult delete(String id);
+     WriteResult delete(String id);
 
     /**
      * Searches for SourceDocumentReferences which has referenceOwner.recordId equal with the given ID.
@@ -79,6 +80,17 @@ public interface SourceDocumentReferenceDao {
      * @param recordID resources record ID
      * @return - a list of SourceDocumentReference objects
      */
-    public List<SourceDocumentReference> findByRecordID(String recordID);
+     List<SourceDocumentReference> findByRecordID(String recordID);
+
+    /**
+     * @deprecated "This operation is time consuming. It does an update on the entire db"
+     *
+     * Returns all the jobs from the DB for a specific owner and deactivates it.
+     *
+     * @param owner  filter criteria.
+     * @return - list of ProcessingJobs
+     */
+     @Deprecated
+     List<SourceDocumentReference> deactivateDocuments (final ReferenceOwner owner);
 
 }

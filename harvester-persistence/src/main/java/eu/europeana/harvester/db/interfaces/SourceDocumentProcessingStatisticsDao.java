@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * DAO for CRUD with source_document_processing_stats collection
  */
-public interface SourceDocumentProcessingStatisticsDao {
+ public interface SourceDocumentProcessingStatisticsDao {
 
     /**
      * Persists a SourceDocumentProcessingStatistics object
@@ -22,14 +22,14 @@ public interface SourceDocumentProcessingStatisticsDao {
      *                     operation
      * @return returns if the operation was successful
      */
-    public boolean create(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
+     boolean create(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
      * Reads and returns a SourceDocumentProcessingStatistics object
      * @param id the unique id of the record
      * @return - found SourceDocumentProcessingStatistics object, it can be null
      */
-    public SourceDocumentProcessingStatistics read(String id);
+     SourceDocumentProcessingStatistics read(String id);
 
     /**
      * Updates a SourceDocumentProcessingStatistics record
@@ -38,7 +38,7 @@ public interface SourceDocumentProcessingStatisticsDao {
      *                     operation
      * @return - success or failure
      */
-    public boolean update(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
+     boolean update(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
      * If the object doesn't exists creates it otherwise updates the a SourceDocumentProcessingStatistics record
@@ -47,7 +47,7 @@ public interface SourceDocumentProcessingStatisticsDao {
      *                     operation
      * @return - success or failure
      */
-    public com.google.code.morphia.Key<SourceDocumentProcessingStatistics> createOrModify(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
+     com.google.code.morphia.Key<SourceDocumentProcessingStatistics> createOrModify(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
      * If the objects don't exists they get created; otherwise updates the a SourceDocumentProcessingStatistics record
@@ -56,7 +56,7 @@ public interface SourceDocumentProcessingStatisticsDao {
      *                     operation
      * @return - success or failure
      */
-    public Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrModify (Collection
+     Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrModify (Collection
                                                                                                              <SourceDocumentProcessingStatistics> sourceDocumentProcessingStatistics,
                                                                                                      WriteConcern writeConcern);
 
@@ -65,7 +65,7 @@ public interface SourceDocumentProcessingStatisticsDao {
          * @param id the unique id of the record
          * @return - an object which contains all information about this operation
          */
-    public WriteResult delete(String id);
+     WriteResult delete(String id);
 
     /**
      * Search for a SourceDocumentProcessingStatistics object by an SourceDocumentReference and a ProcessingJob id
@@ -73,14 +73,14 @@ public interface SourceDocumentProcessingStatisticsDao {
      * @param id SourceDocumentReference id
      * @return found SourceDocumentProcessingStatistics object
      */
-    public SourceDocumentProcessingStatistics findBySourceDocumentReferenceAndJobId(String id, String jobId);
+     SourceDocumentProcessingStatistics findBySourceDocumentReferenceAndJobId(String id, String jobId);
 
     /**
      * Searches for SourceDocumentProcessingStatistics which has referenceOwner.recordId equal with the given ID.
      * @param recordID resources record ID
      * @return - a list of SourceDocumentProcessingStatistics objects
      */
-    public List<SourceDocumentProcessingStatistics> findByRecordID(String recordID);
+     List<SourceDocumentProcessingStatistics> findByRecordID(String recordID);
 
     /**
      *  @deprecated "This is a time consuming operation. Use it with great care!"
@@ -90,4 +90,16 @@ public interface SourceDocumentProcessingStatisticsDao {
      */
     @Deprecated
     Map<ProcessingState, Long> countNumberOfDocumentsWithState();
+
+    /**
+     * @deprecated "This operation is time consuming. It does an update on the entire db"
+     *
+     * Returns all the jobs from the DB for a specific owner and deactivates it.
+     *
+     * @param sourceDocumentReferenceIds
+     * @return - list of ProcessingJobs
+     */
+     @Deprecated
+     List<SourceDocumentProcessingStatistics> deactivateDocuments(final List<String> sourceDocumentReferenceIds);
+
 }
