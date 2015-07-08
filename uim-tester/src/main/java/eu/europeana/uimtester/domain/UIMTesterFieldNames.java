@@ -13,6 +13,7 @@ public class UIMTesterFieldNames {
         public static final String EDM_HAS_VIEWS_URLS = "edmHasViewUrls";
         public static final String EDM_IS_SHOWN_BY_URL = "edmIsShownByUrl";
         public static final String EDM_IS_SHOWN_AT_URL = "edmIsShownAtUrl";
+        public static final String FORCE_UNCONDITIONAL_DOWNLOAD = "forceUnconditionalDownload";
     }
 
 }

@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigFactory;
 import eu.europeana.harvester.client.HarvesterClient;
 import eu.europeana.harvester.domain.JobPriority;
 import eu.europeana.jobcreator.JobCreator;
+import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.uimtester.jobcreator.domain.UIMTestSample;
 
@@ -53,7 +54,8 @@ public class JobCreatorTester {
                     testSample.getEdmHasViewUrls(),
                     testSample.getEdmIsShownByUrl(),
                     testSample.getEdmIsShownAtUrl(),
-                    JobPriority.FASTLANE.getPriority()
+                    JobPriority.FASTLANE.getPriority(),
+                    new ProcessingJobCreationOptions(testSample.getForceUnconditionalDownload())
             ));
         }
         return generatedJobs;
