@@ -54,7 +54,7 @@ public class JobCreatorTester {
                     testSample.getEdmHasViewUrls(),
                     testSample.getEdmIsShownByUrl(),
                     testSample.getEdmIsShownAtUrl(),
-                    JobPriority.FASTLANE.getPriority(),
+                    JobPriority.NORMAL.getPriority(),
                     new ProcessingJobCreationOptions(testSample.getForceUnconditionalDownload())
             ));
         }
