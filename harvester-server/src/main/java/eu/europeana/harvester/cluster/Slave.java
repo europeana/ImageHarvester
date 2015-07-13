@@ -18,8 +18,7 @@ import eu.europeana.harvester.cluster.slave.validator.ImageMagicValidator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.dummy.DummyMediaStorageClientImpl;
 import eu.europeana.harvester.db.swift.SwiftConfiguration;
-import eu.europeana.harvester.domain.MediaStorageClientConfig;
-import eu.europeana.harvester.domain.MongoConfig;
+import eu.europeana.harvester.db.swift.SwiftMediaStorageClientImpl;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +42,6 @@ public class Slave {
     private static final String containerName = "swiftUnitTesting";
 
 
-
     public Slave(String[] args) {
         this.args = args;
     }
@@ -57,24 +55,22 @@ public class Slave {
 //                .build();
 
 
-
-
         String configFilePath;
 
-        if(args.length == 0) {
+        if (args.length == 0) {
             configFilePath = "./extra-files/config-files/slave.conf";
         } else {
             configFilePath = args[0];
         }
 
         final File configFile = new File(configFilePath);
-        if(!configFile.exists()) {
+        if (!configFile.exists()) {
             LOG.error("Config file not found!");
             System.exit(-1);
         }
 
         final Config config = ConfigFactory.parseFileAnySyntax(configFile, ConfigParseOptions.defaults()
-                                                                                             .setSyntax(ConfigSyntax.CONF));
+                .setSyntax(ConfigSyntax.CONF));
 
         final ExecutorService bossPool = Executors.newCachedThreadPool();
         final ExecutorService workerPool = Executors.newCachedThreadPool();
@@ -83,7 +79,7 @@ public class Slave {
 
         final ResponseType responseType;
 
-        if("diskStorage".equals(config.getString("slave.responseType"))) {
+        if ("diskStorage".equals(config.getString("slave.responseType"))) {
             responseType = ResponseType.DISK_STORAGE;
         } else {
             responseType = ResponseType.MEMORY_STORAGE;
@@ -91,7 +87,7 @@ public class Slave {
 
         final String pathToSave = config.getString("slave.pathToSave");
         final File dir = new File(pathToSave);
-        if(!dir.exists()) {
+        if (!dir.exists()) {
             dir.mkdirs();
         }
         final String source = config.getString("media-storage.source");
@@ -106,24 +102,20 @@ public class Slave {
         final NodeMasterConfig nodeMasterConfig = new NodeMasterConfig(nrOfDownloaderSlaves, nrOfExtractorSlaves,
                 nrOfPingerSlaves, nrOfRetries, taskNrLimit, pathToSave, responseType, source, colorMapPath);
 
-        final String mediaStorageNameSpace = config.getString("media-storage.nameSpace");
-
-        final MediaStorageClientConfig mediaStorageClientConfig =
-                new MediaStorageClientConfig(MongoConfig.valueOf(config.getConfig("media-storage")),
-                                             mediaStorageNameSpace
-                                            );
+        final String mediaStorageClientType = config.hasPath("media-storage-type") ? config.getString("media-storage-type") : "DUMMY";
 
         MediaStorageClient mediaStorageClient = null;
         try {
-            //mediaStorageClient = new MediaStorageClientImpl(mediaStorageClientConfig);
-            SwiftConfiguration swiftConfiguration = new SwiftConfiguration("https://auth.hydranodes.de:5000/v2.0",
-            "d35f3a21-cf35-48a0-a035-99bfc2252528.swift.tenant@a9s.eu",
-                    "c9b9ddb5-4f64-4e08-9237-1d6848973ee1.swift.user@a9s.eu",
-                    "78ae7i9XO3O7CcdkDa87", containerName, "hydranodes");
-//            mediaStorageClient = new SwiftMediaStorageClientImpl(swiftConfiguration);
 
-            //does nothing implementation
-            mediaStorageClient = new DummyMediaStorageClientImpl();
+            if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
+                LOG.info("Using swift as media-storage ");
+                mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
+
+            } else {
+                LOG.info("Using dummy as media-storage ");
+                mediaStorageClient = new DummyMediaStorageClientImpl();
+
+            }
         } catch (Exception e) {
             LOG.error("Error: connection failed to media-storage " + e.getMessage());
             e.printStackTrace();
@@ -149,8 +141,6 @@ public class Slave {
         reporter2.start(1, TimeUnit.MINUTES);
 
 
-
-
         system = ActorSystem.create("ClusterSystem", config);
 
         final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
@@ -170,7 +160,7 @@ public class Slave {
         //sleep 10 minutes
         try {
             Thread.sleep(600000l);
-        } catch ( InterruptedException e) {
+        } catch (InterruptedException e) {
             LOG.error(e.getMessage());
         }
 
