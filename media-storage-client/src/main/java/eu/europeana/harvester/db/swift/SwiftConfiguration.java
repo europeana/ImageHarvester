@@ -35,24 +35,24 @@ public class SwiftConfiguration {
         final String TENANT_NAME = "tenantName";
 
 
-        if (config.hasPath(AUTH_URL)) throw new IllegalArgumentException("The swift configuration needs a " + AUTH_URL);
+        if (!config.hasPath(AUTH_URL)) throw new IllegalArgumentException("The swift configuration needs a " + AUTH_URL);
         final String authUrl = config.getString(AUTH_URL);
 
-        if (config.hasPath(USERNAME)) throw new IllegalArgumentException("The swift configuration needs a " + USERNAME);
+        if (!config.hasPath(USERNAME)) throw new IllegalArgumentException("The swift configuration needs a " + USERNAME);
         final String userName = config.getString(USERNAME);
 
-        if (config.hasPath(PASSWORD)) throw new IllegalArgumentException("The swift configuration needs a " + PASSWORD);
+        if (!config.hasPath(PASSWORD)) throw new IllegalArgumentException("The swift configuration needs a " + PASSWORD);
         final String password = config.getString(PASSWORD);
 
-        if (config.hasPath(CONTAINER_NAME))
+        if (!config.hasPath(CONTAINER_NAME))
             throw new IllegalArgumentException("The swift configuration needs a " + CONTAINER_NAME);
         final String containerName = config.getString(CONTAINER_NAME);
 
-        if (config.hasPath(REGION_NAME))
+        if (!config.hasPath(REGION_NAME))
             throw new IllegalArgumentException("The swift configuration needs a " + REGION_NAME);
         final String regionName = config.getString(REGION_NAME);
 
-        if (config.hasPath(TENANT_NAME))
+        if (!config.hasPath(TENANT_NAME))
             throw new IllegalArgumentException("The swift configuration needs a " + TENANT_NAME);
         final String tenantName = config.getString(TENANT_NAME);
 
