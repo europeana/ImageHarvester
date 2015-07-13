@@ -19,6 +19,7 @@ import org.apache.solr.common.params.CommonParams;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -72,6 +73,9 @@ public class SOLRWriter {
                 return false;
             }
 
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                       publishingBatchId, null, null),
+                                                       "Number of Documents trying to update: " + newDocs.size());
             int retry = 0;
             while (retry <= MAX_RETRIES) {
                 final SolrClient server = createServer();
@@ -81,7 +85,6 @@ public class SOLRWriter {
                 for (final CRFSolrDocument CRFSolrDocument : newDocs) {
 
                     final SolrInputDocument update = new SolrInputDocument();
-
 
                     update.addField("europeana_id", CRFSolrDocument.getRecordId());
 
@@ -117,6 +120,7 @@ public class SOLRWriter {
                              newDocs.size(), retry);
                     server.commit();
                     server.close();
+                    System.out.println("Commit was a success");
                     PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToSolr.inc(numberOfDocumentsToUpdate);
                     return true;
                 } catch (Exception e) {
@@ -178,7 +182,9 @@ public class SOLRWriter {
             }
 
             // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
-
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                       publishingBatchId, null, null),
+                      "Checking documents: " + documents.size());
             for (int documentIdsStartChunkIndex = 0; documentIdsStartChunkIndex <= documentIds.size();
                  documentIdsStartChunkIndex += MAX_NUMBER_OF_IDS_IN_SOLR_QUERY) {
                 final int endOfArray = (documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY >= documentIds
@@ -230,6 +236,9 @@ public class SOLRWriter {
         }
         finally {
             context.close();
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                       publishingBatchId, null, null),
+                      "Documents that remained after checking: " + documents.size());
         }
 
         return documents;

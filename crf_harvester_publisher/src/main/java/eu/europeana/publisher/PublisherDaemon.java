@@ -4,6 +4,7 @@ import com.typesafe.config.*;
 import eu.europeana.publisher.logging.LoggingComponent;
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
+import org.apache.commons.daemon.DaemonController;
 import org.apache.commons.daemon.DaemonInitException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -66,5 +67,26 @@ public class PublisherDaemon implements Daemon {
     @Override
     public void destroy() {
 
+    }
+
+    public static void main(final String[] args) throws Exception {
+        final PublisherDaemon publisherDaemon = new PublisherDaemon();
+        publisherDaemon.init(new DaemonContext() {
+            @Override
+            public DaemonController getController () {
+                return null;
+            }
+
+            @Override
+            public String[] getArguments () {
+                return args;
+            }
+        });
+        try {
+            publisherDaemon.start();
+        }
+        finally {
+           publisherDaemon.destroy();
+        }
     }
 }
