@@ -238,7 +238,7 @@ public class SOLRWriter {
             context.close();
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                        publishingBatchId, null, null),
-                      "Documents that remained after checking: " + documents.size());
+                      "Documents that remained after checking: " + (null == documents ? 0 : documents.size()));
         }
 
         return documents;
