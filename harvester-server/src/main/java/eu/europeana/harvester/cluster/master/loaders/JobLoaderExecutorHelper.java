@@ -108,7 +108,7 @@ public class JobLoaderExecutorHelper  {
                     "Checking IPs with no jobs in database");
 
 //            ArrayList<String> noJobsIPs = new ArrayList<>();
-//            List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0, 10000));
+              List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0, 10000));
 //
 //            for (Map.Entry<String, Boolean> entry : ipsWithJobs.entrySet()) {
 //                if (!entry.getValue()) {
@@ -128,11 +128,11 @@ public class JobLoaderExecutorHelper  {
 //            }
 //
 //
-//            for (MachineResourceReference machine : ips) {
-//                if (!ipDistribution.containsKey(machine.getIp())) {
-//                    ipDistribution.put(machine.getIp(), 0);
-//                }
-//            }
+            for (MachineResourceReference machine : ips) {
+                if (!ipDistribution.containsKey(machine.getIp())) {
+                    ipDistribution.put(machine.getIp(), 0);
+                }
+            }
 //
 //            if (noJobsIPs.size() > 0) {
 //                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
