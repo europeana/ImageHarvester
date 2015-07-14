@@ -149,12 +149,12 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
         }
 
         if (null != owner.getExecutionId()) {
-            query.criteria("referenceOwner.providerId").equal(owner.getExecutionId());
+            query.criteria("referenceOwner.executionId").equal(owner.getExecutionId());
         }
 
         final UpdateOperations<ProcessingJob> updateOperations = datastore.createUpdateOperations(ProcessingJob.class);
 
-        updateOperations.set("state", JobState.PAUSE.name());
+        updateOperations.set("active", false);
 
         datastore.update(query, updateOperations);
 

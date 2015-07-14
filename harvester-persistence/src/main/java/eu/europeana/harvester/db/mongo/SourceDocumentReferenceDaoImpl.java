@@ -2,12 +2,16 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
+import com.google.code.morphia.query.UpdateOperations;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
+import eu.europeana.harvester.domain.JobState;
+import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 
 import java.util.ArrayList;
@@ -95,5 +99,39 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
         if(query == null) {return new ArrayList<>(0);}
 
         return query.asList();
+    }
+
+    @Override
+    public List<SourceDocumentReference> deactivateDocuments (ReferenceOwner owner) {
+        if (null == owner || (owner.equals(new ReferenceOwner()))) {
+            throw new IllegalArgumentException("The reference owner cannot be null and must have at least one field not null");
+        }
+
+        final Query<SourceDocumentReference> query = datastore.createQuery(SourceDocumentReference.class);
+
+        if (null != owner.getCollectionId()) {
+            query.criteria("referenceOwner.collectionId").equal(owner.getCollectionId());
+        }
+
+        if (null != owner.getRecordId()) {
+            query.criteria("referenceOwner.recordId").equal(owner.getRecordId());
+        }
+
+        if (null != owner.getProviderId()) {
+            query.criteria("referenceOwner.providerId").equal(owner.getProviderId());
+        }
+
+        if (null != owner.getExecutionId()) {
+            query.criteria("referenceOwner.executionId").equal(owner.getExecutionId());
+        }
+
+        final UpdateOperations<SourceDocumentReference> updateOperations = datastore.createUpdateOperations(SourceDocumentReference.class);
+
+        updateOperations.set("active", false);
+
+        datastore.update(query, updateOperations);
+
+        return query.asList();
+
     }
 }

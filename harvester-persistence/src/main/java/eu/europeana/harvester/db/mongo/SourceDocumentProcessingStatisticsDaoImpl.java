@@ -2,6 +2,7 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
+import com.google.code.morphia.query.UpdateOperations;
 import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.domain.ProcessingState;
@@ -112,6 +113,25 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
         }
 
         return results;
+    }
+
+    @Override
+    public List<SourceDocumentProcessingStatistics> deactivateDocuments (List<String> sourceDocumentReferenceIds) {
+        if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+
+        final Query<SourceDocumentProcessingStatistics> query = datastore.find(SourceDocumentProcessingStatistics.class);
+
+        query.field("sourceDocumentReferenceId").hasAnyOf(sourceDocumentReferenceIds);
+
+        final UpdateOperations<SourceDocumentProcessingStatistics> update = datastore.createUpdateOperations(SourceDocumentProcessingStatistics.class);
+
+        update.set("active", false);
+
+        datastore.update(query, update);
+
+        return query.asList();
     }
 
 }

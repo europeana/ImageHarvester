@@ -1,7 +1,7 @@
 package eu.europeana.harvester.client;
 
 import com.mongodb.WriteConcern;
-import eu.europeana.harvester.db.*;
+import com.google.code.morphia.Datastore;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
@@ -59,12 +59,12 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     private final CachingUrlResolver cachingUrlResolver;
 
-    public HarvesterClientImpl(final MorphiaDataStore datastore, final HarvesterClientConfig harvesterClientConfig) {
-        this(new ProcessingJobDaoImpl(datastore.getDatastore()),
-                new MachineResourceReferenceDaoImpl(datastore.getDatastore()),
-                new SourceDocumentProcessingStatisticsDaoImpl(datastore.getDatastore()),
-                new SourceDocumentReferenceDaoImpl(datastore.getDatastore()),
-                new SourceDocumentReferenceMetaInfoDaoImpl(datastore.getDatastore()),
+    public HarvesterClientImpl(final Datastore datastore, final HarvesterClientConfig harvesterClientConfig) {
+        this(new ProcessingJobDaoImpl(datastore),
+                new MachineResourceReferenceDaoImpl(datastore),
+                new SourceDocumentProcessingStatisticsDaoImpl(datastore),
+                new SourceDocumentReferenceDaoImpl(datastore),
+                new SourceDocumentReferenceMetaInfoDaoImpl(datastore),
                 harvesterClientConfig);
     }
 
@@ -196,7 +196,19 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public List<ProcessingJob> deactivateJobs (final ReferenceOwner owner) {
-        return processingJobDao.deactivateJobs(owner);
+        final List<ProcessingJob> processingJobs = processingJobDao.deactivateJobs(owner);
+
+        if (processingJobs.isEmpty()) return  processingJobs;
+
+        final List<String> sourceDocumentReferenceIds = new ArrayList<>(processingJobs.size());
+
+        for (final SourceDocumentReference documentReference: sourceDocumentReferenceDao.deactivateDocuments(owner)) {
+           sourceDocumentReferenceIds.add(documentReference.getId());
+        }
+
+        sourceDocumentProcessingStatisticsDao.deactivateDocuments(sourceDocumentReferenceIds).clear();
+
+        return processingJobs;
     }
 
     @Override

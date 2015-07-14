@@ -17,12 +17,11 @@ import org.unitils.reflectionassert.ReflectionAssert;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 /**
@@ -170,6 +169,66 @@ public class HarvesterClientTest {
         }
     }
 
+    @Test
+    public void test_DeactivateJobs() {
+        final ReferenceOwner[] owners = new ReferenceOwner[] {
+            new ReferenceOwner("1", "1", "1"),
+            new ReferenceOwner("2", "1", "1", "2"),
+            new ReferenceOwner("1", "1", "2", "1")
+        };
 
+        final Map<ReferenceOwner, List<String>> processingJobIds = new HashMap<>();
+        final Map<ReferenceOwner, List<String>> sourceDocumentReferenceIds = new HashMap<>();
+        final Map<ReferenceOwner, List<String>> sourceDocumentProcessingStatisticsIds = new HashMap<>();
+
+        final Random random = new Random();
+
+        for (final ReferenceOwner owner: owners) {
+            processingJobIds.put(owner, new ArrayList<String>());
+            sourceDocumentReferenceIds.put(owner, new ArrayList<String>());
+            sourceDocumentProcessingStatisticsIds.put(owner, new ArrayList<String>());
+        }
+
+        for (int i = 0; i < 150; ++i) {
+            final String id = UUID.randomUUID().toString();
+            final ReferenceOwner owner = owners[random.nextInt(3)];
+
+            processingJobIds.get(owner).add(id);
+
+            final ProcessingJob processingJob =
+                    new ProcessingJob(id, 1, new Date(), owner, null, JobState.READY, "", null, null);
+
+            processingJobDao.create(processingJob, WriteConcern.NONE);
+
+            final SourceDocumentReference sourceDocumentReference =
+                    new SourceDocumentReference(owner, null, "test", null, null, 0l, null, true);
+
+            sourceDocumentReferenceDao.create(sourceDocumentReference, WriteConcern.NONE);
+
+            sourceDocumentReferenceIds.get(owner).add(sourceDocumentReference.getId());
+
+            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
+                    new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, owner,
+                                                           null, sourceDocumentReference.getId(), "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
+
+            sourceDocumentProcessingStatisticsIds.get(owner).add(sourceDocumentProcessingStatistics.getId());
+            sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
+        }
+
+        final List<ProcessingJob> jobs = harvesterClient.deactivateJobs(owners[1]);
+
+        assertEquals(processingJobIds.get(owners[1]).size(), jobs.size());
+        for (final String jobId: processingJobIds.get(owners[1])) {
+           assertFalse(processingJobDao.read(jobId).getActive());
+        }
+
+        for (final String referenceId: sourceDocumentReferenceIds.get(owners[1])) {
+            assertFalse(sourceDocumentReferenceDao.read(referenceId).getActive());
+        }
+
+        for (final String id: sourceDocumentProcessingStatisticsIds.get(owners[1])) {
+            assertFalse(sourceDocumentProcessingStatisticsDao.read(id).getActive());
+        }
+    }
 
 }

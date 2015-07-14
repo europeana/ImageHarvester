@@ -143,7 +143,8 @@ class Master {
         final IPExceptions ipExceptions = new IPExceptions(ipExceptionsMaxConcurrentConnectionsLimit, ips, ignoredIPs);
 
         final Integer cleanupInterval = config.getInt("akka.cluster.cleanupInterval");
-        final Integer delayForCountingTheStateOfDocuments = config.getInt("akka.cluster.delayForCountingTheStateOfDocuments");
+        final Duration delayForCountingTheStateOfDocuments = Duration.millis(config.getDuration("akka.cluster.delayForCountingTheStateOfDocuments",
+                                                                                               TimeUnit.MILLISECONDS));
 
         clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class,
                 clusterMasterConfig, ipExceptions, processingJobDao, machineResourceReferenceDao,

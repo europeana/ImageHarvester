@@ -37,7 +37,7 @@ public class JobCreatorTest {
 
     @Test (expected = IllegalArgumentException.class)
     public void test_NullOption() throws MalformedURLException, UnknownHostException {
-        JobCreator.createJobs(collectionId, providerId, recordId, executionId, "", null, "", "", null);
+        JobCreator.createJobs(collectionId, providerId, recordId, executionId, "", null, "", "", JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test

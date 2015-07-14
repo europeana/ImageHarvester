@@ -18,12 +18,13 @@ import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.master.accountants.AccountantDispatcherActor;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
-import eu.europeana.harvester.cluster.master.metrics.ProcessingJobStateStatistics;
+import eu.europeana.harvester.cluster.master.metrics.ProcessingJobStateStatisticsActor;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
 import eu.europeana.harvester.cluster.master.senders.JobSenderActor;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -136,7 +137,7 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private final Integer cleanupInterval;
 
-    private final Integer delayForCountingTheStateOfDocuments;
+    private final Duration delayForCountingTheStateOfDocuments;
 
     /**
      * Maps each IP with a boolean which indicates if an IP has jobs in MongoDB or not.
@@ -154,7 +155,7 @@ public class ClusterMasterActor extends UntypedActor {
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
                                final DefaultLimits defaultLimits,
                                final Integer cleanupInterval,
-                               final Integer delayForCountingTheStateOfDocuments) {
+                               final Duration delayForCountingTheStateOfDocuments) {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor constructor");
 
@@ -193,12 +194,10 @@ public class ClusterMasterActor extends UntypedActor {
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
                 defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
 
-        processingJobStateStatisticsActor = getContext().system().actorOf(Props.create(ProcessingJobStateStatistics.class,
-                                                                                        sourceDocumentProcessingStatisticsDao,
-                                                                                        delayForCountingTheStateOfDocuments
-                                                                                       ),
-                                                                           "processingJobStateStatistics"
-                                                                          );
+        processingJobStateStatisticsActor = getContext().system().actorOf(Props.create(ProcessingJobStateStatisticsActor.class,
+                                                                                       sourceDocumentProcessingStatisticsDao,
+                                                                                       delayForCountingTheStateOfDocuments),
+                                                                          "processingJobStateStatistics");
 
         jobSenderActor = getContext().system().actorOf(Props.create(JobSenderActor.class, ipExceptions, ipsWithJobs,
         defaultLimits,cleanupInterval, jobLoaderActor,accountantActor, receiverActor), "jobSender");
@@ -222,6 +221,7 @@ public class ClusterMasterActor extends UntypedActor {
         getContext().system().stop(receiverActor);
         getContext().system().stop(accountantActor);
         getContext().system().stop(monitoringActor);
+        getContext().system().stop(processingJobStateStatisticsActor);
     }
 
     @Override

@@ -31,8 +31,9 @@ public class JobCreatorTesterInputLoader {
         final List<String> edmHasViewUrls = (config.hasPath(UIMTesterFieldNames.FieldNames.EDM_HAS_VIEWS_URLS)) ? config.getStringList(UIMTesterFieldNames.FieldNames.EDM_HAS_VIEWS_URLS) : Collections.EMPTY_LIST;
         final String edmIsShownByUrl = (config.hasPath(UIMTesterFieldNames.FieldNames.EDM_IS_SHOWN_BY_URL)) ? config.getString(UIMTesterFieldNames.FieldNames.EDM_IS_SHOWN_BY_URL) : null;
         final String edmIsShownAtUrl = (config.hasPath(UIMTesterFieldNames.FieldNames.EDM_IS_SHOWN_AT_URL)) ? config.getString(UIMTesterFieldNames.FieldNames.EDM_IS_SHOWN_AT_URL) : null;
+        final Boolean forceUnconditionalDownload = (config.hasPath(UIMTesterFieldNames.FieldNames.FORCE_UNCONDITIONAL_DOWNLOAD)) ? config.getBoolean(UIMTesterFieldNames.FieldNames.FORCE_UNCONDITIONAL_DOWNLOAD) : false;
 
-        return new UIMTestSample(sampleId, collectionId, providerId, recordId, executionId, edmObjectUrl, edmHasViewUrls, edmIsShownByUrl, edmIsShownAtUrl);
+        return new UIMTestSample(sampleId, collectionId, providerId, recordId, executionId, edmObjectUrl, edmHasViewUrls, edmIsShownByUrl, edmIsShownAtUrl,forceUnconditionalDownload);
     }
 
 

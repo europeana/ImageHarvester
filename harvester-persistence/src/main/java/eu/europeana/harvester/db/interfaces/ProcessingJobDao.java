@@ -92,5 +92,15 @@ public interface ProcessingJobDao {
      */
      List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs);
 
-    List<ProcessingJob> deactivateJobs (final ReferenceOwner owner);
+
+     /**
+      * @deprecated "This operation is time consuming. It does an update on the entire db"
+      *
+      * Returns all the jobs from the DB for a specific owner and deactivates it.
+      *
+      * @param owner  filter criteria.
+      * @return - list of ProcessingJobs
+      */
+     @Deprecated
+     List<ProcessingJob> deactivateJobs (final ReferenceOwner owner);
 }

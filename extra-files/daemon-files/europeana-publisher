@@ -10,8 +10,10 @@
 
 [ -R /etc/default/europeana-publisher ] && . /etc/default/europeana-publisher
 
+JAVA_HOME=${JAVA_HOME:=/usr/lib/jvm/java-7-oracle}
 EUROPEANA_PUBLISHER=${EUROPEANA_PUBLISHER:=/opt/publisher}
-SCRIPT="java -server -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -XX:+UseParallelGC -Xms1g -Xmx4g -Xss1M -Dlog4j.configurationFile=$EUROPEANA_PUBLISHER/extra-files/log4j2.xml -cp $EUROPEANA_PUBLISHER/publisher.jar eu.europeana.publisher.PublisherMain $EUROPEANA_PUBLISHER/extra-files/publishing.conf"
+LIB_DAEMON=${LIB_DAEMON:=$EUROPEANA_PUBLISHER/lib/commons-daemon.jar}
+ERR_FILE=${ERR_FILE:=$EUROPEANA_PUBLISHER/err}
 RUNAS=root
 
 PIDFILE=/var/run/publisher.pid
@@ -22,14 +24,14 @@ start() {
     echo 'Service already running' >&2
     return 1
   fi
-  
   echo 'Starting publisher...' >&2
   DATE=`echo $(date +%D) | sed -e "s/\//-/g"`
-  LOGFILE="/var/log/migrator_$DATE.log"
+  LOGFILE="/var/log/publisher_$DATE.log"
   echo 'logfile created: '  $LOGFILE
   if [ -f "$LOGFILE" ]; then
      su -c "rm -f $LOGFILE"
   fi
+  SCRIPT="/usr/bin/jsvc -home $JAVA_HOME -outfile $LOGFILE -errfile $ERR_FILE -server -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -XX:+UseParallelGC -Xms1g -Xmx4g -Xss1M -Dlog4j.configurationFile=$EUROPEANA_PUBLISHER/extra-files/log4j2.xml -cp $LIB_DAEMON:$EUROPEANA_PUBLISHER/publisher.jar eu.europeana.publisher.PublisherDaemon $EUROPEANA_PUBLISHER/extra-files/publishing.conf"
 
   cd $EUROPEANA_PUBLISHER
   local CMD="$SCRIPT > \"$LOGFILE\" & echo \$!"
@@ -38,15 +40,8 @@ start() {
 }
 
 stop() {
-  if [ -f "$PIDFILE" ] && ps -p $(cat "$PIDFILE") > /dev/null ;  then
-        echo 'Stopping publisher ... ' >& 2
-        (kill -15 $(cat "$PIDFILE")) &> /dev/null
-        rm -rf "$PIDFILE"
-        echo 'Stopped service ...'
-  else
-        echo "Publisher not working ... " >& 2
-        return 1
-  fi
+   echo "killing every europeana publisher started"
+   su -c "ps -ef | grep '-errfile $ERR_FILE -server -XX:+UseNUMA -XX:+UseCondCardMark -XX:-UseBiasedLocking -XX:+UseParallelGC -Xms1g -Xmx4g -Xss1M -Dlog4j.configurationFile=$EUROPEANA_PUBLISHER/extra-files/log4j2.xml -cp $LIB_DAEMON:$EUROPEANA_PUBLISHER/publisher.jar eu.europeana.publisher.PublisherDaemon $EUROPEANA_PUBLISHER/extra-files/publishing.conf$' | awk '{print \$2}' | xargs kill -15"
 }
 
 uninstall() {

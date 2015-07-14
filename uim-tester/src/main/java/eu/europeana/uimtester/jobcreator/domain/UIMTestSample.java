@@ -12,8 +12,9 @@ public class UIMTestSample {
     private final List<String> edmHasViewUrls;
     private final String edmIsShownByUrl;
     private final String edmIsShownAtUrl;
-
-    public UIMTestSample(String sampleId, String collectionId, String providerId, String recordId, String executionId, String edmObjectUrl, List<String> edmHasViewUrls, String edmIsShownByUrl, String edmIsShownAtUrl) {
+    private final Boolean forceUnconditionalDownload;
+    public UIMTestSample(String sampleId, String collectionId, String providerId, String recordId, String executionId, String edmObjectUrl, List<String> edmHasViewUrls, String edmIsShownByUrl, String edmIsShownAtUrl,
+                         Boolean forceUnconditionalDownload) {
         this.sampleId = sampleId;
         this.collectionId = collectionId;
         this.providerId = providerId;
@@ -23,6 +24,7 @@ public class UIMTestSample {
         this.edmHasViewUrls = edmHasViewUrls;
         this.edmIsShownByUrl = edmIsShownByUrl;
         this.edmIsShownAtUrl = edmIsShownAtUrl;
+        this.forceUnconditionalDownload = forceUnconditionalDownload;
     }
 
     public String getSampleId() {
@@ -59,5 +61,9 @@ public class UIMTestSample {
 
     public String getEdmIsShownAtUrl() {
         return edmIsShownAtUrl;
+    }
+
+    public Boolean getForceUnconditionalDownload() {
+        return forceUnconditionalDownload;
     }
 }

@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,9 +46,9 @@ public class PublisherManager {
 
     private final PublisherConfig config;
 
-    private final List<SOLRWriter> solrWriters;
+    private final PublisherHarvesterDao[] publisherHarvesterDaos;
+    private final SOLRWriter[] solrWriters;
     private PublisherEuropeanaDao publisherEuropeanaDao;
-    private final List<PublisherHarvesterDao> publisherHarvesterDaos;
 
     private DateTime currentTimestamp;
     private DBCursor cursor;
@@ -58,20 +59,22 @@ public class PublisherManager {
     public PublisherManager(PublisherConfig config) throws UnknownHostException {
         this.config = config;
 
+        publisherHarvesterDaos = new PublisherHarvesterDao[config.getTargetDBConfig().size()];
+        solrWriters = new SOLRWriter[config.getTargetDBConfig().size()];
+
+        int count = 0;
+        for (final DBTargetConfig targetConfig: config.getTargetDBConfig()) {
+            publisherHarvesterDaos[count] = new PublisherHarvesterDao(targetConfig);
+            solrWriters[count++] = new SOLRWriter(targetConfig);
+        }
+
         publisherEuropeanaDao = new PublisherEuropeanaDao(config.getSourceMongoConfig());
 
         currentTimestamp = config.getStartTimestamp();
 
-        publisherHarvesterDaos = new LinkedList<>();
-        solrWriters = new LinkedList<>();
-
-        for (final DBTargetConfig target : config.getTargetDBConfig()) {
-            publisherHarvesterDaos.add(new PublisherHarvesterDao(target));
-            solrWriters.add(new SOLRWriter(target));
-        }
 
         Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.METRIC_REGISTRY)
-                                              .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
+                                              .outputTo(LOG)
                                               .convertRatesTo(TimeUnit.SECONDS)
                                               .convertDurationsTo(TimeUnit.MILLISECONDS).build();
 
@@ -95,17 +98,19 @@ public class PublisherManager {
 
 
     public void start() throws IOException, SolrServerException, InterruptedException {
-       LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+       LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                  "Starting publishing process. The minimal timestamp is {}", config.getStartTimestamp());
 
         cursor =  publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
 
         final AtomicLong numberOfDocumentToProcess = new AtomicLong();
+        final String publishingBatchId = "publishing-batch-"+DateTime.now().getMillis()+"-"+Math.random();
         final Runnable runGauge = new Runnable() {
             @Override
             public void run () {
                numberOfDocumentToProcess.set(publisherEuropeanaDao.countNumberOfDocumentUpdatedBefore(currentTimestamp));
-                LOG.error("Number of Remaining documents to process is: " + numberOfDocumentToProcess.toString());
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
+                          "Number of Remaining documents to process is: " + numberOfDocumentToProcess.toString());
             }
         };
 
@@ -119,8 +124,7 @@ public class PublisherManager {
             }
         });
 
-        scheduler.schedule(runGauge, config.getDelayInSecondsForRemainingRecordsStatistics(), TimeUnit.MINUTES
-                          );
+        scheduler.schedule(runGauge, config.getDelayInSecondsForRemainingRecordsStatistics(), TimeUnit.MINUTES);
 
         while (true) {
             final Timer.Context context = PublisherMetrics.Publisher.Batch.loopBatchDuration.time();
@@ -136,13 +140,13 @@ public class PublisherManager {
     private void batchProcessing() throws InterruptedException, IOException {
         final String publishingBatchId = "publishing-batch-"+DateTime.now().getMillis()+"-"+Math.random();
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
+        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                  "Executing publishing CRF retrieval query {}", cursor.getQuery());
 
         List<HarvesterDocument> retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor, config.getBatch());
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
-                 "Retrieved CRF documents with meta info {}", retrievedDocs.size());
+        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
+                 "Retrieved CRF documents with meta error {}", retrievedDocs.size());
 
         if (null == retrievedDocs || retrievedDocs.isEmpty()) {
             LOG.error("received null or empty documents from source mongo. Sleeping " + config.getSleepSecondsAfterEmptyBatch());
@@ -150,56 +154,48 @@ public class PublisherManager {
             cursor =  publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
         }
 
-        retrievedDocs = filterDocumentIds(retrievedDocs, publishingBatchId);
+        final List<List<HarvesterDocument>> solrFilteredDocs = new ArrayList<>();
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
-                 "Retrieved CRF documents after SOLR filtering {}", retrievedDocs.size());
+        LOG.error(LoggingComponent
+                         .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+                 "Starting filtering retrieved docs with solr");
 
-        final List<CRFSolrDocument> solrDocuments = FakeTagExtractor.extractTags(retrievedDocs,publishingBatchId);
+        for (final SOLRWriter writer: solrWriters) {
+            final List<HarvesterDocument> document = writer.filterDocumentIds(retrievedDocs, publishingBatchId);
+            LOG.error(LoggingComponent
+                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+                     "Retrieved CRF documents after SOLR filtering {}", document.size());
+            solrFilteredDocs.add(document);
+            PublisherMetrics.Publisher.Batch.totalNumberOfDocumentsProcessed.inc(document.size());
+        }
 
-        PublisherMetrics.Publisher.Batch.totalNumberOfDocumentsProcessed.inc(solrDocuments.size());
+        LOG.error(LoggingComponent
+                         .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+                 "Filtering is done. Writing them to mongo");
 
-
-        if (null != solrDocuments && !solrDocuments.isEmpty() && updateDocuments(solrDocuments,publishingBatchId)) {
-            writeMetaInfos(retrievedDocs);
-        } else {
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
-                      "There was a problem with writing this batch to solr. No metainfo was written to mongo. Maybe documents where empty ?");
+        int idx = 0;
+        for (final List<HarvesterDocument> document: solrFilteredDocs) {
+            final List<CRFSolrDocument> crfSolrDocument = FakeTagExtractor.extractTags(document, publishingBatchId);
+            if (null != crfSolrDocument && !crfSolrDocument.isEmpty() && updateDocuments(crfSolrDocument, publishingBatchId)) {
+                publisherHarvesterDaos[idx++].writeMetaInfos(document);
+            }
+            else {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
+                          "There was a problem with writing this batch to solr. No metaerror was written to mongo. Maybe documents where empty ?");
+            }
         }
 
         try {
+            LOG.error(LoggingComponent
+                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+                     "Updating currentTime to: " + currentTimestamp);
             currentTimestamp = updateTimestamp(currentTimestamp, retrievedDocs);
         } catch (IOException e) {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                       "Problem writing " + currentTimestamp + "to file: " + config.getStartTimestampFile(), e);
         }
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
-                 "Updating timestamp after batch finished to "+currentTimestamp);
-    }
-
-    private List<HarvesterDocument> filterDocumentIds(List<HarvesterDocument> retreivedDocuments, final String publishingBatchId) {
-
-        int size = -1;
-
-        for (final SOLRWriter solrWriter: solrWriters) {
-            retreivedDocuments = solrWriter.filterDocumentIds(retreivedDocuments, publishingBatchId);
-
-            if (-1 == size) {
-                size = retreivedDocuments.size();
-            }
-            else if (size != retreivedDocuments.size()) {
-                LOG.error ("Solr at url "  + solrWriter.getSolrUrl() + " is inconsistent with other solrs");
-                System.exit(-1);
-            }
-        }
-
-        return retreivedDocuments;
-    }
-
-    private void writeMetaInfos (List<HarvesterDocument> retrievedDocs) {
-        for (final PublisherHarvesterDao dao: publisherHarvesterDaos) {
-            dao.writeMetaInfos(retrievedDocs);
-        }
+        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+                 "Updating timestamp after batch finished to " + currentTimestamp);
     }
 
     private boolean updateDocuments (List<CRFSolrDocument> solrDocuments, String publishingBatchId) throws IOException {
