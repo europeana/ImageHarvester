@@ -46,6 +46,32 @@ public class ProcessingJobReportWriter {
         output.append("\t {\n");
         output.append("\t\t").append("job.id").append(" = ").append(input.getProcessingJob().getId()).append("\n");
         output.append("\t\t").append("job.state").append(" = ").append(input.getProcessingJob().getState().name()).append("\n");
+        output.append("\t\t").append("referenceOwner.executionId").append(" = ").append(input.getProcessingJob()
+                                                                                             .getReferenceOwner()
+                                                                                             .getExecutionId());
+        output.append("\t\t").append("referenceOwner.recordId").append(" = ").append(input.getProcessingJob()
+                                                                                          .getReferenceOwner()
+                                                                                          .getRecordId());
+        output.append("\t\t").append("referenceOwner.collectionId").append(" = ").append(input.getProcessingJob()
+                                                                                              .getReferenceOwner()
+                                                                                              .getCollectionId());
+        output.append("\t\t").append("referenceOwner.providerId").append(" = ").append(input.getProcessingJob().getReferenceOwner().getProviderId());
+        output.append("\t\t").append("ipAddress").append(" = ").append(input.getProcessingJob().getIpAddress());
+        output.append("\t\t").append("sourceDocumentReference = [\n");
+        for (final SourceDocumentReference reference : input.getSourceDocumentReferenceList()) {
+            output.append("\t\t\t").append("{\n");
+            output.append("\t\t\t\t").append("sourceDocumenReferenceId = " + reference.getId());
+            output.append("\t\t\t\t").append("url = ").append(reference.getUrl());
+            if (null != reference.getUrlSourceType()) {
+                output.append("\t\t\t\t").append("urlSourceType = ").append(reference.getUrlSourceType());
+            }
+            output.append("\t\t\t").append("}\n");
+        }
+        output.append("\t\t").append("]\n");
+
+
+
+
 
         if (printMore) {
             output.append("\t\t").append("taskStatistics = [\n");
