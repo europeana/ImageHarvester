@@ -34,7 +34,7 @@ public class SOLRWriter {
      * The maximum number of ID's that can be present in a SOLR search query.
      * Important because of the limitations of the HTTP URL length.
      */
-    private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 100;
+    private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 10;
 
     private static final int MAX_RETRIES = 5;
     private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
@@ -187,19 +187,16 @@ public class SOLRWriter {
                       "Checking documents: " + documents.size());
             for (int documentIdsStartChunkIndex = 0; documentIdsStartChunkIndex <= documentIds.size();
                  documentIdsStartChunkIndex += MAX_NUMBER_OF_IDS_IN_SOLR_QUERY) {
-                final int endOfArray = (documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY >= documentIds
-                                                                                                                .size()) ? documentIds
-                                                                                                                                   .size() : documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY;
+                final int endOfArray = Math.min(documentIds.size(), documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY);
                 final List<String> documentIdsToQuery = documentIds.subList(documentIdsStartChunkIndex, endOfArray);
 
                 if (!documentIdsToQuery.isEmpty()) {
                     // Do the SOLR query
                     final SolrQuery query = new SolrQuery();
+
                     final String queryString = "(" + StringUtils.join(documentIdsToQuery, " OR ").replace("/", "\\/") + ")";
-                    query.set(CommonParams.Q, "*:*");
-                    query.set(CommonParams.ROWS, MAX_NUMBER_OF_IDS_IN_SOLR_QUERY + 1);
-                    query.set(CommonParams.FQ, "europeana_id:" + queryString);
-                    query.set(CommonParams.FL, "europeana_id");
+                    query.setRows(MAX_NUMBER_OF_IDS_IN_SOLR_QUERY + 1);
+                    query.setQuery("europeana_id:" + queryString);
 
                     try {
                         final SolrClient server = createServer();
@@ -218,7 +215,7 @@ public class SOLRWriter {
                         LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                                    publishingBatchId, null, null),
                                   "Failed when executing existence query for {} documents. Will mark the documents as non-existent. The query string is {}",
-                                  documents.size(), queryString);
+                                  MAX_NUMBER_OF_IDS_IN_SOLR_QUERY, queryString);
                     }
                 }
             }
