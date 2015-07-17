@@ -11,7 +11,7 @@ public class SourceDocumentReferenceProcessingProfile implements Serializable {
 
     public final static String idFromUrl(final String sourceDocumentReferenceId, final URLSourceType urlSourceType, final DocumentReferenceTaskType taskType) {
         return new StringBuilder().append(sourceDocumentReferenceId).append("-").append(urlSourceType.name())
-                .append("-").append(taskType.name()).toString();
+                                  .append("-").append(taskType.name()).toString();
     }
 
     /**
@@ -64,6 +64,24 @@ public class SourceDocumentReferenceProcessingProfile implements Serializable {
      */
     private final long secondsBetweenEvaluations;
 
+    public SourceDocumentReferenceProcessingProfile(final Boolean active,
+                                                    ReferenceOwner referenceOwner,
+                                                    String sourceDocumentReferenceId,
+                                                    URLSourceType urlSourceType,
+                                                    DocumentReferenceTaskType taskType,
+                                                    int priority,
+                                                    Date toBeEvaluatedAt,
+                                                    long secondsBetweenEvaluations) {
+        this.id = idFromUrl(sourceDocumentReferenceId, urlSourceType, taskType);
+        this.active = active;
+        this.referenceOwner = referenceOwner;
+        this.sourceDocumentReferenceId = sourceDocumentReferenceId;
+        this.urlSourceType = urlSourceType;
+        this.taskType = taskType;
+        this.priority = priority;
+        this.toBeEvaluatedAt = toBeEvaluatedAt;
+        this.secondsBetweenEvaluations = secondsBetweenEvaluations;
+    }
 
     public SourceDocumentReferenceProcessingProfile(String id,final Boolean active, ReferenceOwner referenceOwner, String sourceDocumentReferenceId, URLSourceType urlSourceType, DocumentReferenceTaskType taskType, int priority, Date toBeEvaluatedAt, long secondsBetweenEvaluations) {
         this.id = id;
