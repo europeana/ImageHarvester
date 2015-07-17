@@ -56,8 +56,13 @@ public class ProcessingJobBuilder {
                 ),
                 JobState.READY, Utils.ipAddressOf(url), true);
 
-        // TODO : implement
-        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
+               Arrays.asList(
+                  SourceDocumentReferenceProcessingProfileBuilder.edmObjectUrl(sourceDocumentReference.getId(),
+                                                                               owner,
+                                                                               priority
+                                                                              )
+               );
 
         return Arrays.asList(
                 new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
@@ -78,7 +83,7 @@ public class ProcessingJobBuilder {
         }
 
         final List<ProcessingJobTuple> results = new ArrayList();
-
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = new ArrayList<>();
         for (final String url : urls) {
 
             final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.HASVIEW, url,
@@ -97,8 +102,12 @@ public class ProcessingJobBuilder {
                     ),
                     JobState.READY, Utils.ipAddressOf(url), true);
 
-            // TODO : implement
-            final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
+            sourceDocumentReferenceProcessingProfiles.add(
+                SourceDocumentReferenceProcessingProfileBuilder.edmHasView(sourceDocumentReference.getId(),
+                                                                           owner,
+                                                                           priority
+                                                                          )
+            );
 
             results.add(
                     new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
@@ -136,8 +145,13 @@ public class ProcessingJobBuilder {
                 ),
                 JobState.READY, Utils.ipAddressOf(url), true);
 
-        // TODO : implement
-        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
+                Arrays.asList (
+                   SourceDocumentReferenceProcessingProfileBuilder.edmIsShownBy (sourceDocumentReference.getId(),
+                                                                                 owner,
+                                                                                 priority
+                                                                                )
+                );
 
         return Arrays.asList(
                 new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
@@ -169,9 +183,13 @@ public class ProcessingJobBuilder {
                 ),
                 JobState.READY, Utils.ipAddressOf(url), true);
 
-        // TODO : implement
-        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
-
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
+            Arrays.asList (
+                 SourceDocumentReferenceProcessingProfileBuilder.edmIsShownAt(sourceDocumentReference.getId(),
+                                                                              owner,
+                                                                              priority
+                                                                             )
+            );
         return Arrays.asList(
                 new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
     }
