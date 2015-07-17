@@ -2,6 +2,7 @@ package eu.europeana.jobcreator.domain;
 
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.SourceDocumentReference;
+import eu.europeana.harvester.domain.SourceDocumentReferenceProcessingProfile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +23,12 @@ public class ProcessingJobTuple {
 
     private final ProcessingJob processingJob;
     private final SourceDocumentReference sourceDocumentReference;
+    private final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles;
 
-    public ProcessingJobTuple(ProcessingJob processingJob, SourceDocumentReference sourceDocumentReference) {
+    public ProcessingJobTuple(ProcessingJob processingJob, SourceDocumentReference sourceDocumentReference, List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles) {
         this.processingJob = processingJob;
         this.sourceDocumentReference = sourceDocumentReference;
+        this.sourceDocumentReferenceProcessingProfiles = sourceDocumentReferenceProcessingProfiles;
     }
 
     public ProcessingJob getProcessingJob() {
@@ -34,5 +37,10 @@ public class ProcessingJobTuple {
 
     public SourceDocumentReference getSourceDocumentReference() {
         return sourceDocumentReference;
+    }
+
+
+    public List<SourceDocumentReferenceProcessingProfile> getSourceDocumentReferenceProcessingProfiles() {
+        return sourceDocumentReferenceProcessingProfiles;
     }
 }
