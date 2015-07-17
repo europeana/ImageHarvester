@@ -56,8 +56,11 @@ public class ProcessingJobBuilder {
                 ),
                 JobState.READY, Utils.ipAddressOf(url), true);
 
+        // TODO : implement
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
+
         return Arrays.asList(
-                new ProcessingJobTuple(processingJob, sourceDocumentReference));
+                new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
     }
 
     /**
@@ -94,8 +97,11 @@ public class ProcessingJobBuilder {
                     ),
                     JobState.READY, Utils.ipAddressOf(url), true);
 
+            // TODO : implement
+            final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
+
             results.add(
-                    new ProcessingJobTuple(processingJob, sourceDocumentReference));
+                    new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
         }
         return results;
     }
@@ -130,8 +136,11 @@ public class ProcessingJobBuilder {
                 ),
                 JobState.READY, Utils.ipAddressOf(url), true);
 
+        // TODO : implement
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
+
         return Arrays.asList(
-                new ProcessingJobTuple(processingJob, sourceDocumentReference));
+                new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
     }
 
 
@@ -160,8 +169,11 @@ public class ProcessingJobBuilder {
                 ),
                 JobState.READY, Utils.ipAddressOf(url), true);
 
+        // TODO : implement
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
+
         return Arrays.asList(
-                new ProcessingJobTuple(processingJob, sourceDocumentReference));
+                new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
     }
 
 }

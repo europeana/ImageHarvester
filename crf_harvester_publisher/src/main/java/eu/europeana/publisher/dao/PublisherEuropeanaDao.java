@@ -123,7 +123,7 @@ public class PublisherEuropeanaDao {
         final BasicDBObject findQuery = new BasicDBObject();
 
         if (null != dateFilter) {
-            findQuery.put("updatedAt", new BasicDBObject("$lt", dateFilter.toDate()));
+            findQuery.put("updatedAt", new BasicDBObject("$gt", dateFilter.toDate()));
         }
 
         return mongoDB.getCollection("SourceDocumentProcessingStatistics").count(findQuery);

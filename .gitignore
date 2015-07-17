@@ -14,7 +14,6 @@ harvester-server/harvester-server.iml
 harvester-client/harvester-client.iml
 
 #ignore target compilation
-harvester-persistence/target/
-harvester-server/target/
-media-storage-client/target/
+target/
+out/
 
