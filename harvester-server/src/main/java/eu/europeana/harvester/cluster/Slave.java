@@ -155,19 +155,26 @@ public class Slave {
 
     }
 
-    public void restart() throws Exception {
+    public void restart() {
+        LOG.info("Shutting down the actor system.");
         system.shutdown();
-        //sleep 10 minutes
+        system.awaitTermination();
+        //sleep 5 minutes
         try {
-            Thread.sleep(600000l);
+            Thread.sleep(300000l);
         } catch (InterruptedException e) {
             LOG.error(e.getMessage());
         }
 
         LOG.info("trying to restart the actor system.");
 
-        this.init(this);
-        this.start();
+        try {
+            this.init(this);
+            this.start();
+        } catch ( Exception e ){
+            LOG.error("Init threw exception",e);
+        }
+
     }
 
     public ActorSystem getActorSystem() {

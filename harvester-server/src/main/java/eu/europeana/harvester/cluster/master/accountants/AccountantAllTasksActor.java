@@ -36,6 +36,23 @@ public class AccountantAllTasksActor extends UntypedActor {
     private final Map<String, Pair<RetrieveUrl, TaskState>> allTasks = new HashMap<>();
     private final Map<String,Long> allTasksTimer = new HashMap<>();
 
+    @Override
+    public void preStart(){
+
+        getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+                TimeUnit.MINUTES), getSelf(), new CleanUp(), getContext().system().dispatcher(), getSelf());
+
+    }
+
+
+    @Override
+    public void postRestart(Throwable reason){
+
+        getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+                TimeUnit.MINUTES), getSelf(), new CleanUp(), getContext().system().dispatcher(), getSelf());
+
+    }
+
 
     @Override
     public void onReceive(Object message) throws Exception {
@@ -74,7 +91,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 ReferenceOwner referenceOwner = null;
                 if (allTasks.containsKey(taskID)) {
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
-                    referenceOwner = retrieveUrl.getReferenceOwner();
+                    //referenceOwner = retrieveUrl.getReferenceOwner();
                     getSender().tell(retrieveUrl, getSelf());
                     return;
                 }
@@ -385,15 +402,19 @@ public class AccountantAllTasksActor extends UntypedActor {
     // marks old tasks that aren't done yet as Done so they can be removed
     private void cleanTasks () {
         long currentTime = System.currentTimeMillis();
+        ArrayList<String> toRemove = new ArrayList<>();
         for ( String taskID: allTasksTimer.keySet()) {
             Long sinceWhen = allTasksTimer.get(taskID);
-            if ( currentTime-sinceWhen.longValue() > 30*60*1000 ) {
+            if ( currentTime-sinceWhen.longValue() > 60*60*1000 ) {
+                toRemove.add(taskID);
                 if (allTasks.containsKey(taskID)) {
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
-                    allTasks.remove(taskID);
+                    allTasks.put(taskID, new Pair<>(retrieveUrl, TaskState.READY));
                 }
             }
         }
+        for (String task: toRemove)
+            allTasksTimer.remove(task);
     }
 
 

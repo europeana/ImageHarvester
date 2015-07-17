@@ -128,6 +128,12 @@ public class NodeSupervisor extends UntypedActor {
             onMemberUpReceived((ClusterEvent.MemberUp) message);
             return;
         }
+
+        if (message instanceof ClusterEvent.UnreachableMember) {
+            onUnreachableMember((ClusterEvent.UnreachableMember) message);
+            return;
+        }
+
         // Anything else
         nodeMaster.tell(message, getSender());
     }
@@ -152,16 +158,22 @@ public class NodeSupervisor extends UntypedActor {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Member disassociated: {}", disassociatedEvent.remoteAddress());
 
+
+    }
+
+
+    private void onUnreachableMember(ClusterEvent.UnreachableMember message){
         // if it's the master, restart
-        if (disassociatedEvent.getLocalAddress() == disassociatedEvent.getRemoteAddress()) {
+
+        if (message.member().getRoles().contains("master")) {
             try {
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
-                        "Master {} disassociated. Waiting 30 secs.", disassociatedEvent.remoteAddress());
+                        "Master {} unreachable. Waiting 5 min.", message.member().address().toString());
                 Thread.sleep(300000);
 
             } catch (InterruptedException e) {
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
-                        "Master {} disassociated. Interrupted while waiting 30 secs.", e);
+                        "Master {} unreachable. Interrupted while waiting 30 secs.", e);
             }
 
             slave.restart();
