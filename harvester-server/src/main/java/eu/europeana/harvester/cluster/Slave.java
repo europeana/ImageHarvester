@@ -22,13 +22,9 @@ import eu.europeana.harvester.db.swift.SwiftMediaStorageClientImpl;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 
 import java.io.File;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class Slave {
@@ -38,6 +34,8 @@ public class Slave {
     private final String[] args;
 
     private ActorSystem system;
+
+    private Config config;
 
     private static final String containerName = "swiftUnitTesting";
 
@@ -69,13 +67,13 @@ public class Slave {
             System.exit(-1);
         }
 
-        final Config config = ConfigFactory.parseFileAnySyntax(configFile, ConfigParseOptions.defaults()
+        config = ConfigFactory.parseFileAnySyntax(configFile, ConfigParseOptions.defaults()
                 .setSyntax(ConfigSyntax.CONF));
 
-        final ExecutorService bossPool = Executors.newCachedThreadPool();
-        final ExecutorService workerPool = Executors.newCachedThreadPool();
-
-        final ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossPool, workerPool);
+//        final ExecutorService bossPool = Executors.newCachedThreadPool();
+//        final ExecutorService workerPool = Executors.newCachedThreadPool();
+//
+//        final ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossPool, workerPool);
 
         final ResponseType responseType;
 
@@ -151,12 +149,73 @@ public class Slave {
         //system.actorOf(Props.create(MetricsListener.class), "metricsListener");
     }
 
-    public void start() {
+
+    public void reinit(Slave slave) throws Exception {
+        allRequirementsAreMetOrThrowException();
+
+
+        final ResponseType responseType;
+
+        if ("diskStorage".equals(config.getString("slave.responseType"))) {
+            responseType = ResponseType.DISK_STORAGE;
+        } else {
+            responseType = ResponseType.MEMORY_STORAGE;
+        }
+
+        final String pathToSave = config.getString("slave.pathToSave");
+        final File dir = new File(pathToSave);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        final String source = config.getString("media-storage.source");
+        final String colorMapPath = config.getString("slave.colorMap");
+
+        final Integer nrOfDownloaderSlaves = config.getInt("slave.nrOfDownloaderSlaves");
+        final Integer nrOfExtractorSlaves = config.getInt("slave.nrOfExtractorSlaves");
+        final Integer nrOfPingerSlaves = config.getInt("slave.nrOfPingerSlaves");
+        final Integer nrOfRetries = config.getInt("slave.nrOfRetries");
+        final Integer taskNrLimit = config.getInt("slave.taskNrLimit");
+
+        final NodeMasterConfig nodeMasterConfig = new NodeMasterConfig(nrOfDownloaderSlaves, nrOfExtractorSlaves,
+                nrOfPingerSlaves, nrOfRetries, taskNrLimit, pathToSave, responseType, source, colorMapPath);
+
+        final String mediaStorageClientType = config.hasPath("media-storage-type") ? config.getString("media-storage-type") : "DUMMY";
+
+        MediaStorageClient mediaStorageClient = null;
+        try {
+
+            if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
+                LOG.info("Using swift as media-storage ");
+                mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
+
+            } else {
+                LOG.info("Using dummy as media-storage ");
+                mediaStorageClient = new DummyMediaStorageClientImpl();
+
+            }
+        } catch (Exception e) {
+            LOG.error("Error: connection failed to media-storage " + e.getMessage());
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+
+
+        system = ActorSystem.create("ClusterSystem", config);
+
+        final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
+
+        NodeSupervisor.createActor(system, slave, masterSender, nodeMasterConfig,
+                mediaStorageClient, SlaveMetrics.METRIC_REGISTRY);
+
 
     }
 
+
+
     public void restart() {
         LOG.info("Shutting down the actor system.");
+        SlaveMetrics.Worker.Slave.restartCounter.inc();
         system.shutdown();
         system.awaitTermination();
         //sleep 5 minutes
@@ -169,8 +228,8 @@ public class Slave {
         LOG.info("trying to restart the actor system.");
 
         try {
-            this.init(this);
-            this.start();
+            this.reinit(this);
+
         } catch ( Exception e ){
             LOG.error("Init threw exception",e);
         }
@@ -189,7 +248,7 @@ public class Slave {
     public static void main(String[] args) throws Exception {
         final Slave slave = new Slave(args);
         slave.init(slave);
-        slave.start();
+        //slave.start();
     }
 
 }

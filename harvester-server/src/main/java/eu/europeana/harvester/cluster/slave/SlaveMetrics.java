@@ -78,6 +78,10 @@ public class SlaveMetrics {
              * How many times has the circuit breaker closed inside the worker.
              */
             public static final Counter forcedSelfDestructCounter = METRIC_REGISTRY.counter(name(Slave.NAME, "forcedTerminationTimeout", COUNTER));
+            /**
+             * How many times has the slave has been restarted.
+             */
+            public static final Counter restartCounter = METRIC_REGISTRY.counter(name(Slave.NAME, "slaveRestart", COUNTER));
 
 
             public static class Retrieve {
