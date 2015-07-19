@@ -2,7 +2,6 @@ package eu.europeana.harvester.cluster;
 
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
-import org.apache.commons.daemon.DaemonInitException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -25,7 +24,7 @@ public class SlaveDaemon implements Daemon {
     public void start() throws Exception {
         LOG.info("Starting slave");
 
-        slave.start();
+        //slave.start();
     }
 
     @Override
