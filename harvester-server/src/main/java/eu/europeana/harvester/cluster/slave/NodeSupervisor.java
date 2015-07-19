@@ -165,7 +165,7 @@ public class NodeSupervisor extends UntypedActor {
     private void onUnreachableMember(ClusterEvent.UnreachableMember message){
         // if it's the master, restart
 
-        if (message.member().getRoles().contains("master")) {
+        if (message.member().getRoles().contains("clusterMaster")) {
             try {
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                         "Master {} unreachable. Waiting 5 min.", message.member().address().toString());
