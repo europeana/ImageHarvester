@@ -66,7 +66,7 @@ public class SourceDocumentReferenceProcessingProfile implements Serializable {
     private final int secondsBetweenEvaluations;
 
 
-    public SourceDocumentReferenceProcessingProfile(final Boolean active,
+    public SourceDocumentReferenceProcessingProfile(Boolean active,
                                                     ReferenceOwner referenceOwner,
                                                     String sourceDocumentReferenceId,
                                                     URLSourceType urlSourceType,
