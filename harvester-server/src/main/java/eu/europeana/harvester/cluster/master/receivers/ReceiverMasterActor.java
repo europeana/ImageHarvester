@@ -48,7 +48,7 @@ public class ReceiverMasterActor extends UntypedActor {
     /**
      * SourceDocumentReference DAO object which lets us to read and store data to and from the database.
      */
-    private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
+    private final SourceDocumentReferenceDao SourceDocumentReferenceDao;
 
     /**
      * SourceDocumentReferenceMetaInfo DAO object which lets us to read and store data to and from the database.
@@ -76,7 +76,7 @@ public class ReceiverMasterActor extends UntypedActor {
                                final ActorRef monitoringActor,
                                final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                               final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                               final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao
                                ){
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
@@ -87,7 +87,7 @@ public class ReceiverMasterActor extends UntypedActor {
         this.monitoringActor = monitoringActor;
         this.processingJobDao = processingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
-        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.SourceDocumentReferenceDao = SourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
     }
 
@@ -102,10 +102,10 @@ public class ReceiverMasterActor extends UntypedActor {
                 accountantActor,  processingJobDao), "jobDumper");
 
         receiverStatisticsDumper = getContext().actorOf(Props.create(ReceiverStatisticsDumperActor.class, clusterMasterConfig,
-                sourceDocumentProcessingStatisticsDao,  sourceDocumentReferenceDao), "statisticsDumper");
+                sourceDocumentProcessingStatisticsDao, SourceDocumentReferenceDao), "statisticsDumper");
 
         receiverMetaInfoDumper = getContext().actorOf(Props.create(ReceiverMetaInfoDumperActor.class, clusterMasterConfig,
-                accountantActor,  sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");
+                accountantActor, SourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");
 
 
 

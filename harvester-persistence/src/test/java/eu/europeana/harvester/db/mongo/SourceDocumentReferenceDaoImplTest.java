@@ -24,7 +24,7 @@ public class SourceDocumentReferenceDaoImplTest {
 
     private static final Logger LOG = LogManager.getLogger(SourceDocumentReferenceDaoImplTest.class.getName());
 
-    private SourceDocumentReferenceDaoImpl sourceDocumentReferenceDao;
+    private SourceDocumentReferenceDaoImpl processingProfileDao;
 
     @Before
     public void setUp() throws Exception {
@@ -48,17 +48,17 @@ public class SourceDocumentReferenceDaoImplTest {
             LOG.error(e.getMessage());
         }
 
-        sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
+        processingProfileDao = new SourceDocumentReferenceDaoImpl(datastore);
     }
 
     @Test
     public void test_CreateOrModify_NullCollection() throws Exception {
-        assertFalse (sourceDocumentReferenceDao.createOrModify((Collection)null, WriteConcern.NONE).iterator().hasNext());
+        assertFalse (processingProfileDao.createOrModify((Collection)null, WriteConcern.NONE).iterator().hasNext());
     }
 
     @Test
     public void test_CreateOrModify_EmptyCollection() throws Exception {
-        assertFalse (sourceDocumentReferenceDao.createOrModify(Collections.EMPTY_LIST, WriteConcern.NONE).iterator().hasNext());
+        assertFalse (processingProfileDao.createOrModify(Collections.EMPTY_LIST, WriteConcern.NONE).iterator().hasNext());
     }
 
     @Test
@@ -67,11 +67,11 @@ public class SourceDocumentReferenceDaoImplTest {
                 new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
         assertNotNull(sourceDocumentReference.getId());
 
-        sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
+        processingProfileDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
         assertEquals(sourceDocumentReference.getUrl(),
-                sourceDocumentReferenceDao.read(sourceDocumentReference.getId()).getUrl());
+                processingProfileDao.read(sourceDocumentReference.getId()).getUrl());
 
-        sourceDocumentReferenceDao.delete(sourceDocumentReference.getId());
+        processingProfileDao.delete(sourceDocumentReference.getId());
     }
 
     @Test
@@ -86,87 +86,87 @@ public class SourceDocumentReferenceDaoImplTest {
                                           )
             );
         }
-        sourceDocumentReferenceDao.createOrModify(documentReferences, WriteConcern.NONE);
+        processingProfileDao.createOrModify(documentReferences, WriteConcern.NONE);
 
         for (final SourceDocumentReference document: documentReferences) {
-            final SourceDocumentReference  writtenDocument = sourceDocumentReferenceDao.read(document.getId());
+            final SourceDocumentReference  writtenDocument = processingProfileDao.read(document.getId());
 
-            sourceDocumentReferenceDao.delete(document.getId());
+            processingProfileDao.delete(document.getId());
             ReflectionAssert.assertReflectionEquals(document, writtenDocument);
         }
     }
 
     @Test
     public void testRead() throws Exception {
-        SourceDocumentReference sourceDocumentReferenceFromRead = sourceDocumentReferenceDao.read("");
+        SourceDocumentReference sourceDocumentReferenceFromRead = processingProfileDao.read("");
         assertNull(sourceDocumentReferenceFromRead);
 
         final SourceDocumentReference sourceDocumentReference =
                 new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
-        sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
+        processingProfileDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
 
-        sourceDocumentReferenceFromRead = sourceDocumentReferenceDao.read(sourceDocumentReference.getId());
+        sourceDocumentReferenceFromRead = processingProfileDao.read(sourceDocumentReference.getId());
         assertEquals(sourceDocumentReference.getUrl(), sourceDocumentReferenceFromRead.getUrl());
 
-        sourceDocumentReferenceDao.delete(sourceDocumentReference.getId());
+        processingProfileDao.delete(sourceDocumentReference.getId());
     }
 
     @Test
     public void testUpdate() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
                 new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
-        assertFalse(sourceDocumentReferenceDao.update(sourceDocumentReference, WriteConcern.NONE));
-        sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
+        assertFalse(processingProfileDao.update(sourceDocumentReference, WriteConcern.NONE));
+        processingProfileDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
 
         final SourceDocumentReference newSourceDocumentReference =
                 new SourceDocumentReference(sourceDocumentReference.getId(),
                         sourceDocumentReference.getReferenceOwner(), null, "test2", null, null, 0l, null, true);
-        assertTrue(sourceDocumentReferenceDao.update(newSourceDocumentReference, WriteConcern.NONE));
+        assertTrue(processingProfileDao.update(newSourceDocumentReference, WriteConcern.NONE));
 
-        assertEquals(sourceDocumentReferenceDao.read(sourceDocumentReference.getId()).getUrl(), "test2");
-        sourceDocumentReferenceDao.delete(newSourceDocumentReference.getId());
+        assertEquals(processingProfileDao.read(sourceDocumentReference.getId()).getUrl(), "test2");
+        processingProfileDao.delete(newSourceDocumentReference.getId());
     }
 
     @Test
     public void testDelete() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
                 new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
-        assertFalse(sourceDocumentReferenceDao.delete(sourceDocumentReference.getId()).getN() == 1);
-        sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
+        assertFalse(processingProfileDao.delete(sourceDocumentReference.getId()).getN() == 1);
+        processingProfileDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
 
         SourceDocumentReference sourceDocumentReferenceFromRead =
-                sourceDocumentReferenceDao.read(sourceDocumentReference.getId());
+                processingProfileDao.read(sourceDocumentReference.getId());
         assertNotNull(sourceDocumentReferenceFromRead);
 
-        assertTrue(sourceDocumentReferenceDao.delete(sourceDocumentReference.getId()).getN() == 1);
+        assertTrue(processingProfileDao.delete(sourceDocumentReference.getId()).getN() == 1);
 
-        sourceDocumentReferenceFromRead = sourceDocumentReferenceDao.read(sourceDocumentReference.getId());
+        sourceDocumentReferenceFromRead = processingProfileDao.read(sourceDocumentReference.getId());
         assertNull(sourceDocumentReferenceFromRead);
 
-        assertFalse(sourceDocumentReferenceDao.delete(sourceDocumentReference.getId()).getN() == 1);
+        assertFalse(processingProfileDao.delete(sourceDocumentReference.getId()).getN() == 1);
     }
 
     @Test
     public void testCreateOrModify() throws Exception {
         final SourceDocumentReference sourceDocumentReference =
                 new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
-        assertNull(sourceDocumentReferenceDao.read(sourceDocumentReference.getId()));
+        assertNull(processingProfileDao.read(sourceDocumentReference.getId()));
 
-        sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
-        assertNotNull(sourceDocumentReferenceDao.read(sourceDocumentReference.getId()));
-        assertEquals(sourceDocumentReferenceDao.read(sourceDocumentReference.getId()).getUrl(),
+        processingProfileDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
+        assertNotNull(processingProfileDao.read(sourceDocumentReference.getId()));
+        assertEquals(processingProfileDao.read(sourceDocumentReference.getId()).getUrl(),
                 sourceDocumentReference.getUrl());
 
         final SourceDocumentReference updatedSourceDocumentReference =
                 new SourceDocumentReference(sourceDocumentReference.getId(),
                         new ReferenceOwner("1", "1", "1"), null, "test2", null, null, 0l, null, true);
-        sourceDocumentReferenceDao.createOrModify(updatedSourceDocumentReference, WriteConcern.NONE);
-        assertEquals(sourceDocumentReferenceDao.read(sourceDocumentReference.getId()).getUrl(),
+        processingProfileDao.createOrModify(updatedSourceDocumentReference, WriteConcern.NONE);
+        assertEquals(processingProfileDao.read(sourceDocumentReference.getId()).getUrl(),
                 updatedSourceDocumentReference.getUrl());
-        assertNotEquals(sourceDocumentReferenceDao.read(sourceDocumentReference.getId()).getUrl(),
+        assertNotEquals(processingProfileDao.read(sourceDocumentReference.getId()).getUrl(),
                 sourceDocumentReference.getUrl());
 
-        sourceDocumentReferenceDao.delete(sourceDocumentReference.getId());
+        processingProfileDao.delete(sourceDocumentReference.getId());
     }
 
     @Test
@@ -175,9 +175,8 @@ public class SourceDocumentReferenceDaoImplTest {
                 new SourceDocumentReference(new ReferenceOwner("1", "1", "1"), null, "test", null, null, 0l, null, true);
         final String url = "test";
 
-        sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
+        processingProfileDao.createOrModify(sourceDocumentReference, WriteConcern.NONE);
 
-        sourceDocumentReferenceDao.delete(sourceDocumentReference.getId());
+        processingProfileDao.delete(sourceDocumentReference.getId());
     }
-
 }

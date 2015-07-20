@@ -1,4 +1,4 @@
-package eu.europeana.harvester.cluster.master.reloader;
+package eu.europeana.harvester.cluster.master.jobrestarter;
 
 import akka.actor.Cancellable;
 import akka.actor.UntypedActor;
@@ -13,23 +13,23 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by salexandru on 20.07.2015.
  */
-public class JobReloaderActor extends UntypedActor {
+public class JobRestarterActor extends UntypedActor {
     private Cancellable cancellable;
 
-    private final JobReloaderConfig config;
-    private final JobReloaderHelper helper;
+    private final JobRestarterConfig config;
+    private final JobRestarterHelper helper;
 
-    public JobReloaderActor (final JobReloaderConfig config,
-                             final SourceDocumentReferenceDao sourceDocumentReferenceDao,
-                             final ProcessingJobDao processingJobDao,
-                             final SourceDocumentReferenceProcessingProfileDao processingProfileDao)
+    public JobRestarterActor (final JobRestarterConfig config,
+                              final SourceDocumentReferenceDao documentReferenceDao,
+                              final ProcessingJobDao processingJobDao,
+                              final SourceDocumentReferenceProcessingProfileDao processingProfileDao)
     {
         if (null == config || null == processingProfileDao) {
-            throw new IllegalArgumentException("JobReloaderActor: config and processingProfileDao cannot be null!");
+            throw new IllegalArgumentException("JobRestarterActor: config and SourceDocumentReferenceDao cannot be null!");
         }
 
         this.config = config;
-        helper = new JobReloaderHelper(sourceDocumentReferenceDao, processingJobDao, processingProfileDao);
+        helper = new JobRestarterHelper(documentReferenceDao, processingJobDao, processingProfileDao);
     }
 
 
@@ -52,7 +52,7 @@ public class JobReloaderActor extends UntypedActor {
     }
 
     private Cancellable scheduleOnce() {
-       return scheduleOnce(config.getNumberOfSeconds().getStandardSeconds());
+       return scheduleOnce(config.getNumberOfSecondsBetweenRepetition().getStandardSeconds());
     }
 
     private Cancellable scheduleOnce(long delayInSeconds) {

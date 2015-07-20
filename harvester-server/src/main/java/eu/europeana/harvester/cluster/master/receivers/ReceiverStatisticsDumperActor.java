@@ -31,20 +31,20 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
     /**
      * SourceDocumentReference DAO object which lets us to read and store data to and from the database.
      */
-    private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
+    private final SourceDocumentReferenceDao SourceDocumentReferenceDao;
 
 
 
 
     public ReceiverStatisticsDumperActor(final ClusterMasterConfig clusterMasterConfig,
                                          final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                                         final SourceDocumentReferenceDao sourceDocumentReferenceDao){
+                                         final SourceDocumentReferenceDao SourceDocumentReferenceDao){
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverStatisticsDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
-        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.SourceDocumentReferenceDao = SourceDocumentReferenceDao;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
      * @param msg - the message from the slave actor with url, jobId and other statistics
      */
     private void saveStatistics(DoneProcessing msg) {
-        final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.read(msg.getReferenceId());
+        final SourceDocumentReference finishedDocument = SourceDocumentReferenceDao.read(msg.getReferenceId());
 
         final String docId = finishedDocument.getId();
         //LOG.info("save statistics for document with ID: {}",docId);
@@ -88,7 +88,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
         SourceDocumentReference updatedDocument =
                 finishedDocument.withLastStatsId(sourceDocumentProcessingStatistics.getId());
         updatedDocument = updatedDocument.withRedirectionPath(msg.getRedirectionPath());
-        sourceDocumentReferenceDao.update(updatedDocument, clusterMasterConfig.getWriteConcern());
+        SourceDocumentReferenceDao.update(updatedDocument, clusterMasterConfig.getWriteConcern());
 
     }
 

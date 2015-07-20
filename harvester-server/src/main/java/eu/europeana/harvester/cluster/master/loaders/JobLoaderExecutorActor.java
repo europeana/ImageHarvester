@@ -22,14 +22,14 @@ public class JobLoaderExecutorActor extends UntypedActor {
     public static final ActorRef createActor(final ActorSystem system, final ClusterMasterConfig clusterMasterConfig,
                                              final ActorRef accountantActor, final ProcessingJobDao processingJobDao,
                                              final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                                             final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                                             final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                              final MachineResourceReferenceDao machineResourceReferenceDao,
                                              final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions,
                                              final Map<String, Integer> ipDistribution
     ) {
         return system.actorOf(Props.create(JobLoaderExecutorActor.class,
                 clusterMasterConfig, accountantActor, processingJobDao, sourceDocumentProcessingStatisticsDao,
-                sourceDocumentReferenceDao, machineResourceReferenceDao, ipsWithJobs, ipExceptions, ipDistribution ));
+                                           SourceDocumentReferenceDao, machineResourceReferenceDao, ipsWithJobs, ipExceptions, ipDistribution ));
 
     }
 
@@ -59,7 +59,7 @@ public class JobLoaderExecutorActor extends UntypedActor {
     /**
      * SourceDocumentReference DAO object which lets us to read and store data to and from the database.
      */
-    private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
+    private final SourceDocumentReferenceDao SourceDocumentReferenceDao;
 
     /**
      * MachineResourceReference DAO object which lets us to read and store data to and from the database.
@@ -90,7 +90,7 @@ public class JobLoaderExecutorActor extends UntypedActor {
     public JobLoaderExecutorActor(final ClusterMasterConfig clusterMasterConfig,
                                   final ActorRef accountantActor, final ProcessingJobDao processingJobDao,
                                   final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                                  final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                                  final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                   final MachineResourceReferenceDao machineResourceReferenceDao,
                                   final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions,
                                   final Map<String, Integer> ipDistribution) {
@@ -101,7 +101,7 @@ public class JobLoaderExecutorActor extends UntypedActor {
         this.accountantActor = accountantActor;
         this.processingJobDao = processingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
-        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.SourceDocumentReferenceDao = SourceDocumentReferenceDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.ipsWithJobs = ipsWithJobs;
         this.ipExceptions = ipExceptions;
@@ -119,10 +119,11 @@ public class JobLoaderExecutorActor extends UntypedActor {
             try {
 
                 JobLoaderExecutorHelper.checkForNewFastLaneJobs(clusterMasterConfig, ipDistribution, ipsWithJobs, accountantActor, processingJobDao,
-                        sourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
+                                                                SourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
 
-                JobLoaderExecutorHelper.checkForNewJobs(clusterMasterConfig, ipDistribution, ipsWithJobs, accountantActor, processingJobDao,
-                        sourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
+                JobLoaderExecutorHelper.checkForNewJobs(clusterMasterConfig, ipDistribution, ipsWithJobs,
+                                                        accountantActor, processingJobDao,
+                                                        SourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
 
             } catch (Exception e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
