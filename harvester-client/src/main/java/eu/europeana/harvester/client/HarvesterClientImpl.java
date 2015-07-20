@@ -225,23 +225,23 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo) {
-        return sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo, WriteConcern.NORMAL);
+        return sourceDocumentReferenceMetaInfoDao.update(sourceDocumentReferenceMetaInfo, harvesterClientConfig.getWriteConcern());
     }
 
     @Override
     public List<ProcessingJob> deactivateJobs (final ReferenceOwner owner) {
-        final List<ProcessingJob> processingJobs = processingJobDao.deactivateJobs(owner);
+        final List<ProcessingJob> processingJobs = processingJobDao.deactivateJobs(owner, harvesterClientConfig.getWriteConcern());
 
         if (processingJobs.isEmpty()) return  processingJobs;
 
         final List<String> sourceDocumentReferenceIds = new ArrayList<>(processingJobs.size());
 
-        for (final SourceDocumentReference documentReference: sourceDocumentReferenceDao.deactivateDocuments(owner)) {
+        for (final SourceDocumentReference documentReference: sourceDocumentReferenceDao.deactivateDocuments(owner, harvesterClientConfig.getWriteConcern())) {
            sourceDocumentReferenceIds.add(documentReference.getId());
         }
 
-        sourceDocumentProcessingStatisticsDao.deactivateDocuments(sourceDocumentReferenceIds).clear();
-        sourceDocumentReferenceProcessingProfileDao.deactivateDocuments(owner);
+        sourceDocumentProcessingStatisticsDao.deactivateDocuments(sourceDocumentReferenceIds, harvesterClientConfig.getWriteConcern()).clear();
+        sourceDocumentReferenceProcessingProfileDao.deactivateDocuments(owner, harvesterClientConfig.getWriteConcern()).clear();
 
         return processingJobs;
     }
@@ -250,7 +250,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     public void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId, final String processingJobId) {
         SourceDocumentProcessingStatistics s = this.sourceDocumentProcessingStatisticsDao.read(SourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId, processingJobId));
         if (s != null) {
-            this.sourceDocumentProcessingStatisticsDao.update(s.withActive(true), WriteConcern.NORMAL);
+            this.sourceDocumentProcessingStatisticsDao.update(s.withActive(true), harvesterClientConfig.getWriteConcern());
         }
 
     }

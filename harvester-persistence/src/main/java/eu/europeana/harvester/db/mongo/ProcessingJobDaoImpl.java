@@ -129,7 +129,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
     }
 
     @Override
-    public List<ProcessingJob> deactivateJobs (final ReferenceOwner owner) {
+    public List<ProcessingJob> deactivateJobs (final ReferenceOwner owner, final WriteConcern writeConcern) {
         if (null == owner || (owner.equals(new ReferenceOwner()))) {
             throw new IllegalArgumentException("The reference owner cannot be null and must have at least one field not null");
         }
@@ -156,7 +156,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
         updateOperations.set("active", false);
 
-        datastore.update(query, updateOperations);
+        datastore.update(query, updateOperations, false, writeConcern);
 
         return query.asList();
     }

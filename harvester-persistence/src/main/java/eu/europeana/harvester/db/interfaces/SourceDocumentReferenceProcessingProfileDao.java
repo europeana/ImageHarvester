@@ -96,5 +96,5 @@ public interface SourceDocumentReferenceProcessingProfileDao {
      * @return - list of ProcessingJobs
      */
     @Deprecated
-    List<SourceDocumentReferenceProcessingProfile> deactivateDocuments (final ReferenceOwner owner);
+    List<SourceDocumentReferenceProcessingProfile> deactivateDocuments (final ReferenceOwner owner, final WriteConcern writeConcern);
 }

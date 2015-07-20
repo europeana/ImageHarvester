@@ -216,7 +216,7 @@ public class ProcessingJobDaoImplTest {
             processingJobDao.create(processingJob, WriteConcern.NONE);
         }
 
-        for (final ProcessingJob job: processingJobDao.deactivateJobs(referenceOwners[0])) {
+        for (final ProcessingJob job: processingJobDao.deactivateJobs(referenceOwners[0], WriteConcern.ACKNOWLEDGED)) {
             assertFalse (job.getActive());
             assertFalse (processingJobDao.read(job.getId()).getActive());
         }

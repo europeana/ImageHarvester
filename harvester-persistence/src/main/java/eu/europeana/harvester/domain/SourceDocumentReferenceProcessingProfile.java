@@ -65,6 +65,17 @@ public class SourceDocumentReferenceProcessingProfile implements Serializable {
      */
     private final int secondsBetweenEvaluations;
 
+    public SourceDocumentReferenceProcessingProfile () {
+        this.id = null;
+        this.active = null;
+        this.referenceOwner = null;
+        this.sourceDocumentReferenceId = null;
+        this.urlSourceType = null;
+        this.taskType = null;
+        this.priority = -1;
+        this.toBeEvaluatedAt = null;
+        this.secondsBetweenEvaluations = -1;
+    }
 
     public SourceDocumentReferenceProcessingProfile(Boolean active,
                                                     ReferenceOwner referenceOwner,
