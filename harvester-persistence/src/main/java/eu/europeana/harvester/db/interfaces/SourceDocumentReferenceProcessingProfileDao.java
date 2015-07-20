@@ -97,7 +97,4 @@ public interface SourceDocumentReferenceProcessingProfileDao {
      */
     @Deprecated
     List<SourceDocumentReferenceProcessingProfile> deactivateDocuments (final ReferenceOwner owner);
-
-
-
 }
