@@ -10,6 +10,7 @@ import eu.europeana.harvester.client.HarvesterClientImpl;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
+import org.apache.commons.collections.map.HashedMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,6 +73,7 @@ public class HarvesterClientTest {
         datastore.delete(datastore.createQuery(SourceDocumentProcessingStatistics.class));
         datastore.delete(datastore.createQuery(SourceDocumentReferenceMetaInfo.class));
         datastore.delete(datastore.createQuery(SourceDocumentReference.class));
+        datastore.delete(datastore.createQuery(SourceDocumentReferenceProcessingProfile.class));
     }
 
     @Test
@@ -180,6 +182,7 @@ public class HarvesterClientTest {
         final Map<ReferenceOwner, List<String>> processingJobIds = new HashMap<>();
         final Map<ReferenceOwner, List<String>> sourceDocumentReferenceIds = new HashMap<>();
         final Map<ReferenceOwner, List<String>> sourceDocumentProcessingStatisticsIds = new HashMap<>();
+        final Map<ReferenceOwner, List<String>> sourceDocumentProcessingProfileIds = new HashMap<>();
 
         final Random random = new Random();
 
@@ -187,6 +190,7 @@ public class HarvesterClientTest {
             processingJobIds.put(owner, new ArrayList<String>());
             sourceDocumentReferenceIds.put(owner, new ArrayList<String>());
             sourceDocumentProcessingStatisticsIds.put(owner, new ArrayList<String>());
+            sourceDocumentProcessingProfileIds.put(owner, new ArrayList<String>());
         }
 
         for (int i = 0; i < 150; ++i) {
@@ -198,12 +202,12 @@ public class HarvesterClientTest {
             final ProcessingJob processingJob =
                     new ProcessingJob(id, 1, new Date(), owner, null, JobState.READY, URLSourceType.HASVIEW, "", null, null);
 
-            processingJobDao.create(processingJob, WriteConcern.NONE);
+
 
             final SourceDocumentReference sourceDocumentReference =
                     new SourceDocumentReference(owner, "test", null, null, 0l, null, true);
 
-            sourceDocumentReferenceDao.create(sourceDocumentReference, WriteConcern.NONE);
+
 
             sourceDocumentReferenceIds.get(owner).add(sourceDocumentReference.getId());
 
@@ -211,8 +215,22 @@ public class HarvesterClientTest {
                     new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, owner,
                                                            null, sourceDocumentReference.getId(), "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
 
+            final SourceDocumentReferenceProcessingProfile profile =
+                    new SourceDocumentReferenceProcessingProfile(true,
+                                                                 owner,
+                                                                 sourceDocumentReference.getId(),
+                                                                 URLSourceType.ISSHOWNAT,
+                                                                 DocumentReferenceTaskType.CHECK_LINK,
+                                                                 0,
+                                                                 new Date(),
+                                                                 10);
+            sourceDocumentProcessingProfileIds.get(owner).add(profile.getId());
+
+            sourceDocumentReferenceDao.create(sourceDocumentReference, WriteConcern.NONE);
+            processingJobDao.create(processingJob, WriteConcern.NONE);
             sourceDocumentProcessingStatisticsIds.get(owner).add(sourceDocumentProcessingStatistics.getId());
             sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
+            sourceDocumentReferenceProcessingProfileDao.create(profile, WriteConcern.NONE);
         }
 
         final List<ProcessingJob> jobs = harvesterClient.deactivateJobs(owners[1]);
@@ -228,6 +246,10 @@ public class HarvesterClientTest {
 
         for (final String id: sourceDocumentProcessingStatisticsIds.get(owners[1])) {
             assertFalse(sourceDocumentProcessingStatisticsDao.read(id).getActive());
+        }
+
+        for (final String id: sourceDocumentProcessingProfileIds.get(owners[1])) {
+            assertFalse(sourceDocumentReferenceProcessingProfileDao.read(id).getActive());
         }
     }
 
