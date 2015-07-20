@@ -102,5 +102,5 @@ public interface ProcessingJobDao {
       * @return - list of ProcessingJobs
       */
      @Deprecated
-     List<ProcessingJob> deactivateJobs (final ReferenceOwner owner);
+     List<ProcessingJob> deactivateJobs (final ReferenceOwner owner, final WriteConcern writeConcern);
 }

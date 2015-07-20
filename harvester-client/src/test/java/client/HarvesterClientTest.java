@@ -62,7 +62,7 @@ public class HarvesterClientTest {
                                                   sourceDocumentReferenceDao,
                                                   sourceDocumentReferenceMetaInfoDao,
                                                   sourceDocumentReferenceProcessingProfileDao,
-                                                  new HarvesterClientConfig(WriteConcern.NONE)
+                                                  new HarvesterClientConfig(WriteConcern.ACKNOWLEDGED)
         );
     }
 
@@ -182,18 +182,18 @@ public class HarvesterClientTest {
             new ReferenceOwner("1", "1", "2", "1")
         };
 
-        final Map<ReferenceOwner, List<String>> processingJobIds = new HashMap<>();
-        final Map<ReferenceOwner, List<String>> sourceDocumentReferenceIds = new HashMap<>();
-        final Map<ReferenceOwner, List<String>> sourceDocumentProcessingStatisticsIds = new HashMap<>();
-        final Map<ReferenceOwner, List<String>> sourceDocumentProcessingProfileIds = new HashMap<>();
+        final Map<ReferenceOwner, Set<String>> processingJobIds = new HashMap<>();
+        final Map<ReferenceOwner, Set<String>> sourceDocumentReferenceIds = new HashMap<>();
+        final Map<ReferenceOwner, Set<String>> sourceDocumentProcessingStatisticsIds = new HashMap<>();
+        final Map<ReferenceOwner, Set<String>> sourceDocumentProcessingProfileIds = new HashMap<>();
 
-        final Random random = new Random();
+        final Random random = new Random(System.nanoTime());
 
         for (final ReferenceOwner owner: owners) {
-            processingJobIds.put(owner, new ArrayList<String>());
-            sourceDocumentReferenceIds.put(owner, new ArrayList<String>());
-            sourceDocumentProcessingStatisticsIds.put(owner, new ArrayList<String>());
-            sourceDocumentProcessingProfileIds.put(owner, new ArrayList<String>());
+            processingJobIds.put(owner, new HashSet<String>());
+            sourceDocumentReferenceIds.put(owner, new HashSet<String>());
+            sourceDocumentProcessingStatisticsIds.put(owner, new HashSet<String>());
+            sourceDocumentProcessingProfileIds.put(owner, new HashSet<String>());
         }
 
         for (int i = 0; i < 150; ++i) {
@@ -218,6 +218,9 @@ public class HarvesterClientTest {
                     new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, owner,
                                                            null, sourceDocumentReference.getId(), "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
 
+
+            sourceDocumentProcessingStatisticsIds.get(owner).add(sourceDocumentProcessingStatistics.getId());
+
             final SourceDocumentReferenceProcessingProfile profile =
                     new SourceDocumentReferenceProcessingProfile(true,
                                                                  owner,
@@ -231,7 +234,6 @@ public class HarvesterClientTest {
 
             sourceDocumentReferenceDao.create(sourceDocumentReference, WriteConcern.NONE);
             processingJobDao.create(processingJob, WriteConcern.NONE);
-            sourceDocumentProcessingStatisticsIds.get(owner).add(sourceDocumentProcessingStatistics.getId());
             sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
             sourceDocumentReferenceProcessingProfileDao.create(profile, WriteConcern.NONE);
         }

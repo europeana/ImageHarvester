@@ -102,7 +102,7 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
     }
 
     @Override
-    public List<SourceDocumentReference> deactivateDocuments (ReferenceOwner owner) {
+    public List<SourceDocumentReference> deactivateDocuments (ReferenceOwner owner, WriteConcern concern) {
         if (null == owner || (owner.equals(new ReferenceOwner()))) {
             throw new IllegalArgumentException("The reference owner cannot be null and must have at least one field not null");
         }
@@ -129,7 +129,8 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
 
         updateOperations.set("active", false);
 
-        datastore.update(query, updateOperations);
+        query.disableCursorTimeout();
+        datastore.update(query, updateOperations, false, concern);
 
         return query.asList();
 
