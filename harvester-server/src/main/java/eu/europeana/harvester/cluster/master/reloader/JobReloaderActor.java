@@ -3,6 +3,8 @@ package eu.europeana.harvester.cluster.master.reloader;
 import akka.actor.Cancellable;
 import akka.actor.UntypedActor;
 import eu.europeana.harvester.cluster.domain.messages.ReloadJobs;
+import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceProcessingProfileDao;
 import scala.concurrent.duration.Duration;
 
@@ -18,6 +20,8 @@ public class JobReloaderActor extends UntypedActor {
     private final JobReloaderHelper helper;
 
     public JobReloaderActor (final JobReloaderConfig config,
+                             final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                             final ProcessingJobDao processingJobDao,
                              final SourceDocumentReferenceProcessingProfileDao processingProfileDao)
     {
         if (null == config || null == processingProfileDao) {
