@@ -7,9 +7,6 @@ import eu.europeana.harvester.domain.URLSourceType;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 
-import java.util.Date;
-
-
 /**
  * Created by paul on 16/07/15.
  */
@@ -28,7 +25,7 @@ public class SourceDocumentReferenceProcessingProfileBuilder {
                                                             DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                                                             priority,
                                                             DateTime.now().plusMonths(12).toDate(),
-                                                            Days.ONE.toStandardSeconds().getSeconds() * 365L
+                                                            Days.ONE.toStandardSeconds().getSeconds() * 365
                                                           );
     }
 
@@ -44,7 +41,7 @@ public class SourceDocumentReferenceProcessingProfileBuilder {
                                                             DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                                                             priority,
                                                             DateTime.now().plusMonths(12).toDate(),
-                                                            Days.ONE.toStandardSeconds().getSeconds() * 365L
+                                                            Days.ONE.toStandardSeconds().getSeconds() * 365
                                                           );
 
     }
@@ -62,7 +59,7 @@ public class SourceDocumentReferenceProcessingProfileBuilder {
                                                             DocumentReferenceTaskType.CHECK_LINK,
                                                             priority,
                                                             DateTime.now().plusMonths(12).toDate(),
-                                                            Days.ONE.toStandardSeconds().getSeconds() * 365L
+                                                            Days.ONE.toStandardSeconds().getSeconds() * 365
                                                           );
 
     }
@@ -79,7 +76,7 @@ public class SourceDocumentReferenceProcessingProfileBuilder {
                                                              DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                                                              priority,
                                                              DateTime.now().plusMonths(12).toDate(),
-                                                             Days.ONE.toStandardSeconds().getSeconds() * 365L
+                                                             Days.ONE.toStandardSeconds().getSeconds() * 365
                                                             );
     }
 }

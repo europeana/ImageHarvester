@@ -1,6 +1,8 @@
 package eu.europeana.jobcreator;
 
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ReferenceOwner;
+import eu.europeana.harvester.domain.URLSourceType;
 import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
@@ -8,6 +10,7 @@ import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -15,6 +18,32 @@ import java.util.List;
  * Handles creation of processing jobs.
  */
 public class JobCreator {
+
+    public final static List<ProcessingJobTuple> createJobs (final ReferenceOwner owner,
+                                                             final String url,
+                                                             final URLSourceType urlSourceType,
+                                                             final int priority,
+                                                             final DocumentReferenceTaskType taskType
+                                                             ) throws MalformedURLException, UnknownHostException {
+
+        final String edmObjectUrl = (URLSourceType.OBJECT == urlSourceType) ? url : null;
+        final List<String> edmHasViewUrl = (URLSourceType.HASVIEW == urlSourceType) ? Arrays.asList(url) : null;
+        final String edmIsShownByUrl = (URLSourceType.ISSHOWNBY == urlSourceType) ? url: null;
+        final String edmIshShownAtUrl = (URLSourceType.ISSHOWNAT == urlSourceType) ? url: null;
+        final ProcessingJobCreationOptions options = new ProcessingJobCreationOptions(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD == taskType);
+
+        return createJobs(owner.getCollectionId(),
+                          owner.getProviderId(),
+                          owner.getRecordId(),
+                          owner.getExecutionId(),
+                          edmObjectUrl,
+                          edmHasViewUrl,
+                          edmIsShownByUrl,
+                          edmIshShownAtUrl,
+                          priority,
+                          options
+                          );
+    }
 
     /**
      * Creates processing jobs from basic EDM object properties.
