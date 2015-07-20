@@ -12,12 +12,10 @@ import eu.europeana.harvester.domain.SourceDocumentReference;
 import eu.europeana.harvester.domain.SourceDocumentReferenceProcessingProfile;
 import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
-import org.joda.time.DateTime;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
