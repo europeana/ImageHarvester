@@ -3,14 +3,9 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.google.code.morphia.query.UpdateOperations;
-import com.google.common.base.Charsets;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
-import eu.europeana.harvester.domain.JobState;
-import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 

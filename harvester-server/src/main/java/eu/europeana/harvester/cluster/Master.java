@@ -128,7 +128,7 @@ class Master {
 
         final ProcessingJobDao processingJobDao = new ProcessingJobDaoImpl(datastore);
         final MachineResourceReferenceDao machineResourceReferenceDao = new MachineResourceReferenceDaoImpl(datastore);
-        final SourceDocumentReferenceDao sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
+        final SourceDocumentReferenceDao SourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
         final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao =
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore);
         final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao =
@@ -148,7 +148,7 @@ class Master {
 
         clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class,
                 clusterMasterConfig, ipExceptions, processingJobDao, machineResourceReferenceDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
+                sourceDocumentProcessingStatisticsDao, SourceDocumentReferenceDao,
                 sourceDocumentReferenceMetaInfoDao, defaultLimits,
                 cleanupInterval, delayForCountingTheStateOfDocuments ), "clusterMaster");
     }

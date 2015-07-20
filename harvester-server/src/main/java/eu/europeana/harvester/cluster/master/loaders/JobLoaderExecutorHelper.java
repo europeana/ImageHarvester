@@ -33,7 +33,7 @@ public class JobLoaderExecutorHelper  {
      */
     public static void checkForNewJobs(ClusterMasterConfig clusterMasterConfig, Map<String, Integer> ipDistribution,
                                        HashMap<String, Boolean> ipsWithJobs , ActorRef accountantActor,ProcessingJobDao processingJobDao,
-                                       SourceDocumentReferenceDao sourceDocumentReferenceDao, MachineResourceReferenceDao machineResourceReferenceDao,
+                                       SourceDocumentReferenceDao SourceDocumentReferenceDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                        final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                        Logger LOG) {
         final int taskSize = getAllTasks(accountantActor, LOG);
@@ -76,7 +76,7 @@ public class JobLoaderExecutorHelper  {
                     resourceIds.add(resourceId);
                 }
             }
-            final List<SourceDocumentReference> sourceDocumentReferences = sourceDocumentReferenceDao.read(resourceIds);
+            final List<SourceDocumentReference> sourceDocumentReferences = SourceDocumentReferenceDao.read(resourceIds);
             final Map<String, SourceDocumentReference> resources = new HashMap<>();
             for (SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
                 resources.put(sourceDocumentReference.getId(), sourceDocumentReference);
@@ -270,7 +270,7 @@ public class JobLoaderExecutorHelper  {
      */
     public static void checkForNewFastLaneJobs(ClusterMasterConfig clusterMasterConfig, Map<String, Integer> ipDistribution,
                                        HashMap<String, Boolean> ipsWithJobs , ActorRef accountantActor,ProcessingJobDao processingJobDao,
-                                       SourceDocumentReferenceDao sourceDocumentReferenceDao, MachineResourceReferenceDao machineResourceReferenceDao,
+                                       SourceDocumentReferenceDao SourceDocumentReferenceDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                        final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                        Logger LOG) {
 
@@ -297,7 +297,7 @@ public class JobLoaderExecutorHelper  {
                     resourceIds.add(resourceId);
                 }
             }
-            final List<SourceDocumentReference> sourceDocumentReferences = sourceDocumentReferenceDao.read(resourceIds);
+            final List<SourceDocumentReference> sourceDocumentReferences = SourceDocumentReferenceDao.read(resourceIds);
             final Map<String, SourceDocumentReference> resources = new HashMap<>();
             for (SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
                 resources.put(sourceDocumentReference.getId(), sourceDocumentReference);

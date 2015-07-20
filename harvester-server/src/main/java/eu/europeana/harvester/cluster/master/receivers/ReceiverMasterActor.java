@@ -76,7 +76,7 @@ public class ReceiverMasterActor extends UntypedActor {
                                final ActorRef monitoringActor,
                                final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                               final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                               final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao
                                ){
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
@@ -87,7 +87,7 @@ public class ReceiverMasterActor extends UntypedActor {
         this.monitoringActor = monitoringActor;
         this.processingJobDao = processingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
-        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.sourceDocumentReferenceDao = SourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
     }
 
@@ -105,7 +105,7 @@ public class ReceiverMasterActor extends UntypedActor {
                 sourceDocumentProcessingStatisticsDao,  sourceDocumentReferenceDao, processingJobDao), "statisticsDumper");
 
         receiverMetaInfoDumper = getContext().actorOf(Props.create(ReceiverMetaInfoDumperActor.class, clusterMasterConfig,
-                accountantActor,  sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");
+                accountantActor, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");
 
 
 

@@ -120,7 +120,7 @@ public class ClusterMasterActor extends UntypedActor {
     /**
      * SourceDocumentReference DAO object which lets us to read and store data to and from the database.
      */
-    private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
+    private final SourceDocumentReferenceDao SourceDocumentReferenceDao;
 
     /**
      * SourceDocumentReferenceMetaInfo DAO object which lets us to read and store data to and from the database.
@@ -151,7 +151,7 @@ public class ClusterMasterActor extends UntypedActor {
                                final ProcessingJobDao processingJobDao,
                                final MachineResourceReferenceDao machineResourceReferenceDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                               final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                               final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
                                final DefaultLimits defaultLimits,
                                final Integer cleanupInterval,
@@ -164,7 +164,7 @@ public class ClusterMasterActor extends UntypedActor {
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
-        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.SourceDocumentReferenceDao = SourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
         this.defaultLimits = defaultLimits;
         this.cleanupInterval = cleanupInterval;
@@ -186,12 +186,12 @@ public class ClusterMasterActor extends UntypedActor {
 
         receiverActor = getContext().system().actorOf(Props.create(ReceiverMasterActor.class, clusterMasterConfig,
                 accountantActor, monitoringActor, processingJobDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao
+                sourceDocumentProcessingStatisticsDao, SourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao
         ), "receiver");
 
         jobLoaderActor = getContext().system().actorOf(Props.create(JobLoaderMasterActor.class, receiverActor,
                 clusterMasterConfig, accountantActor, processingJobDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
+                sourceDocumentProcessingStatisticsDao, SourceDocumentReferenceDao, machineResourceReferenceDao,
                 defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
 
         processingJobStateStatisticsActor = getContext().system().actorOf(Props.create(ProcessingJobStateStatisticsActor.class,

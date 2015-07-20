@@ -55,7 +55,7 @@ public class JobLoaderMasterActor extends UntypedActor {
     /**
      * SourceDocumentReference DAO object which lets us to read and store data to and from the database.
      */
-    private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
+    private final SourceDocumentReferenceDao SourceDocumentReferenceDao;
 
     /**
      * MachineResourceReference DAO object which lets us to read and store data to and from the database.
@@ -92,7 +92,7 @@ public class JobLoaderMasterActor extends UntypedActor {
     public JobLoaderMasterActor(final ActorRef receiverActor, final ClusterMasterConfig clusterMasterConfig,
                                 final ActorRef accountantActor, final ProcessingJobDao processingJobDao,
                                 final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                                final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                                final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
                                 final DefaultLimits defaultLimits,
                                 final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions) {
@@ -105,7 +105,7 @@ public class JobLoaderMasterActor extends UntypedActor {
 
         this.processingJobDao = processingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
-        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.SourceDocumentReferenceDao = SourceDocumentReferenceDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.defaultLimits = defaultLimits;
         this.ipsWithJobs = ipsWithJobs;
@@ -127,7 +127,8 @@ public class JobLoaderMasterActor extends UntypedActor {
 
                     ActorRef loaderActor = JobLoaderExecutorActor.createActor(getContext().system(),
                             clusterMasterConfig, accountantActor, processingJobDao, sourceDocumentProcessingStatisticsDao,
-                            sourceDocumentReferenceDao, machineResourceReferenceDao, ipsWithJobs, ipExceptions, ipDistribution
+
+                                                                              SourceDocumentReferenceDao, machineResourceReferenceDao, ipsWithJobs, ipExceptions, ipDistribution
                     );
                     context().watch(loaderActor);
                     loaderActor.tell(message, ActorRef.noSender());
@@ -147,7 +148,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         }
         if (message instanceof LookInDB) {
             JobLoaderMasterHelper.updateLists(clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
-                    sourceDocumentReferenceDao, accountantActor, LOG);
+                                              SourceDocumentReferenceDao, accountantActor, LOG);
 
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
                     TimeUnit.MINUTES), getSelf(), new LookInDB(), getContext().system().dispatcher(), getSelf());

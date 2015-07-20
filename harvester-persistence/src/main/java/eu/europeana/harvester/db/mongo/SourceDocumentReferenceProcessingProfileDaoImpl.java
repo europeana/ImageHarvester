@@ -39,6 +39,9 @@ public class SourceDocumentReferenceProcessingProfileDaoImpl implements SourceDo
     @Override
     public Iterable<Key<SourceDocumentReferenceProcessingProfile>> createOrModify (Collection<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles,
                                                                                    WriteConcern writeConcern) {
+        if (null == sourceDocumentReferenceProcessingProfiles || sourceDocumentReferenceProcessingProfiles.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
         return datastore.save(sourceDocumentReferenceProcessingProfiles, writeConcern);
     }
 
@@ -59,6 +62,7 @@ public class SourceDocumentReferenceProcessingProfileDaoImpl implements SourceDo
                            WriteConcern writeConcern) {
         if (null != read(sourceDocumentReferenceProcessingProfile.getId())) {
             datastore.save(sourceDocumentReferenceProcessingProfile, writeConcern);
+            return true;
         }
         return false;
     }
@@ -77,7 +81,7 @@ public class SourceDocumentReferenceProcessingProfileDaoImpl implements SourceDo
     public List<SourceDocumentReferenceProcessingProfile> getJobToBeEvaluated () {
         final Query<SourceDocumentReferenceProcessingProfile> query = datastore.createQuery(SourceDocumentReferenceProcessingProfile.class);
 
-        query.criteria("toBeEvaluatedAt").lessThan(new Date());
+        query.criteria("toBeEvaluatedAt").lessThanOrEq(new Date());
 
         final List<SourceDocumentReferenceProcessingProfile> profiles = query.asList();
         final Iterator<SourceDocumentReferenceProcessingProfile> profileIterator = profiles.listIterator();

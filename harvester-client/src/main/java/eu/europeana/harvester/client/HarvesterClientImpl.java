@@ -1,7 +1,6 @@
 package eu.europeana.harvester.client;
 
 import com.google.code.morphia.Key;
-import com.mongodb.WriteConcern;
 import com.google.code.morphia.Datastore;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
@@ -45,7 +44,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     /**
      * DAO for CRUD with source_document_reference collection
      */
-    private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
+    private final SourceDocumentReferenceDao SourceDocumentReferenceDao;
 
     /**
      * SourceDocumentReferenceMetaInfo DAO object which lets us to read and
@@ -75,7 +74,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     public HarvesterClientImpl (ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                 SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                                SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                                SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                 SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
                                 SourceDocumentReferenceProcessingProfileDao sourceDocumentReferenceProcessingProfileDao,
                                 HarvesterClientConfig harvesterClientConfig) {
@@ -83,7 +82,7 @@ public class HarvesterClientImpl implements HarvesterClient {
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
-        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.SourceDocumentReferenceDao = SourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
         this.sourceDocumentReferenceProcessingProfileDao = sourceDocumentReferenceProcessingProfileDao;
         this.harvesterClientConfig = harvesterClientConfig;
@@ -106,7 +105,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
         // Persist everything.
         machineResourceReferenceDao.createOrModify(machineResourceReferences, harvesterClientConfig.getWriteConcern());
-        return sourceDocumentReferenceDao.createOrModify(sourceDocumentReferences, harvesterClientConfig.getWriteConcern());
+        return SourceDocumentReferenceDao.createOrModify(sourceDocumentReferences, harvesterClientConfig.getWriteConcern());
     }
 
     @Override
@@ -186,12 +185,12 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url,String recordId) {
-        return sourceDocumentReferenceDao.read(SourceDocumentReference.idFromUrl(url,recordId));
+        return SourceDocumentReferenceDao.read(SourceDocumentReference.idFromUrl(url,recordId));
     }
 
     @Override
     public SourceDocumentReference retrieveSourceDocumentReferenceById(String id) {
-        return sourceDocumentReferenceDao.read(id);
+        return SourceDocumentReferenceDao.read(id);
     }
 
     @Override
@@ -202,7 +201,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     @Override
     public void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         final List<SourceDocumentReference> sourceDocumentReferenceList
-                = sourceDocumentReferenceDao.findByRecordID(recordID);
+                = SourceDocumentReferenceDao.findByRecordID(recordID);
         final List<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatisticsList
                 = sourceDocumentProcessingStatisticsDao.findByRecordID(recordID);
 
@@ -236,7 +235,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
         final List<String> sourceDocumentReferenceIds = new ArrayList<>(processingJobs.size());
 
-        for (final SourceDocumentReference documentReference: sourceDocumentReferenceDao.deactivateDocuments(owner, harvesterClientConfig.getWriteConcern())) {
+        for (final SourceDocumentReference documentReference: SourceDocumentReferenceDao.deactivateDocuments(owner, harvesterClientConfig.getWriteConcern())) {
            sourceDocumentReferenceIds.add(documentReference.getId());
         }
 

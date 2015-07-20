@@ -54,11 +54,11 @@ public class JobLoaderMasterHelper  {
      */
     public static void updateLists(ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao,
                              SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                             SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                             SourceDocumentReferenceDao SourceDocumentReferenceDao,
                              ActorRef accountantActor, Logger LOG) {
         try {
             checkForPausedJobs(clusterMasterConfig, processingJobDao, accountantActor, LOG);
-            checkForResumedJobs(clusterMasterConfig, processingJobDao, sourceDocumentReferenceDao, sourceDocumentProcessingStatisticsDao, accountantActor, LOG);
+            checkForResumedJobs(clusterMasterConfig, processingJobDao, SourceDocumentReferenceDao, sourceDocumentProcessingStatisticsDao, accountantActor, LOG);
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }
@@ -89,7 +89,7 @@ public class JobLoaderMasterHelper  {
      * Checks if any job was started by a client.
      */
     private static void checkForResumedJobs(ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao,
-                                     SourceDocumentReferenceDao sourceDocumentReferenceDao, SourceDocumentProcessingStatisticsDao sourceDocumentProcessingDao,
+                                     SourceDocumentReferenceDao SourceDocumentReferenceDao, SourceDocumentProcessingStatisticsDao sourceDocumentProcessingDao,
                                      ActorRef accountantActor, Logger LOG) {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "Looking for resumed job in database to resume");
@@ -105,7 +105,7 @@ public class JobLoaderMasterHelper  {
         }
         final Map<String, SourceDocumentReference> resources = new HashMap<>();
         if (resourceIds.size() != 0) {
-            final List<SourceDocumentReference> sourceDocumentReferences = sourceDocumentReferenceDao.read(resourceIds);
+            final List<SourceDocumentReference> sourceDocumentReferences = SourceDocumentReferenceDao.read(resourceIds);
             for (SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
                 resources.put(sourceDocumentReference.getId(), sourceDocumentReference);
             }

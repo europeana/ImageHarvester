@@ -10,7 +10,6 @@ import eu.europeana.harvester.client.HarvesterClientImpl;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
-import org.apache.commons.collections.map.HashedMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +29,7 @@ import static org.junit.Assert.assertFalse;
  */
 public class HarvesterClientTest {
     private HarvesterClient harvesterClient;
-    private SourceDocumentReferenceDao sourceDocumentReferenceDao;
+    private SourceDocumentReferenceDao SourceDocumentReferenceDao;
     private SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao;
     private SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
     private MachineResourceReferenceDao machineResourceReferenceDao;
@@ -49,7 +48,7 @@ public class HarvesterClientTest {
 
         datastore = morphia.createDatastore(mongo, dbName);
 
-        sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
+        SourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
         sourceDocumentProcessingStatisticsDao = new SourceDocumentProcessingStatisticsDaoImpl(datastore);
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
         machineResourceReferenceDao = new MachineResourceReferenceDaoImpl(datastore);
@@ -58,8 +57,7 @@ public class HarvesterClientTest {
 
         harvesterClient = new HarvesterClientImpl(processingJobDao,
                                                   machineResourceReferenceDao,
-                                                  sourceDocumentProcessingStatisticsDao,
-                                                  sourceDocumentReferenceDao,
+                                                  sourceDocumentProcessingStatisticsDao, SourceDocumentReferenceDao,
                                                   sourceDocumentReferenceMetaInfoDao,
                                                   sourceDocumentReferenceProcessingProfileDao,
                                                   new HarvesterClientConfig(WriteConcern.ACKNOWLEDGED)
@@ -117,7 +115,7 @@ public class HarvesterClientTest {
         harvesterClient.createOrModifySourceDocumentReference(Arrays.asList(sourceDocumentReferences));
 
         for (final SourceDocumentReference reference: sourceDocumentReferences) {
-            final SourceDocumentReference writtenReference = sourceDocumentReferenceDao.read(reference.getId());
+            final SourceDocumentReference writtenReference = SourceDocumentReferenceDao.read(reference.getId());
 
             ReflectionAssert.assertReflectionEquals(reference, writtenReference);
         }
@@ -165,7 +163,7 @@ public class HarvesterClientTest {
         harvesterClient.createOrModifySourceDocumentReference(Arrays.asList(sourceDocumentReferences));
 
         for (final SourceDocumentReference reference: sourceDocumentReferences) {
-            final SourceDocumentReference writtenReference = sourceDocumentReferenceDao.read(reference.getId());
+            final SourceDocumentReference writtenReference = SourceDocumentReferenceDao.read(reference.getId());
 
             ReflectionAssert.assertReflectionEquals(reference, writtenReference);
         }
@@ -229,7 +227,7 @@ public class HarvesterClientTest {
                                                                  10);
             sourceDocumentProcessingProfileIds.get(owner).add(profile.getId());
 
-            sourceDocumentReferenceDao.create(sourceDocumentReference, WriteConcern.NONE);
+            SourceDocumentReferenceDao.create(sourceDocumentReference, WriteConcern.NONE);
             processingJobDao.create(processingJob, WriteConcern.NONE);
             sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
             sourceDocumentReferenceProcessingProfileDao.create(profile, WriteConcern.NONE);
@@ -243,7 +241,7 @@ public class HarvesterClientTest {
         }
 
         for (final String referenceId: sourceDocumentReferenceIds.get(owners[1])) {
-            assertFalse(sourceDocumentReferenceDao.read(referenceId).getActive());
+            assertFalse(SourceDocumentReferenceDao.read(referenceId).getActive());
         }
 
         for (final String id: sourceDocumentProcessingStatisticsIds.get(owners[1])) {
