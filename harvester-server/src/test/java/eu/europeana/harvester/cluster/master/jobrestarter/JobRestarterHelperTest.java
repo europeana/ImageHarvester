@@ -7,11 +7,8 @@ import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
-import eu.europeana.jobcreator.logic.SourceDocumentReferenceProcessingProfileBuilder;
 import eu.europeana.jobcreator.logic.SubTaskBuilder;
-import eu.europeana.jobcreator.logic.Utils;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.junit.After;
@@ -56,9 +53,6 @@ public class JobRestarterHelperTest {
     @After
     public void tearDown() {
         datastore.delete(datastore.createQuery(ProcessingJob.class));
-        datastore.delete(datastore.createQuery(MachineResourceReference.class));
-        datastore.delete(datastore.createQuery(SourceDocumentProcessingStatistics.class));
-        datastore.delete(datastore.createQuery(SourceDocumentReferenceMetaInfo.class));
         datastore.delete(datastore.createQuery(SourceDocumentReference.class));
         datastore.delete(datastore.createQuery(SourceDocumentReferenceProcessingProfile.class));
     }
@@ -71,29 +65,31 @@ public class JobRestarterHelperTest {
         subTasks.addAll(SubTaskBuilder.colourExtraction());
         subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
 
-        final ProcessingJob processingJob = new ProcessingJob(0,
-                                                              new Date(),
-                                                              owner,
-                                                              Arrays.asList(
-                                                                             new ProcessingJobTaskDocumentReference(taskType,
-                                                                                                                    sourceDocumentReference.getId(),
-                                                                                                                    subTasks)
-                                                                           ),
+        final ProcessingJob processingJob = new ProcessingJob(0, new Date(), owner,
+                                                              Arrays.asList(new ProcessingJobTaskDocumentReference(taskType,
+                                                                                                                   sourceDocumentReference
+                                                                                                                           .getId(),
+                                                                                                                   subTasks)),
                                                               JobState.READY, url, true);
 
-        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
-           Arrays.asList(
-                            new SourceDocumentReferenceProcessingProfile(isActive,
-                                                                         owner,
-                                                                         sourceDocumentReference.getId(),
-                                                                         sourceType,
-                                                                         taskType,
-                                                                         0,
-                                                                         dateTime.toDate(),
-                                                                         1000)
-           );
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = Arrays.asList(new SourceDocumentReferenceProcessingProfile(isActive,
+                                                                                                                                                                    owner,
+                                                                                                                                                                    sourceDocumentReference.getId(),
+                                                                                                                                                                    sourceType,
+                                                                                                                                                                    taskType,
+                                                                                                                                                                    0,
+                                                                                                                                                                    dateTime.toDate(),
+                                                                                                                                                                    Days.ONE.toStandardSeconds().getSeconds() * 365
+                                                                                                                                                                    ));
 
         return new ProcessingJobTuple(processingJob, sourceDocumentReference, sourceDocumentReferenceProcessingProfiles);
+    }
+
+    private DocumentReferenceTaskType getTaskType (final URLSourceType urlSourceType) {
+        switch (urlSourceType) {
+            case ISSHOWNAT: return DocumentReferenceTaskType.CHECK_LINK;
+            default: return DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD;
+        }
     }
 
     @Test
@@ -109,14 +105,11 @@ public class JobRestarterHelperTest {
         for (int i = 0; i < 150; ++i) {
             final String recordId = UUID.randomUUID().toString();
             final String url = new URI("http", UUID.randomUUID().toString().replace("-", ""), "/test").toString();
+            final URLSourceType urlSourceType = URLSourceType.values()[random.nextInt(urlSourceTypeSize)];
 
-            processingJobTuples.add(createJob(new ReferenceOwner(recordId, recordId, recordId, recordId),
-                                              url,
-                                              URLSourceType.values()[random.nextInt(urlSourceTypeSize)],
-                                              DocumentReferenceTaskType.values()[random.nextInt(taskTypeSize)],
-                                              true,
-                                              DateTime.now().minusDays(random.nextInt(500) + 1)
-                                             )
+            processingJobTuples.add(createJob(new ReferenceOwner(recordId, recordId, recordId, recordId), url,
+                                              urlSourceType, getTaskType(urlSourceType), true,
+                                              DateTime.now().minusDays(random.nextInt(500) + 1))
                                    );
         }
 
@@ -159,6 +152,7 @@ public class JobRestarterHelperTest {
             sourceDocumentReferenceProcessingProfileDao.createOrModify(jobTuple.getSourceDocumentReferenceProcessingProfiles(), WriteConcern.ACKNOWLEDGED);
         }
 
+        final Long timestamp = DateTime.now().plusMonths(12).toDate().getTime();
         helper.reloadJobs();
 
         for (final ProcessingJobTuple jobTuple: processingJobTuples) {
@@ -166,16 +160,12 @@ public class JobRestarterHelperTest {
                 final SourceDocumentReferenceProcessingProfile newProfile = sourceDocumentReferenceProcessingProfileDao.read(profile.getId());
 
                 assertTrue (profile.getActive());
-                assertTrue (newProfile.getActive());
+                assertTrue(newProfile.getActive());
 
-                System.out.println("Old date: " + profile.getToBeEvaluatedAt() + " read date: " + newProfile
-                                                                                                          .getToBeEvaluatedAt());
                 assertTrue(profile.getToBeEvaluatedAt().before(newProfile.getToBeEvaluatedAt()));
 
-                final DateTime newDate = new DateTime(profile.getToBeEvaluatedAt()).plusSeconds(profile.getSecondsBetweenEvaluations());
-
-                System.out.println("New date: " +  newDate.toDate() + " read date: " + newProfile.getToBeEvaluatedAt());
-                assertTrue(newDate.toDate().equals(newProfile.getToBeEvaluatedAt()));
+                assertTrue (newProfile.getToBeEvaluatedAt().getTime() >= timestamp);
+                assertTrue (newProfile.getToBeEvaluatedAt().getTime() <= (timestamp + 200));
             }
         }
 
