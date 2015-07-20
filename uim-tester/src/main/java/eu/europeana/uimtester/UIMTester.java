@@ -6,6 +6,7 @@ import com.mongodb.Mongo;
 import eu.europeana.harvester.client.HarvesterClient;
 import eu.europeana.harvester.client.HarvesterClientConfig;
 import eu.europeana.harvester.client.HarvesterClientImpl;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceProcessingProfileDao;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.db.swift.SwiftConfiguration;
 import eu.europeana.uimtester.domain.UIMTesterConfig;
@@ -21,7 +22,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -108,6 +108,7 @@ public class UIMTester {
                                         new SourceDocumentProcessingStatisticsDaoImpl(dataStore),
                                         new SourceDocumentReferenceDaoImpl(dataStore),
                                         new SourceDocumentReferenceMetaInfoDaoImpl(dataStore),
+                                        new SourceDocumentReferenceProcessingProfileDaoImpl(dataStore),
                                         new HarvesterClientConfig(uimTesterConfig.getWriteConcern())
                                        );
 

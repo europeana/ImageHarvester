@@ -34,6 +34,7 @@ public class HarvesterClientTest {
     private SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
     private MachineResourceReferenceDao machineResourceReferenceDao;
     private ProcessingJobDao processingJobDao;
+    private SourceDocumentReferenceProcessingProfileDao sourceDocumentReferenceProcessingProfileDao;
 
 
     private Datastore datastore;
@@ -52,12 +53,14 @@ public class HarvesterClientTest {
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
         machineResourceReferenceDao = new MachineResourceReferenceDaoImpl(datastore);
         processingJobDao = new ProcessingJobDaoImpl(datastore);
+        sourceDocumentReferenceProcessingProfileDao = new SourceDocumentReferenceProcessingProfileDaoImpl(datastore);
 
         harvesterClient = new HarvesterClientImpl(processingJobDao,
                                                   machineResourceReferenceDao,
                                                   sourceDocumentProcessingStatisticsDao,
                                                   sourceDocumentReferenceDao,
                                                   sourceDocumentReferenceMetaInfoDao,
+                                                  sourceDocumentReferenceProcessingProfileDao,
                                                   new HarvesterClientConfig(WriteConcern.NONE)
         );
     }

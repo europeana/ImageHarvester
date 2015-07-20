@@ -1,10 +1,12 @@
 package eu.europeana.harvester.client;
 
+import com.google.code.morphia.Key;
 import com.mongodb.WriteConcern;
 import com.google.code.morphia.Datastore;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -51,6 +53,8 @@ public class HarvesterClientImpl implements HarvesterClient {
      */
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
+    private final SourceDocumentReferenceProcessingProfileDao sourceDocumentReferenceProcessingProfileDao;
+
     /**
      * An object which contains different special configurations for Harvester
      * Client.
@@ -65,20 +69,23 @@ public class HarvesterClientImpl implements HarvesterClient {
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore),
                 new SourceDocumentReferenceDaoImpl(datastore),
                 new SourceDocumentReferenceMetaInfoDaoImpl(datastore),
-                harvesterClientConfig);
+                new SourceDocumentReferenceProcessingProfileDaoImpl(datastore),
+             harvesterClientConfig);
     }
 
-    public HarvesterClientImpl(ProcessingJobDao processingJobDao,
-                               MachineResourceReferenceDao machineResourceReferenceDao,
-                               SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                               SourceDocumentReferenceDao sourceDocumentReferenceDao,
-                               SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao, HarvesterClientConfig harvesterClientConfig) {
+    public HarvesterClientImpl (ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
+                                SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                                SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                                SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
+                                SourceDocumentReferenceProcessingProfileDao sourceDocumentReferenceProcessingProfileDao,
+                                HarvesterClientConfig harvesterClientConfig) {
 
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
+        this.sourceDocumentReferenceProcessingProfileDao = sourceDocumentReferenceProcessingProfileDao;
         this.harvesterClientConfig = harvesterClientConfig;
         this.cachingUrlResolver = new CachingUrlResolver();
     }
@@ -100,6 +107,33 @@ public class HarvesterClientImpl implements HarvesterClient {
         // Persist everything.
         machineResourceReferenceDao.createOrModify(machineResourceReferences, harvesterClientConfig.getWriteConcern());
         return sourceDocumentReferenceDao.createOrModify(sourceDocumentReferences, harvesterClientConfig.getWriteConcern());
+    }
+
+    @Override
+    public Iterable<Key<SourceDocumentReferenceProcessingProfile>> createOrModifyProcessingProfiles (Collection<SourceDocumentReferenceProcessingProfile> profiles) {
+        return sourceDocumentReferenceProcessingProfileDao.createOrModify(profiles, harvesterClientConfig.getWriteConcern());
+    }
+
+    @Override
+    public void createOrModifyProcessingJobTuples (Collection<ProcessingJobTuple> jobTuples) throws
+                                                                                             InterruptedException,
+                                                                                             MalformedURLException,
+                                                                                             TimeoutException,
+                                                                                             ExecutionException,
+                                                                                             UnknownHostException {
+        final Collection <ProcessingJob> processingJobs = new ArrayList<>(jobTuples.size());
+        final Collection <SourceDocumentReference> sourceDocumentReferences = new ArrayList<>(jobTuples.size());
+        final Collection <SourceDocumentReferenceProcessingProfile> processingProfiles = new ArrayList<>(jobTuples.size());
+
+        for (final ProcessingJobTuple jobTuple: jobTuples) {
+            processingJobs.add(jobTuple.getProcessingJob());
+            sourceDocumentReferences.add(jobTuple.getSourceDocumentReference());
+            processingProfiles.addAll(jobTuple.getSourceDocumentReferenceProcessingProfiles());
+        }
+
+        createOrModifySourceDocumentReference(sourceDocumentReferences);
+        createOrModify(processingJobs);
+        createOrModifyProcessingProfiles(processingProfiles);
     }
 
     @Override
@@ -207,6 +241,7 @@ public class HarvesterClientImpl implements HarvesterClient {
         }
 
         sourceDocumentProcessingStatisticsDao.deactivateDocuments(sourceDocumentReferenceIds).clear();
+        sourceDocumentReferenceProcessingProfileDao.deactivateDocuments(owner);
 
         return processingJobs;
     }
