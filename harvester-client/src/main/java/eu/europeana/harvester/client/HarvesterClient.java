@@ -1,6 +1,7 @@
 package eu.europeana.harvester.client;
 
 import eu.europeana.harvester.domain.*;
+import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -21,6 +22,18 @@ public interface HarvesterClient {
      */
     Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(final
                                                                                                                 Collection<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
+
+
+    Iterable<com.google.code.morphia.Key<SourceDocumentReferenceProcessingProfile>>
+        createOrModifyProcessingProfiles (final Collection <SourceDocumentReferenceProcessingProfile> profiles);
+
+    void
+        createOrModifyProcessingJobTuples (final Collection<ProcessingJobTuple> jobTuples) throws InterruptedException,
+                                                                                                  MalformedURLException,
+                                                                                                  TimeoutException,
+                                                                                                  ExecutionException,
+                                                                                                  UnknownHostException;
+
 
     /**
      * Sends to the master a new processing job.

@@ -35,6 +35,7 @@ public class SourceDocumentReferenceProcessingProfile implements Serializable {
      */
     private final String sourceDocumentReferenceId;
 
+
     /**
      * The type of field in the EDM that contains that URL.
      * We store this separately from the SourceDocumentReference as the same URL can appear
@@ -62,16 +63,16 @@ public class SourceDocumentReferenceProcessingProfile implements Serializable {
      * The number of seconds between two successive evaluations of the profile.
      * It's the only way to configure the frequency of the evaluation.
      */
-    private final long secondsBetweenEvaluations;
+    private final int secondsBetweenEvaluations;
 
-    public SourceDocumentReferenceProcessingProfile(final Boolean active,
+    public SourceDocumentReferenceProcessingProfile(Boolean active,
                                                     ReferenceOwner referenceOwner,
                                                     String sourceDocumentReferenceId,
                                                     URLSourceType urlSourceType,
                                                     DocumentReferenceTaskType taskType,
                                                     int priority,
                                                     Date toBeEvaluatedAt,
-                                                    long secondsBetweenEvaluations) {
+                                                    int secondsBetweenEvaluations) {
         this.id = idFromUrl(sourceDocumentReferenceId, urlSourceType, taskType);
         this.active = active;
         this.referenceOwner = referenceOwner;
@@ -83,7 +84,15 @@ public class SourceDocumentReferenceProcessingProfile implements Serializable {
         this.secondsBetweenEvaluations = secondsBetweenEvaluations;
     }
 
-    public SourceDocumentReferenceProcessingProfile(String id,final Boolean active, ReferenceOwner referenceOwner, String sourceDocumentReferenceId, URLSourceType urlSourceType, DocumentReferenceTaskType taskType, int priority, Date toBeEvaluatedAt, long secondsBetweenEvaluations) {
+    public SourceDocumentReferenceProcessingProfile(String id,
+                                                    Boolean active,
+                                                    ReferenceOwner referenceOwner,
+                                                    String sourceDocumentReferenceId,
+                                                    URLSourceType urlSourceType,
+                                                    DocumentReferenceTaskType taskType,
+                                                    int priority,
+                                                    Date toBeEvaluatedAt,
+                                                    int secondsBetweenEvaluations) {
         this.id = id;
         this.active = active;
         this.referenceOwner = referenceOwner;
@@ -127,7 +136,7 @@ public class SourceDocumentReferenceProcessingProfile implements Serializable {
         return toBeEvaluatedAt;
     }
 
-    public long getSecondsBetweenEvaluations() {
+    public int getSecondsBetweenEvaluations() {
         return secondsBetweenEvaluations;
     }
 }
