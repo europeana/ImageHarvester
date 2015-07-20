@@ -40,17 +40,22 @@ public class JobRestarterHelper {
 
         for (final SourceDocumentReferenceProcessingProfile profile: processingProfileDao.getJobToBeEvaluated()) {
             newProcessingJobTuples.addAll(JobCreator.createJobs(profile.getReferenceOwner(),
-                                                                sourceDocumentReferenceDao.read(profile.getSourceDocumentReferenceId()).getUrl(),
+                                                                sourceDocumentReferenceDao.read(profile.getSourceDocumentReferenceId()),
                                                                 profile.getUrlSourceType(),
                                                                 profile.getPriority(),
-                                                                profile.getTaskType()));
+                                                                profile.getTaskType()
+                                                               )
+                                         );
         }
 
 
         for (final ProcessingJobTuple jobTuple: newProcessingJobTuples) {
             processingJobDao.createOrModify(jobTuple.getProcessingJob(), WriteConcern.ACKNOWLEDGED);
-            sourceDocumentReferenceDao.createOrModify(jobTuple.getSourceDocumentReference(), WriteConcern.ACKNOWLEDGED);
-            processingProfileDao.createOrModify(jobTuple.getSourceDocumentReferenceProcessingProfiles(), WriteConcern.ACKNOWLEDGED);
+            for (final SourceDocumentReferenceProcessingProfile profile: jobTuple.getSourceDocumentReferenceProcessingProfiles()) {
+                if (!processingProfileDao.update(profile, WriteConcern.ACKNOWLEDGED)) {
+                    System.out.println (profile.getId() + " " + profile.getSourceDocumentReferenceId() + " " + profile.getTaskType());
+                }
+            }
         }
     }
 }
