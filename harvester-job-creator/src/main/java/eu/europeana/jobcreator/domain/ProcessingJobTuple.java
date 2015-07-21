@@ -25,7 +25,8 @@ public class ProcessingJobTuple {
     private final SourceDocumentReference sourceDocumentReference;
     private final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles;
 
-    public ProcessingJobTuple(ProcessingJob processingJob, SourceDocumentReference sourceDocumentReference, List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles) {
+    public ProcessingJobTuple(ProcessingJob processingJob, SourceDocumentReference sourceDocumentReference,
+                              List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles) {
         this.processingJob = processingJob;
         this.sourceDocumentReference = sourceDocumentReference;
         this.sourceDocumentReferenceProcessingProfiles = sourceDocumentReferenceProcessingProfiles;

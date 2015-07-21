@@ -216,24 +216,28 @@ public class ProcessingJobBuilder {
         subTasks.addAll(SubTaskBuilder.colourExtraction());
         subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
 
-        final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
-                                                              Arrays.asList(
-                                                                                   new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
-                                                                                                                          sourceDocumentReference.getId(),
-                                                                                                                          subTasks)
-                                                                           ),
-                                                              JobState.READY, URLSourceType.OBJECT, Utils.ipAddressOf(url), true);
+        final ProcessingJob processingJob = new ProcessingJob(
+              priority,
+              new Date(),
+              owner,
+              Arrays.asList(new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
+                                                                   sourceDocumentReference.getId(),
+                                                                   subTasks)
+                            ),
+              JobState.READY,
+              URLSourceType.OBJECT,
+              Utils.ipAddressOf(url),
+              true
+        );
 
-        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
-                Arrays.asList(
-                                     SourceDocumentReferenceProcessingProfileBuilder.edmObjectUrl(sourceDocumentReference.getId(),
-                                                                                                  owner,
-                                                                                                  priority
-                                                                                                 )
-                             );
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = Arrays.asList(
+              SourceDocumentReferenceProcessingProfileBuilder.edmObjectUrl(sourceDocumentReference.getId(),
+                                                                           owner,
+                                                                           priority
+                                                                          )
+        );
 
-        return Arrays.asList(
-                                    new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
+        return Arrays.asList(new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
     }
 
     /**
@@ -262,23 +266,29 @@ public class ProcessingJobBuilder {
             subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
             subTasks.addAll(SubTaskBuilder.metaExtraction());
 
-            final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
-                                                                  Arrays.asList(
-                                                                                       new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
-                                                                                                                              sourceDocumentReference.getId(),
-                                                                                                                              subTasks)
-                                                                               ),
-                                                                  JobState.READY, URLSourceType.HASVIEW, Utils.ipAddressOf(url), true);
+            final ProcessingJob processingJob = new ProcessingJob (
+                  priority,
+                  new Date(),
+                  owner,
+                  Arrays.asList(new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
+                                                                       sourceDocumentReference.getId(),
+                                                                       subTasks
+                                                                      )
+                                ),
+                  JobState.READY,
+                  URLSourceType.HASVIEW,
+                  Utils.ipAddressOf(url),
+                  true
+            );
 
             sourceDocumentReferenceProcessingProfiles.add(
-                                                                 SourceDocumentReferenceProcessingProfileBuilder.edmHasView(sourceDocumentReference.getId(),
-                                                                                                                            owner,
-                                                                                                                            priority
-                                                                                                                           )
-                                                         );
+                  SourceDocumentReferenceProcessingProfileBuilder.edmHasView(sourceDocumentReference.getId(),
+                                                                             owner,
+                                                                             priority
+                                                                            )
+                  );
 
-            results.add(
-                               new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
+            results.add(new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
         }
         return results;
     }
@@ -306,24 +316,29 @@ public class ProcessingJobBuilder {
         subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
         subTasks.addAll(SubTaskBuilder.metaExtraction());
 
-        final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
-                                                              Arrays.asList(
-                                                                                   new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
-                                                                                                                          sourceDocumentReference.getId(),
-                                                                                                                          subTasks)
-                                                                           ),
-                                                              JobState.READY, URLSourceType.ISSHOWNBY, Utils.ipAddressOf(url), true);
+        final ProcessingJob processingJob = new ProcessingJob(
+              priority,
+              new Date(),
+              owner,
+              Arrays.asList(new ProcessingJobTaskDocumentReference(documentReferenceTaskTypeFromOptions(options),
+                                                                   sourceDocumentReference.getId(),
+                                                                   subTasks
+                                                                  )
+                           ),
+              JobState.READY,
+              URLSourceType.ISSHOWNBY,
+              Utils.ipAddressOf(url),
+              true
+        );
 
-        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
-                Arrays.asList (
-                                      SourceDocumentReferenceProcessingProfileBuilder.edmIsShownBy (sourceDocumentReference.getId(),
-                                                                                                    owner,
-                                                                                                    priority
-                                                                                                   )
-                              );
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = Arrays.asList (
+             SourceDocumentReferenceProcessingProfileBuilder.edmIsShownBy (sourceDocumentReference.getId(),
+                                                                           owner,
+                                                                           priority
+                                                                          )
+             );
 
-        return Arrays.asList(
-                                    new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
+        return Arrays.asList(new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
     }
 
 
@@ -345,22 +360,27 @@ public class ProcessingJobBuilder {
             throw new IllegalArgumentException("options/sourceDocumentReference must not be null");
         }
 
-        final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
-                                                              Arrays.asList(
-                                                                                   new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
-                                                                                                                          sourceDocumentReference.getId(),
-                                                                                                                          new ArrayList())
-                                                                           ),
-                                                              JobState.READY, URLSourceType.ISSHOWNAT, Utils.ipAddressOf(url), true);
+        final ProcessingJob processingJob = new ProcessingJob(
+              priority,
+              new Date(),
+              owner,
+              Arrays.asList(new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
+                                                                   sourceDocumentReference.getId(),
+                                                                   new ArrayList()
+                                                                  )
+                            ),
+              JobState.READY,
+              URLSourceType.ISSHOWNAT,
+              Utils.ipAddressOf(url),
+              true);
 
-        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
-                Arrays.asList (
-                                      SourceDocumentReferenceProcessingProfileBuilder.edmIsShownAt(sourceDocumentReference.getId(),
-                                                                                                   owner,
-                                                                                                   priority
-                                                                                                  )
-                              );
-        return Arrays.asList(
-                                    new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
+        final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = Arrays.asList (
+              SourceDocumentReferenceProcessingProfileBuilder.edmIsShownAt(sourceDocumentReference.getId(),
+                                                                           owner,
+                                                                           priority
+                                                                          )
+         );
+
+        return Arrays.asList(new ProcessingJobTuple(processingJob, sourceDocumentReference,sourceDocumentReferenceProcessingProfiles));
     }
 }

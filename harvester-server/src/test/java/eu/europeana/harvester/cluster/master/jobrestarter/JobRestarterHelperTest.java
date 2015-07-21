@@ -20,6 +20,7 @@ import java.net.*;
 import java.util.*;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Created by salexandru on 20.07.2015.
@@ -41,6 +42,13 @@ public class JobRestarterHelperTest {
         Morphia morphia = new Morphia();
         String dbName = "crf_europeana_jobRestarter";
 
+        final String username = "crf_europeana_jobRestarter";
+        final String password = "Nhck0zCfcu0M6kK";
+
+        if (!mongo.getDB("admin").authenticate(username, password.toCharArray())) {
+            fail ("Couldn't auth info db");
+        }
+
         datastore = morphia.createDatastore(mongo, dbName);
 
         sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
@@ -58,7 +66,7 @@ public class JobRestarterHelperTest {
     }
 
     private ProcessingJobTuple createJob (ReferenceOwner owner, String url, URLSourceType sourceType, DocumentReferenceTaskType taskType, boolean isActive, DateTime dateTime) {
-        final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, sourceType, url,
+        final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, url,
                                                                                             null, null, null, null, true);
 
         final List<ProcessingJobSubTask> subTasks = new ArrayList();
@@ -70,7 +78,7 @@ public class JobRestarterHelperTest {
                                                                                                                    sourceDocumentReference
                                                                                                                            .getId(),
                                                                                                                    subTasks)),
-                                                              JobState.READY, url, true);
+                                                              JobState.READY, sourceType, url, true);
 
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = Arrays.asList(new SourceDocumentReferenceProcessingProfile(isActive,
                                                                                                                                                                     owner,

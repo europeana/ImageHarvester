@@ -7,6 +7,8 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceProcessingPro
 import eu.europeana.harvester.domain.SourceDocumentReferenceProcessingProfile;
 import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -17,6 +19,8 @@ import java.util.List;
  * Created by salexandru on 20.07.2015.
  */
 public class JobRestarterHelper {
+    private static Logger LOG = LogManager.getLogger(JobRestarterHelper.class.getName());
+
     private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
     private final ProcessingJobDao processingJobDao;
     private final SourceDocumentReferenceProcessingProfileDao processingProfileDao;
@@ -42,12 +46,12 @@ public class JobRestarterHelper {
                                          );
         }
 
-
         for (final ProcessingJobTuple jobTuple: newProcessingJobTuples) {
             processingJobDao.createOrModify(jobTuple.getProcessingJob(), WriteConcern.ACKNOWLEDGED);
             for (final SourceDocumentReferenceProcessingProfile profile: jobTuple.getSourceDocumentReferenceProcessingProfiles()) {
+                //should never happen
                 if (!processingProfileDao.update(profile, WriteConcern.ACKNOWLEDGED)) {
-                    System.out.println (profile.getId() + " " + profile.getSourceDocumentReferenceId() + " " + profile.getTaskType());
+                   LOG.error(profile.getId() + " " + profile.getSourceDocumentReferenceId() + " " + profile.getTaskType());
                 }
             }
         }
