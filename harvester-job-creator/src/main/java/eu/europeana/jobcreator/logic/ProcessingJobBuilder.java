@@ -222,7 +222,7 @@ public class ProcessingJobBuilder {
                                                                                                                           sourceDocumentReference.getId(),
                                                                                                                           subTasks)
                                                                            ),
-                                                              JobState.READY, Utils.ipAddressOf(url), true);
+                                                              JobState.READY, URLSourceType.OBJECT, Utils.ipAddressOf(url), true);
 
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
                 Arrays.asList(
@@ -268,7 +268,7 @@ public class ProcessingJobBuilder {
                                                                                                                               sourceDocumentReference.getId(),
                                                                                                                               subTasks)
                                                                                ),
-                                                                  JobState.READY, Utils.ipAddressOf(url), true);
+                                                                  JobState.READY, URLSourceType.HASVIEW, Utils.ipAddressOf(url), true);
 
             sourceDocumentReferenceProcessingProfiles.add(
                                                                  SourceDocumentReferenceProcessingProfileBuilder.edmHasView(sourceDocumentReference.getId(),
@@ -312,7 +312,7 @@ public class ProcessingJobBuilder {
                                                                                                                           sourceDocumentReference.getId(),
                                                                                                                           subTasks)
                                                                            ),
-                                                              JobState.READY, Utils.ipAddressOf(url), true);
+                                                              JobState.READY, URLSourceType.ISSHOWNBY, Utils.ipAddressOf(url), true);
 
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
                 Arrays.asList (
@@ -351,7 +351,7 @@ public class ProcessingJobBuilder {
                                                                                                                           sourceDocumentReference.getId(),
                                                                                                                           new ArrayList())
                                                                            ),
-                                                              JobState.READY, Utils.ipAddressOf(url), true);
+                                                              JobState.READY, URLSourceType.ISSHOWNAT, Utils.ipAddressOf(url), true);
 
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
                 Arrays.asList (

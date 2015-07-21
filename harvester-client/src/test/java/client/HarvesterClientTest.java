@@ -201,10 +201,8 @@ public class HarvesterClientTest {
                     new ProcessingJob(id, 1, new Date(), owner, null, JobState.READY, URLSourceType.HASVIEW, "", null, null);
 
 
-
             final SourceDocumentReference sourceDocumentReference =
                     new SourceDocumentReference(owner, "test", null, null, 0l, null, true);
-
 
 
             sourceDocumentReferenceIds.get(owner).add(sourceDocumentReference.getId());

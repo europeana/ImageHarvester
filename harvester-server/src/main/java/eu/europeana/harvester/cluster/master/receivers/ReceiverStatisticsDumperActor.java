@@ -97,7 +97,6 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                 finishedDocument.withLastStatsId(sourceDocumentProcessingStatistics.getId());
         updatedDocument = updatedDocument.withRedirectionPath(msg.getRedirectionPath());
         sourceDocumentReferenceDao.update(updatedDocument, clusterMasterConfig.getWriteConcern());
-
     }
 
 
