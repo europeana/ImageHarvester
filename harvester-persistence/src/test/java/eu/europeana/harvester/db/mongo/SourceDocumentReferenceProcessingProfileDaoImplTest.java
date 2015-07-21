@@ -33,14 +33,14 @@ public class SourceDocumentReferenceProcessingProfileDaoImplTest {
             Morphia morphia = new Morphia();
             String dbName = "harvester_persistency";
 
-//            String username  ;//= "harvester_persistency";
-//            String password ;//= "Nhck0zCfcu0M6kK";
-//
-//            boolean auth = mongo.getDB("admin").authenticate(username, password.toCharArray());
-//
-//            if (!auth) {
-//                fail("couldn't authenticate " + username + " against admin db");
-//            }
+            String username  = "harvester_persistency";
+            String password = "Nhck0zCfcu0M6kK";
+
+            boolean auth = mongo.getDB("admin").authenticate(username, password.toCharArray());
+
+            if (!auth) {
+                fail("couldn't authenticate " + username + " against admin db");
+            }
 
             datastore = morphia.createDatastore(mongo, dbName);
         } catch (UnknownHostException e) {
@@ -58,14 +58,14 @@ public class SourceDocumentReferenceProcessingProfileDaoImplTest {
             Morphia morphia = new Morphia();
             String dbName = "harvester_persistency";
 
-            //            String username  ;//= "harvester_persistency";
-            //            String password ;//= "Nhck0zCfcu0M6kK";
-            //
-            //            boolean auth = mongo.getDB("admin").authenticate(username, password.toCharArray());
-            //
-            //            if (!auth) {
-            //                fail("couldn't authenticate " + username + " against admin db");
-            //            }
+                      String username  = "harvester_persistency";
+                        String password = "Nhck0zCfcu0M6kK";
+
+                       boolean auth = mongo.getDB("admin").authenticate(username, password.toCharArray());
+
+                       if (!auth) {
+                            fail("couldn't authenticate " + username + " against admin db");
+                        }
 
             datastore = morphia.createDatastore(mongo, dbName);
         } catch (UnknownHostException e) {
