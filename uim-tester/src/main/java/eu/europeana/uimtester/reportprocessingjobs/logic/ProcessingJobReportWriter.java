@@ -56,22 +56,16 @@ public class ProcessingJobReportWriter {
                                                                                               .getReferenceOwner()
                                                                                               .getCollectionId());
         output.append("\t\t").append("referenceOwner.providerId").append(" = ").append(input.getProcessingJob().getReferenceOwner().getProviderId());
+        output.append("\t\t").append("urlSourceType").append(" = ").append(input.getProcessingJob().getUrlSourceType());
         output.append("\t\t").append("ipAddress").append(" = ").append(input.getProcessingJob().getIpAddress());
         output.append("\t\t").append("sourceDocumentReference = [\n");
         for (final SourceDocumentReference reference : input.getSourceDocumentReferenceList()) {
             output.append("\t\t\t").append("{\n");
             output.append("\t\t\t\t").append("sourceDocumenReferenceId = " + reference.getId());
             output.append("\t\t\t\t").append("url = ").append(reference.getUrl());
-            if (null != reference.getUrlSourceType()) {
-                output.append("\t\t\t\t").append("urlSourceType = ").append(reference.getUrlSourceType());
-            }
             output.append("\t\t\t").append("}\n");
         }
         output.append("\t\t").append("]\n");
-
-
-
-
 
         if (printMore) {
             output.append("\t\t").append("taskStatistics = [\n");
