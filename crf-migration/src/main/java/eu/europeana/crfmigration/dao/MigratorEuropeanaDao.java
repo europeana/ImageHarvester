@@ -82,8 +82,8 @@ public class MigratorEuropeanaDao {
             if (null == aggregation) {
                 MigrationMetrics.Migrator.Overall.invalidAggregationCounter.inc();
 
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,migratingBatchId,(String) aggregation.get("edmObject"), referenceOwner),
-                        "Missing aggregation: /aggregation/provider" + record.getKey());
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,migratingBatchId, "", referenceOwner),
+                          "Missing aggregation: /aggregation/provider" + record.getKey());
                 /* It's consistent with business logic to log and continue as we want to ignore records that cannot be migrated. */
                 continue;
             }
