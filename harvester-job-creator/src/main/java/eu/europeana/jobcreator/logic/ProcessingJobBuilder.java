@@ -1,6 +1,5 @@
 package eu.europeana.jobcreator.logic;
 
-import com.sun.org.apache.xalan.internal.xslt.*;
 import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.harvester.domain.*;
