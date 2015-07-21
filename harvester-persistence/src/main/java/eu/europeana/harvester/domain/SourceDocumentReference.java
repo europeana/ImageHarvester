@@ -33,7 +33,6 @@ public class SourceDocumentReference {
      */
     private final ReferenceOwner referenceOwner;
 
-    private final URLSourceType urlSourceType;
 
     /**
      * The url.
@@ -71,7 +70,6 @@ public class SourceDocumentReference {
         this.lastStatsId = null;
         this.id = null;
         this.referenceOwner = null;
-        this.urlSourceType = null;
         this.url = null;
         this.ipAddress = null;
         this.redirectPathDepth = null;
@@ -79,13 +77,12 @@ public class SourceDocumentReference {
         this.active = null;
     }
 
-    public SourceDocumentReference(final ReferenceOwner referenceOwner, final URLSourceType urlSourceType,
+    public SourceDocumentReference(final ReferenceOwner referenceOwner,
                                    final String url, final String ipAddress, final String lastStatsId,
                                    final Long redirectPathDepth, final List<String> redirectionPath,
                                    final Boolean active) {
         this.id = SourceDocumentReference.idFromUrl(url,referenceOwner.getRecordId());
         this.referenceOwner = referenceOwner;
-        this.urlSourceType = urlSourceType;
         this.url = url;
         this.ipAddress = ipAddress;
         this.lastStatsId = lastStatsId;
@@ -95,12 +92,11 @@ public class SourceDocumentReference {
     }
 
     public SourceDocumentReference(final String id, final ReferenceOwner referenceOwner,
-                                   final URLSourceType urlSourceType, final String url, final String ipAddress,
+                                   final String url, final String ipAddress,
                                    final String lastStatsId, final Long redirectPathDepth,
                                    final List<String> redirectionPath, final Boolean active) {
         this.id = id;
         this.referenceOwner = referenceOwner;
-        this.urlSourceType = urlSourceType;
         this.url = url;
         this.ipAddress = ipAddress;
         this.lastStatsId = lastStatsId;
@@ -127,25 +123,24 @@ public class SourceDocumentReference {
 
     public Boolean getActive() {return active;}
 
-    public URLSourceType getUrlSourceType() {return urlSourceType;}
 
     public SourceDocumentReference withLastStatsId(String id) {
-        return new SourceDocumentReference(this.id, this.referenceOwner, this.urlSourceType, this.url,
+        return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
                 this.ipAddress, id, this.redirectPathDepth, this.redirectionPath, this.active);
     }
 
     public SourceDocumentReference withRedirectionPath(List<String> redirectionPath) {
-        return new SourceDocumentReference(this.id, this.referenceOwner, this.urlSourceType, this.url,
+        return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
                 this.ipAddress, this.lastStatsId, (long)redirectionPath.size(), redirectionPath, this.active);
     }
 
     public SourceDocumentReference withIPAddress(String ipAddress) {
-        return new SourceDocumentReference(this.id, this.referenceOwner, this.urlSourceType, this.url,
+        return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
                 ipAddress, this.lastStatsId, this.redirectPathDepth, this.redirectionPath, this.active);
     }
 
     public SourceDocumentReference withActive(Boolean active) {
-        return new SourceDocumentReference(this.id, this.referenceOwner, this.urlSourceType, this.url,
+        return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
                 this.ipAddress, this.lastStatsId, this.redirectPathDepth, this.redirectionPath, active);
     }
 

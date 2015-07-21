@@ -65,7 +65,7 @@ public class MigratorHarvesterDaoTest {
     @Test
     public void test_SourceDocumentReferences_OneElement() throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(owner, URLSourceType.ISSHOWNBY, "http://www.google.com",
+                new SourceDocumentReference(owner, "http://www.google.com",
                                             null, null, null, null, true);
         harvesterDao.saveSourceDocumentReferences(Arrays.asList(sourceDocumentReference),migrationBatchId);
         assertEquals (1, dataStore.getCount(sourceDocumentReference));
@@ -75,18 +75,18 @@ public class MigratorHarvesterDaoTest {
     public void test_SourceDocumentReferences_ManyElements() throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         final List<SourceDocumentReference> sourceDocumentReferences =new ArrayList<>();
         sourceDocumentReferences.add(
-           new SourceDocumentReference(owner, URLSourceType.ISSHOWNBY, "http://www.google.com", null, null, null, null, true)
+           new SourceDocumentReference(owner, "http://www.google.com", null, null, null, null, true)
         );
 
         sourceDocumentReferences.add(
-           new SourceDocumentReference(owner, URLSourceType.ISSHOWNAT, "http://www.skype.com", null, null, null, null, true)
+           new SourceDocumentReference(owner, "http://www.skype.com", null, null, null, null, true)
         );
 
         sourceDocumentReferences.add(
-           new SourceDocumentReference(owner, URLSourceType.HASVIEW, "http://www.yahoo.com", null, null, null, null, true)
+           new SourceDocumentReference(owner, "http://www.yahoo.com", null, null, null, null, true)
         );
 
-        sourceDocumentReferences.add(new SourceDocumentReference(owner, null, "http://www.facebook.com", null, null,
+        sourceDocumentReferences.add(new SourceDocumentReference(owner, "http://www.facebook.com", null, null,
                                                                  null, null, true));
 
         harvesterDao.saveSourceDocumentReferences(sourceDocumentReferences,migrationBatchId);
