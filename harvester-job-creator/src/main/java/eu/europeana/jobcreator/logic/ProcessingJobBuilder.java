@@ -41,8 +41,7 @@ public class ProcessingJobBuilder {
             throw new IllegalArgumentException("options must not be null");
         }
 
-        final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.OBJECT, url,
-                null, null, null, null, true);
+        final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, url, null, null, null, null, true);
 
         final List<ProcessingJobSubTask> subTasks = new ArrayList();
         subTasks.addAll(SubTaskBuilder.colourExtraction());
@@ -54,7 +53,10 @@ public class ProcessingJobBuilder {
                                 sourceDocumentReference.getId(),
                                 subTasks)
                 ),
-                JobState.READY, Utils.ipAddressOf(url), true);
+                JobState.READY,
+                URLSourceType.OBJECT,
+                Utils.ipAddressOf(url),
+                true);
 
         // TODO : implement
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
@@ -81,8 +83,7 @@ public class ProcessingJobBuilder {
 
         for (final String url : urls) {
 
-            final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.HASVIEW, url,
-                    null, null, null, null, true);
+            final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, url, null, null, null, null, true);
 
             final List<ProcessingJobSubTask> subTasks = new ArrayList();
             subTasks.addAll(SubTaskBuilder.colourExtraction());
@@ -95,7 +96,7 @@ public class ProcessingJobBuilder {
                                     sourceDocumentReference.getId(),
                                     subTasks)
                     ),
-                    JobState.READY, Utils.ipAddressOf(url), true);
+                    JobState.READY, URLSourceType.HASVIEW, Utils.ipAddressOf(url), true);
 
             // TODO : implement
             final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
@@ -120,8 +121,7 @@ public class ProcessingJobBuilder {
             throw new IllegalArgumentException("options must not be null");
         }
 
-        final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.ISSHOWNBY, url,
-                null, null, null, null, true);
+        final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, url, null, null, null, null, true);
 
         final List<ProcessingJobSubTask> subTasks = new ArrayList();
         subTasks.addAll(SubTaskBuilder.colourExtraction());
@@ -134,7 +134,7 @@ public class ProcessingJobBuilder {
                                 sourceDocumentReference.getId(),
                                 subTasks)
                 ),
-                JobState.READY, Utils.ipAddressOf(url), true);
+                JobState.READY, URLSourceType.ISSHOWNBY, Utils.ipAddressOf(url), true);
 
         // TODO : implement
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;
@@ -158,8 +158,7 @@ public class ProcessingJobBuilder {
             throw new IllegalArgumentException("options must not be null");
         }
 
-        final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, URLSourceType.ISSHOWNAT, url,
-                null, null, null, null, true);
+        final SourceDocumentReference sourceDocumentReference = new SourceDocumentReference(owner, url, null, null, null, null, true);
 
         final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
                 Arrays.asList(
@@ -167,7 +166,7 @@ public class ProcessingJobBuilder {
                                 sourceDocumentReference.getId(),
                                 new ArrayList())
                 ),
-                JobState.READY, Utils.ipAddressOf(url), true);
+                JobState.READY, URLSourceType.ISSHOWNAT, Utils.ipAddressOf(url), true);
 
         // TODO : implement
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = null;

@@ -100,7 +100,6 @@ public class HarvesterClientTest {
             sourceDocumentReferences[i] = new SourceDocumentReference(
                 iString,
                 new ReferenceOwner(iString, iString, iString, iString),
-                URLSourceType.values()[random.nextInt(URLSourceType.values().length)],
                 "http://www.google.com",
                 "127.0.0.1",
                 "",
@@ -131,7 +130,6 @@ public class HarvesterClientTest {
             sourceDocumentReferences[i] = new SourceDocumentReference(
                                                                              iString,
                                                                              new ReferenceOwner(iString, iString, iString, iString),
-                                                                             URLSourceType.values()[random.nextInt(URLSourceType.values().length)],
                                                                              "http://www.google.com",
                                                                              "127.0.0.1",
                                                                              "",
@@ -149,7 +147,6 @@ public class HarvesterClientTest {
                 sourceDocumentReferences[i] = new SourceDocumentReference(
                                                                                  iString,
                                                                                  new ReferenceOwner(iString, iString, iString, ""),
-                                                                                 URLSourceType.values()[random.nextInt(URLSourceType.values().length)],
                                                                                  "http://www.skype.com",
                                                                                  "127.1.1.1",
                                                                                  "",
@@ -196,12 +193,12 @@ public class HarvesterClientTest {
             processingJobIds.get(owner).add(id);
 
             final ProcessingJob processingJob =
-                    new ProcessingJob(id, 1, new Date(), owner, null, JobState.READY, "", null, null);
+                    new ProcessingJob(id, 1, new Date(), owner, null, JobState.READY, URLSourceType.HASVIEW, "", null, null);
 
             processingJobDao.create(processingJob, WriteConcern.NONE);
 
             final SourceDocumentReference sourceDocumentReference =
-                    new SourceDocumentReference(owner, null, "test", null, null, 0l, null, true);
+                    new SourceDocumentReference(owner, "test", null, null, 0l, null, true);
 
             sourceDocumentReferenceDao.create(sourceDocumentReference, WriteConcern.NONE);
 

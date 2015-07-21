@@ -55,6 +55,8 @@ public class ProcessingJob {
      */
     private final ProcessingJobLimits limits;
 
+    private final URLSourceType urlSourceType;
+
     public ProcessingJob() {
         this.id = null;
         this.priority = 0;
@@ -65,11 +67,19 @@ public class ProcessingJob {
         this.limits = new ProcessingJobLimits();
         this.ipAddress = null;
         this.active = null;
+        this.urlSourceType = null;
     }
 
-    public ProcessingJob (final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress,
-                          Boolean active) {
+    public ProcessingJob (final int priority,
+                          final Date expectedStartDate,
+                          final ReferenceOwner referenceOwner,
+                          final List<ProcessingJobTaskDocumentReference> tasks,
+                          final JobState state,
+                          final URLSourceType urlSourceType,
+                          final String ipAddress,
+                          final Boolean active) {
         this.priority = priority;
+        this.urlSourceType = urlSourceType;
         this.ipAddress = ipAddress;
         this.active = active;
         this.id = UUID.randomUUID().toString();
@@ -80,9 +90,17 @@ public class ProcessingJob {
         this.limits = new ProcessingJobLimits();
     }
 
-    public ProcessingJob (final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks, final JobState state, String ipAddress,
-                          Boolean active, ProcessingJobLimits limits) {
+    public ProcessingJob (final int priority,
+                          final Date expectedStartDate,
+                          final ReferenceOwner referenceOwner,
+                          final List<ProcessingJobTaskDocumentReference> tasks,
+                          final JobState state,
+                          final URLSourceType urlSourceType,
+                          final String ipAddress,
+                          final Boolean active,
+                          final ProcessingJobLimits limits) {
         this.priority = priority;
+        this.urlSourceType = urlSourceType;
         this.ipAddress = ipAddress;
         this.active = active;
         this.id = UUID.randomUUID().toString();
@@ -93,14 +111,23 @@ public class ProcessingJob {
         this.limits = limits;
     }
 
-    public ProcessingJob (final String id, final int priority, final Date expectedStartDate, final ReferenceOwner referenceOwner, final List<ProcessingJobTaskDocumentReference> tasks,
-                          final JobState state, String ipAddress, Boolean active, ProcessingJobLimits limits) {
+    public ProcessingJob (final String id,
+                          final int priority,
+                          final Date expectedStartDate,
+                          final ReferenceOwner referenceOwner,
+                          final List<ProcessingJobTaskDocumentReference> tasks,
+                          final JobState state,
+                          final URLSourceType urlSourceType,
+                          String ipAddress,
+                          Boolean active,
+                          ProcessingJobLimits limits) {
         this.id = id;
         this.priority = priority;
         this.expectedStartDate = expectedStartDate;
         this.referenceOwner = referenceOwner;
         this.tasks = tasks;
         this.state = state;
+        this.urlSourceType = urlSourceType;
         this.ipAddress = ipAddress;
         this.limits = limits;
         this.active = active;
@@ -139,13 +166,15 @@ public class ProcessingJob {
         else return limits;
     }
 
+    public URLSourceType getUrlSourceType() {return urlSourceType;}
+
     public ProcessingJob withState(JobState state) {
-        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress, active,
+        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, urlSourceType, ipAddress, active,
                                  limits);
     }
 
     public ProcessingJob withLimits(ProcessingJobLimits limits) {
-        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, ipAddress, active,
+        return new ProcessingJob(id, priority, expectedStartDate, referenceOwner, tasks, state, urlSourceType, ipAddress, active,
                                  limits);
     }
 

@@ -3,8 +3,10 @@ package eu.europeana.harvester.cluster.master.receivers;
 import akka.actor.UntypedActor;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
+import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
+import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 import eu.europeana.harvester.logging.LoggingComponent;
@@ -33,18 +35,22 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
      */
     private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
 
+    private final ProcessingJobDao processingJobDao;
+
 
 
 
     public ReceiverStatisticsDumperActor(final ClusterMasterConfig clusterMasterConfig,
                                          final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                                         final SourceDocumentReferenceDao sourceDocumentReferenceDao){
+                                         final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                                         final ProcessingJobDao processingJobDao){
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverStatisticsDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.processingJobDao = processingJobDao;
     }
 
     @Override
@@ -66,6 +72,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
      */
     private void saveStatistics(DoneProcessing msg) {
         final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.read(msg.getReferenceId());
+        final ProcessingJob processingJob = processingJobDao.read(msg.getJobId());
 
         final String docId = finishedDocument.getId();
         //LOG.info("save statistics for document with ID: {}",docId);
@@ -73,8 +80,9 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
 
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(new Date(), new Date(), finishedDocument.getActive(),
-                        msg.getTaskType(), msg.getProcessingState(), finishedDocument.getReferenceOwner(),
-                        finishedDocument.getUrlSourceType(), docId,
+                        msg.getTaskType(), msg.getProcessingState(),
+                        processingJob.getReferenceOwner(),
+                        processingJob.getUrlSourceType(), docId,
                         msg.getJobId(), msg.getHttpResponseCode(), msg.getHttpResponseContentType(),
                         msg.getHttpResponseContentSizeInBytes(),
                         msg.getSocketConnectToDownloadStartDurationInMilliSecs(),
