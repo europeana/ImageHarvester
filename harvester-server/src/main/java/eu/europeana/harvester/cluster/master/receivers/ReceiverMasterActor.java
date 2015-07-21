@@ -105,9 +105,7 @@ public class ReceiverMasterActor extends UntypedActor {
                 sourceDocumentProcessingStatisticsDao,  sourceDocumentReferenceDao, processingJobDao), "statisticsDumper");
 
         receiverMetaInfoDumper = getContext().actorOf(Props.create(ReceiverMetaInfoDumperActor.class, clusterMasterConfig,
-                accountantActor,  sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");
-
-
+                accountantActor, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");
 
     }
 

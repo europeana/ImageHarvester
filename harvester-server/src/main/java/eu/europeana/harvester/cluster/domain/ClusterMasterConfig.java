@@ -1,6 +1,7 @@
 package eu.europeana.harvester.cluster.domain;
 
 import com.mongodb.WriteConcern;
+import eu.europeana.harvester.cluster.master.jobrestarter.JobRestarterConfig;
 import org.joda.time.Duration;
 
 /**
@@ -30,18 +31,20 @@ public class ClusterMasterConfig {
      */
     private final Integer responseTimeoutFromSlaveInMillis;
 
+    private final JobRestarterConfig jobRestarterConfig;
+
     /**
      * Describes the guarantee that MongoDB provides when reporting on the success of a write operation
      */
     private final WriteConcern writeConcern;
 
-    public ClusterMasterConfig(final Integer jobsPerIP, final Long maxTasksInMemory,
-                               final Duration receiveTimeoutInterval, final Integer responseTimeoutFromSlaveInMillis, 
-                               final WriteConcern writeConcern) {
+    public ClusterMasterConfig (final Integer jobsPerIP, final Long maxTasksInMemory, final Duration receiveTimeoutInterval, final Integer responseTimeoutFromSlaveInMillis,
+                                JobRestarterConfig jobRestarterConfig, final WriteConcern writeConcern) {
         this.jobsPerIP = jobsPerIP;
         this.maxTasksInMemory = maxTasksInMemory;
         this.receiveTimeoutInterval = receiveTimeoutInterval;
         this.responseTimeoutFromSlaveInMillis = responseTimeoutFromSlaveInMillis;
+        this.jobRestarterConfig = jobRestarterConfig;
         this.writeConcern = writeConcern;
     }
 
@@ -63,5 +66,9 @@ public class ClusterMasterConfig {
 
     public Long getMaxTasksInMemory() {
         return maxTasksInMemory;
+    }
+
+    public JobRestarterConfig getJobRestarterConfig () {
+        return jobRestarterConfig;
     }
 }

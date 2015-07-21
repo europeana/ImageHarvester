@@ -100,6 +100,6 @@ import java.util.Map;
      * @return - list of ProcessingJobs
      */
      @Deprecated
-     List<SourceDocumentProcessingStatistics> deactivateDocuments(final List<String> sourceDocumentReferenceIds);
+     List<SourceDocumentProcessingStatistics> deactivateDocuments(final List<String> sourceDocumentReferenceIds, final WriteConcern concern);
 
 }

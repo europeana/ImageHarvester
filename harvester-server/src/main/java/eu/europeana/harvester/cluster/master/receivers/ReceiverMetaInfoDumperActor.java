@@ -38,13 +38,13 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
      */
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
-    final SourceDocumentReferenceDao sourceDocumentReferenceDao;
+    final SourceDocumentReferenceDao SourceDocumentReferenceDao;
 
 
 
     public ReceiverMetaInfoDumperActor(final ClusterMasterConfig clusterMasterConfig,
                                        final ActorRef accountantActor,
-                                       final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                                       final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                        final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao){
 
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
@@ -52,7 +52,7 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
-        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.SourceDocumentReferenceDao = SourceDocumentReferenceDao;
         this.accountantActor = accountantActor;
     }
 
@@ -63,7 +63,7 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
 
             final DoneProcessing doneProcessing = (DoneProcessing) message;
 
-            final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.read(doneProcessing.getReferenceId());
+            final SourceDocumentReference finishedDocument = SourceDocumentReferenceDao.read(doneProcessing.getReferenceId());
 
 
             final String docId = finishedDocument.getId();

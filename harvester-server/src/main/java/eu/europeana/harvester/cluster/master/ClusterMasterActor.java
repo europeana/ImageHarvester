@@ -17,6 +17,7 @@ import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.master.accountants.AccountantDispatcherActor;
+import eu.europeana.harvester.cluster.master.jobrestarter.JobRestarterActor;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
 import eu.europeana.harvester.cluster.master.metrics.ProcessingJobStateStatisticsActor;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
@@ -75,6 +76,11 @@ public class ClusterMasterActor extends UntypedActor {
     private ActorRef processingJobStateStatisticsActor;
 
     /**
+     *  every X seconds get the job profiles and create new jobs
+     */
+    private ActorRef jobRestarterActor;
+
+    /**
      * Contains all the configuration needed by this actor.
      */
     private final ClusterMasterConfig clusterMasterConfig;
@@ -122,6 +128,8 @@ public class ClusterMasterActor extends UntypedActor {
      */
     private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
 
+    private final SourceDocumentReferenceProcessingProfileDao sourceDocumentProcessingProfileDao;
+
     /**
      * SourceDocumentReferenceMetaInfo DAO object which lets us to read and store data to and from the database.
      */
@@ -151,7 +159,8 @@ public class ClusterMasterActor extends UntypedActor {
                                final ProcessingJobDao processingJobDao,
                                final MachineResourceReferenceDao machineResourceReferenceDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                               final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                               final SourceDocumentReferenceDao SourceDocumentReferenceDao,
+                               final SourceDocumentReferenceProcessingProfileDao sourceDocumentProcessingProfileDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
                                final DefaultLimits defaultLimits,
                                final Integer cleanupInterval,
@@ -164,7 +173,8 @@ public class ClusterMasterActor extends UntypedActor {
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
-        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.sourceDocumentReferenceDao = SourceDocumentReferenceDao;
+        this.sourceDocumentProcessingProfileDao = sourceDocumentProcessingProfileDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
         this.defaultLimits = defaultLimits;
         this.cleanupInterval = cleanupInterval;
@@ -199,6 +209,15 @@ public class ClusterMasterActor extends UntypedActor {
                                                                                        delayForCountingTheStateOfDocuments),
                                                                           "processingJobStateStatistics");
 
+        jobRestarterActor = getContext().system().actorOf(Props.create(JobRestarterActor.class,
+                                                                       clusterMasterConfig.getJobRestarterConfig(),
+                                                                       sourceDocumentReferenceDao,
+                                                                       processingJobDao,
+                                                                       sourceDocumentProcessingProfileDao
+                                                                       ),
+                                                          "jobRestarter"
+                                                         );
+
         jobSenderActor = getContext().system().actorOf(Props.create(JobSenderActor.class, ipExceptions, ipsWithJobs,
         defaultLimits,cleanupInterval, jobLoaderActor,accountantActor, receiverActor), "jobSender");
 
@@ -222,6 +241,7 @@ public class ClusterMasterActor extends UntypedActor {
         getContext().system().stop(accountantActor);
         getContext().system().stop(monitoringActor);
         getContext().system().stop(processingJobStateStatisticsActor);
+        getContext().system().stop(jobRestarterActor);
     }
 
     @Override

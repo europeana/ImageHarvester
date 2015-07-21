@@ -21,6 +21,7 @@ import eu.europeana.harvester.cluster.domain.messages.CheckForTaskTimeout;
 import eu.europeana.harvester.cluster.domain.messages.LoadJobs;
 import eu.europeana.harvester.cluster.domain.messages.Monitor;
 import eu.europeana.harvester.cluster.master.ClusterMasterActor;
+import eu.europeana.harvester.cluster.master.jobrestarter.JobRestarterConfig;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
@@ -76,8 +77,10 @@ class Master {
                 config.getInt("default-limits.responseTimeoutFromSlaveInMillis");
         final Long maxTasksInMemory = config.getLong("mongo.maxTasksInMemory");
 
+        final JobRestarterConfig jobRestarterConfig = JobRestarterConfig.valueOf(config.getConfig("akka.cluster"));
+
         final ClusterMasterConfig clusterMasterConfig = new ClusterMasterConfig(jobsPerIP, maxTasksInMemory,
-                receiveTimeoutInterval, responseTimeoutFromSlaveInMillis, WriteConcern.NONE);
+                receiveTimeoutInterval, responseTimeoutFromSlaveInMillis, jobRestarterConfig, WriteConcern.NONE);
 
         Slf4jReporter reporter = Slf4jReporter.forRegistry(MasterMetrics.METRIC_REGISTRY)
                 .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
@@ -128,7 +131,7 @@ class Master {
 
         final ProcessingJobDao processingJobDao = new ProcessingJobDaoImpl(datastore);
         final MachineResourceReferenceDao machineResourceReferenceDao = new MachineResourceReferenceDaoImpl(datastore);
-        final SourceDocumentReferenceDao sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
+        final SourceDocumentReferenceDao SourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
         final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao =
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore);
         final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao =
@@ -148,7 +151,7 @@ class Master {
 
         clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class,
                 clusterMasterConfig, ipExceptions, processingJobDao, machineResourceReferenceDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao,
+                sourceDocumentProcessingStatisticsDao, SourceDocumentReferenceDao,
                 sourceDocumentReferenceMetaInfoDao, defaultLimits,
                 cleanupInterval, delayForCountingTheStateOfDocuments ), "clusterMaster");
     }

@@ -116,7 +116,7 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     }
 
     @Override
-    public List<SourceDocumentProcessingStatistics> deactivateDocuments (List<String> sourceDocumentReferenceIds) {
+    public List<SourceDocumentProcessingStatistics> deactivateDocuments (List<String> sourceDocumentReferenceIds, WriteConcern writeConcern) {
         if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
@@ -129,7 +129,7 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
 
         update.set("active", false);
 
-        datastore.update(query, update);
+        datastore.update(query, update, false, writeConcern);
 
         return query.asList();
     }
