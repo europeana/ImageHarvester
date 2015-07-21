@@ -99,10 +99,11 @@ public class SlaveDownloader {
 
                 /** Abort when conditional download and headers match */
                 if (task.getDocumentReferenceTask().getTaskType() == DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) {
-                    final String existingContentLength = task.getHeaders().get("Content-Length");
-                    final String downloadContentLength = downloadResponseHeaders.getHeaders().getFirstValue("Content-Length");
+                    final String existingContentLength = task.getHeaders().get("Content-Length".toLowerCase());
+                    final String downloadContentLength = downloadResponseHeaders.getHeaders().getFirstValue("Content-Length".toLowerCase());
 
-                    if (existingContentLength != null && downloadContentLength != null && existingContentLength.equalsIgnoreCase(downloadContentLength)) {
+                    if (existingContentLength != null && downloadContentLength != null &&
+                        existingContentLength.trim().equalsIgnoreCase(downloadContentLength.trim())) {
                         // Same content length response headers => abort
                         httpRetrieveResponse.setState(RetrievingState.COMPLETED);
                         httpRetrieveResponse.setLog("Conditional download aborted as existing Content-Length == " + existingContentLength + " and download Content-Length == " + downloadContentLength);
