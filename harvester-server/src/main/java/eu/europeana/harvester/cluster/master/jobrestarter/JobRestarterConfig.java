@@ -17,7 +17,7 @@ public class JobRestarterConfig {
         return numberOfSecondsBetweenRepetition;
     }
 
-    public JobRestarterConfig valueOf (final Config config) {
+    public static JobRestarterConfig valueOf (final Config config) {
         return new JobRestarterConfig(new Duration(config.getDuration("jobRestarterTimeBetweenRepetitions", TimeUnit.SECONDS)));
     }
 }
