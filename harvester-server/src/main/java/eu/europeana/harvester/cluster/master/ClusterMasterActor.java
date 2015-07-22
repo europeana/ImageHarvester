@@ -151,20 +151,20 @@ public class ClusterMasterActor extends UntypedActor {
      * Maps each IP with a boolean which indicates if an IP has jobs in MongoDB or not.
      */
     private final HashMap<String, Boolean> ipsWithJobs = new HashMap<>();
+    private final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao;
 
 
-
-    public ClusterMasterActor (final ClusterMasterConfig clusterMasterConfig,
-                               final IPExceptions ipExceptions,
+    public ClusterMasterActor (final ClusterMasterConfig clusterMasterConfig, final IPExceptions ipExceptions,
                                final ProcessingJobDao processingJobDao,
                                final MachineResourceReferenceDao machineResourceReferenceDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                final SourceDocumentReferenceProcessingProfileDao sourceDocumentProcessingProfileDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
-                               final DefaultLimits defaultLimits,
-                               final Integer cleanupInterval,
-                               final Duration delayForCountingTheStateOfDocuments) {
+                               final DefaultLimits defaultLimits, final Integer cleanupInterval,
+                               final Duration delayForCountingTheStateOfDocuments,
+                               final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao) {
+
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor constructor");
 
@@ -173,6 +173,7 @@ public class ClusterMasterActor extends UntypedActor {
         this.processingJobDao = processingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
+        this.lastSourceDocumentProcessingStatisticsDao = lastSourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = SourceDocumentReferenceDao;
         this.sourceDocumentProcessingProfileDao = sourceDocumentProcessingProfileDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
@@ -196,7 +197,9 @@ public class ClusterMasterActor extends UntypedActor {
 
         receiverActor = getContext().system().actorOf(Props.create(ReceiverMasterActor.class, clusterMasterConfig,
                 accountantActor, monitoringActor, processingJobDao,
-                sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao
+                sourceDocumentProcessingStatisticsDao,
+                lastSourceDocumentProcessingStatisticsDao,
+                sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao
         ), "receiver");
 
         jobLoaderActor = getContext().system().actorOf(Props.create(JobLoaderMasterActor.class, receiverActor,

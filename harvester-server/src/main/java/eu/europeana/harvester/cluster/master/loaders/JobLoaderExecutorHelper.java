@@ -250,8 +250,7 @@ public class JobLoaderExecutorHelper  {
 
         if ((DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD).equals(documentReferenceTaskType)) {
             final String statisticsID = newDoc.getLastStatsId();
-            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
-                    sourceDocumentProcessingStatisticsDao.read(statisticsID);
+            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics = sourceDocumentProcessingStatisticsDao.read(statisticsID);
             try {
                 headers = sourceDocumentProcessingStatistics.getHttpResponseHeaders();
             } catch (Exception e) {

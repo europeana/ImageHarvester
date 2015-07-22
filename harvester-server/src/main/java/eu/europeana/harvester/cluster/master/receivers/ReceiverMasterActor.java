@@ -10,10 +10,7 @@ import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.domain.messages.inner.MarkJobAsDone;
 import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
-import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
+import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
@@ -28,6 +25,7 @@ public class ReceiverMasterActor extends UntypedActor {
      * Contains all the configuration needed by this actor.
      */
     private final ClusterMasterConfig clusterMasterConfig;
+    private final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao;
 
     /**
      * A wrapper class for all important data (ips, loaded jobs, jobs in progress etc.)
@@ -76,6 +74,7 @@ public class ReceiverMasterActor extends UntypedActor {
                                final ActorRef monitoringActor,
                                final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                               final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao,
                                final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao
                                ){
@@ -87,6 +86,7 @@ public class ReceiverMasterActor extends UntypedActor {
         this.monitoringActor = monitoringActor;
         this.processingJobDao = processingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
+        this.lastSourceDocumentProcessingStatisticsDao = lastSourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
     }
@@ -102,7 +102,8 @@ public class ReceiverMasterActor extends UntypedActor {
                 accountantActor,  processingJobDao), "jobDumper");
 
         receiverStatisticsDumper = getContext().actorOf(Props.create(ReceiverStatisticsDumperActor.class, clusterMasterConfig,
-                sourceDocumentProcessingStatisticsDao,  sourceDocumentReferenceDao, processingJobDao), "statisticsDumper");
+                sourceDocumentProcessingStatisticsDao, lastSourceDocumentProcessingStatisticsDao,
+                sourceDocumentReferenceDao, processingJobDao), "statisticsDumper");
 
         receiverMetaInfoDumper = getContext().actorOf(Props.create(ReceiverMetaInfoDumperActor.class, clusterMasterConfig,
                 accountantActor, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");

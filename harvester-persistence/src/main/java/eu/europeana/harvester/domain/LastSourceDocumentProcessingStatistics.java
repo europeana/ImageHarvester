@@ -153,7 +153,7 @@ public class LastSourceDocumentProcessingStatistics {
         this.active = active;
         this.taskType = taskType;
         this.urlSourceType = urlSourceType;
-        this.id = sourceDocumentReferenceId + "-" + processingJobId;
+        this.id = idOf(sourceDocumentReferenceId, taskType, urlSourceType);
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.state = state;
@@ -172,7 +172,8 @@ public class LastSourceDocumentProcessingStatistics {
         this.processingJobSubTaskStats = processingJobSubTaskStats;
     }
 
-    public LastSourceDocumentProcessingStatistics(final String id, final Date createdAt, final Date updatedAt,
+    public LastSourceDocumentProcessingStatistics(final String id,
+                                                  final Date createdAt, final Date updatedAt,
                                               final Boolean active, final DocumentReferenceTaskType taskType,
                                               final ProcessingState state, final ReferenceOwner referenceOwner,
                                               final URLSourceType urlSourceType, final String sourceDocumentReferenceId,
@@ -283,32 +284,49 @@ public class LastSourceDocumentProcessingStatistics {
         return log;
     }
 
-    public SourceDocumentProcessingStatistics withUpdate(final ProcessingState state,
-                                                         final String jobId, final Integer responseCode,
-                                                         final Long size,
-                                                         final Long socketConnectToDownloadStartDurationInMilliSecs,
-                                                         final Long retrievalDurationInMilliSecs,
-                                                         final Long checkingDurationInMilliSecs,
-                                                         final Map<String, String> httpResponseHeaders,
-                                                         final String log,
-                                                         final ProcessingJobSubTaskStats processingJobSubTaskStats) {
-        return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), this.active, this.taskType,
-                state, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId, jobId, responseCode,
-                this.httpResponseContentType, size, socketConnectToDownloadStartDurationInMilliSecs,
-                retrievalDurationInMilliSecs, checkingDurationInMilliSecs, this.sourceIp, httpResponseHeaders, log,
-                processingJobSubTaskStats);
+    public LastSourceDocumentProcessingStatistics withUpdate(final ProcessingState state,
+                                                             final String jobId,
+                                                             final Integer responseCode,
+                                                             final Long size,
+                                                             final Long socketConnectToDownloadStartDurationInMilliSecs,
+                                                             final Long retrievalDurationInMilliSecs,
+                                                             final Long checkingDurationInMilliSecs,
+                                                             final Map<String, String> httpResponseHeaders,
+                                                             final String log,
+                                                             final ProcessingJobSubTaskStats processingJobSubTaskStats) {
+        return new LastSourceDocumentProcessingStatistics(this.id,
+                                                          this.createdAt,
+                                                          new Date(),
+                                                          this.active,
+                                                          this.taskType,
+                                                          state,
+                                                          this.referenceOwner,
+                                                          this.urlSourceType,
+                                                          this.sourceDocumentReferenceId,
+                                                          jobId,
+                                                          responseCode,
+                                                          this.httpResponseContentType,
+                                                          size,
+                                                          socketConnectToDownloadStartDurationInMilliSecs,
+                                                          retrievalDurationInMilliSecs,
+                                                          checkingDurationInMilliSecs,
+                                                          this.sourceIp,
+                                                          httpResponseHeaders,
+                                                          log,
+                                                          processingJobSubTaskStats
+                                                        );
     }
 
-    public SourceDocumentProcessingStatistics withState(final ProcessingState state) {
-        return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), this.active, this.taskType,
+    public LastSourceDocumentProcessingStatistics withState(final ProcessingState state) {
+        return new LastSourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), this.active, this.taskType,
                 state, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId, this.processingJobId,
                 this.httpResponseCode, this.httpResponseContentType, this.httpResponseContentSizeInBytes,
                 this.socketConnectToDownloadStartDurationInMilliSecs, this.retrievalDurationInMilliSecs,
                 this.checkingDurationInMilliSecs, this.sourceIp, this.httpResponseHeaders, this.log,this.processingJobSubTaskStats);
     }
 
-    public SourceDocumentProcessingStatistics withActive(final Boolean active) {
-        return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), active, this.taskType,
+    public LastSourceDocumentProcessingStatistics withActive(final Boolean active) {
+        return new LastSourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), active, this.taskType,
                 this.state, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId,
                 this.processingJobId, this.httpResponseCode, this.httpResponseContentType,
                 this.httpResponseContentSizeInBytes, this.socketConnectToDownloadStartDurationInMilliSecs,

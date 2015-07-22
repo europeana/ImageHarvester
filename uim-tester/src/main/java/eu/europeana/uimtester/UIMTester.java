@@ -106,6 +106,7 @@ public class UIMTester {
                 new HarvesterClientImpl(new ProcessingJobDaoImpl(dataStore),
                                         new MachineResourceReferenceDaoImpl(dataStore),
                                         new SourceDocumentProcessingStatisticsDaoImpl(dataStore),
+                                        new LastSourceDocumentProcessingStatisticsDaoImpl(dataStore),
                                         new SourceDocumentReferenceDaoImpl(dataStore),
                                         new SourceDocumentReferenceMetaInfoDaoImpl(dataStore),
                                         new SourceDocumentReferenceProcessingProfileDaoImpl(dataStore),

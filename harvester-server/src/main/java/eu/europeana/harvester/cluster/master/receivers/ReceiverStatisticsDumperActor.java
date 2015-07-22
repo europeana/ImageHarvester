@@ -3,9 +3,11 @@ package eu.europeana.harvester.cluster.master.receivers;
 import akka.actor.UntypedActor;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
+import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
+import eu.europeana.harvester.domain.LastSourceDocumentProcessingStatistics;
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 import eu.europeana.harvester.domain.SourceDocumentReference;
@@ -36,12 +38,12 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
     private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
 
     private final ProcessingJobDao processingJobDao;
-
-
+    private final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao;
 
 
     public ReceiverStatisticsDumperActor(final ClusterMasterConfig clusterMasterConfig,
                                          final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                                         final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao,
                                          final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                          final ProcessingJobDao processingJobDao){
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
@@ -49,6 +51,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
+        this.lastSourceDocumentProcessingStatisticsDao = lastSourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.processingJobDao = processingJobDao;
     }
@@ -92,6 +95,34 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
         sourceDocumentProcessingStatisticsDao.createOrModify(sourceDocumentProcessingStatistics,
                 clusterMasterConfig.getWriteConcern());
 
+
+        LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatistics =
+                lastSourceDocumentProcessingStatisticsDao.read(sourceDocumentProcessingStatistics.getSourceDocumentReferenceId(),
+                                                               sourceDocumentProcessingStatistics.getTaskType(),
+                                                               sourceDocumentProcessingStatistics.getUrlSourceType()
+                                                              );
+
+        if (null == lastSourceDocumentProcessingStatistics) {
+           lastSourceDocumentProcessingStatistics =
+                   new LastSourceDocumentProcessingStatistics(new Date(), new Date(), finishedDocument.getActive(), msg.getTaskType(),
+                                                       msg.getProcessingState(), processingJob.getReferenceOwner(),
+                                                       processingJob.getUrlSourceType(), docId, msg.getJobId(), msg.getHttpResponseCode(),
+                                                       msg.getHttpResponseContentType(), msg.getHttpResponseContentSizeInBytes(),
+                                                       msg.getSocketConnectToDownloadStartDurationInMilliSecs(), msg.getRetrievalDurationInMilliSecs(),
+                                                       msg.getCheckingDurationInMilliSecs(), msg.getSourceIp(), msg.getHttpResponseHeaders(),
+                                                       msg.getLog(), null);
+        }
+        else {
+            lastSourceDocumentProcessingStatistics
+                    .withUpdate(msg.getProcessingState(), msg.getJobId(), msg.getHttpResponseCode(),
+                                msg.getHttpResponseContentSizeInBytes(),
+                                msg.getSocketConnectToDownloadStartDurationInMilliSecs(),
+                                msg.getRetrievalDurationInMilliSecs(), msg.getCheckingDurationInMilliSecs(),
+                                msg.getHttpResponseHeaders(), msg.getLog(), null);
+
+        }
+
+        lastSourceDocumentProcessingStatisticsDao.createOrModify(lastSourceDocumentProcessingStatistics, clusterMasterConfig.getWriteConcern());
 
         SourceDocumentReference updatedDocument =
                 finishedDocument.withLastStatsId(sourceDocumentProcessingStatistics.getId());
