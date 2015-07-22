@@ -87,7 +87,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                         msg.getHttpResponseContentSizeInBytes(),
                         msg.getSocketConnectToDownloadStartDurationInMilliSecs(),
                         msg.getRetrievalDurationInMilliSecs(), msg.getCheckingDurationInMilliSecs(),
-                        msg.getSourceIp(), msg.getHttpResponseHeaders(), msg.getLog());
+                        msg.getSourceIp(), msg.getHttpResponseHeaders(), msg.getLog(),null);
 
         sourceDocumentProcessingStatisticsDao.createOrModify(sourceDocumentProcessingStatistics,
                 clusterMasterConfig.getWriteConcern());

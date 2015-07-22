@@ -7,12 +7,13 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * Stores the stats for a specific processing job for a source.
+ * Stores the last stats for a specific processing job for a source.
  */
-public class SourceDocumentProcessingStatistics {
 
-    public static final String idOf(final String sourceDocumentReferenceId,final String processingJobId) {
-        return sourceDocumentReferenceId+"-"+processingJobId;
+public class LastSourceDocumentProcessingStatistics {
+
+    public static final String idOf(final String sourceDocumentReferenceId,final DocumentReferenceTaskType taskType,final URLSourceType urlSourceType) {
+        return new StringBuilder().append(sourceDocumentReferenceId).append("-").append(taskType.name()).append("-").append(urlSourceType.name()).toString();
     }
 
     @Id
@@ -112,7 +113,7 @@ public class SourceDocumentProcessingStatistics {
      */
     private final ProcessingJobSubTaskStats processingJobSubTaskStats;
 
-    public SourceDocumentProcessingStatistics() {
+    public LastSourceDocumentProcessingStatistics() {
         this.id = null;
         this.createdAt = null;
         this.updatedAt = null;
@@ -133,9 +134,10 @@ public class SourceDocumentProcessingStatistics {
         this.httpResponseHeaders = null;
         this.log = null;
         this.processingJobSubTaskStats = null;
+
     }
 
-    public SourceDocumentProcessingStatistics(final Date createdAt, final Date updatedAt,
+    public LastSourceDocumentProcessingStatistics(final Date createdAt, final Date updatedAt,
                                               final Boolean active, final DocumentReferenceTaskType taskType,
                                               final ProcessingState state, final ReferenceOwner referenceOwner,
                                               final URLSourceType urlSourceType, final String sourceDocumentReferenceId,
@@ -168,10 +170,9 @@ public class SourceDocumentProcessingStatistics {
         this.httpResponseHeaders = httpResponseHeaders;
         this.log = log;
         this.processingJobSubTaskStats = processingJobSubTaskStats;
-
     }
 
-    public SourceDocumentProcessingStatistics(final String id, final Date createdAt, final Date updatedAt,
+    public LastSourceDocumentProcessingStatistics(final String id, final Date createdAt, final Date updatedAt,
                                               final Boolean active, final DocumentReferenceTaskType taskType,
                                               final ProcessingState state, final ReferenceOwner referenceOwner,
                                               final URLSourceType urlSourceType, final String sourceDocumentReferenceId,
@@ -204,7 +205,6 @@ public class SourceDocumentProcessingStatistics {
         this.httpResponseHeaders = httpResponseHeaders;
         this.log = log;
         this.processingJobSubTaskStats = processingJobSubTaskStats;
-
     }
 
     public String getId() {
@@ -295,7 +295,8 @@ public class SourceDocumentProcessingStatistics {
         return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), this.active, this.taskType,
                 state, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId, jobId, responseCode,
                 this.httpResponseContentType, size, socketConnectToDownloadStartDurationInMilliSecs,
-                retrievalDurationInMilliSecs, checkingDurationInMilliSecs, this.sourceIp, httpResponseHeaders, log,processingJobSubTaskStats);
+                retrievalDurationInMilliSecs, checkingDurationInMilliSecs, this.sourceIp, httpResponseHeaders, log,
+                processingJobSubTaskStats);
     }
 
     public SourceDocumentProcessingStatistics withState(final ProcessingState state) {
@@ -314,4 +315,5 @@ public class SourceDocumentProcessingStatistics {
                 this.retrievalDurationInMilliSecs, this.checkingDurationInMilliSecs, this.sourceIp,
                 this.httpResponseHeaders, this.log,this.processingJobSubTaskStats);
     }
+
 }

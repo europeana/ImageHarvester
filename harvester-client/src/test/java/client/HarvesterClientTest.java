@@ -209,7 +209,7 @@ public class HarvesterClientTest {
 
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                     new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, owner,
-                                                           null, sourceDocumentReference.getId(), "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "");
+                                                           null, sourceDocumentReference.getId(), "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null);
 
 
             sourceDocumentProcessingStatisticsIds.get(owner).add(sourceDocumentProcessingStatistics.getId());
