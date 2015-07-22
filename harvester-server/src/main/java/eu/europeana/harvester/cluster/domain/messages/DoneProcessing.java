@@ -148,6 +148,10 @@ public class DoneProcessing implements Serializable {
         this.log = log;
     }
 
+    public DoneProcessing (final DoneDownload doneDownload) {
+        this (doneDownload, null, null, null, null);
+    }
+
     public DoneProcessing(final DoneDownload doneDownload, final ImageMetaInfo imageMetaInfo,
                           final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo,
                           final TextMetaInfo textMetaInfo) {

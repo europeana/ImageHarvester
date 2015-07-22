@@ -15,9 +15,7 @@ import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
 import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ProcessingJobLimits;
-import eu.europeana.harvester.domain.ProcessingState;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.harvester.httpclient.response.ResponseType;
@@ -166,14 +164,20 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
                 if (processingResultTuple == null)
                     throw new IllegalStateException("Unexpected processingResultTuple with value null. Probable cause : bug in slave code.");
-                if (processingResultTuple.getMediaMetaInfoTuple() == null)
-                    throw new IllegalStateException("Unexpected processingResultTuple.mediaMetaInfoTuple with value null. Probable cause : bug in slave code.");
-
-                doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                        processingResultTuple.getMediaMetaInfoTuple().getImageMetaInfo(),
-                        processingResultTuple.getMediaMetaInfoTuple().getAudioMetaInfo(),
-                        processingResultTuple.getMediaMetaInfoTuple().getVideoMetaInfo(),
-                        processingResultTuple.getMediaMetaInfoTuple().getTextMetaInfo());
+                if (processingResultTuple.getMediaMetaInfoTuple() == null) {
+                    doneProcessingMessage = new DoneProcessing(doneDownloadMessage);
+                    LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                              "The current job has not metainfo attached to it."
+                            );
+                }
+                else {
+                    doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
+                                                               processingResultTuple.getMediaMetaInfoTuple().getImageMetaInfo(),
+                                                               processingResultTuple.getMediaMetaInfoTuple().getAudioMetaInfo(),
+                                                               processingResultTuple.getMediaMetaInfoTuple().getVideoMetaInfo(),
+                                                               processingResultTuple.getMediaMetaInfoTuple().getTextMetaInfo()
+                                                             );
+                }
 
             } catch (Exception e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
@@ -279,8 +283,12 @@ public class RetrieveAndProcessActor extends UntypedActor {
      * @throws Exception
      */
     private final ProcessingResultTuple executeProcessing(final HttpRetrieveResponse response, final RetrieveUrl task) throws Exception {
-        return slaveProcessor.process(task.getDocumentReferenceTask(), taskWithProcessingConfig.getDownloadPath(), response.getUrl().toURI().toASCIIString(), response.getContent(), responseTypeFromTaskType(task.getDocumentReferenceTask().getTaskType()),
-                task.getReferenceOwner()
+        return slaveProcessor.process(task.getDocumentReferenceTask(),
+                                      taskWithProcessingConfig.getDownloadPath(),
+                                      response.getUrl().toURI().toASCIIString(),
+                                      response.getContent(),
+                                      responseTypeFromTaskType(task.getDocumentReferenceTask().getTaskType()),
+                                      task.getReferenceOwner()
         );
     }
 

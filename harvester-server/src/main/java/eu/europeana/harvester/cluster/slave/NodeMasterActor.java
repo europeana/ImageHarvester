@@ -292,7 +292,11 @@ public class NodeMasterActor extends UntypedActor {
 
         if(!jobsToStop.contains(jobId)) {
 
-            masterReceiver.tell(new DownloadConfirmation(doneDownload.getTaskID(), doneDownload.getIpAddress(),doneDownload.getHttpRetrieveResponse().getState()), getSelf());
+            masterReceiver.tell(new DownloadConfirmation(doneDownload.getTaskID(),
+                                                         doneDownload.getIpAddress(),
+                                                         doneDownload.getHttpRetrieveResponse().getState()),
+                                                         getSelf()
+                               );
 
             if((DocumentReferenceTaskType.CHECK_LINK).equals(doneDownload.getDocumentReferenceTask().getTaskType()) ||
                     (ProcessingState.ERROR).equals(doneDownload.getProcessingState())) {
@@ -300,7 +304,7 @@ public class NodeMasterActor extends UntypedActor {
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                         "Slave sending DoneDownload message for job {} and task {}", doneDownload.getJobId(), doneDownload.getTaskID());
 
-                masterReceiver.tell(new DoneProcessing(doneDownload, null, null, null, null), getSelf());
+                masterReceiver.tell(new DoneProcessing(doneDownload), getSelf());
                 deleteFile(doneDownload.getReferenceId());
 
             }

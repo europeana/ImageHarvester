@@ -11,7 +11,10 @@ import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenera
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.ResponseType;
+import eu.europeana.harvester.logging.LoggingComponent;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SlaveProcessor {
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final MediaMetaInfoExtractor metaInfoExtractor;
     private final ThumbnailGenerator thumbnailGenerator;
@@ -40,13 +44,19 @@ public class SlaveProcessor {
 
     }
 
-    public ProcessingResultTuple process(final ProcessingJobTaskDocumentReference task, String originalFilePath, String originalFileUrl, byte[] originalFileContent,
-                                         ResponseType responseType, ReferenceOwner referenceOwner) throws Exception {
+    public ProcessingResultTuple process(final ProcessingJobTaskDocumentReference task,
+                                         String originalFilePath,
+                                         String originalFileUrl,
+                                         byte[] originalFileContent,
+                                         ResponseType responseType,
+                                         ReferenceOwner referenceOwner) throws Exception {
 
         // (1) Locate tasks
         final ProcessingJobSubTask metaExtractionProcessingTask = locateMetaInfoExtractionProcessingTask(task);
         final ProcessingJobSubTask colorExtractionProcessingTask = locateColorExtractionProcessingTask(task);
         final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks = locateThumbnailExtractionProcessingTask(task);
+
+
 
         // (2) Execute tasks
         final MediaMetaInfoTuple mediaMetaInfoTuple = (metaExtractionProcessingTask != null) ? extractMetaInfo(originalFilePath, originalFileUrl, responseType, metaExtractionProcessingTask) : null;
