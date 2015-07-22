@@ -99,8 +99,8 @@ public class SlaveDownloader {
 
                 /** Abort when conditional download and headers match */
                 if (task.getDocumentReferenceTask().getTaskType() == DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) {
-                    final String existingContentLength = task.getHeaders().get("Content-Length".toLowerCase());
-                    final String downloadContentLength = downloadResponseHeaders.getHeaders().getFirstValue("Content-Length".toLowerCase());
+                    final String existingContentLength = fetchContentLengthHeader(task.getHeaders());
+                    final String downloadContentLength = downloadResponseHeaders.getHeaders().getFirstValue("Content-Length"); //case insensitive map
 
                     if (existingContentLength != null && downloadContentLength != null &&
                         existingContentLength.trim().equalsIgnoreCase(downloadContentLength.trim())) {
@@ -206,6 +206,15 @@ public class SlaveDownloader {
             asyncHttpClient.close();
             return httpRetrieveResponse;
         }
+    }
+
+    private String fetchContentLengthHeader (Map<String, String> headers) {
+        for (final Map.Entry<String, String> entry: headers.entrySet()) {
+            if ("Content-Length".equalsIgnoreCase(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     private void cleanup(final HttpRetrieveResponse httpRetrieveResponse,final RetrieveUrl task, final AsyncHttpClient asyncHttpClient, final Throwable e) {
