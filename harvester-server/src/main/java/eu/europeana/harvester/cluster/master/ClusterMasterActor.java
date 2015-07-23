@@ -154,16 +154,17 @@ public class ClusterMasterActor extends UntypedActor {
     private final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao;
 
 
-    public ClusterMasterActor (final ClusterMasterConfig clusterMasterConfig, final IPExceptions ipExceptions,
+    public ClusterMasterActor (final ClusterMasterConfig clusterMasterConfig,
+                               final IPExceptions ipExceptions,
                                final ProcessingJobDao processingJobDao,
                                final MachineResourceReferenceDao machineResourceReferenceDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                               final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao,
                                final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                final SourceDocumentReferenceProcessingProfileDao sourceDocumentProcessingProfileDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
                                final DefaultLimits defaultLimits, final Integer cleanupInterval,
-                               final Duration delayForCountingTheStateOfDocuments,
-                               final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao) {
+                               final Duration delayForCountingTheStateOfDocuments) {
 
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor constructor");

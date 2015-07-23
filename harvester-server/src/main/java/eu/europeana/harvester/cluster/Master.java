@@ -151,7 +151,10 @@ class Master {
                                                                                                TimeUnit.MILLISECONDS));
 
         clusterMaster = system.actorOf(Props.create(ClusterMasterActor.class,
-                clusterMasterConfig, ipExceptions, processingJobDao, machineResourceReferenceDao,
+                clusterMasterConfig,
+                ipExceptions,
+                processingJobDao,
+                machineResourceReferenceDao,
                 sourceDocumentProcessingStatisticsDao,
                 lastSourceDocumentProcessingStatisticsDao,
                 sourceDocumentReferenceDao,
