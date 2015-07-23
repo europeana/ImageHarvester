@@ -38,6 +38,8 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
         contentSizeInBytes = 0l;
         try {
             final File file = new File(absolutePath);
+
+
             if(file.exists()) {
                 if (!file.delete()) {
                     throw new RuntimeException("couldn't delete file " + absolutePath + " for unknown reason");
@@ -97,4 +99,17 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
        if (null != fo) fo.close();
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        if (null != fo && fo.getChannel().isOpen()) {
+            LOG.error ("File: " + absolutePath + " has channel still opened");
+            try {
+                fo.close();
+            }
+            catch (Exception e) {
+
+            }
+        }
+        super.finalize();
+    }
 }
