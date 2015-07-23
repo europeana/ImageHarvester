@@ -5,78 +5,71 @@ import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReferenceProcessingProfile;
 import eu.europeana.harvester.domain.URLSourceType;
 import org.joda.time.DateTime;
-import org.joda.time.Days;
+import org.joda.time.Years;
 
-/**
- * Created by paul on 16/07/15.
- */
 public class SourceDocumentReferenceProcessingProfileBuilder {
 
 
-    public static SourceDocumentReferenceProcessingProfile edmObjectUrl (final String id,
-                                                                         final ReferenceOwner owner,
-                                                                         final int priority
-                                                                        )
-    {
+    public static SourceDocumentReferenceProcessingProfile edmObjectUrl(final String id,
+                                                                        final ReferenceOwner owner,
+                                                                        final int priority
+    ) {
         return new SourceDocumentReferenceProcessingProfile(true,
-                                                            owner,
-                                                            id,
-                                                            URLSourceType.OBJECT,
-                                                            DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
-                                                            priority,
-                                                            DateTime.now().plusMonths(12).toDate(),
-                                                            Days.ONE.toStandardSeconds().getSeconds() * 365
-                                                          );
+                owner,
+                id,
+                URLSourceType.OBJECT,
+                DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
+                priority,
+                DateTime.now().plusMonths(12).toDate(),
+                Years.ONE.toPeriod().getSeconds()
+        );
     }
 
-    public static SourceDocumentReferenceProcessingProfile edmHasView (final String id,
-                                                                       final ReferenceOwner owner,
-                                                                       final int priority
-                                                                      )
-    {
+    public static SourceDocumentReferenceProcessingProfile edmHasView(final String id,
+                                                                      final ReferenceOwner owner,
+                                                                      final int priority
+    ) {
         return new SourceDocumentReferenceProcessingProfile(true,
-                                                            owner,
-                                                            id,
-                                                            URLSourceType.HASVIEW,
-                                                            DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
-                                                            priority,
-                                                            DateTime.now().plusMonths(12).toDate(),
-                                                            Days.ONE.toStandardSeconds().getSeconds() * 365
-                                                          );
-
-    }
-
-
-    public static SourceDocumentReferenceProcessingProfile edmIsShownAt (final String id,
-                                                                         final ReferenceOwner owner,
-                                                                         final int priority
-                                                                        )
-    {
-        return new SourceDocumentReferenceProcessingProfile(true,
-                                                            owner,
-                                                            id,
-                                                            URLSourceType.ISSHOWNAT,
-                                                            DocumentReferenceTaskType.CHECK_LINK,
-                                                            priority,
-                                                            DateTime.now().plusMonths(12).toDate(),
-                                                            Days.ONE.toStandardSeconds().getSeconds() * 365
-                                                          );
+                owner,
+                id,
+                URLSourceType.HASVIEW,
+                DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
+                priority,
+                DateTime.now().plusMonths(12).toDate(),
+                Years.ONE.toPeriod().getSeconds()
+        );
 
     }
 
-    public static SourceDocumentReferenceProcessingProfile edmIsShownBy (final String id,
-                                                                         final ReferenceOwner owner,
-                                                                         final int priority
-                                                                        )
-    {
-         return new SourceDocumentReferenceProcessingProfile(true,
-                                                             owner,
-                                                             id,
-                                                             URLSourceType.ISSHOWNBY,
-                                                             DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
-                                                             priority,
-                                                             DateTime.now().plusMonths(12).toDate(),
-                                                             Days.ONE.toStandardSeconds().getSeconds() * 365
-                                                            );
+
+    public static SourceDocumentReferenceProcessingProfile edmIsShownAt(final String id,
+                                                                        final ReferenceOwner owner,
+                                                                        final int priority
+    ) {
+        return new SourceDocumentReferenceProcessingProfile(true,
+                owner,
+                id,
+                URLSourceType.ISSHOWNAT,
+                DocumentReferenceTaskType.CHECK_LINK,
+                priority,
+                DateTime.now().plusMonths(12).toDate(),
+                Years.ONE.toPeriod().getSeconds()
+        );
+
+    }
+
+    public static SourceDocumentReferenceProcessingProfile edmIsShownBy(final String id,
+                                                                        final ReferenceOwner owner,
+                                                                        final int priority
+    ) {
+        return new SourceDocumentReferenceProcessingProfile(true,
+                owner,
+                id,
+                URLSourceType.ISSHOWNBY,
+                DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
+                priority,
+                DateTime.now().plusMonths(12).toDate(),
+                Years.ONE.toPeriod().getSeconds()
+        );
     }
 }
