@@ -1,7 +1,6 @@
 package eu.europeana.uimtester.jobcreator.logic;
 
-import com.google.code.morphia.Key;
-import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -12,13 +11,13 @@ public class JobCreatorTesterOutputWriter {
     public JobCreatorTesterOutputWriter (Writer writer) {this.writer = writer;}
 
 
-    public void write (Iterable<Key<ProcessingJob>> processingJobs) throws IOException {
+    public void write (Iterable<ProcessingJobTuple> processingJobs) throws IOException {
         if (null == processingJobs) {
             return ;
         }
 
-        for (final Key<ProcessingJob> processingJob: processingJobs) {
-            writer.write(processingJob.getId().toString());
+        for (final ProcessingJobTuple processingJob: processingJobs) {
+            writer.write(processingJob.getProcessingJob().getId());
             writer.write('\n');
         }
 

@@ -30,16 +30,15 @@ public class JobCreatorTester {
     public void execute(final File inputFile) throws InterruptedException, IOException,
                                                                            TimeoutException, ExecutionException {
         final List<UIMTestSample> uimTestSamples = JobCreatorTesterInputLoader.loadSamplesFromConfig(ConfigFactory.parseFile(inputFile));
-        final Iterable<com.google.code.morphia.Key<eu.europeana.harvester.domain.ProcessingJob>> processingJob = createAndSendJobsFromSamples(uimTestSamples);
+        final Iterable<ProcessingJobTuple> processingJob = createAndSendJobsFromSamples(uimTestSamples);
 
         writer.write(processingJob);
     }
 
-    private Iterable<com.google.code.morphia.Key<eu.europeana.harvester.domain.ProcessingJob>> createAndSendJobsFromSamples(final List<UIMTestSample> samples) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
-
-        final List<ProcessingJobTuple> generatedJobs =  generateJobs(samples);
-        harvesterClient.createOrModifySourceDocumentReference(ProcessingJobTuple.sourceDocumentReferencesFromList(generatedJobs));
-        return harvesterClient.createOrModify(ProcessingJobTuple.processingJobsFromList(generatedJobs));
+    private Iterable<ProcessingJobTuple> createAndSendJobsFromSamples(final List<UIMTestSample> samples) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
+        final List<ProcessingJobTuple> jobTuples = generateJobs(samples);
+        harvesterClient.createOrModifyProcessingJobTuples(jobTuples);
+        return jobTuples;
     }
 
     private List<ProcessingJobTuple> generateJobs(List<UIMTestSample> samples) throws UnknownHostException, MalformedURLException {
