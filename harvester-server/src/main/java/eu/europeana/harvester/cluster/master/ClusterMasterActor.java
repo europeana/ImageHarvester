@@ -161,8 +161,8 @@ public class ClusterMasterActor extends UntypedActor {
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao,
                                final SourceDocumentReferenceDao SourceDocumentReferenceDao,
-                               final SourceDocumentReferenceProcessingProfileDao sourceDocumentProcessingProfileDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao,
+                               final SourceDocumentReferenceProcessingProfileDao sourceDocumentProcessingProfileDao,
                                final DefaultLimits defaultLimits, final Integer cleanupInterval,
                                final Duration delayForCountingTheStateOfDocuments) {
 

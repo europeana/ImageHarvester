@@ -26,6 +26,7 @@ import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.MongoConfig;
+import eu.europeana.harvester.domain.SourceDocumentReferenceProcessingProfile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.Duration;
@@ -138,6 +139,8 @@ class Master {
         final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao =
                 new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
 
+        final SourceDocumentReferenceProcessingProfileDao sourceDocumentProcessingProfileDao = new SourceDocumentReferenceProcessingProfileDaoImpl(datastore);
+
 
 
 
@@ -158,8 +161,11 @@ class Master {
                 sourceDocumentProcessingStatisticsDao,
                 lastSourceDocumentProcessingStatisticsDao,
                 sourceDocumentReferenceDao,
-                sourceDocumentReferenceMetaInfoDao, defaultLimits,
-                cleanupInterval, delayForCountingTheStateOfDocuments ), "clusterMaster");
+                sourceDocumentReferenceMetaInfoDao,
+                sourceDocumentProcessingProfileDao,
+                defaultLimits,
+                cleanupInterval,
+                delayForCountingTheStateOfDocuments ), "clusterMaster");
     }
 
     public void start() {
