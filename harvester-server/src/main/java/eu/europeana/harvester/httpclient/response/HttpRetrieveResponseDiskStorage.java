@@ -1,6 +1,7 @@
 package eu.europeana.harvester.httpclient.response;
 
 import com.google.common.io.Files;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,21 +27,29 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
     private final String absolutePath;
 
     public HttpRetrieveResponseDiskStorage(String path) throws IOException {
+        if (StringUtils.isBlank(path)) {
+            throw new IllegalArgumentException("Path to file is blank");
+        }
         this.absolutePath = path;
-        init();
     }
 
     @Override
-    public void init() throws IOException {
+    synchronized public void init() throws IOException {
         contentSizeInBytes = 0l;
         try {
             final File file = new File(absolutePath);
             if(file.exists()) {
-                file.delete();
+                if (!file.delete()) {
+                    throw new RuntimeException("couldn't delete file " + absolutePath + " for unknown reason");
+                }
             }
-            file.createNewFile();
+
+            if (!file.createNewFile()) {
+                throw new RuntimeException("createNewFile: " + absolutePath + " has failed for unknown reason");
+            }
+
             fo = new FileOutputStream(file.getAbsoluteFile());
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException  e) {
             setState(RetrievingState.ERROR);
             setException(e);
             LOG.error(e.getMessage());
@@ -56,18 +65,24 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
     @Override
     synchronized public byte[] getContent() throws IOException {
         final File file = new File(absolutePath);
-            final byte[] data = Files.toByteArray(file);
-            return data;
+        final byte[] data = Files.toByteArray(file);
+        return data;
     }
 
     @Override
     synchronized public void addContent(byte[] content) throws Exception {
+        //lazy load
+        if (null == fo) init();
         try {
             contentSizeInBytes += content.length;
             fo.write(content);
+            fo.flush();
         } catch (IOException e) {
             setState(RetrievingState.ERROR);
             setException(e);
+
+            close();
+
             throw e;
         }
     }
@@ -79,7 +94,7 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
 
     @Override
     synchronized public void close() throws IOException {
-       fo.close();
+       if (null != fo) fo.close();
     }
 
 }

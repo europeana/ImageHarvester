@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -34,7 +35,7 @@ public class SlaveDownloaderTest {
 
     @After
     public void tearDown() throws Exception {
-        Files.delete(Paths.get(pathOnDisk));
+        if (new File(pathOnDisk).exists()) new File(pathOnDisk).delete();
     }
 
     @Test
@@ -198,7 +199,7 @@ public class SlaveDownloaderTest {
         assertTrue(response.getCheckingDurationInMilliSecs() > 50);
         assertTrue(response.getRetrievalDurationInMilliSecs() > 50);
         assertEquals(response.getContentSizeInBytes().longValue(), 0);
-        assertEquals(Files.size(Paths.get(pathOnDisk)), 0);
+        assertFalse(new File(pathOnDisk).exists());
 
     }
 
