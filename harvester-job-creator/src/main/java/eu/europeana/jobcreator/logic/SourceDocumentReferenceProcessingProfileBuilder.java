@@ -5,7 +5,7 @@ import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReferenceProcessingProfile;
 import eu.europeana.harvester.domain.URLSourceType;
 import org.joda.time.DateTime;
-import org.joda.time.Years;
+import org.joda.time.Period;
 
 public class SourceDocumentReferenceProcessingProfileBuilder {
 
@@ -21,8 +21,7 @@ public class SourceDocumentReferenceProcessingProfileBuilder {
                 DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                 priority,
                 DateTime.now().plusMonths(12).toDate(),
-                Years.ONE.toPeriod().getSeconds()
-        );
+                Period.weeks(52).toStandardSeconds().getSeconds());
     }
 
     public static SourceDocumentReferenceProcessingProfile edmHasView(final String id,
@@ -36,8 +35,7 @@ public class SourceDocumentReferenceProcessingProfileBuilder {
                 DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                 priority,
                 DateTime.now().plusMonths(12).toDate(),
-                Years.ONE.toPeriod().getSeconds()
-        );
+                Period.weeks(52).toStandardSeconds().getSeconds());
 
     }
 
@@ -53,8 +51,7 @@ public class SourceDocumentReferenceProcessingProfileBuilder {
                 DocumentReferenceTaskType.CHECK_LINK,
                 priority,
                 DateTime.now().plusMonths(12).toDate(),
-                Years.ONE.toPeriod().getSeconds()
-        );
+                Period.weeks(52).toStandardSeconds().getSeconds());
 
     }
 
@@ -69,7 +66,6 @@ public class SourceDocumentReferenceProcessingProfileBuilder {
                 DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                 priority,
                 DateTime.now().plusMonths(12).toDate(),
-                Years.ONE.toPeriod().getSeconds()
-        );
+                Period.weeks(52).toStandardSeconds().getSeconds());
     }
 }
