@@ -227,6 +227,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                 final Timer.Context downloadLinkCheckingTimerContext = SlaveMetrics.Worker.Slave.Retrieve.linkCheckingDuration.time();
                 try {
                     response = httpRetrieveResponseFactory.create(ResponseType.NO_STORAGE, taskWithProcessingConfig.getDownloadPath());
+                    response.setLoggingAppFields(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()));
                     slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
                 } finally {
                     downloadLinkCheckingTimerContext.stop();
@@ -237,6 +238,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                 final Timer.Context downloadUnconditionalDownloadTimerContext = SlaveMetrics.Worker.Slave.Retrieve.unconditionalDownloadDuration.time();
                 try {
                     response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, taskWithProcessingConfig.getDownloadPath());
+                    response.setLoggingAppFields(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()));
                     slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
                 } finally {
                     downloadUnconditionalDownloadTimerContext.stop();
@@ -248,6 +250,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
                 try {
                     response = httpRetrieveResponseFactory.create(ResponseType.DISK_STORAGE, taskWithProcessingConfig.getDownloadPath());
+                    response.setLoggingAppFields(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()));
                     slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
                 } finally {
                     downloadConditionalDownloadTimerContext.stop();

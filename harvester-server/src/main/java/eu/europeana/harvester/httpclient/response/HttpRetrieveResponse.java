@@ -1,6 +1,7 @@
 package eu.europeana.harvester.httpclient.response;
 
 import eu.europeana.harvester.domain.ResponseHeader;
+import net.logstash.logback.marker.MapEntriesAppendingMarker;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -11,72 +12,73 @@ import java.util.Map;
 /**
  * The HTTP request response.
  */
-public interface HttpRetrieveResponse extends Serializable {
+ public interface HttpRetrieveResponse extends Serializable {
 
-    public URL getUrl();
+     URL getUrl();
 
-    public void setUrl(URL url);
+     void setUrl(URL url);
 
-    public void init() throws IOException;
+     void init() throws IOException;
 
-    public String getAbsolutePath();
+     String getAbsolutePath();
 
-    public Map<String, String> getResponseHeaders();
+     Map<String, String> getResponseHeaders();
 
-    public void addHeader(String type, String value);
+     void addHeader(String type, String value);
 
-    public RetrievingState getState();
+     RetrievingState getState();
 
-    public void setState(RetrievingState retrievingState);
+     void setState(RetrievingState retrievingState);
 
-    public byte[] getContent() throws IOException;
+     byte[] getContent() throws IOException;
 
-    public void addContent(byte[] content) throws Exception;
+     void addContent(byte[] content) throws Exception;
 
-    public Long getContentSizeInBytes();
+     Long getContentSizeInBytes();
 
-    public Throwable getException();
+     Throwable getException();
 
-    public void setException(Throwable exception);
+     void setException(Throwable exception);
 
-    public void close() throws IOException;
+     void close() throws IOException;
 
-    public Integer getHttpResponseCode();
+     Integer getHttpResponseCode();
 
-    public void setHttpResponseCode(Integer httpResponseCode);
+     void setHttpResponseCode(Integer httpResponseCode);
 
-    public String getHttpResponseContentType();
+     String getHttpResponseContentType();
 
-    public void setHttpResponseContentType(String httpResponseContentType);
+     void setHttpResponseContentType(String httpResponseContentType);
 
-    public Long getSocketConnectToDownloadStartDurationInMilliSecs();
+     Long getSocketConnectToDownloadStartDurationInMilliSecs();
 
-    public void setSocketConnectToDownloadStartDurationInMilliSecs(Long socketConnectToDownloadStartDurationInSecs);
+     void setSocketConnectToDownloadStartDurationInMilliSecs(Long socketConnectToDownloadStartDurationInSecs);
 
-    public Long getRetrievalDurationInMilliSecs();
+     Long getRetrievalDurationInMilliSecs();
 
-    public void setRetrievalDurationInMilliSecs(Long retrievalDurationInSecs);
+     void setRetrievalDurationInMilliSecs(Long retrievalDurationInSecs);
 
-    public Long getCheckingDurationInMilliSecs();
+     Long getCheckingDurationInMilliSecs();
 
-    public void setCheckingDurationInMilliSecs(Long checkingDurationInSecs);
+     void setCheckingDurationInMilliSecs(Long checkingDurationInSecs);
 
-    public String getSourceIp();
+     String getSourceIp();
 
-    public void setSourceIp(String sourceIp);
+     void setSourceIp(String sourceIp);
 
-    public List<ResponseHeader> getHttpResponseHeaders();
+     List<ResponseHeader> getHttpResponseHeaders();
 
-    public void addHttpResponseHeaders(String name, String value);
+     void addHttpResponseHeaders(String name, String value);
 
-    public List<String> getRedirectionPath();
+     List<String> getRedirectionPath();
 
-    public void setRedirectionPath(List<String> redirectionPath);
+     void setRedirectionPath(List<String> redirectionPath);
 
-    public void addRedirectionPath(String redirectionPath);
+     void addRedirectionPath(String redirectionPath);
 
-    public String getLog();
+     String getLog();
 
-    public void setLog(String log);
+     void setLog(String log);
 
+    void setLoggingAppFields (MapEntriesAppendingMarker mapEntriesAppendingMarker);
 }

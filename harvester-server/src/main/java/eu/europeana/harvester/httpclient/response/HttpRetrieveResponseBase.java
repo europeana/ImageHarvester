@@ -1,6 +1,7 @@
 package eu.europeana.harvester.httpclient.response;
 
 import eu.europeana.harvester.domain.ResponseHeader;
+import net.logstash.logback.marker.MapEntriesAppendingMarker;
 
 import java.io.IOException;
 import java.net.URL;
@@ -85,6 +86,8 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
      * Stores error messages.
      */
     private String log = "";
+
+    protected MapEntriesAppendingMarker loggingMarker;
 
     @Override
     synchronized public RetrievingState getState() {
@@ -246,5 +249,10 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     @Override
     public void setLog(String log) {
         this.log = log;
+    }
+
+    @Override
+    public void setLoggingAppFields (MapEntriesAppendingMarker mapEntriesAppendingMarker) {
+        this.loggingMarker = mapEntriesAppendingMarker;
     }
 }

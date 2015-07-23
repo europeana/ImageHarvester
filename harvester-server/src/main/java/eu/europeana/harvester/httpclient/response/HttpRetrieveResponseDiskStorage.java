@@ -2,19 +2,20 @@ package eu.europeana.harvester.httpclient.response;
 
 import com.google.common.io.Files;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stores the retrieved content on disk thus minimizing the memory usage to hold only meta info (ie. headers, url, etc.)
  */
 public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
-    private static final Logger LOG = LogManager.getLogger(HttpRetrieveResponseDiskStorage.class.getName());
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * The file where to store the content.
@@ -102,7 +103,13 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
     @Override
     protected void finalize() throws Throwable {
         if (null != fo && fo.getChannel().isOpen()) {
-            LOG.error ("File: " + absolutePath + " has channel still opened");
+            if (null != loggingMarker) {
+                LOG.error (loggingMarker, "File: " + absolutePath + " has channel still opened");
+            }
+            else {
+                LOG.error ("File: " + absolutePath + " has channel still opened");
+            }
+
             try {
                 fo.close();
             }
