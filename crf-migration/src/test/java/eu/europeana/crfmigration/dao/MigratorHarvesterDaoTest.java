@@ -6,6 +6,7 @@ import eu.europeana.crfmigration.domain.MigratorConfig;
 import eu.europeana.harvester.db.MorphiaDataStore;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
+import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
@@ -54,85 +55,63 @@ public class MigratorHarvesterDaoTest {
     public void tearDown() {
         dataStore.delete(dataStore.createQuery(SourceDocumentReference.class));
         dataStore.delete(dataStore.createQuery(ProcessingJob.class));
+        dataStore.delete(dataStore.createQuery(SourceDocumentReferenceProcessingProfile.class));
     }
 
     @Test
-    public void test_SourceDocumentReferences_EmptyList() throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
-        harvesterDao.saveSourceDocumentReferences(Collections.EMPTY_LIST,migrationBatchId);
-        assertEquals (0, dataStore.getCount(SourceDocumentReference.class));
-    }
-
-    @Test
-    public void test_SourceDocumentReferences_OneElement() throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
-        final SourceDocumentReference sourceDocumentReference =
-                new SourceDocumentReference(owner, "http://www.google.com",
-                                            null, null, null, null, true);
-        harvesterDao.saveSourceDocumentReferences(Arrays.asList(sourceDocumentReference),migrationBatchId);
-        assertEquals (1, dataStore.getCount(sourceDocumentReference));
-    }
-
-    @Test
-    public void test_SourceDocumentReferences_ManyElements() throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
-        final List<SourceDocumentReference> sourceDocumentReferences =new ArrayList<>();
-        sourceDocumentReferences.add(
-           new SourceDocumentReference(owner, "http://www.google.com", null, null, null, null, true)
-        );
-
-        sourceDocumentReferences.add(
-           new SourceDocumentReference(owner, "http://www.skype.com", null, null, null, null, true)
-        );
-
-        sourceDocumentReferences.add(
-           new SourceDocumentReference(owner, "http://www.yahoo.com", null, null, null, null, true)
-        );
-
-        sourceDocumentReferences.add(new SourceDocumentReference(owner, "http://www.facebook.com", null, null,
-                                                                 null, null, true));
-
-        harvesterDao.saveSourceDocumentReferences(sourceDocumentReferences,migrationBatchId);
-        assertEquals(4, dataStore.getCount(SourceDocumentReference.class));
-
-        for (final SourceDocumentReference reference: sourceDocumentReferences) {
-            final Query<SourceDocumentReference> query = dataStore.createQuery(SourceDocumentReference.class);
-            query.filter("_id", reference.getId());
-            assertEquals (1, dataStore.getCount(query));
-        }
-    }
-
-    @Test
-    public void test_ProcessJobs_EmptyList() {
-        harvesterDao.saveProcessingJobs(Collections.EMPTY_LIST,migrationBatchId);
+    public void test_ProcessJobs_EmptyList() throws InterruptedException, MalformedURLException, TimeoutException,
+                                                    ExecutionException, UnknownHostException {
+        harvesterDao.saveProcessingJobTuples(Collections.EMPTY_LIST, migrationBatchId);
         assertEquals(0, dataStore.getCount(ProcessingJob.class));
     }
 
     @Test
-    public void test_ProcessJobs_OneElement() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJob> processingJobList = Arrays.asList(ProcessingJobBuilder
-                                                                            .edmObjectUrlJobs("http://www.google.com",
-                                                                                              owner, JobPriority.NORMAL.getPriority(), falseOption).get(0)
-                                                                            .getProcessingJob());
-        harvesterDao.saveProcessingJobs(processingJobList,migrationBatchId);
-        assertEquals (1, dataStore.getCount(processingJobList.get(0)));
+    public void test_ProcessJobs_OneElement() throws MalformedURLException, UnknownHostException, InterruptedException,
+                                                     ExecutionException, TimeoutException {
+        final ProcessingJobTuple job = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com",
+                                                                                              owner, JobPriority.NORMAL.getPriority(), falseOption).get(0);
+        harvesterDao.saveProcessingJobTuples(Arrays.asList(job), migrationBatchId);
+        final Query<ProcessingJob> query = dataStore.createQuery(ProcessingJob.class);
+        query.filter("_id", job.getProcessingJob().getId());
+        assertEquals(1, dataStore.getCount(query));
+
+        final Query<SourceDocumentReference> sourceDocumentReferenceQuery = dataStore.createQuery(SourceDocumentReference.class);
+        sourceDocumentReferenceQuery.filter("_id", job.getSourceDocumentReference().getId());
+        assertEquals(1, dataStore.getCount(sourceDocumentReferenceQuery));
+
+        for (final SourceDocumentReferenceProcessingProfile profile: job.getSourceDocumentReferenceProcessingProfiles()) {
+            final Query<SourceDocumentReferenceProcessingProfile> profileQuery = dataStore.createQuery(SourceDocumentReferenceProcessingProfile.class);
+            profileQuery.filter("_id", profile.getId());
+            assertEquals(1, dataStore.getCount(profileQuery));
+        }
     }
 
     @Test
-    public void test_ProcessJobs_ManyElements() throws MalformedURLException, UnknownHostException {
-        final List<ProcessingJob> processingJobList = new ArrayList<>();
+    public void test_ProcessJobs_ManyElements() throws MalformedURLException, UnknownHostException,
+                                                       InterruptedException, ExecutionException, TimeoutException {
+        final List<ProcessingJobTuple> processingJobList = new ArrayList<>();
 
-        processingJobList.add(ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(), falseOption).get(0)
-                                                 .getProcessingJob());
-        processingJobList.add(ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.skype.com", owner,JobPriority.NORMAL.getPriority(), falseOption).get(0)
-                                                 .getProcessingJob());
-        processingJobList.add(ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.yahoo.com", owner,JobPriority.NORMAL.getPriority(), falseOption).get(0)
-                                                 .getProcessingJob());
+        processingJobList.add(ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(), falseOption).get(0));
+        processingJobList.add(ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.skype.com", owner,JobPriority.NORMAL.getPriority(), falseOption).get(0));
+        processingJobList.add(ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.yahoo.com", owner,JobPriority.NORMAL.getPriority(), falseOption).get(0));
 
-        harvesterDao.saveProcessingJobs(processingJobList,migrationBatchId);
+        harvesterDao.saveProcessingJobTuples(processingJobList, migrationBatchId);
         assertEquals(3, dataStore.getCount(ProcessingJob.class));
 
-        for (final ProcessingJob job: processingJobList) {
+        for (final ProcessingJobTuple job: processingJobList) {
             final Query<ProcessingJob> query = dataStore.createQuery(ProcessingJob.class);
-            query.filter("_id", job.getId());
-            assertEquals (1, dataStore.getCount(query));
+            query.filter("_id", job.getProcessingJob().getId());
+            assertEquals(1, dataStore.getCount(query));
+
+            final Query<SourceDocumentReference> sourceDocumentReferenceQuery = dataStore.createQuery(SourceDocumentReference.class);
+            sourceDocumentReferenceQuery.filter("_id", job.getSourceDocumentReference().getId());
+            assertEquals(1, dataStore.getCount(sourceDocumentReferenceQuery));
+
+            for (final SourceDocumentReferenceProcessingProfile profile: job.getSourceDocumentReferenceProcessingProfiles()) {
+                final Query<SourceDocumentReferenceProcessingProfile> profileQuery = dataStore.createQuery(SourceDocumentReferenceProcessingProfile.class);
+                profileQuery.filter("_id", profile.getId());
+                assertEquals(1, dataStore.getCount(profileQuery));
+            }
         }
     }
 

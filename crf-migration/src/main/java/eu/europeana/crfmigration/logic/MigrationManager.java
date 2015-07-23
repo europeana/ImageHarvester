@@ -98,25 +98,17 @@ public class MigrationManager {
         }
 
         final List<ProcessingJobTuple> processingJobTuples = convertEDMObjectToJobs(edmObjectsOfRecords,migratingBatchId);
-        final List<ProcessingJob> processingJobs = ProcessingJobTuple.processingJobsFromList(processingJobTuples);
-        final List<SourceDocumentReference> sourceDocumentReferences = ProcessingJobTuple.sourceDocumentReferencesFromList(processingJobTuples);
 
-        final Timer.Context processedSourceDocumentRef = MigrationMetrics.Migrator.Batch.processedSourceDocumentReferencesDuration.time();
+        final Timer.Context processedJobTuples = MigrationMetrics.Migrator.Batch.processedJobTuplesDuration.time();
+
+        MigrationMetrics.Migrator.Overall.processedJobsCount.inc(processingJobTuples.size());
+
+        //save jobs
         try {
-            migratorHarvesterDao.saveSourceDocumentReferences(sourceDocumentReferences,migratingBatchId);
-            MigrationMetrics.Migrator.Overall.processedSourceDocumentReferencesCount.inc(sourceDocumentReferences.size());
-        } finally {
-            processedSourceDocumentRef.stop();
+            migratorHarvesterDao.saveProcessingJobTuples(processingJobTuples, migratingBatchId);
         }
-
-        // Save the jobs
-        final Timer.Context processedJobsTimerContext = MigrationMetrics.Migrator.Batch.processedJobsDuration.time();
-        try {
-            migratorHarvesterDao.saveProcessingJobs(processingJobs,migratingBatchId);
-            MigrationMetrics.Migrator.Overall.processedJobsCount.inc(processingJobs.size());
-            MigrationMetrics.Migrator.Overall.processedSourceDocumentReferencesCount.inc(sourceDocumentReferences.size());
-        } finally {
-            processedJobsTimerContext.stop();
+        finally {
+           processedJobTuples.close();
         }
     }
 

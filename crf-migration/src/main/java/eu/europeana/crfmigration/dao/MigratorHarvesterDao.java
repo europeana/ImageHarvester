@@ -9,6 +9,7 @@ import eu.europeana.harvester.client.HarvesterClientImpl;
 import eu.europeana.harvester.db.MorphiaDataStore;
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.domain.SourceDocumentReference;
+import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.maven.shared.utils.StringUtils;
 import org.slf4j.LoggerFactory;
 
@@ -45,26 +46,13 @@ public class MigratorHarvesterDao {
 
     }
 
-    public void saveSourceDocumentReferences(final List<SourceDocumentReference> sourceDocumentReferences,final String migratingBatchId) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
-        try{
-            harvesterClient.createOrModifySourceDocumentReference(sourceDocumentReferences);
-        }
-        finally {
-            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_HARVESTER,migratingBatchId,null,null),
-                    "Finished saving {} source document references", sourceDocumentReferences.size());
-        }
-    }
-
-    public void saveProcessingJobs(final List<ProcessingJob> jobs,final String migratingBatchId) {
-        try {
-            for (final ProcessingJob processingJob : jobs) {
-                harvesterClient.createOrModify(processingJob);
-            }
-        }
-        finally {
-            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_HARVESTER,migratingBatchId,null,null),
-                    "Finished saving {} jobs", jobs.size());
-        }
+    public void saveProcessingJobTuples (List<ProcessingJobTuple> processingJobTuples, String migratingBatchId) throws
+                                                                                                                InterruptedException,
+                                                                                                                MalformedURLException,
+                                                                                                                TimeoutException,
+                                                                                                                ExecutionException,
+                                                                                                                UnknownHostException {
+            harvesterClient.createOrModifyProcessingJobTuples(processingJobTuples);
     }
 }
 
