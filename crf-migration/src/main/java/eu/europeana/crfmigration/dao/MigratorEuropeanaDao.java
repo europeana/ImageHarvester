@@ -126,7 +126,8 @@ public class MigratorEuropeanaDao {
 
     private final ReferenceOwner getReferenceOwner(final Map.Entry pairs,final String migratingBatchId) {
         final String about = (String) pairs.getKey();
-        final String collectionId = (String) pairs.getValue();
+        final EuropeanaRecord europeanaRecord = (EuropeanaRecord) pairs.getValue();
+        final String collectionId = (europeanaRecord != null)? europeanaRecord.getCollectionId() : null;
 
         final String[] temp = about.split("/");
         final String providerId = temp[1];
