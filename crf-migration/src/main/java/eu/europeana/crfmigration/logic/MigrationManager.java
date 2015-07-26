@@ -5,6 +5,7 @@ import com.mongodb.DBCursor;
 import eu.europeana.crfmigration.dao.MigratorEuropeanaDao;
 import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
+import eu.europeana.crfmigration.domain.EuropeanaRecord;
 import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.harvester.domain.JobPriority;
 import eu.europeana.harvester.domain.ProcessingJob;
@@ -57,36 +58,45 @@ public class MigrationManager {
 
         while (recordCursor.hasNext()) {
             final String migratingBatchId = "migrating-batch-"+ DateTime.now().getMillis()+"-"+Math.random();
-
+            DateTime minimalUpdatedTimestampInRecords = null;
             final Timer.Context totalTimerContext = MigrationMetrics.Migrator.Batch.totalDuration.time();
             try {
-                Map<String, String> recordsRetrievedInBatch = null;
+                Map<String, EuropeanaRecord> recordsRetrievedInBatch = null;
                 final Timer.Context processedRecordsDurationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsDuration.time();
                 try {
                     recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, batch,migratingBatchId);
+                    minimalUpdatedTimestampInRecords = EuropeanaRecord.minimalTimestampUpdated(recordsRetrievedInBatch.values());
                     positionInRecordCollection = positionInRecordCollection + recordsRetrievedInBatch.size();
                 } finally {
                     processedRecordsDurationTimerContext.stop();
                 }
                 migrateRecordsInSingleBatch(recordsRetrievedInBatch,migratingBatchId);
                 MigrationMetrics.Migrator.Overall.processedRecordsCount.inc(recordsRetrievedInBatch.size());
+
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                        "Finished migration batch with success to cursor position {} and minimum date in batch was {}.",positionInRecordCollection, minimalUpdatedTimestampInRecords);
+
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                        "Finished migration batch with {} records",recordsRetrievedInBatch.size());
+
             } catch (Exception e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,migratingBatchId,null,null),
                         "Error reading record after record: #" + positionInRecordCollection,e);
 
                 MigrationMetrics.Migrator.Batch.skippedBecauseOfErrorCounter.inc();
-                recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter,migratingBatchId);
+                recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(minimalUpdatedTimestampInRecords.toDate(),migratingBatchId);
                 recordCursor.skip(positionInRecordCollection);
+
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                        "Finished migration batch with error and skipping to cursor position {} . Cursor is being rebuilt.", positionInRecordCollection);
 
             } finally {
                 totalTimerContext.stop();
             }
         }
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                "Finished migration process with minimum date filter {}", dateFilter);
     }
 
-    private void migrateRecordsInSingleBatch(final Map<String, String> recordsInBatch,final String migratingBatchId) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
+    private void migrateRecordsInSingleBatch(final Map<String, EuropeanaRecord> recordsInBatch,final String migratingBatchId) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         // Retrieve records and convert to jobs
         List<EuropeanaEDMObject> edmObjectsOfRecords = Collections.emptyList();
         final Timer.Context processedRecordsAggregationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsAggregationDuration.time();

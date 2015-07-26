@@ -2,11 +2,13 @@ package eu.europeana.crfmigration.dao;
 
 import com.mongodb.*;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
+import eu.europeana.crfmigration.domain.EuropeanaRecord;
 import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.crfmigration.logic.MigrationMetrics;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
@@ -35,15 +37,17 @@ public class MigratorEuropeanaDao {
         database = mongo.getDB(mongoConfig.getDbName());
     }
 
-    public final Map<String, String> retrieveRecordsIdsFromCursor(final DBCursor recordCursor,int batchSize,final String migratingBatchId) {
-        final Map<String, String> records = new HashMap<>();
+    public final Map<String, EuropeanaRecord> retrieveRecordsIdsFromCursor(final DBCursor recordCursor,int batchSize,final String migratingBatchId) {
+        final Map<String, EuropeanaRecord> records = new HashMap<>();
         int i = 0;
         while (recordCursor.hasNext() && (i < batchSize)) {
             final BasicDBObject item = (BasicDBObject) recordCursor.next();
             final String about = (String) item.get("about");
+            final String id = (String) item.get("_id");
+            final DateTime timestampUpdated = new DateTime(item.getDate("timestampUpdated"));
             final BasicDBList collNames = (BasicDBList) item.get("europeanaCollectionName");
             final String collectionId = (String) collNames.get(0);
-            records.put(about, collectionId);
+            records.put(about, new EuropeanaRecord(id,about,collectionId,timestampUpdated));
             i = i + 1;
         }
         return records;
@@ -72,9 +76,9 @@ public class MigratorEuropeanaDao {
         return recordCursor;
     }
 
-    public final List<EuropeanaEDMObject> retrieveAggregationEDMInformation(final Map<String, String> records,final String migratingBatchId) {
+    public final List<EuropeanaEDMObject> retrieveAggregationEDMInformation(final Map<String, EuropeanaRecord> records,final String migratingBatchId) {
         final List<EuropeanaEDMObject> results = new ArrayList<>();
-        for (final Map.Entry<String, String> record : records.entrySet()) {
+        for (final Map.Entry<String, EuropeanaRecord> record : records.entrySet()) {
             final ReferenceOwner referenceOwner = getReferenceOwner(record,migratingBatchId);
 
             final DBObject aggregation = getAggregation("/aggregation/provider" + record.getKey(),migratingBatchId);
