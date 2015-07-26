@@ -43,6 +43,8 @@ public class MigrationMetrics {
 
             public static final Timer totalDuration = METRIC_REGISTRY.timer(name(NAME, TOTAL,DURATION));
 
+            public static Timer processedEDMToJobTuplesConversionDuration = METRIC_REGISTRY.timer(name(NAME, "processedEDMToJobTuplesConversion", DURATION));
+
             public static Timer processedJobTuplesDuration = METRIC_REGISTRY.timer(name(NAME, "processingJobTupleDuration", DURATION));
         }
 

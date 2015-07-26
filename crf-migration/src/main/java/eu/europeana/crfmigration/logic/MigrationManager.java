@@ -107,7 +107,11 @@ public class MigrationManager {
             processedRecordsAggregationTimerContext.stop();
         }
 
+        final Timer.Context processedEDMToJobTuplesConversion = MigrationMetrics.Migrator.Batch.processedEDMToJobTuplesConversionDuration.time();
+
         final List<ProcessingJobTuple> processingJobTuples = convertEDMObjectToJobs(edmObjectsOfRecords,migratingBatchId);
+
+        processedEDMToJobTuplesConversion.stop();
 
         final Timer.Context processedJobTuples = MigrationMetrics.Migrator.Batch.processedJobTuplesDuration.time();
 
@@ -118,7 +122,7 @@ public class MigrationManager {
             migratorHarvesterDao.saveProcessingJobTuples(processingJobTuples, migratingBatchId);
         }
         finally {
-           processedJobTuples.close();
+           processedJobTuples.stop();
         }
     }
 
