@@ -1,5 +1,6 @@
 package eu.europeana.jobcreator.logic;
 
+import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.harvester.domain.*;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Builder for various types of processing jobs.
@@ -36,7 +38,7 @@ public class ProcessingJobBuilder {
      * @throws MalformedURLException
      * @throws UnknownHostException
      */
-    public static final List<ProcessingJobTuple> edmObjectUrlJobs(final String url, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+    public static final List<ProcessingJobTuple> edmObjectUrlJobs(final String url, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException, ExecutionException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -55,7 +57,7 @@ public class ProcessingJobBuilder {
                 ),
                 JobState.READY,
                 URLSourceType.OBJECT,
-                Utils.ipAddressOf(url),
+                JobCreator.URL_RESOLVER.resolveIpOfUrl(url),
                 true);
 
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
@@ -79,7 +81,7 @@ public class ProcessingJobBuilder {
      * @throws MalformedURLException
      * @throws UnknownHostException
      */
-    public static final List<ProcessingJobTuple> edmHasViewUrlsJobs(final List<String> urls, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+    public static final List<ProcessingJobTuple> edmHasViewUrlsJobs(final List<String> urls, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException, ExecutionException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -101,7 +103,7 @@ public class ProcessingJobBuilder {
                                     sourceDocumentReference.getId(),
                                     subTasks)
                     ),
-                    JobState.READY, URLSourceType.HASVIEW, Utils.ipAddressOf(url), true);
+                    JobState.READY, URLSourceType.HASVIEW, JobCreator.URL_RESOLVER.resolveIpOfUrl(url), true);
 
             sourceDocumentReferenceProcessingProfiles.add(
                 SourceDocumentReferenceProcessingProfileBuilder.edmHasView(sourceDocumentReference.getId(),
@@ -125,7 +127,7 @@ public class ProcessingJobBuilder {
      * @throws MalformedURLException
      * @throws UnknownHostException
      */
-    public static final List<ProcessingJobTuple> edmIsShownByUrlJobs(final String url, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+    public static final List<ProcessingJobTuple> edmIsShownByUrlJobs(final String url, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException, ExecutionException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -143,7 +145,7 @@ public class ProcessingJobBuilder {
                                 sourceDocumentReference.getId(),
                                 subTasks)
                 ),
-                JobState.READY, URLSourceType.ISSHOWNBY, Utils.ipAddressOf(url), true);
+                JobState.READY, URLSourceType.ISSHOWNBY, JobCreator.URL_RESOLVER.resolveIpOfUrl(url), true);
 
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
                 Arrays.asList (
@@ -167,7 +169,7 @@ public class ProcessingJobBuilder {
      * @throws MalformedURLException
      * @throws UnknownHostException
      */
-    public static final List<ProcessingJobTuple> edmIsShownAtUrlJobs(final String url, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+    public static final List<ProcessingJobTuple> edmIsShownAtUrlJobs(final String url, final ReferenceOwner owner,final Integer priority, final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException, ExecutionException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -180,7 +182,7 @@ public class ProcessingJobBuilder {
                                 sourceDocumentReference.getId(),
                                 new ArrayList())
                 ),
-                JobState.READY, URLSourceType.ISSHOWNAT, Utils.ipAddressOf(url), true);
+                JobState.READY, URLSourceType.ISSHOWNAT, JobCreator.URL_RESOLVER.resolveIpOfUrl(url), true);
 
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles =
             Arrays.asList (
@@ -207,7 +209,7 @@ public class ProcessingJobBuilder {
     public static final List<ProcessingJobTuple> edmObjectUrlJobs(final String url, final ReferenceOwner owner,final Integer priority,
                                                                   final SourceDocumentReference sourceDocumentReference,
                                                                   final ProcessingJobCreationOptions options
-                                                                 ) throws MalformedURLException, UnknownHostException {
+                                                                 ) throws MalformedURLException, UnknownHostException, ExecutionException {
         if (null == options || sourceDocumentReference == null) {
             throw new IllegalArgumentException("options/sourceDcoumentReference must not be null");
         }
@@ -226,7 +228,7 @@ public class ProcessingJobBuilder {
                             ),
               JobState.READY,
               URLSourceType.OBJECT,
-              Utils.ipAddressOf(url),
+                JobCreator.URL_RESOLVER.resolveIpOfUrl(url),
               true
         );
 
@@ -253,7 +255,7 @@ public class ProcessingJobBuilder {
                                                                     final ReferenceOwner owner,
                                                                     final Integer priority,
                                                                     final SourceDocumentReference sourceDocumentReference,
-                                                                    final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+                                                                    final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException, ExecutionException {
         if (null == options || null == sourceDocumentReference) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -277,7 +279,7 @@ public class ProcessingJobBuilder {
                                 ),
                   JobState.READY,
                   URLSourceType.HASVIEW,
-                  Utils.ipAddressOf(url),
+                    JobCreator.URL_RESOLVER.resolveIpOfUrl(url),
                   true
             );
 
@@ -306,7 +308,7 @@ public class ProcessingJobBuilder {
                                                                      final ReferenceOwner owner,
                                                                      final Integer priority,
                                                                      final SourceDocumentReference sourceDocumentReference,
-                                                                     final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+                                                                     final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException, ExecutionException {
         if (null == options || null == sourceDocumentReference) {
             throw new IllegalArgumentException("options/sourceDocumentReference must not be null");
         }
@@ -327,7 +329,7 @@ public class ProcessingJobBuilder {
                            ),
               JobState.READY,
               URLSourceType.ISSHOWNBY,
-              Utils.ipAddressOf(url),
+                JobCreator.URL_RESOLVER.resolveIpOfUrl(url),
               true
         );
 
@@ -355,7 +357,7 @@ public class ProcessingJobBuilder {
                                                                      final ReferenceOwner owner,
                                                                      final Integer priority,
                                                                      final SourceDocumentReference sourceDocumentReference,
-                                                                     final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException {
+                                                                     final ProcessingJobCreationOptions options) throws MalformedURLException, UnknownHostException, ExecutionException {
         if (null == options || sourceDocumentReference == null) {
             throw new IllegalArgumentException("options/sourceDocumentReference must not be null");
         }
@@ -371,7 +373,7 @@ public class ProcessingJobBuilder {
                             ),
               JobState.READY,
               URLSourceType.ISSHOWNAT,
-              Utils.ipAddressOf(url),
+                JobCreator.URL_RESOLVER.resolveIpOfUrl(url),
               true);
 
         final List<SourceDocumentReferenceProcessingProfile> sourceDocumentReferenceProcessingProfiles = Arrays.asList (

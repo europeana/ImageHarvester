@@ -1,12 +1,12 @@
 package eu.europeana.harvester.cluster.slave.downloading;
 
 import com.ning.http.client.*;
+import eu.europeana.harvester.cluster.Slave;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.logging.LogMarker;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
-import eu.europeana.harvester.utils.NetUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class SlaveLinkChecker {
                 httpRetrieveResponse.setCheckingDurationInMilliSecs(connectionSetupDurationInMillis);
 
                 httpRetrieveResponse.setUrl(new URL(task.getUrl()));
-                httpRetrieveResponse.setSourceIp(NetUtils.ipOfUrl(task.getUrl()));
+                httpRetrieveResponse.setSourceIp(Slave.URL_RESOLVER.resolveIpOfUrl(task.getUrl()));
 
                 if (connectionSetupDurationInMillis > task.getLimits().getRetrievalConnectionTimeoutInMillis()) {
                     /* Initial connection setup time longer than threshold. */

@@ -14,6 +14,7 @@ import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by salexandru on 20.07.2015.
@@ -33,7 +34,7 @@ public class JobRestarterHelper {
         this.processingJobDao = processingJobDao;
     }
 
-    public void reloadJobs() throws MalformedURLException, UnknownHostException {
+    public void reloadJobs() throws MalformedURLException, UnknownHostException, ExecutionException {
         final List<ProcessingJobTuple> newProcessingJobTuples = new ArrayList<>();
 
         for (final SourceDocumentReferenceProcessingProfile profile: processingProfileDao.getJobToBeEvaluated()) {

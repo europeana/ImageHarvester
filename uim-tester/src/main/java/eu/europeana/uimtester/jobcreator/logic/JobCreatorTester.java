@@ -41,7 +41,7 @@ public class JobCreatorTester {
         return jobTuples;
     }
 
-    private List<ProcessingJobTuple> generateJobs(List<UIMTestSample> samples) throws UnknownHostException, MalformedURLException {
+    private List<ProcessingJobTuple> generateJobs(List<UIMTestSample> samples) throws UnknownHostException, MalformedURLException, ExecutionException {
         final List<ProcessingJobTuple> generatedJobs = new ArrayList<>();
         for (final UIMTestSample testSample : samples) {
             generatedJobs.addAll(JobCreator.createJobs(

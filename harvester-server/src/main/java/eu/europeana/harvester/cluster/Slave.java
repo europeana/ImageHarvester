@@ -20,6 +20,7 @@ import eu.europeana.harvester.db.dummy.DummyMediaStorageClientImpl;
 import eu.europeana.harvester.db.swift.SwiftConfiguration;
 import eu.europeana.harvester.db.swift.SwiftMediaStorageClientImpl;
 import eu.europeana.harvester.httpclient.response.ResponseType;
+import eu.europeana.harvester.util.CachingUrlResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,6 +29,8 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 public class Slave {
+
+    public static final CachingUrlResolver URL_RESOLVER = new CachingUrlResolver();
 
     private static final Logger LOG = LogManager.getLogger(Slave.class.getName());
 

@@ -1,7 +1,7 @@
-package client;
+package eu.europeana.harvester.db.mongo;
 
 
-import eu.europeana.harvester.client.CachingUrlResolver;
+import eu.europeana.harvester.util.CachingUrlResolver;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;

@@ -4,6 +4,7 @@ import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 import eu.europeana.harvester.domain.URLSourceType;
+import eu.europeana.harvester.util.CachingUrlResolver;
 import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
@@ -13,6 +14,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -20,12 +22,14 @@ import java.util.List;
  */
 public class JobCreator {
 
+    public final static CachingUrlResolver URL_RESOLVER = new CachingUrlResolver();
+
     public final static List<ProcessingJobTuple> createJobs (final ReferenceOwner owner,
                                                              final SourceDocumentReference reference,
                                                              final URLSourceType urlSourceType,
                                                              final int priority,
                                                              final DocumentReferenceTaskType taskType
-                                                            ) throws MalformedURLException, UnknownHostException {
+                                                            ) throws MalformedURLException, UnknownHostException, ExecutionException {
 
         final String url = reference.getUrl();
         final String edmObjectUrl = (URLSourceType.OBJECT == urlSourceType) ? url : null;
@@ -71,7 +75,7 @@ public class JobCreator {
                                                             final String edmIsShownByUrl,
                                                             final String edmIsShownAtUrl,
                                                             final Integer priority
-                                                            ) throws UnknownHostException, MalformedURLException {
+                                                            ) throws UnknownHostException, MalformedURLException, ExecutionException {
         return createJobs(collectionId, providerId, recordId, executionId, edmObjectUrl, edmHasViewUrls, edmIsShownByUrl, edmIsShownAtUrl, priority, new ProcessingJobCreationOptions(false));
     }
 
@@ -99,7 +103,7 @@ public class JobCreator {
                                                             final String edmIsShownByUrl,
                                                             final String edmIsShownAtUrl,
                                                             final Integer priority,
-                                                            final ProcessingJobCreationOptions options) throws UnknownHostException, MalformedURLException {
+                                                            final ProcessingJobCreationOptions options) throws UnknownHostException, MalformedURLException, ExecutionException {
 
         if (null == collectionId || null == providerId || null == recordId) {
             throw new IllegalArgumentException("Incomplete ownership information : collectionId = " + collectionId + ", providerId = " + providerId + " and recordId = " + recordId + ". Neither of them can be null. ");
@@ -158,7 +162,7 @@ public class JobCreator {
                                                             final String edmIsShownAtUrl,
                                                             final Integer priority,
                                                             final SourceDocumentReference sourceDocumentReference,
-                                                            final ProcessingJobCreationOptions options) throws UnknownHostException, MalformedURLException {
+                                                            final ProcessingJobCreationOptions options) throws UnknownHostException, MalformedURLException, ExecutionException {
 
         if (null == collectionId || null == providerId || null == recordId) {
             throw new IllegalArgumentException("Incomplete ownership information : collectionId = " + collectionId + ", providerId = " + providerId + " and recordId = " + recordId + ". Neither of them can be null. ");

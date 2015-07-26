@@ -1,4 +1,4 @@
-package eu.europeana.harvester.client;
+package eu.europeana.harvester.util;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -18,7 +18,7 @@ public class CachingUrlResolver {
     public CachingUrlResolver() {
         this.hostnameToIpCache =
                 CacheBuilder.newBuilder()
-                        .maximumSize(10000)
+                        .maximumSize(10*10000)
                         .expireAfterWrite(24, TimeUnit.HOURS)
                         .build(
                                 new CacheLoader<String, String>() {

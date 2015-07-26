@@ -18,6 +18,7 @@ import org.unitils.reflectionassert.ReflectionAssert;
 
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -101,7 +102,7 @@ public class JobRestarterHelperTest {
     }
 
     @Test
-    public void test_restartJobs() throws MalformedURLException, UnknownHostException, URISyntaxException {
+    public void test_restartJobs() throws MalformedURLException, UnknownHostException, URISyntaxException, ExecutionException {
         final List<ProcessingJobTuple> processingJobTuples = new ArrayList<>();
 
         final Random random = new Random(System.nanoTime());

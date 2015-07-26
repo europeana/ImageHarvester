@@ -122,7 +122,7 @@ public class MigrationManager {
         }
     }
 
-    private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects,final String migratingBatchId) {
+    private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects,final String migratingBatchId) throws ExecutionException {
         if (null == edmObjects || edmObjects.isEmpty()) {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB,migratingBatchId,null,null),
                     "No jobs to convert.");
