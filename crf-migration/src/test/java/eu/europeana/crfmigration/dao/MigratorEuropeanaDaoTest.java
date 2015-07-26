@@ -65,7 +65,7 @@ public class MigratorEuropeanaDaoTest {
         for (final Map.Entry<String, EuropeanaRecord> record: records.entrySet()) {
             final BasicDBObject query = new BasicDBObject();
             query.put("about", record.getKey());
-            query.put("europeanaCollectionName", record.getValue());
+            query.put("europeanaCollectionName", record.getValue().getCollectionId());
             assertEquals(1, mongo.find(query).size());
         }
     }
@@ -81,7 +81,7 @@ public class MigratorEuropeanaDaoTest {
         for (final Map.Entry<String, EuropeanaRecord> record: records.entrySet()) {
             final BasicDBObject filteringQuery = new BasicDBObject(query);
             filteringQuery.put("about", record.getKey());
-            filteringQuery.put("europeanaCollectionName", record.getValue());
+            filteringQuery.put("europeanaCollectionName", record.getValue().getCollectionId());
 
             assertEquals(1, mongo.find(filteringQuery).size());
         }
