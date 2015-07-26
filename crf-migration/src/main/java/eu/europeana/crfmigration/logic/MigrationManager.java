@@ -8,12 +8,8 @@ import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
 import eu.europeana.crfmigration.domain.EuropeanaRecord;
 import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.harvester.domain.JobPriority;
-import eu.europeana.harvester.domain.ProcessingJob;
-import eu.europeana.harvester.domain.SourceDocumentReference;
 import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +34,11 @@ public class MigrationManager {
 
     private final int batch;
 
-    public MigrationManager(final MigratorEuropeanaDao migratorEuropeanaDao, final MigratorHarvesterDao migratorHarvesterDao, final Date dateFilter, final int batch) throws IOException {
+    public MigrationManager(final MigratorEuropeanaDao migratorEuropeanaDao, final MigratorHarvesterDao migratorHarvesterDao, final Date dateFilter, final int batchSize) throws IOException {
         this.migratorEuropeanaDao = migratorEuropeanaDao;
         this.migratorHarvesterDao = migratorHarvesterDao;
         this.dateFilter = dateFilter;
-        this.batch = batch;
+        this.batch = batchSize;
     }
 
     public void migrate() {
@@ -50,23 +46,24 @@ public class MigrationManager {
     }
 
     private void starMigration() {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                "Started migration process with minimum date filter {}", dateFilter);
-        DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter,null);
 
-        int positionInRecordCollection = 0;
-
-        while (recordCursor.hasNext()) {
+        /** Repeat forever */
+        while (true) {
             final String migratingBatchId = "migrating-batch-"+ DateTime.now().getMillis()+"-"+Math.random();
-            DateTime minimalUpdatedTimestampInRecords = null;
+            Date maximalUpdatedTimestampInRecords = dateFilter;
             final Timer.Context totalTimerContext = MigrationMetrics.Migrator.Batch.totalDuration.time();
+            final DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter, batch, null);
+            Map<String, EuropeanaRecord> recordsRetrievedInBatch = null;
+            int numberOfRecordsRetrievedInBatch = 0;
+            System.out.println(
+                    "[Console] Starting migration batch and minimum date in batch is "+ maximalUpdatedTimestampInRecords);
+
             try {
-                Map<String, EuropeanaRecord> recordsRetrievedInBatch = null;
                 final Timer.Context processedRecordsDurationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsDuration.time();
                 try {
-                    recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, batch,migratingBatchId);
-                    minimalUpdatedTimestampInRecords = EuropeanaRecord.minimalTimestampUpdated(recordsRetrievedInBatch.values());
-                    positionInRecordCollection = positionInRecordCollection + recordsRetrievedInBatch.size();
+                    recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, migratingBatchId);
+                    if (recordsRetrievedInBatch != null) numberOfRecordsRetrievedInBatch = recordsRetrievedInBatch.size();
+                    maximalUpdatedTimestampInRecords = EuropeanaRecord.maximalTimestampUpdated(recordsRetrievedInBatch.values());
                 } finally {
                     processedRecordsDurationTimerContext.stop();
                 }
@@ -74,23 +71,20 @@ public class MigrationManager {
                 MigrationMetrics.Migrator.Overall.processedRecordsCount.inc(recordsRetrievedInBatch.size());
 
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                        "Finished migration batch with success to cursor position {} and minimum date in batch was {}.",positionInRecordCollection, minimalUpdatedTimestampInRecords);
+                        "Finished migration batch of {} records with success and minimum date in batch was {}.",numberOfRecordsRetrievedInBatch, maximalUpdatedTimestampInRecords);
 
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                        "Finished migration batch with {} records",recordsRetrievedInBatch.size());
 
             } catch (Exception e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,migratingBatchId,null,null),
-                        "Error reading record after record: #" + positionInRecordCollection,e);
 
                 MigrationMetrics.Migrator.Batch.skippedBecauseOfErrorCounter.inc();
-                recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(minimalUpdatedTimestampInRecords.toDate(),migratingBatchId);
-                recordCursor.skip(positionInRecordCollection);
 
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                        "Finished migration batch with error and skipping to cursor position {} . Cursor is being rebuilt.", positionInRecordCollection);
+                        "Finished migration batch with error and min date was", maximalUpdatedTimestampInRecords);
 
             } finally {
+                System.out.println(
+                        "[Console] Finished migration batch of "+numberOfRecordsRetrievedInBatch+" records with success and minimum date in batch was "+ maximalUpdatedTimestampInRecords);
+                recordCursor.close();
                 totalTimerContext.stop();
             }
         }

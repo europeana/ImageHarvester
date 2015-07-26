@@ -3,34 +3,35 @@ package eu.europeana.crfmigration.domain;
 import org.joda.time.DateTime;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
 
 public class EuropeanaRecord {
 
-    public static DateTime minimalTimestampUpdated(Collection<EuropeanaRecord> records) {
+    public static Date maximalTimestampUpdated(Collection<EuropeanaRecord> records) {
         Iterator<EuropeanaRecord> recordsIterator = records.iterator();
         if (!recordsIterator.hasNext()) return null; /* Cannot compute minimal date on empty list of dates */
-        DateTime minimalDate = recordsIterator.next().getTimestampUpdated();
+        Date maximalDate = recordsIterator.next().getTimestampUpdated();
 
         while(recordsIterator.hasNext()) {
-            DateTime recordlDate = recordsIterator.next().getTimestampUpdated();
-            if (recordlDate != null && minimalDate.isAfter(recordlDate)) {
-                minimalDate = recordlDate;
+            Date recordDate = recordsIterator.next().getTimestampUpdated();
+            if (recordDate != null && new DateTime(maximalDate).isBefore(new DateTime(recordDate))) {
+                maximalDate = recordDate;
             }
         }
 
-        return minimalDate;
+        return maximalDate;
     }
 
     private final String id;
     private final String about;
     private final String collectionId;
-    private final DateTime timestampUpdated;
+    private final Date timestampUpdated;
 
 
-    public EuropeanaRecord(String id, String about, String collectionId, DateTime timestampUpdated) {
+    public EuropeanaRecord(String id, String about, String collectionId, Date timestampUpdated) {
         this.id = id;
         this.about = about;
         this.collectionId = collectionId;
@@ -49,7 +50,7 @@ public class EuropeanaRecord {
         return collectionId;
     }
 
-    public DateTime getTimestampUpdated() {
+    public Date getTimestampUpdated() {
         return timestampUpdated;
     }
 }

@@ -37,14 +37,14 @@ public class MigratorEuropeanaDao {
         database = mongo.getDB(mongoConfig.getDbName());
     }
 
-    public final Map<String, EuropeanaRecord> retrieveRecordsIdsFromCursor(final DBCursor recordCursor,int batchSize,final String migratingBatchId) {
+    public final Map<String, EuropeanaRecord> retrieveRecordsIdsFromCursor(final DBCursor recordCursor,final String migratingBatchId) {
         final Map<String, EuropeanaRecord> records = new HashMap<>();
         int i = 0;
-        while (recordCursor.hasNext() && (i < batchSize)) {
+        while (recordCursor.hasNext()) {
             final BasicDBObject item = (BasicDBObject) recordCursor.next();
             final String about = (String) item.get("about");
             final String id = (String) item.get("_id");
-            final DateTime timestampUpdated = new DateTime(item.getDate("timestampUpdated"));
+            final Date timestampUpdated = item.getDate("timestampUpdated");
             final BasicDBList collNames = (BasicDBList) item.get("europeanaCollectionName");
             final String collectionId = (String) collNames.get(0);
             records.put(about, new EuropeanaRecord(id,about,collectionId,timestampUpdated));
@@ -53,7 +53,7 @@ public class MigratorEuropeanaDao {
         return records;
     }
 
-    public final DBCursor buildRecordsRetrievalCursorByFilter(Date moreRecentThan,final String migratingBatchId) {
+    public final DBCursor buildRecordsRetrievalCursorByFilter(Date moreRecentThan,int batchSize,final String migratingBatchId) {
         final DBCollection recordCollection = database.getCollection("record");
         DBObject filterByTimestampQuery = new BasicDBObject();
         final BasicDBObject recordFields = new BasicDBObject();
@@ -68,10 +68,12 @@ public class MigratorEuropeanaDao {
         recordFields.put("timestampUpdated", 1);
         recordFields.put("europeanaCollectionName", 1);
         recordFields.put("_id", 0);
-        final BasicDBObject sortOrder = new BasicDBObject();
-        sortOrder.put("$natural", 1);
 
-        final DBCursor recordCursor = recordCollection.find(filterByTimestampQuery, recordFields).sort(sortOrder);
+        /* Ascending sort by date => oldest date first and then newer ones */
+        final BasicDBObject sortOrder = new BasicDBObject();
+        sortOrder.put("timestampUpdated", 1);
+
+        final DBCursor recordCursor = recordCollection.find(filterByTimestampQuery, recordFields).sort(sortOrder).limit(batchSize);
         recordCursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
         return recordCursor;
     }
