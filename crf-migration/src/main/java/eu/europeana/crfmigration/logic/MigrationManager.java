@@ -34,6 +34,8 @@ public class MigrationManager {
 
     private final int batch;
 
+    private Boolean hasMoreRecords = true;
+
     public MigrationManager(final MigratorEuropeanaDao migratorEuropeanaDao, final MigratorHarvesterDao migratorHarvesterDao, final Date dateFilter, final int batchSize) throws IOException {
         this.migratorEuropeanaDao = migratorEuropeanaDao;
         this.migratorHarvesterDao = migratorHarvesterDao;
@@ -48,7 +50,7 @@ public class MigrationManager {
     private void starMigration() {
 
         /** Repeat forever */
-        while (true) {
+        while (hasMoreRecords) {
             final String migratingBatchId = "migrating-batch-"+ DateTime.now().getMillis()+"-"+Math.random();
             Date maximalUpdatedTimestampInRecords = dateFilter;
             final Timer.Context totalTimerContext = MigrationMetrics.Migrator.Batch.totalDuration.time();
@@ -64,6 +66,8 @@ public class MigrationManager {
                     recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, migratingBatchId);
                     if (recordsRetrievedInBatch != null) numberOfRecordsRetrievedInBatch = recordsRetrievedInBatch.size();
                     maximalUpdatedTimestampInRecords = EuropeanaRecord.maximalTimestampUpdated(recordsRetrievedInBatch.values());
+                    if (recordsRetrievedInBatch.isEmpty()) hasMoreRecords = false;
+
                 } finally {
                     processedRecordsDurationTimerContext.stop();
                 }
@@ -88,6 +92,9 @@ public class MigrationManager {
                 totalTimerContext.stop();
             }
         }
+        System.out.println(
+                "[Console] Finished migration process as there are no more records to migrate");
+
     }
 
     private void migrateRecordsInSingleBatch(final Map<String, EuropeanaRecord> recordsInBatch,final String migratingBatchId) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
