@@ -54,7 +54,7 @@ public class MigrationManager {
             final String migratingBatchId = "migrating-batch-"+ DateTime.now().getMillis()+"-"+Math.random();
             Date maximalUpdatedTimestampInRecords = dateFilter;
             final Timer.Context totalTimerContext = MigrationMetrics.Migrator.Batch.totalDuration.time();
-            final DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter, batch, null);
+            final DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(maximalUpdatedTimestampInRecords, batch, null);
             Map<String, EuropeanaRecord> recordsRetrievedInBatch = null;
             int numberOfRecordsRetrievedInBatch = 0;
             System.out.println(
