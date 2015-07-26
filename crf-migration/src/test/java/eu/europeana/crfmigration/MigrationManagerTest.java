@@ -16,7 +16,7 @@ import static org.junit.Assert.assertEquals;
 
 public class MigrationManagerTest {
     private MigratorConfig migratorConfig;
-    private MongoDBUtils mongoDBUtils;
+    private MongoDBUtils mongoDBUtils; 
 
 
     @After
@@ -58,7 +58,7 @@ public class MigrationManagerTest {
     @Test
     public void testDBIteration_FilterByDate_BatchSize2_AllMinus2 () throws IOException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/filterSomeByDate/migration.conf");
-        mongoDBUtils = new MongoDBUtils(migratorConfig);
+        mongoDBUtils = new MongoDBUtils(migratorConfig.withBatchSize(2));
 
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/filterSomeByDate/record.json", "record");
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/filterSomeByDate/aggregation.json",
@@ -96,7 +96,7 @@ public class MigrationManagerTest {
     @Test
     public void testDBIteration_FilterByDate_BatchSize2_All () throws IOException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/filterNoOneByDate/migration.conf");
-        mongoDBUtils = new MongoDBUtils(migratorConfig);
+        mongoDBUtils = new MongoDBUtils(migratorConfig.withBatchSize(2));
 
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/filterNoOneByDate/record.json", "record");
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/filterNoOneByDate/aggregation.json",

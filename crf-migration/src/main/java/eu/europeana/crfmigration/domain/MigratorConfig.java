@@ -31,4 +31,8 @@ public class MigratorConfig {
     public int getBatch() {
         return batch;
     }
+
+    public MigratorConfig withBatchSize(int newBatch) {
+        return new MigratorConfig(sourceMongoConfig,targetMongoConfig,graphiteReporterConfig,newBatch);
+    }
 }
