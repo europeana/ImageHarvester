@@ -23,6 +23,17 @@ public class MorphiaDataStore {
         datastore = morphia.createDatastore(mongo, dbName);
     }
 
+    public MorphiaDataStore (String host, int port, String dbName, String username, String password) throws UnknownHostException {
+        mongo = new MongoClient(host, port);
+
+        if (!mongo.getDB("admin").authenticate(username, password.toCharArray())) {
+            throw new RuntimeException("Couldn't login to mongo");
+        }
+
+        morphia = new Morphia();
+        datastore = morphia.createDatastore(mongo, dbName);
+    }
+
     public MorphiaDataStore(final List<ServerAddress> serverAddressList, String dbName) {
        mongo = new MongoClient(serverAddressList);
        morphia = new Morphia();
