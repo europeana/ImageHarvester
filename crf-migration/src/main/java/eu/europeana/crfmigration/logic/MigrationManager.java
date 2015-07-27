@@ -127,7 +127,7 @@ public class MigrationManager {
         }
     }
 
-    private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects,final String migratingBatchId) throws ExecutionException {
+    private List<ProcessingJobTuple> convertEDMObjectToJobs(final List<EuropeanaEDMObject> edmObjects,final String migratingBatchId)  {
         if (null == edmObjects || edmObjects.isEmpty()) {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB,migratingBatchId,null,null),
                     "No jobs to convert.");
@@ -150,6 +150,9 @@ public class MigrationManager {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB,migratingBatchId,null,null),
                         "Exception while converting record.",e);
                 MigrationMetrics.Migrator.Overall.invalidUrlCounter.inc();
+            } catch (ExecutionException e) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB, migratingBatchId, null, null),
+                        "Exception while converting record.", e);
             }
         }
         return results;
