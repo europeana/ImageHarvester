@@ -33,9 +33,9 @@ public class MigratorHarvesterDao {
         if (StringUtils.isNotEmpty(mongoConfig.getUsername())  &&
                 StringUtils.isNotEmpty(mongoConfig.getPassword())) {
 
-            final Boolean auth = datastore.getMongo().getDB("admin").authenticate(mongoConfig.getUsername(),
-                    mongoConfig.getPassword()
-                            .toCharArray());
+            final Boolean auth = datastore.getMongo().getDB("admin").authenticate(
+                    mongoConfig.getUsername(),
+                    mongoConfig.getPassword().toCharArray());
 
             if (!auth) {
                 throw new MongoException("Cannot authenticate to mongo database");

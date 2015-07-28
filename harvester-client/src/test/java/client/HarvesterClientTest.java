@@ -76,6 +76,7 @@ public class HarvesterClientTest {
         datastore.delete(datastore.createQuery(SourceDocumentReferenceMetaInfo.class));
         datastore.delete(datastore.createQuery(SourceDocumentReference.class));
         datastore.delete(datastore.createQuery(SourceDocumentReferenceProcessingProfile.class));
+        datastore.delete(datastore.createQuery(LastSourceDocumentProcessingStatistics.class));
     }
 
     @Test
