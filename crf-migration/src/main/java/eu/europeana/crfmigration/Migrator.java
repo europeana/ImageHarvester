@@ -111,7 +111,7 @@ public class Migrator {
     }
 
     public static void main(String[] args) throws IOException {
-         final SimpleDateFormat parserSDF=new SimpleDateFormat("yyyy.mm.dd-HH:mm:ss");
+         final SimpleDateFormat parserSDF=new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss");
 
         Date dateFilter = null;
 
