@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -110,15 +111,18 @@ public class Migrator {
     }
 
     public static void main(String[] args) throws IOException {
+         final SimpleDateFormat parserSDF=new SimpleDateFormat("yyyy.mm.dd-HH:mm:ss");
 
         Date dateFilter = null;
 
         if (1 == args.length) {
             try {
-                dateFilter = ISODateTimeFormat.dateTime().parseDateTime(args[0]).toDate();
+                System.out.println("date is "+args[0]);
+                dateFilter = parserSDF.parse(args[0]);
+                System.out.println("Date filter is "+dateFilter);
             } catch (Exception e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                        "The timestamp must respect the ISO 861 format! E.q: yyyy-MM-dd'T'HH:mm:ss.SSSZZ defaulting to begining of time", e);
+                        "The timestamp must respect the yyyy.mm.dd-HH:mm:ss format. defaulting to begining of time", e);
                 dateFilter = DateTime.now().minusYears(20).toDate();
             }
         } else if (args.length > 1) {
