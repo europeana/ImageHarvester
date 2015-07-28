@@ -108,7 +108,7 @@ public class MediaMetaDataUtils {
      * @return - an object with all the meta info
      */
     public final static TextMetaInfo extractTextMetaData(final String path) throws Exception {
-        TextMetaInfo textMetaInfo = null;
+        TextMetaInfo textMetaInfo ;
 
             final Long fileSize = MediaChecker.getFileSize(path);
             final Boolean isSearchable = LocalMediaChecker.issearchable(path);

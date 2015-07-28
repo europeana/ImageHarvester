@@ -2,6 +2,7 @@ package eu.europeana.harvester.cluster.slave.processing.color;
 
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
 import eu.europeana.harvester.domain.ImageMetaInfo;
+import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import gr.ntua.image.mediachecker.MediaChecker;
 
 import java.io.IOException;

@@ -12,6 +12,8 @@ import java.util.Map;
 
 public class LastSourceDocumentProcessingStatistics {
 
+    private final ProcessingStatus taskStatus;
+
     public static final String idOf(final String sourceDocumentReferenceId,final DocumentReferenceTaskType taskType,final URLSourceType urlSourceType) {
         return new StringBuilder().append(sourceDocumentReferenceId).append("-").append(taskType.name()).append("-").append(urlSourceType.name()).toString();
     }
@@ -134,7 +136,7 @@ public class LastSourceDocumentProcessingStatistics {
         this.httpResponseHeaders = null;
         this.log = null;
         this.processingJobSubTaskStats = null;
-
+        this.taskStatus = null;
     }
 
     public LastSourceDocumentProcessingStatistics(final Date createdAt, final Date updatedAt,
@@ -149,6 +151,7 @@ public class LastSourceDocumentProcessingStatistics {
                                               final Long checkingDurationInMilliSecs,
                                               final String sourceIp, final Map<String, String> httpResponseHeaders,
                                               final String log,
+                                              final ProcessingStatus status,
                                               final ProcessingJobSubTaskStats processingJobSubTaskStats) {
         this.active = active;
         this.taskType = taskType;
@@ -169,6 +172,7 @@ public class LastSourceDocumentProcessingStatistics {
         this.sourceIp = sourceIp;
         this.httpResponseHeaders = httpResponseHeaders;
         this.log = log;
+        this.taskStatus = status;
         this.processingJobSubTaskStats = processingJobSubTaskStats;
     }
 
@@ -185,6 +189,7 @@ public class LastSourceDocumentProcessingStatistics {
                                               final Long checkingDurationInMilliSecs,
                                               final String sourceIp, final Map<String, String> httpResponseHeaders,
                                               final String log,
+                                              final ProcessingStatus status,
                                               final ProcessingJobSubTaskStats processingJobSubTaskStats) {
         this.id = id;
         this.createdAt = createdAt;
@@ -205,6 +210,7 @@ public class LastSourceDocumentProcessingStatistics {
         this.sourceIp = sourceIp;
         this.httpResponseHeaders = httpResponseHeaders;
         this.log = log;
+        this.taskStatus = status;
         this.processingJobSubTaskStats = processingJobSubTaskStats;
     }
 
@@ -293,6 +299,7 @@ public class LastSourceDocumentProcessingStatistics {
                                                              final Long checkingDurationInMilliSecs,
                                                              final Map<String, String> httpResponseHeaders,
                                                              final String log,
+                                                             final ProcessingStatus status,
                                                              final ProcessingJobSubTaskStats processingJobSubTaskStats) {
         return new LastSourceDocumentProcessingStatistics(this.id,
                                                           this.createdAt,
@@ -313,6 +320,7 @@ public class LastSourceDocumentProcessingStatistics {
                                                           this.sourceIp,
                                                           httpResponseHeaders,
                                                           log,
+                                                          status,
                                                           processingJobSubTaskStats
                                                         );
     }
@@ -322,7 +330,7 @@ public class LastSourceDocumentProcessingStatistics {
                 state, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId, this.processingJobId,
                 this.httpResponseCode, this.httpResponseContentType, this.httpResponseContentSizeInBytes,
                 this.socketConnectToDownloadStartDurationInMilliSecs, this.retrievalDurationInMilliSecs,
-                this.checkingDurationInMilliSecs, this.sourceIp, this.httpResponseHeaders, this.log,this.processingJobSubTaskStats);
+                this.checkingDurationInMilliSecs, this.sourceIp, this.httpResponseHeaders, this.log, this.taskStatus, this.processingJobSubTaskStats);
     }
 
     public LastSourceDocumentProcessingStatistics withActive(final Boolean active) {
@@ -331,7 +339,10 @@ public class LastSourceDocumentProcessingStatistics {
                 this.processingJobId, this.httpResponseCode, this.httpResponseContentType,
                 this.httpResponseContentSizeInBytes, this.socketConnectToDownloadStartDurationInMilliSecs,
                 this.retrievalDurationInMilliSecs, this.checkingDurationInMilliSecs, this.sourceIp,
-                this.httpResponseHeaders, this.log,this.processingJobSubTaskStats);
+                this.httpResponseHeaders, this.log, this.taskStatus, this.processingJobSubTaskStats);
     }
 
+    public ProcessingStatus getTaskStatus () {
+        return taskStatus;
+    }
 }

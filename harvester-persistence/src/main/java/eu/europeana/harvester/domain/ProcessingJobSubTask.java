@@ -10,19 +10,36 @@ public class ProcessingJobSubTask implements Serializable {
     /**
      * The type of the subtask. (COLOR_EXTRACTION, META_EXTRACTION or GENERATE_THUMBNAIL)
      */
-    private ProcessingJobSubTaskType taskType;
+    private final ProcessingJobSubTaskType taskType;
+
+    private final ProcessingJobSubTaskState taskState;
 
     /**
      * The configuration object needed by the specified subtask.
      */
     private GenericSubTaskConfiguration config;
 
-    public ProcessingJobSubTask(ProcessingJobSubTaskType taskType, GenericSubTaskConfiguration config) {
+    public ProcessingJobSubTask(ProcessingJobSubTaskType taskType,
+                                GenericSubTaskConfiguration config) {
         this.taskType = taskType;
         this.config = config;
+        this.taskState = ProcessingJobSubTaskState.READY;
     }
 
-    public ProcessingJobSubTask() {}
+
+    public ProcessingJobSubTask(ProcessingJobSubTaskType taskType,
+                                GenericSubTaskConfiguration config,
+                                ProcessingJobSubTaskState taskState) {
+        this.taskType = taskType;
+        this.config = config;
+        this.taskState = taskState;
+    }
+
+    public ProcessingJobSubTask() {
+        taskState = null;
+        config = null;
+        taskType = null;
+    }
 
     public ProcessingJobSubTaskType getTaskType() {
         return taskType;
@@ -40,6 +57,11 @@ public class ProcessingJobSubTask implements Serializable {
 
         final ProcessingJobSubTask task = (ProcessingJobSubTask)obj;
         return this.taskType == task.getTaskType() &&
-               (null == config ? null == task.getConfig() : config.equals(task.getConfig()));
+               (null == config ? null == task.getConfig() : config.equals(task.getConfig())) &&
+               taskType == task.getTaskType();
+    }
+
+    public ProcessingJobSubTaskState getTaskState () {
+        return taskState;
     }
 }

@@ -57,12 +57,45 @@ public class SlaveProcessor {
         final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks = locateThumbnailExtractionProcessingTask(task);
 
 
+        ProcessingJobTaskDocumentReference taskWithStats = task;
+        ProcessingJobSubTaskStats stats = new ProcessingJobSubTaskStats();
 
         // (2) Execute tasks
         final MediaMetaInfoTuple mediaMetaInfoTuple = (metaExtractionProcessingTask != null) ? extractMetaInfo(originalFilePath, originalFileUrl, responseType, metaExtractionProcessingTask) : null;
         final ImageMetaInfo imageColorMetaInfo = (colorExtractionProcessingTask != null) ? extractColor(originalFilePath) : null;
         final Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent, referenceOwner, thumbnailGenerationProcessingTasks);
 
+
+        if (null != metaExtractionProcessingTask) {
+            if (null != mediaMetaInfoTuple) {
+                stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.SUCCESS);
+            }
+            else stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.ERROR);
+        }
+        else stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.NEVER_EXECUTED);
+
+        if (null != colorExtractionProcessingTask) {
+            if (null != imageColorMetaInfo) {
+                stats = stats.withColorExtractionState(ProcessingJobSubTaskState.SUCCESS);
+            }
+            else stats = stats.withColorExtractionState(ProcessingJobSubTaskState.ERROR);
+        }
+        else stats = stats.withColorExtractionState(ProcessingJobSubTaskState.NEVER_EXECUTED);
+
+        if (null != thumbnailGenerationProcessingTasks && !thumbnailGenerationProcessingTasks.isEmpty()) {
+            if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
+                stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
+            }
+            else {
+                stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR);
+            }
+        }
+        else {
+            stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.NEVER_EXECUTED);
+            stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.NEVER_EXECUTED);
+        }
+
+        taskWithStats = taskWithStats.withProcessingJobSubTaskStats(stats);
 
         // (3) Post task execution
 
@@ -81,6 +114,7 @@ public class SlaveProcessor {
             for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
                 mediaStorageClient.createOrModify(thumbnailEntry.getValue());
             }
+            stats
         } finally {
             thumbnailStorageDurationContext.stop();
 

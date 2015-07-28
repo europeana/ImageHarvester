@@ -67,7 +67,7 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
     public void testCreate() throws Exception {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, new ReferenceOwner("1", "1", "1"),
-                        null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null);
+                        null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null, null);
         assertNotNull(sourceDocumentProcessingStatistics.getId());
 
         sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
@@ -86,11 +86,11 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
             final String iString = Integer.toString(i);
             documents.add(
                new SourceDocumentProcessingStatistics(iString,
-                                                             new Date(),
+                                                       new Date(),
                                                       new Date(),
                                                       true, null, null,
                                                       new ReferenceOwner(iString, iString, iString, iString),
-                                                      null, "", "", 100, "", (i + 1L)*1024l, i * 1L , 0l, 0l, "", null, "",null
+                                                      null, "", "", 100, "", (i + 1L)*1024l, i * 1L , 0l, 0l, "", null, "",null, null
                                                     )
             );
         }
@@ -115,7 +115,7 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
 
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, new ReferenceOwner("1", "1", "1"),
-                        null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null);
+                        null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null, null);
         sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
         sourceDocumentProcessingStatisticsFromRead =
                 sourceDocumentProcessingStatisticsDao.read(sourceDocumentProcessingStatistics.getId());
@@ -130,7 +130,7 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
     public void testUpdate() throws Exception {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, ProcessingState.DOWNLOADING,
-                        new ReferenceOwner("1", "1", "1"), null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null);
+                        new ReferenceOwner("1", "1", "1"), null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null, null);
         assertFalse(sourceDocumentProcessingStatisticsDao.update(sourceDocumentProcessingStatistics, WriteConcern.NONE));
         sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
 
@@ -149,7 +149,7 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
                         sourceDocumentProcessingStatistics.getSocketConnectToDownloadStartDurationInMilliSecs(),
                         sourceDocumentProcessingStatistics.getCheckingDurationInMilliSecs(),
                         sourceDocumentProcessingStatistics.getSourceIp(),
-                        sourceDocumentProcessingStatistics.getHttpResponseHeaders(), "",null);
+                        sourceDocumentProcessingStatistics.getHttpResponseHeaders(), "",null, null);
         assertTrue(sourceDocumentProcessingStatisticsDao.update(updatedSourceDocumentProcessingStatistics, WriteConcern.NONE));
 
         assertEquals(sourceDocumentProcessingStatisticsDao.read(sourceDocumentProcessingStatistics.getId()).getState(),
@@ -162,7 +162,7 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
     public void testDelete() throws Exception {
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(new Date(), new Date(), true, null, null, new ReferenceOwner("1", "1", "1"),
-                        null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null);
+                        null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null, null);
         assertFalse(sourceDocumentProcessingStatisticsDao.delete(sourceDocumentProcessingStatistics.getId()).getN() == 1);
         sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
 
@@ -185,7 +185,7 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
            ids.add(id);
            final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                    new SourceDocumentProcessingStatistics(id, new Date(), new Date(), true, null, ProcessingState.READY, new ReferenceOwner("1", "1", "1"),
-                                                          null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null);
+                                                          null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null, null);
            sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
        }
 
@@ -194,7 +194,7 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
             ids.add(id);
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                     new SourceDocumentProcessingStatistics(id,new Date(), new Date(), true, null, ProcessingState.ERROR, new ReferenceOwner("1", "1", "1"),
-                                                           null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null);
+                                                           null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null, null);
             sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
         }
 
@@ -203,7 +203,7 @@ public class SourceDocumentProcessingStatisticsDaoImplTest {
             ids.add(id);
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                     new SourceDocumentProcessingStatistics(id,new Date(), new Date(), true, null, ProcessingState.SUCCESS, new ReferenceOwner("1", "1", "1"),
-                                                           null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null);
+                                                           null, "", "", 100, "", 150*1024l, 50l, 0l, 0l, "", null, "",null, null);
             sourceDocumentProcessingStatisticsDao.create(sourceDocumentProcessingStatistics, WriteConcern.NONE);
         }
 

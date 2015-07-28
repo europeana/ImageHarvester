@@ -76,7 +76,11 @@ public class RetrieveAndProcessActor extends UntypedActor {
     ) {
 
         this.httpRetrieveResponseFactory = httpRetrieveResponseFactory;
-        this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(colorMapPath), new ThumbnailGenerator(colorMapPath), new ColorExtractor(colorMapPath), mediaStorageClient);
+        this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(colorMapPath),
+                                                 new ThumbnailGenerator(colorMapPath),
+                                                 new ColorExtractor(colorMapPath),
+                                                 mediaStorageClient
+                                                );
         this.slaveDownloader = new SlaveDownloader();
         this.slaveLinkChecker = new SlaveLinkChecker();
     }
@@ -130,6 +134,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
         final Timer.Context downloadTimerContext = SlaveMetrics.Worker.Slave.Retrieve.totalDuration.time();
 
         try {
+
+
 
             response = executeRetrieval(task);
 
