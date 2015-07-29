@@ -4,6 +4,10 @@ import com.codahale.metrics.Timer;
 import eu.europeana.harvester.cluster.domain.ContentType;
 import eu.europeana.harvester.cluster.slave.SlaveMetrics;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
+import eu.europeana.harvester.cluster.slave.processing.exceptiions.ColorExtractionException;
+import eu.europeana.harvester.cluster.slave.processing.exceptiions.LocaleException;
+import eu.europeana.harvester.cluster.slave.processing.exceptiions.MetaInfoExtractionException;
+import eu.europeana.harvester.cluster.slave.processing.exceptiions.ThumbnailGenerationException;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTuple;
@@ -11,7 +15,6 @@ import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenera
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.ResponseType;
-import eu.europeana.harvester.logging.LoggingComponent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +23,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Ref;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +51,7 @@ public class SlaveProcessor {
                                          String originalFileUrl,
                                          byte[] originalFileContent,
                                          ResponseType responseType,
-                                         ReferenceOwner referenceOwner) throws Exception {
+                                         ReferenceOwner referenceOwner) throws LocaleException {
 
         // (1) Locate tasks
         final ProcessingJobSubTask metaExtractionProcessingTask = locateMetaInfoExtractionProcessingTask(task);
@@ -57,45 +59,62 @@ public class SlaveProcessor {
         final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks = locateThumbnailExtractionProcessingTask(task);
 
 
-        ProcessingJobTaskDocumentReference taskWithStats = task;
+
         ProcessingJobSubTaskStats stats = new ProcessingJobSubTaskStats();
 
         // (2) Execute tasks
-        final MediaMetaInfoTuple mediaMetaInfoTuple = (metaExtractionProcessingTask != null) ? extractMetaInfo(originalFilePath, originalFileUrl, responseType, metaExtractionProcessingTask) : null;
-        final ImageMetaInfo imageColorMetaInfo = (colorExtractionProcessingTask != null) ? extractColor(originalFilePath) : null;
-        final Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent, referenceOwner, thumbnailGenerationProcessingTasks);
+        MediaMetaInfoTuple mediaMetaInfoTuple = null;
+        ImageMetaInfo imageColorMetaInfo = null;
+        Map <ProcessingJobSubTask, MediaFile> generatedThumbnails = null;
 
+        try {
+            if (null != metaExtractionProcessingTask) {
+                mediaMetaInfoTuple = extractMetaInfo(originalFilePath, originalFileUrl, responseType,
+                                                     metaExtractionProcessingTask);
 
-        if (null != metaExtractionProcessingTask) {
-            if (null != mediaMetaInfoTuple) {
-                stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.SUCCESS);
+                if (null != mediaMetaInfoTuple && mediaMetaInfoTuple.isValid()) {
+                    stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.SUCCESS);
+                }
+                else {
+                    stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.ERROR);
+                }
             }
-            else stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.ERROR);
-        }
-        else stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.NEVER_EXECUTED);
 
-        if (null != colorExtractionProcessingTask) {
-            if (null != imageColorMetaInfo) {
-                stats = stats.withColorExtractionState(ProcessingJobSubTaskState.SUCCESS);
-            }
-            else stats = stats.withColorExtractionState(ProcessingJobSubTaskState.ERROR);
-        }
-        else stats = stats.withColorExtractionState(ProcessingJobSubTaskState.NEVER_EXECUTED);
+            if (null != colorExtractionProcessingTask) {
+                imageColorMetaInfo = extractColor(originalFilePath);
 
-        if (null != thumbnailGenerationProcessingTasks && !thumbnailGenerationProcessingTasks.isEmpty()) {
-            if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
-                stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
+                if (null != imageColorMetaInfo && null != imageColorMetaInfo.getColorPalette() &&
+                    imageColorMetaInfo.getColorPalette().length > 0) {
+                   stats = stats.withColorExtractionState(ProcessingJobSubTaskState.SUCCESS);
+                }
+                else {
+                   stats = stats.withColorExtractionState(ProcessingJobSubTaskState.ERROR);
+                }
             }
-            else {
-                stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR);
+
+            if (null != thumbnailGenerationProcessingTasks && !thumbnailGenerationProcessingTasks.isEmpty()) {
+                generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent,
+                                                         referenceOwner, thumbnailGenerationProcessingTasks);
+
+                if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
+                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
+                }
+                else {
+                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR);
+                }
             }
         }
-        else {
-            stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.NEVER_EXECUTED);
-            stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.NEVER_EXECUTED);
+        catch (MetaInfoExtractionException e) {
+            throw new LocaleException(stats.withMetaExtractionState(ProcessingJobSubTaskState.FAILED), e);
+        }
+        catch (ColorExtractionException e) {
+            throw new LocaleException(stats.withColorExtractionState(ProcessingJobSubTaskState.FAILED), e);
+        }
+        catch (ThumbnailGenerationException e) {
+            throw new LocaleException(stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED), e);
         }
 
-        taskWithStats = taskWithStats.withProcessingJobSubTaskStats(stats);
+
 
         // (3) Post task execution
 
@@ -110,33 +129,59 @@ public class SlaveProcessor {
         SlaveMetrics.Worker.Slave.Processing.thumbnailStorageCounter.inc();
         final Timer.Context thumbnailStorageDurationContext = SlaveMetrics.Worker.Slave.Processing.thumbnailStorageDuration.time();
 
-        try {
-            for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
-                mediaStorageClient.createOrModify(thumbnailEntry.getValue());
-            }
-            stats
-        } finally {
-            thumbnailStorageDurationContext.stop();
-
-            // (3.3) Cache original if it is an image
-            if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE) && mediaMetaInfoTuple != null) {
-                SlaveMetrics.Worker.Slave.Processing.originalCachingCounter.inc();
-                final Timer.Context originalCachingDurationContext = SlaveMetrics.Worker.Slave.Processing.originalCachingDuration.time();
-                try {
-                    final MediaFile mediaFile = generateOriginal(originalFilePath, originalFileUrl, originalFileContent, referenceOwner, mediaMetaInfoTuple.getImageMetaInfo());
-                    mediaStorageClient.createOrModify(mediaFile);
-                } finally {
-                    originalCachingDurationContext.stop();
-                    Files.deleteIfExists(Paths.get(originalFilePath));
+        {
+            try {
+                for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
+                    mediaStorageClient.createOrModify(thumbnailEntry.getValue());
                 }
-            } else {
-                Files.deleteIfExists(Paths.get(originalFilePath));
+                stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
             }
+            catch (Throwable throwable) {
+                throw new LocaleException(stats.withThumbnailStorageState(ProcessingJobSubTaskState.FAILED), throwable);
+            }
+            finally {
+                thumbnailStorageDurationContext.stop();
 
+                try {
+                    cacheOriginalImage(originalFilePath, originalFileUrl, originalFileContent, referenceOwner,
+                                       mediaMetaInfoTuple);
+
+                }
+                catch (Exception e) {
+                    throw new LocaleException(stats, e);
+                }
+            }
         }
 
 
-        return new ProcessingResultTuple(mediaMetaInfoTuple, generatedThumbnails.values(), imageColorMetaInfo);
+        return new ProcessingResultTuple(stats,
+                                         mediaMetaInfoTuple,
+                                         generatedThumbnails.values(),
+                                         imageColorMetaInfo
+                                        );
+    }
+
+    private void cacheOriginalImage (String originalFilePath, String originalFileUrl, byte[] originalFileContent,
+                                     ReferenceOwner referenceOwner, MediaMetaInfoTuple mediaMetaInfoTuple) throws
+                                                                                                           NoSuchAlgorithmException,
+                                                                                                           IOException {// (3.3) Cache original if it is an image
+        if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE) && mediaMetaInfoTuple != null) {
+            SlaveMetrics.Worker.Slave.Processing.originalCachingCounter.inc();
+            final Timer.Context originalCachingDurationContext = SlaveMetrics.Worker.Slave.Processing.originalCachingDuration
+                                                                         .time();
+            try {
+                final MediaFile mediaFile = generateOriginal(originalFilePath, originalFileUrl,
+                                                             originalFileContent, referenceOwner,
+                                                             mediaMetaInfoTuple.getImageMetaInfo());
+                mediaStorageClient.createOrModify(mediaFile);
+            } finally {
+                originalCachingDurationContext.stop();
+                Files.deleteIfExists(Paths.get(originalFilePath));
+            }
+        }
+        else {
+            Files.deleteIfExists(Paths.get(originalFilePath));
+        }
     }
 
     private final List<ProcessingJobSubTask> locateThumbnailExtractionProcessingTask(final ProcessingJobTaskDocumentReference task) {
@@ -179,20 +224,27 @@ public class SlaveProcessor {
         return result;
     }
 
-    private final ImageMetaInfo extractColor(String originalFilePath) throws IOException, InterruptedException {
+    private final ImageMetaInfo extractColor(String originalFilePath) throws ColorExtractionException {
         if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
             SlaveMetrics.Worker.Slave.Processing.colorExtractionCounter.inc();
             final Timer.Context colorExtractionDurationContext = SlaveMetrics.Worker.Slave.Processing.colorExtractionDuration.time();
             try {
                 return colorExtractor.colorExtraction(originalFilePath);
-            } finally {
+            }
+            catch (Exception e) {
+                throw new ColorExtractionException(e);
+            }
+            finally {
                 colorExtractionDurationContext.stop();
             }
         }
         return null;
     }
 
-    private final MediaMetaInfoTuple extractMetaInfo(final String originalFilePath, final String originalFileUrl, final ResponseType responseType, final ProcessingJobSubTask metaExtractionProcessingTask) throws Exception {
+    private final MediaMetaInfoTuple extractMetaInfo(final String originalFilePath,
+                                                     final String originalFileUrl,
+                                                     final ResponseType responseType,
+                                                     final ProcessingJobSubTask metaExtractionProcessingTask) throws MetaInfoExtractionException {
         if (responseType.equals(ResponseType.NO_STORAGE)) {
             throw new IllegalArgumentException("Configuration for url " + originalFileUrl + " for sub task " + metaExtractionProcessingTask.getConfig() + "Cannot execute meta info extraction because the media file is not stored.");
         }
@@ -200,7 +252,11 @@ public class SlaveProcessor {
         final Timer.Context metaInfoExtractionDurationContext = SlaveMetrics.Worker.Slave.Processing.metaInfoExtractionDuration.time();
         try {
             return metaInfoExtractor.extract(originalFilePath);
-        } finally {
+        }
+        catch (Exception e) {
+            throw new MetaInfoExtractionException(e);
+        }
+        finally {
             metaInfoExtractionDurationContext.stop();
         }
     }
@@ -208,7 +264,7 @@ public class SlaveProcessor {
     private final MediaFile generateOriginal(final String originalFilePath, final String originalFileUrl, final byte[] originalFileContent, final ReferenceOwner referenceOwner, final ImageMetaInfo imageMetaInfo) throws NoSuchAlgorithmException {
 
         if (originalFilePath == null || originalFileUrl == null || originalFileContent == null)
-            throw new IllegalArgumentException("Cannot generate media file as all must be non-null : filepath, url & content");
+            throw new IllegalArgumentException("Cannot generate media file as all must be non-null : file path, url & content");
         if (imageMetaInfo == null)
             throw new IllegalArgumentException("Cannot generate media file from null image meta info");
 
@@ -218,7 +274,11 @@ public class SlaveProcessor {
 
     }
 
-    private final Map<ProcessingJobSubTask, MediaFile> generateThumbnails(final String originalFilePath, final String originalFileUrl, final byte[] originalFileContent, final ReferenceOwner referenceOwner, final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks) throws Exception {
+    private final Map<ProcessingJobSubTask, MediaFile> generateThumbnails(final String originalFilePath,
+                                                                          final String originalFileUrl,
+                                                                          final byte[] originalFileContent,
+                                                                          final ReferenceOwner referenceOwner,
+                                                                          final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks) throws ThumbnailGenerationException {
         final Map<ProcessingJobSubTask, MediaFile> results = new HashMap<ProcessingJobSubTask, MediaFile>();
         for (final ProcessingJobSubTask thumbnailGenerationTask : thumbnailGenerationProcessingTasks) {
             if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
@@ -231,7 +291,11 @@ public class SlaveProcessor {
                             config.getThumbnailConfig().getWidth(), referenceOwner.getExecutionId(), originalFileUrl,
                             originalFileContent, originalFilePath);
                     results.put(thumbnailGenerationTask, thumbnailMediaFile);
-                } finally {
+                }
+                catch (Exception e) {
+                    throw new ThumbnailGenerationException(e);
+                }
+                finally {
                     thumbnailGenerationDurationContext.stop();
                 }
             }

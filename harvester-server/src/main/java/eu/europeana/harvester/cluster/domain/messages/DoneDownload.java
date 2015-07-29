@@ -2,6 +2,7 @@ package eu.europeana.harvester.cluster.domain.messages;
 
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 
 import java.io.Serializable;
 
@@ -33,7 +34,7 @@ public class DoneDownload implements Serializable {
     /**
      * The state of the task.
      */
-    private final ProcessingState processingState;
+    private final RetrievingState retrieveState;
 
     /**
      * Contains different information about the task retrieved while downloading.
@@ -51,7 +52,7 @@ public class DoneDownload implements Serializable {
     private final String ipAddress;
 
     public DoneDownload(final String taskID, final String url, final String referenceId, final String jobId,
-                        final ProcessingState processingState,
+                        final RetrievingState retrieveState,
                         final HttpRetrieveResponse httpRetrieveResponse,
                         final ProcessingJobTaskDocumentReference documentReferenceTask,
                         final String ipAddress) {
@@ -59,7 +60,7 @@ public class DoneDownload implements Serializable {
         this.url = url;
         this.referenceId = referenceId;
         this.jobId = jobId;
-        this.processingState = processingState;
+        this.retrieveState = retrieveState;
         this.httpRetrieveResponse = httpRetrieveResponse;
         this.documentReferenceTask = documentReferenceTask;
         this.ipAddress = ipAddress;
@@ -81,8 +82,8 @@ public class DoneDownload implements Serializable {
         return httpRetrieveResponse;
     }
 
-    public ProcessingState getProcessingState() {
-        return processingState;
+    public RetrievingState getRetrieveState () {
+        return retrieveState;
     }
 
     public ProcessingJobTaskDocumentReference getDocumentReferenceTask() {

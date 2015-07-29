@@ -12,7 +12,6 @@ public class ProcessingJobSubTask implements Serializable {
      */
     private final ProcessingJobSubTaskType taskType;
 
-    private final ProcessingJobSubTaskState taskState;
 
     /**
      * The configuration object needed by the specified subtask.
@@ -23,20 +22,10 @@ public class ProcessingJobSubTask implements Serializable {
                                 GenericSubTaskConfiguration config) {
         this.taskType = taskType;
         this.config = config;
-        this.taskState = ProcessingJobSubTaskState.READY;
     }
 
-
-    public ProcessingJobSubTask(ProcessingJobSubTaskType taskType,
-                                GenericSubTaskConfiguration config,
-                                ProcessingJobSubTaskState taskState) {
-        this.taskType = taskType;
-        this.config = config;
-        this.taskState = taskState;
-    }
 
     public ProcessingJobSubTask() {
-        taskState = null;
         config = null;
         taskType = null;
     }
@@ -57,11 +46,7 @@ public class ProcessingJobSubTask implements Serializable {
 
         final ProcessingJobSubTask task = (ProcessingJobSubTask)obj;
         return this.taskType == task.getTaskType() &&
-               (null == config ? null == task.getConfig() : config.equals(task.getConfig())) &&
-               taskType == task.getTaskType();
+               (null == config ? null == task.getConfig() : config.equals(task.getConfig()));
     }
 
-    public ProcessingJobSubTaskState getTaskState () {
-        return taskState;
-    }
 }

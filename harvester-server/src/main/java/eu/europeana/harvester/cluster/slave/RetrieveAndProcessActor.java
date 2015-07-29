@@ -12,6 +12,7 @@ import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkChecker;
 import eu.europeana.harvester.cluster.slave.processing.ProcessingResultTuple;
 import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
+import eu.europeana.harvester.cluster.slave.processing.exceptiions.LocaleException;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
 import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
@@ -25,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.concurrent.duration.Duration;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -134,13 +137,11 @@ public class RetrieveAndProcessActor extends UntypedActor {
         final Timer.Context downloadTimerContext = SlaveMetrics.Worker.Slave.Retrieve.totalDuration.time();
 
         try {
-
-
-
             response = executeRetrieval(task);
 
             if (response != null) {
-                doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), (response.getState() == RetrievingState.COMPLETED) ? ProcessingState.SUCCESS : ProcessingState.ERROR,
+                doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(),
+                                                       response.getState(),
                         response, task.getDocumentReferenceTask(), task.getIpAddress());
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                         "Retrieval url finished with success and the temporary file is stored on disk at {}", taskWithProcessingConfig.getDownloadPath());
@@ -150,8 +151,14 @@ public class RetrieveAndProcessActor extends UntypedActor {
             }
 
         } catch (Exception e) {
-            doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(), ProcessingState.ERROR,
-                    response, task.getDocumentReferenceTask(), task.getIpAddress());
+            doneDownloadMessage = new DoneDownload(task.getId(),
+                                                   task.getUrl(),
+                                                   task.getReferenceId(),
+                                                   task.getJobId(),
+                                                   RetrievingState.ERROR,
+                                                   response,
+                                                   task.getDocumentReferenceTask(),
+                                                   task.getIpAddress());
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                     "Exception during retrieval. The http retrieve response could not be created. Probable cause : wrong configuration argument in the slave.", e);
         } finally {
@@ -178,6 +185,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                 }
                 else {
                     doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
+                                                               processingResultTuple.getProcessingJobSubTaskStats(),
                                                                processingResultTuple.getMediaMetaInfoTuple().getImageMetaInfo(),
                                                                processingResultTuple.getMediaMetaInfoTuple().getAudioMetaInfo(),
                                                                processingResultTuple.getMediaMetaInfoTuple().getVideoMetaInfo(),
@@ -185,15 +193,23 @@ public class RetrieveAndProcessActor extends UntypedActor {
                                                              );
                 }
 
-            } catch (Exception e) {
+            } catch (LocaleException e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                         "Exception during processing. :  " + e.getLocalizedMessage(), e);
 
                 doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                        null,
-                        null,
-                        null,
-                        null, e.getMessage());
+                                                           e.getSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
+                                                           null, null, null, null,
+                                                           e.getMessage()
+                                                          );
+            } catch (IOException | URISyntaxException e) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                          "Exception during processing. :  " + e.getLocalizedMessage(), e);
+
+                doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
+                                                           ProcessingJobSubTaskStats.withRetrievelSuccess(),
+                                                           null, null, null, null,
+                                                           e.getMessage());
             } finally {
                 processingTimerContext.stop();
             }
@@ -203,10 +219,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
                     "Processing stage skipped because retrieval involved only link checking or finished with non-complete state : " + response.getState() + " and reason " + response.getLog());
 
             doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                    null,
-                    null,
-                    null,
-                    null);
+                                                       new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
+                    null, null, null, null);
         }
 
         sender.tell(doneProcessingMessage, getSelf());
@@ -215,7 +229,6 @@ public class RetrieveAndProcessActor extends UntypedActor {
         getSelf().tell(PoisonPill.getInstance(), ActorRef.noSender());
 
     }
-
 
     /**
      * Executes the retrieval phase.
@@ -291,7 +304,10 @@ public class RetrieveAndProcessActor extends UntypedActor {
      * @return
      * @throws Exception
      */
-    private final ProcessingResultTuple executeProcessing(final HttpRetrieveResponse response, final RetrieveUrl task) throws Exception {
+    private final ProcessingResultTuple executeProcessing(final HttpRetrieveResponse response, final RetrieveUrl task) throws
+                                                                                                                       LocaleException,
+                                                                                                                       URISyntaxException,
+                                                                                                                       IOException {
         return slaveProcessor.process(task.getDocumentReferenceTask(),
                                       taskWithProcessingConfig.getDownloadPath(),
                                       response.getUrl().toURI().toASCIIString(),

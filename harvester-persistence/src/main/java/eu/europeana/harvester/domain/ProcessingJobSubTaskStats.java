@@ -1,5 +1,7 @@
 package eu.europeana.harvester.domain;
 
+import com.sun.org.apache.xalan.internal.xslt.*;
+
 public class ProcessingJobSubTaskStats {
 
     private final ProcessingJobSubTaskState retrieveState;
@@ -9,11 +11,11 @@ public class ProcessingJobSubTaskStats {
     private final ProcessingJobSubTaskState thumbnailStorageState;
 
     public ProcessingJobSubTaskStats() {
-        retrieveState = null;
-        colorExtractionState = null;
-        metaExtractionState = null;
-        thumbnailGenerationState = null;
-        thumbnailStorageState = null;
+        retrieveState = ProcessingJobSubTaskState.NEVER_EXECUTED;
+        colorExtractionState = ProcessingJobSubTaskState.NEVER_EXECUTED;
+        metaExtractionState = ProcessingJobSubTaskState.NEVER_EXECUTED;
+        thumbnailGenerationState = ProcessingJobSubTaskState.NEVER_EXECUTED;
+        thumbnailStorageState = ProcessingJobSubTaskState.NEVER_EXECUTED;
     }
 
     public ProcessingJobSubTaskStats(ProcessingJobSubTaskState retrieveState,
@@ -93,5 +95,21 @@ public class ProcessingJobSubTaskStats {
                                              thumbnailGenerationState,
                                              thumbnailStorageState
                                              );
+    }
+
+    public static ProcessingJobSubTaskStats withProcessingTasksError () {
+         return new ProcessingJobSubTaskStats(
+                                             ProcessingJobSubTaskState.SUCCESS,
+                                             ProcessingJobSubTaskState.ERROR,
+                                             ProcessingJobSubTaskState.ERROR,
+                                             ProcessingJobSubTaskState.ERROR,
+                                             ProcessingJobSubTaskState.ERROR
+                                             );
+
+
+    }
+
+    public static ProcessingJobSubTaskStats withRetrievelSuccess () {
+        return new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS);
     }
 }

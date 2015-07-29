@@ -8,6 +8,7 @@ import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +65,31 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
     }
 
 
+    private ProcessingJobSubTaskStats computeStats (final DoneProcessing msg) {
+       if (!RetrievingState.ERROR.equals(msg.getRetrievingState())) {
+           return new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR);
+       }
+       else if (!RetrievingState.COMPLETED.equals(msg.getRetrievingState())) {
+           return new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.FAILED);
+       }
+       else if (DocumentReferenceTaskType.CHECK_LINK.equals(msg.getTaskType())) {
+            return ProcessingJobSubTaskStats.withRetrievelSuccess();
+       }
+
+       return msg.getProcessingStats();
+    }
+
+    private ProcessingStatus computeStatus (final ProcessingJobSubTaskStats stats) {
+        if (ProcessingJobSubTaskState.SUCCESS != stats.getColorExtractionState() ||
+            ProcessingJobSubTaskState.SUCCESS != stats.getMetaExtractionState() ||
+            ProcessingJobSubTaskState.SUCCESS != stats.getRetrieveState() ||
+            ProcessingJobSubTaskState.SUCCESS != stats.getThumbnailGenerationState() ||
+            ProcessingJobSubTaskState.SUCCESS != stats.getThumbnailStorageState()) {
+            return ProcessingStatus.Failure;
+        }
+        return ProcessingStatus.Success;
+    }
+
 
     /**
      * Marks task as done and save it's statistics in the DB.
@@ -77,7 +103,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
         final String docId = finishedDocument.getId();
         //LOG.info("save statistics for document with ID: {}",docId);
 
-        final ProcessingJobTaskDocumentReference taskDocumentReference = processingJob.getTasks().get(0).withProcessingJobSubTaskStats().withTaskState();
+        final ProcessingJobSubTaskStats subTaskStats = computeStats(msg);
 
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(
@@ -99,8 +125,8 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                         msg.getSourceIp(),
                         msg.getHttpResponseHeaders(),
                         msg.getLog(),
-                        taskDocumentReference.getTaskStatus(),  /* ProcessingStatus -> Success / Fail*/
-                        taskDocumentReference.getProcessingJobSubTaskStats()  /*  ProcessingJobSubTaskStats */
+                        computeStatus(subTaskStats),
+                        subTaskStats
                 );
 
         sourceDocumentProcessingStatisticsDao.createOrModify(sourceDocumentProcessingStatistics,
@@ -122,8 +148,9 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                                                        msg.getSocketConnectToDownloadStartDurationInMilliSecs(), msg.getRetrievalDurationInMilliSecs(),
                                                        msg.getCheckingDurationInMilliSecs(), msg.getSourceIp(), msg.getHttpResponseHeaders(),
                                                        msg.getLog(),
-                                                       taskDocumentReference.getTaskStatus(),
-                                                       taskDocumentReference.getProcessingJobSubTaskStats());
+                                                       computeStatus(subTaskStats),
+                                                       subTaskStats
+                                                      );
         }
         else {
             lastSourceDocumentProcessingStatistics
@@ -132,8 +159,9 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                                 msg.getSocketConnectToDownloadStartDurationInMilliSecs(),
                                 msg.getRetrievalDurationInMilliSecs(), msg.getCheckingDurationInMilliSecs(),
                                 msg.getHttpResponseHeaders(), msg.getLog(),
-                                taskDocumentReference.getTaskStatus(),
-                                taskDocumentReference.getProcessingJobSubTaskStats());
+                                computeStatus(subTaskStats),
+                                subTaskStats
+                               );
 
         }
 
