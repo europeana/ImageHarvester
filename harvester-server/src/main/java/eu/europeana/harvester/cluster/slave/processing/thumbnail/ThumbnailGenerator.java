@@ -27,7 +27,7 @@ public class ThumbnailGenerator {
     /**
      * Creates a thumbnail of a downloaded image.
      */
-    public final MediaFile createMediaFileWithThumbnail(final Integer expectedHeight,final Integer expectedWidth,final String currentProcessId,final String originalImageUrl,final byte[] originalImageContent,final String originalImagePath) throws Exception {
+    public MediaFile createMediaFileWithThumbnail(final Integer expectedHeight,final Integer expectedWidth,final String currentProcessId,final String originalImageUrl,final byte[] originalImageContent,final String originalImagePath) throws Exception {
         if (ContentType.IMAGE != MediaMetaDataUtils.classifyUrl(originalImagePath)) {
             return null;
         }

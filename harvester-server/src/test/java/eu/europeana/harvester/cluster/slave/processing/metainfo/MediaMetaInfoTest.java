@@ -5,7 +5,11 @@ import eu.europeana.harvester.domain.ImageMetaInfo;
 import eu.europeana.harvester.domain.TextMetaInfo;
 import eu.europeana.harvester.domain.VideoMetaInfo;
 import gr.ntua.image.mediachecker.MediaChecker;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
@@ -16,6 +20,13 @@ import static eu.europeana.harvester.TestUtils.*;
  * Created by salexandru on 29.05.2015.
  */
 public class MediaMetaInfoTest {
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            System.out.println("Starting test: " + description.getMethodName());
+        }
+    };
+
     @Test
     public void test_MetadataExtraction_Img1() throws Exception {
         final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(getPath(Image1));

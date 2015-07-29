@@ -1,7 +1,11 @@
 package eu.europeana.harvester.cluster.slave.processing.metainfo;
 
 import eu.europeana.harvester.cluster.domain.ContentType;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import static org.junit.Assert.assertEquals;
 
@@ -11,6 +15,13 @@ import static eu.europeana.harvester.TestUtils.*;
  * Created by salexandru on 29.05.2015.
  */
 public class MediaMetaDataUtilsTest {
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            System.out.println("Starting test: " + description.getMethodName());
+        }
+    };
+
     @Test
     public void test_ContentTypeDetection_ImgJpeg() {
         assertEquals(ContentType.IMAGE, MediaMetaDataUtils.classifyUrl(getPath(Image1)));

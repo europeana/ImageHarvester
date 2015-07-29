@@ -13,7 +13,7 @@ public class MediaMetaInfoExtractor {
         this.colorMapPath = colorMapPath;
     }
 
-    public final MediaMetaInfoTuple extract(final String path) throws Exception {
+    public MediaMetaInfoTuple extract(final String path) throws Exception {
         final ContentType contentType = MediaMetaDataUtils.classifyUrl(path);
 
         ImageMetaInfo imageMetaInfo = null;

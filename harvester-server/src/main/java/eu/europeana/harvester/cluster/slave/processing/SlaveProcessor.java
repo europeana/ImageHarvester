@@ -129,30 +129,25 @@ public class SlaveProcessor {
         SlaveMetrics.Worker.Slave.Processing.thumbnailStorageCounter.inc();
         final Timer.Context thumbnailStorageDurationContext = SlaveMetrics.Worker.Slave.Processing.thumbnailStorageDuration.time();
 
-        {
+        try {
+            for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
+                mediaStorageClient.createOrModify(thumbnailEntry.getValue());
+            }
+            stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
+            thumbnailStorageDurationContext.stop();
+        }
+        catch (RuntimeException e) {
+            throw new LocaleException(stats.withThumbnailStorageState(ProcessingJobSubTaskState.FAILED), e);
+        }
+        finally {
             try {
-                for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
-                    mediaStorageClient.createOrModify(thumbnailEntry.getValue());
-                }
-                stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
-            }
-            catch (Throwable throwable) {
-                throw new LocaleException(stats.withThumbnailStorageState(ProcessingJobSubTaskState.FAILED), throwable);
-            }
-            finally {
-                thumbnailStorageDurationContext.stop();
+                cacheOriginalImage(originalFilePath, originalFileUrl, originalFileContent, referenceOwner,
+                                   mediaMetaInfoTuple);
 
-                try {
-                    cacheOriginalImage(originalFilePath, originalFileUrl, originalFileContent, referenceOwner,
-                                       mediaMetaInfoTuple);
-
-                }
-                catch (Exception e) {
-                    throw new LocaleException(stats, e);
-                }
+            } catch (Exception e) {
+                throw new LocaleException(stats, e);
             }
         }
-
 
         return new ProcessingResultTuple(stats,
                                          mediaMetaInfoTuple,

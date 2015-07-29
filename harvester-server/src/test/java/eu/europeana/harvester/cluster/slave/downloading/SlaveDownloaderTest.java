@@ -9,7 +9,11 @@ import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.logging.log4j.LogManager;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +41,13 @@ public class SlaveDownloaderTest {
     public void tearDown() throws Exception {
         if (new File(pathOnDisk).exists()) new File(pathOnDisk).delete();
     }
+
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            System.out.println("Starting test: " + description.getMethodName());
+        }
+    };
 
     @Test
     public void canAbortUnconditionalDownloadWhenSocketConnectionTimeExceeded() throws Exception {

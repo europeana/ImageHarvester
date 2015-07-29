@@ -21,7 +21,7 @@ public class ColorExtractor {
      * @throws java.io.IOException
      * @throws InterruptedException
      */
-    public final ImageMetaInfo colorExtraction(final String path) throws IOException, InterruptedException {
+    public ImageMetaInfo colorExtraction(final String path) throws IOException, InterruptedException {
         boolean success = true;
         int retry = 3;
         do {

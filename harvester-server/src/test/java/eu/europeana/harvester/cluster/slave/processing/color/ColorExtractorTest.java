@@ -2,7 +2,11 @@ package eu.europeana.harvester.cluster.slave.processing.color;
 
 import eu.europeana.harvester.domain.ImageMetaInfo;
 import gr.ntua.image.mediachecker.MediaChecker;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
@@ -13,6 +17,12 @@ import static eu.europeana.harvester.TestUtils.*;
  * Created by salexandru on 29.05.2015.
  */
 public class ColorExtractorTest {
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            System.out.println("Starting test: " + description.getMethodName());
+        }
+    };
     @Test
     public void test_ColorPaletteExtraction_Image1() throws Exception {
         final ImageMetaInfo metaInfo = new ColorExtractor(PATH_COLORMAP).colorExtraction(getPath(Image1));
