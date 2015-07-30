@@ -51,12 +51,8 @@ public class MongoDBUtils {
 
             for (String name: sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getDbName()).getCollectionNames()) {
                 if ("system.indexes".equalsIgnoreCase(name)) continue;
-                sourceMongo.getDB(migratorConfig.getTargetMongoConfig().getDbName())
-                           .getCollection(name).drop();
+                sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getDbName()).getCollection(name).drop();
             }
-            sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getDbName()).getCollection("record").drop();
-            sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getDbName()).getCollection("Aggregation").drop();
-
 
             final Mongo targetMongo = connectToDB(migratorConfig.getTargetMongoConfig().getMongoServerAddressList(),
                                                   migratorConfig.getTargetMongoConfig().getUsername(),
