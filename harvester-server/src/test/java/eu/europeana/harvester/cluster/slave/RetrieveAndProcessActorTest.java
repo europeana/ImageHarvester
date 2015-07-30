@@ -237,7 +237,7 @@ public class RetrieveAndProcessActorTest {
 
             while (!msgAvailable()) Thread.sleep(100);
             DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-            assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
+            assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD);
             assertEquals(msg1.getRetrieveState(), RetrievingState.COMPLETED);
 
             while (!msgAvailable()) Thread.sleep(100);

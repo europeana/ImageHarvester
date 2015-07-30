@@ -196,7 +196,10 @@ public class RetrieveAndProcessActor extends UntypedActor {
                 if (processingResultTuple == null)
                     throw new IllegalStateException("Unexpected processingResultTuple with value null. Probable cause : bug in slave code.");
                 if (processingResultTuple.getMediaMetaInfoTuple() == null) {
-                    doneProcessingMessage = new DoneProcessing(doneDownloadMessage);
+                    doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
+                                                               processingResultTuple.getProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
+                                                                null, null, null, null
+                                                              );
                     LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                               "The current job has not metainfo attached to it."
                             );
