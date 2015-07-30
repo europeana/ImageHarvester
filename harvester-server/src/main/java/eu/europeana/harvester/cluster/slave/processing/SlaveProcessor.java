@@ -62,7 +62,7 @@ public class SlaveProcessor {
         // (2) Execute tasks
         MediaMetaInfoTuple mediaMetaInfoTuple = null;
         ImageMetaInfo imageColorMetaInfo = null;
-        Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = null;
+        Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = new HashMap<>();
 
         // Meta data extraction
         if (null != metaExtractionProcessingTask) {
