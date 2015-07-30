@@ -23,8 +23,14 @@ import org.junit.runners.Suite;
 public class RunAllTests {
     @Rule
     public TestRule watcher = new TestWatcher() {
+        @Override
         protected void starting(Description description) {
             System.out.println("Starting test: " + description.getMethodName());
+        }
+
+        @Override
+        protected  void finished(Description description) {
+            System.out.println("Stopping test:" + description.getMethodName());
         }
     };
 }

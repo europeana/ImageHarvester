@@ -218,9 +218,11 @@ public class SlaveDownloader {
     }
 
     private void cleanup(final HttpRetrieveResponse httpRetrieveResponse,final RetrieveUrl task, final AsyncHttpClient asyncHttpClient, final Throwable e) {
-        if (httpRetrieveResponse != null) httpRetrieveResponse.setException(e);
         try {
-            if (httpRetrieveResponse != null) httpRetrieveResponse.close();
+            if (httpRetrieveResponse != null) {
+                httpRetrieveResponse.setException(e);
+                httpRetrieveResponse.close();
+            }
         } catch (IOException e1) {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                     "Failed to execute the final cleanup of the async downloader ", e1);

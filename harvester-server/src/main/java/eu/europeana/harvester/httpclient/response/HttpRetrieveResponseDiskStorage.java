@@ -97,17 +97,20 @@ public class HttpRetrieveResponseDiskStorage extends HttpRetrieveResponseBase im
 
     @Override
     synchronized public void close() throws IOException {
-       if (null != fo) fo.close();
+       if (null != fo) {
+           fo.getChannel().close();
+           fo.close();
+       }
     }
 
     @Override
     protected void finalize() throws Throwable {
-        if (null != fo && fo.getChannel().isOpen()) {
+        if (null != fo && fo.getFD().valid()) {
             if (null != loggingMarker) {
-                LOG.error (loggingMarker, "File: " + absolutePath + " has channel still opened");
+                LOG.error (loggingMarker, "File: " + absolutePath + " has valid fd");
             }
             else {
-                LOG.error ("File: " + absolutePath + " has channel still opened");
+                LOG.error ("File: " + absolutePath + " has valid fd");
             }
 
             try {
