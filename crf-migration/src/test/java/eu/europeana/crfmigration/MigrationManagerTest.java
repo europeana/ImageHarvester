@@ -25,7 +25,7 @@ public class MigrationManagerTest {
 
     @After
     public void tearDown () {
-        mongoDBUtils.cleanMongoDatabase();
+       // mongoDBUtils.cleanMongoDatabase();
     }
 
 
