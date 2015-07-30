@@ -134,7 +134,12 @@ public class SlaveProcessor {
             for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
                 mediaStorageClient.createOrModify(thumbnailEntry.getValue());
             }
-            stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
+            if (null == generatedThumbnails || generatedThumbnails.isEmpty()) {
+                stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.NEVER_EXECUTED);
+            }
+            else {
+                stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
+            }
             thumbnailStorageDurationContext.stop();
         } catch (Exception e) {
             stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.ERROR, e);
