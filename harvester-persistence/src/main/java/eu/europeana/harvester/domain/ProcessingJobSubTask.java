@@ -10,19 +10,25 @@ public class ProcessingJobSubTask implements Serializable {
     /**
      * The type of the subtask. (COLOR_EXTRACTION, META_EXTRACTION or GENERATE_THUMBNAIL)
      */
-    private ProcessingJobSubTaskType taskType;
+    private final ProcessingJobSubTaskType taskType;
+
 
     /**
      * The configuration object needed by the specified subtask.
      */
     private GenericSubTaskConfiguration config;
 
-    public ProcessingJobSubTask(ProcessingJobSubTaskType taskType, GenericSubTaskConfiguration config) {
+    public ProcessingJobSubTask(ProcessingJobSubTaskType taskType,
+                                GenericSubTaskConfiguration config) {
         this.taskType = taskType;
         this.config = config;
     }
 
-    public ProcessingJobSubTask() {}
+
+    public ProcessingJobSubTask() {
+        config = null;
+        taskType = null;
+    }
 
     public ProcessingJobSubTaskType getTaskType() {
         return taskType;
@@ -42,4 +48,5 @@ public class ProcessingJobSubTask implements Serializable {
         return this.taskType == task.getTaskType() &&
                (null == config ? null == task.getConfig() : config.equals(task.getConfig()));
     }
+
 }

@@ -34,6 +34,7 @@ public class ProcessingJob {
 
     /**
      * The tasks that have to be executed in the processing job.
+     * TODO: make this a single object, not a list
      */
     @Embedded
     private final List<ProcessingJobTaskDocumentReference> tasks;

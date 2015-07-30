@@ -2,6 +2,7 @@ package eu.europeana.harvester.cluster.slave.processing.color;
 
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
 import eu.europeana.harvester.domain.ImageMetaInfo;
+import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import gr.ntua.image.mediachecker.MediaChecker;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ public class ColorExtractor {
      * @throws java.io.IOException
      * @throws InterruptedException
      */
-    public final ImageMetaInfo colorExtraction(final String path) throws IOException, InterruptedException {
+    public ImageMetaInfo colorExtraction(final String path) throws IOException, InterruptedException {
         boolean success = true;
         int retry = 3;
         do {

@@ -6,8 +6,8 @@ import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,8 +108,7 @@ public class NodeMasterActor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                "Slave master preStart.");
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER), "Slave master preStart.");
 
         lastRequest = 0l;
         sentRequest = false;
@@ -125,8 +124,7 @@ public class NodeMasterActor extends UntypedActor {
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                "Slave master preStart.");
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER), "Slave master preStart.");
     }
 
     @Override
@@ -298,17 +296,16 @@ public class NodeMasterActor extends UntypedActor {
                                                          getSelf()
                                );
 
-            if((DocumentReferenceTaskType.CHECK_LINK).equals(doneDownload.getDocumentReferenceTask().getTaskType()) ||
-                    (ProcessingState.ERROR).equals(doneDownload.getProcessingState())) {
-
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                        "Slave sending DoneDownload message for job {} and task {}", doneDownload.getJobId(), doneDownload.getTaskID());
+            if(DocumentReferenceTaskType.CHECK_LINK.equals(doneDownload.getDocumentReferenceTask().getTaskType()) ||
+               !(RetrievingState.COMPLETED).equals(doneDownload.getRetrieveState())) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
+                          "Slave sending DoneProcessing message for job {} and task {}",
+                          doneDownload.getJobId(), doneDownload.getTaskID());
 
                 masterReceiver.tell(new DoneProcessing(doneDownload), getSelf());
                 deleteFile(doneDownload.getReferenceId());
 
             }
-
         }
         SlaveMetrics.Worker.Master.doneDownloadStateCounters.get(message.getHttpRetrieveResponse().getState()).mark();
         SlaveMetrics.Worker.Master.doneDownloadTotalCounter.mark();

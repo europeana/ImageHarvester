@@ -7,6 +7,7 @@ import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.httpclient.response.ResponseType;
 import org.apache.logging.log4j.LogManager;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -16,12 +17,23 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import eu.europeana.harvester.TestUtils;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
+
 public class SlaveLinkCheckerTest {
 
     private static org.apache.logging.log4j.Logger LOG = LogManager.getLogger(SlaveDownloaderTest.class.getName());
     private static final String text1GitHubUrl = TestUtils.GitHubUrl_PREFIX + TestUtils.Image1;
 
     final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
+
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            System.out.println("Starting test: " + description.getMethodName());
+        }
+    };
 
     @Test
     public void canLinkCheckWithDefaultLimits() throws Exception {

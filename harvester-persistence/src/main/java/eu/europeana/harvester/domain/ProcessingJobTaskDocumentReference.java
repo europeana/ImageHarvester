@@ -18,6 +18,7 @@ public class ProcessingJobTaskDocumentReference implements ProcessingJobTask, Se
      */
     final private String sourceDocumentReferenceID;
 
+
     /**
      * List of subtask
      */
@@ -30,7 +31,8 @@ public class ProcessingJobTaskDocumentReference implements ProcessingJobTask, Se
     }
 
     public ProcessingJobTaskDocumentReference(final DocumentReferenceTaskType taskType,
-                                              final String sourceDocumentReferenceID, List<ProcessingJobSubTask> processingTasks) {
+                                              final String sourceDocumentReferenceID,
+                                              List<ProcessingJobSubTask> processingTasks) {
         this.taskType = taskType;
         this.sourceDocumentReferenceID = sourceDocumentReferenceID;
         this.processingTasks = processingTasks;

@@ -257,7 +257,6 @@ public class ReceiverMasterActor extends UntypedActor {
 //            }
 
             if ((ProcessingState.SUCCESS).equals(msg.getProcessingState())) {
-
                 success++;
             } else {
                 error++;

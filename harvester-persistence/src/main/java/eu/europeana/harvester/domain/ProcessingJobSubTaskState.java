@@ -3,7 +3,8 @@ package eu.europeana.harvester.domain;
 public enum ProcessingJobSubTaskState {
 
     SUCCESS,
+    ERROR,
+    READY,
     FAILED,
-    ERROR
-
+    NEVER_EXECUTED
 }

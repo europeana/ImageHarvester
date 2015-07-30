@@ -5,6 +5,10 @@ import com.google.common.io.Files;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloader;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
+import eu.europeana.harvester.cluster.slave.processing.exceptiions.ColorExtractionException;
+import eu.europeana.harvester.cluster.slave.processing.exceptiions.LocaleException;
+import eu.europeana.harvester.cluster.slave.processing.exceptiions.MetaInfoExtractionException;
+import eu.europeana.harvester.cluster.slave.processing.exceptiions.ThumbnailGenerationException;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
 import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
@@ -20,7 +24,11 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -36,9 +44,18 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 
 @RunWith (MockitoJUnitRunner.class)
 public class SlaveProcessorTest {
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            System.out.println("Starting test: " + description.getMethodName());
+        }
+    };
 
     @Mock
     private LoggingAdapter loggingAdapter;
@@ -74,6 +91,10 @@ public class SlaveProcessorTest {
                                             new ColorExtractor(PATH_COLORMAP),
                                             mediaStorageClient
                                           );
+
+
+
+
         taskDocumentReference = new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                                                                            "source-reference-1", subTasks);
     }
@@ -99,8 +120,12 @@ public class SlaveProcessorTest {
 
     private void checkThumbnails (final String imageName, final Collection<MediaFile> genThumbnails, final String[] colorPalette) throws IOException {
         final Map<ThumbnailType, byte[]> thumbnails = new HashMap<>();
-        thumbnails.put(ThumbnailType.MEDIUM, Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailMedium) : imagesInBytes.get(Image2ThumbnailMedium));
-        thumbnails.put(ThumbnailType.LARGE, Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailLarge) : imagesInBytes.get(Image2ThumbnailLarge));
+        thumbnails.put(ThumbnailType.MEDIUM,
+                       Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailMedium) : imagesInBytes
+                                                                                                     .get(Image2ThumbnailMedium));
+        thumbnails.put(ThumbnailType.LARGE,
+                       Image1.equals(imageName) ? imagesInBytes.get(Image1ThumbnailLarge) : imagesInBytes
+                                                                                                    .get(Image2ThumbnailLarge));
 
         for (final MediaFile thumbnail: genThumbnails) {
             assertEquals (GitHubUrl_PREFIX + imageName,thumbnail.getOriginalUrl());
@@ -236,9 +261,9 @@ public class SlaveProcessorTest {
 
         final ProcessingResultTuple results = slaveProcessor.process(taskDocumentReference, PATH_DOWNLOADED + Video1,
                                                                      fileUrl,
-                                                                     Files.toByteArray(new File(PATH_DOWNLOADED + Video1)),
-                                                                     ResponseType.DISK_STORAGE,
-                                                                     owner);
+                                                                     Files.toByteArray(new File(PATH_DOWNLOADED +
+                                                                                                        Video1)),
+                                                                     ResponseType.DISK_STORAGE, owner);
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNull(results.getImageColorMetaInfo());
@@ -264,9 +289,11 @@ public class SlaveProcessorTest {
 
         final ProcessingResultTuple results = slaveProcessor.process(taskDocumentReference, PATH_DOWNLOADED + Text2,
                                                                      fileUrl,
-                                                                     Files.toByteArray(new File(PATH_DOWNLOADED + Text2)),
+                                                                     Files.toByteArray(new File(PATH_DOWNLOADED +
+                                                                                                        Text2)),
                                                                      ResponseType.DISK_STORAGE,
-                                                                     new ReferenceOwner("unknown","unknwon","unknown"));
+                                                                     new ReferenceOwner("unknown", "unknwon",
+                                                                                        "unknown"));
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNull(results.getImageColorMetaInfo());
@@ -277,6 +304,225 @@ public class SlaveProcessorTest {
 
         final TextMetaInfo metaInfo = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + Text2).getTextMetaInfo();
         assertTrue(EqualsBuilder.reflectionEquals(metaInfo, results.getMediaMetaInfoTuple().getTextMetaInfo()));
+    }
+
+    @Test
+    public void test_MetaInfoExtractionFails() throws Exception{
+        final String fileUrl = GitHubUrl_PREFIX + Image1;
+
+        subTasks.add(metaInfoExtractionSubTask);
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
+        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
+        ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
+        MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+
+        doThrow(new Exception("hahaha")).when(mediaMetaInfoExtractorFail).extract(anyString());
+        doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
+        doReturn(null).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+                                                                                 anyString(),
+                                                                                 any(new byte[]{}.getClass()),
+                                                                                 anyString());
+
+        SlaveProcessor slaveProcessorAlwaysFail = new SlaveProcessor(mediaMetaInfoExtractorFail,
+                                                                     thumbnailGeneratorFail,
+                                                                     colorExtractorFail,
+                                                                     mediaStorageClientFail);
+
+
+
+        try {
+           slaveProcessorAlwaysFail.process(taskDocumentReference,
+                                            PATH_DOWNLOADED + Image1,
+                                            fileUrl,
+                                            new byte[] {0},
+                                            ResponseType.DISK_STORAGE,
+                                            new ReferenceOwner("", "", "", "")
+                                            ) ;
+            fail("");
+        }
+        catch (LocaleException e) {
+            assertTrue (e.getCause() instanceof MetaInfoExtractionException);
+            assertEquals (ProcessingJobSubTaskState.FAILED, e.getSubTaskStats().getMetaExtractionState());
+        }
+    }
+
+    @Test
+    public void test_ColorExtractionFails() throws Exception{
+        final String fileUrl = GitHubUrl_PREFIX + Image1;
+
+        subTasks.add(metaInfoExtractionSubTask);
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
+        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
+        ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
+        MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+
+        doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
+        doThrow(new IOException("")).when(colorExtractorFail).colorExtraction(anyString());
+        doReturn(null).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+                                                                                 anyString(),
+                                                                                 any(new byte[]{}.getClass()),
+                                                                                 anyString());
+
+        SlaveProcessor slaveProcessorAlwaysFail = new SlaveProcessor(mediaMetaInfoExtractorFail,
+                                                                     thumbnailGeneratorFail,
+                                                                     colorExtractorFail,
+                                                                     mediaStorageClientFail);
+
+
+
+        downloadFile(fileUrl, PATH_DOWNLOADED + Image1);
+        try {
+            slaveProcessorAlwaysFail.process(taskDocumentReference,
+                                             PATH_DOWNLOADED + Image1,
+                                             fileUrl,
+                                             new byte[] {0},
+                                             ResponseType.DISK_STORAGE,
+                                             new ReferenceOwner("", "", "", "")
+                                            ) ;
+            fail("");
+        }
+        catch (LocaleException e) {
+            assertTrue (e.getCause() instanceof ColorExtractionException);
+            assertEquals (ProcessingJobSubTaskState.FAILED, e.getSubTaskStats().getColorExtractionState());
+        }
+    }
+
+    @Test
+    public void test_ThumbnailGeneratorFails() throws Exception{
+        final String fileUrl = GitHubUrl_PREFIX + Image1;
+
+        subTasks.add(metaInfoExtractionSubTask);
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
+        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
+        ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
+        MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+
+        doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
+        doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
+        doThrow(new Exception("")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+                                                                                 anyString(),
+                                                                                 any(new byte[]{}.getClass()),
+                                                                                 anyString());
+
+        SlaveProcessor slaveProcessorAlwaysFail = new SlaveProcessor(mediaMetaInfoExtractorFail,
+                                                                     thumbnailGeneratorFail,
+                                                                     colorExtractorFail,
+                                                                     mediaStorageClientFail);
+
+
+
+        downloadFile(fileUrl, PATH_DOWNLOADED + Image1);
+        try {
+            slaveProcessorAlwaysFail.process(taskDocumentReference,
+                                             PATH_DOWNLOADED + Image1,
+                                             fileUrl,
+                                             new byte[] {0},
+                                             ResponseType.DISK_STORAGE,
+                                             new ReferenceOwner("", "", "", "")
+                                            ) ;
+            fail("");
+        }
+        catch (LocaleException e) {
+            assertTrue (e.getCause() instanceof ThumbnailGenerationException);
+            assertEquals (ProcessingJobSubTaskState.FAILED, e.getSubTaskStats().getThumbnailGenerationState());
+        }
+    }
+
+    @Test
+    public void test_AllExtractionReturnNull_MediaStoragesThrows() throws Exception {
+        final String fileUrl = GitHubUrl_PREFIX + Image1;
+
+        subTasks.add(metaInfoExtractionSubTask);
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
+        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
+        ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
+        MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+
+        doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
+        doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
+
+        doThrow(new RuntimeException("hahaha")).when(mediaStorageClientFail).createOrModify(any(MediaFile.class));
+
+        SlaveProcessor slaveProcessorAlwaysFail = new SlaveProcessor(mediaMetaInfoExtractorFail,
+                                                                     new ThumbnailGenerator(PATH_COLORMAP),
+                                                                     colorExtractorFail,
+                                                                     mediaStorageClientFail);
+
+
+        downloadFile(fileUrl, PATH_DOWNLOADED + Image1);
+        try {
+            slaveProcessorAlwaysFail.process(taskDocumentReference,
+                                             PATH_DOWNLOADED + Image1,
+                                             fileUrl,
+                                             Files.toByteArray(new File(PATH_DOWNLOADED + Image1)),
+                                             ResponseType.DISK_STORAGE,
+                                             new ReferenceOwner("", "", "", "")
+                                            ) ;
+            fail("");
+        }
+        catch (LocaleException e) {
+            assertTrue(e.getCause() instanceof RuntimeException);
+            assertEquals(ProcessingJobSubTaskState.ERROR, e.getSubTaskStats().getMetaExtractionState());
+            assertEquals(ProcessingJobSubTaskState.ERROR, e.getSubTaskStats().getColorExtractionState());
+            assertEquals(ProcessingJobSubTaskState.SUCCESS, e.getSubTaskStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, e.getSubTaskStats().getThumbnailStorageState());
+        }
+    }
+
+    @Test
+    public void test_AllExtractionReturnsNull() throws Exception{
+        final String fileUrl = GitHubUrl_PREFIX + Image1;
+
+        subTasks.add(metaInfoExtractionSubTask);
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
+        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
+        ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
+        MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+
+        doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
+        doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
+        doReturn(null).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+                                                                                 anyString(),
+                                                                                 any(new byte[]{}.getClass()),
+                                                                                 anyString());
+
+
+
+        SlaveProcessor slaveProcessorAlwaysFail = new SlaveProcessor(mediaMetaInfoExtractorFail,
+                                                                     thumbnailGeneratorFail,
+                                                                     colorExtractorFail,
+                                                                     mediaStorageClientFail);
+
+
+
+        ProcessingResultTuple tuple =    slaveProcessorAlwaysFail.process(taskDocumentReference, PATH_DOWNLOADED + Image1,
+                                                                  fileUrl, new byte[]{0}, ResponseType.DISK_STORAGE,
+                                                                  new ReferenceOwner("", "", "", "")) ;
+
+        assertEquals(ProcessingJobSubTaskState.ERROR, tuple.getProcessingJobSubTaskStats().getMetaExtractionState());
+        assertEquals(ProcessingJobSubTaskState.ERROR, tuple.getProcessingJobSubTaskStats().getColorExtractionState());
+        assertEquals(ProcessingJobSubTaskState.ERROR, tuple.getProcessingJobSubTaskStats().getThumbnailGenerationState());
+        assertEquals(ProcessingJobSubTaskState.SUCCESS, tuple.getProcessingJobSubTaskStats().getThumbnailStorageState());
     }
 
 }

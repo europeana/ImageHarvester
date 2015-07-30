@@ -13,10 +13,15 @@ import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
+import eu.europeana.harvester.httpclient.response.RetrievingState;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,19 +34,25 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class RetrieveAndProcessActorTests {
+    @Rule
+    public TestRule watcher = new TestWatcher() {
+        protected void starting(Description description) {
+            System.out.println("Starting test: " + description.getMethodName());
+        }
+    };
 
     private static String PROCESSING_PATH_PREFIX = Paths.get("harvester-server/src/test/resources/processing").toAbsolutePath().toString() + "/";
     private static final String text1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
 
-    private static final String PATH_PREFIX = Paths.get("harvester-server/src/test/resources/").toAbsolutePath().toString() + "/" ;
+    private static final String PATH_PREFIX = Paths.get("src/test/resources/").toAbsolutePath().toString() + "/" ;
     private static final String PATH_COLORMAP = PATH_PREFIX + "colormap.png";
 
-    private static final String FILESYSTEM_PATH_PREFIX = Paths.get("harvester-server/src/test/resources/filesystem").toAbsolutePath().toString() + "/";
+    private static final String FILESYSTEM_PATH_PREFIX = Paths.get("src/test/resources/filesystem").toAbsolutePath().toString() + "/";
 
     private static final MediaStorageClient client = new FileSystemMediaStorageClientImpl(FILESYSTEM_PATH_PREFIX);
     final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
-    static ActorSystem system;
+    static ActorSystem system ;
 
     @BeforeClass
     public static void setup() throws IOException {
@@ -52,7 +63,9 @@ public class RetrieveAndProcessActorTests {
 
     @AfterClass
     public static void teardown() throws IOException {
-        system.shutdown();
+        if (null != system) {
+            system.shutdown();
+        }
         FileUtils.deleteDirectory(new File(FILESYSTEM_PATH_PREFIX));
         FileUtils.deleteDirectory(new File(PROCESSING_PATH_PREFIX));
     }
@@ -62,14 +75,12 @@ public class RetrieveAndProcessActorTests {
 
         final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
         final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
-        final ProcessingJobSubTask smallThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(180,180)));
         final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
         final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
 
         final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
                 colorExtractionSubTask,
                 metaInfoExtractionSubTask,
-                smallThumbnailExtractionSubTask,
                 mediumThumbnailExtractionSubTask,
                 largeThumbnailExtractionSubTask
         );
@@ -94,6 +105,7 @@ public class RetrieveAndProcessActorTests {
             while (!msgAvailable()) Thread.sleep(100);
             DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
             assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
+            assertEquals(msg1.getRetrieveState(), RetrievingState.COMPLETED);
 
             while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
@@ -103,12 +115,10 @@ public class RetrieveAndProcessActorTests {
             assertEquals(msg2.getImageMetaInfo().getMimeType(),"image/jpeg");
 
             final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
-            final MediaFile smallStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"SMALL"),true);
             final MediaFile mediumStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"MEDIUM"),true);
             final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
 
             assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
-            assertNotNull(smallStoredContent);
             assertNotNull(mediumStoredContent);
             assertNotNull(largeStoredContent);
 

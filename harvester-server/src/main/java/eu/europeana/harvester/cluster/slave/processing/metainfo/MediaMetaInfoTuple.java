@@ -53,4 +53,10 @@ public class MediaMetaInfoTuple {
         return textMetaInfo;
     }
 
+    public boolean isValid() {
+        return null != getAudioMetaInfo() ||
+               null != getImageMetaInfo() ||
+               null != getTextMetaInfo()  ||
+               null != getVideoMetaInfo();
+    }
 }
