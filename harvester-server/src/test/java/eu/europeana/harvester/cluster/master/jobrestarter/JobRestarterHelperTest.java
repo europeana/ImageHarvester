@@ -161,7 +161,7 @@ public class JobRestarterHelperTest {
             sourceDocumentReferenceProcessingProfileDao.createOrModify(jobTuple.getSourceDocumentReferenceProcessingProfiles(), WriteConcern.ACKNOWLEDGED);
         }
 
-        final Long timestamp = DateTime.now().plusMonths(12).toDate().getTime();
+        final long timestamp = DateTime.now().plusMonths(12).toDate().getTime();
         helper.reloadJobs();
 
         for (final ProcessingJobTuple jobTuple: processingJobTuples) {
