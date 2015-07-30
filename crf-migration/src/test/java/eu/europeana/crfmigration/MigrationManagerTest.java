@@ -79,17 +79,8 @@ public class MigrationManagerTest {
 
         aggregation.remove(query);
 
-        final int count2 = aggregation.find(new BasicDBObject("edmObject", new BasicDBObject("$exists", true))).size() +
-                                   aggregation.find(new BasicDBObject("hasView", new BasicDBObject("$exists", true)))
-                                              .size() +
-                                   aggregation
-                                           .find(new BasicDBObject("edmIsShownBy", new BasicDBObject("$exists", true)))
-                                           .size() +
-                                   aggregation
-                                           .find(new BasicDBObject("edmIsShownAt", new BasicDBObject("$exists", true)))
-                                           .size();
-        assertEquals(20, sourceDocumentReferences.find().size());
-        assertEquals(count2, processJobs.find().size());
+        assertEquals(12, sourceDocumentReferences.find().size());
+        assertEquals(12, processJobs.find().size());
     }
 
     @Test
