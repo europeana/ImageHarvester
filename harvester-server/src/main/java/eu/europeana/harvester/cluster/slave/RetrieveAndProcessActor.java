@@ -39,12 +39,21 @@ import java.util.concurrent.TimeUnit;
 public class RetrieveAndProcessActor extends UntypedActor {
 
     public static final ActorRef createActor(final ActorSystem system,
-                                             final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
-                                             final MediaStorageClient mediaStorageClient,
-                                             final String colorMapPath
+                                                  final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
+                                                  final MediaStorageClient mediaStorageClient,
+                                                  final String colorMapPath
     ) {
         return system.actorOf(Props.create(RetrieveAndProcessActor.class,
                 httpRetrieveResponseFactory, colorMapPath, mediaStorageClient
+        ));
+    }
+
+    public static final ActorRef createActor(final ActorSystem system,
+                                             final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
+                                             final SlaveProcessor processor
+    ) {
+        return system.actorOf(Props.create(RetrieveAndProcessActor.class,
+                httpRetrieveResponseFactory, processor
         ));
     }
 
@@ -74,16 +83,25 @@ public class RetrieveAndProcessActor extends UntypedActor {
     private final SlaveLinkChecker slaveLinkChecker;
 
     public RetrieveAndProcessActor(final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
-                                   final String colorMapPath,
-                                   final MediaStorageClient mediaStorageClient
+                                        final String colorMapPath,
+                                        final MediaStorageClient mediaStorageClient
     ) {
 
         this.httpRetrieveResponseFactory = httpRetrieveResponseFactory;
         this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(colorMapPath),
-                                                 new ThumbnailGenerator(colorMapPath),
-                                                 new ColorExtractor(colorMapPath),
-                                                 mediaStorageClient
-                                                );
+                new ThumbnailGenerator(colorMapPath),
+                new ColorExtractor(colorMapPath),
+                mediaStorageClient
+        );
+        this.slaveDownloader = new SlaveDownloader();
+        this.slaveLinkChecker = new SlaveLinkChecker();
+    }
+
+    public RetrieveAndProcessActor(final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
+                                   final SlaveProcessor slaveProcessor) {
+
+        this.httpRetrieveResponseFactory = httpRetrieveResponseFactory;
+        this.slaveProcessor = slaveProcessor;
         this.slaveDownloader = new SlaveDownloader();
         this.slaveLinkChecker = new SlaveLinkChecker();
     }
@@ -185,7 +203,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                 }
                 else {
                     doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                                                               processingResultTuple.getProcessingJobSubTaskStats(),
+                                                               processingResultTuple.getProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
                                                                processingResultTuple.getMediaMetaInfoTuple().getImageMetaInfo(),
                                                                processingResultTuple.getMediaMetaInfoTuple().getAudioMetaInfo(),
                                                                processingResultTuple.getMediaMetaInfoTuple().getVideoMetaInfo(),
@@ -210,10 +228,18 @@ public class RetrieveAndProcessActor extends UntypedActor {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                     "Processing stage skipped because retrieval involved only link checking or finished with non-complete state : " + response.getState() + " and reason " + response.getLog());
 
-            doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                                                       new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR),
-                                                       null, null, null, null
-                                                      );
+            if (response.getState() != RetrievingState.COMPLETED) {
+                doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
+                        new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR),
+                        null, null, null, null
+                );
+            }
+            else {
+                doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
+                        new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
+                        null, null, null, null
+                );
+            }
         }
 
         sender.tell(doneProcessingMessage, getSelf());
