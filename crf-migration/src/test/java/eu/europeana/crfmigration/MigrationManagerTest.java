@@ -4,10 +4,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runners.MethodSorters;
 import utils.MigratorUtils;
 import utils.MongoDBUtils;
@@ -19,13 +16,14 @@ import java.net.UnknownHostException;
 import static org.junit.Assert.assertEquals;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Ignore
 public class MigrationManagerTest {
     private MigratorConfig migratorConfig;
     private MongoDBUtils mongoDBUtils; 
 
     @After
     public void tearDown () {
-       // mongoDBUtils.cleanMongoDatabase();
+        mongoDBUtils.cleanMongoDatabase();
     }
 
 

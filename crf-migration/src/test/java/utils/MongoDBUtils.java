@@ -51,6 +51,7 @@ public class MongoDBUtils {
 
             for (String name: sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getDbName()).getCollectionNames()) {
                 if ("system.indexes".equalsIgnoreCase(name)) continue;
+                if ("system.users".equalsIgnoreCase(name)) continue;
                 sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getDbName()).getCollection(name).drop();
             }
 
@@ -61,6 +62,7 @@ public class MongoDBUtils {
 
             for (String name: targetMongo.getDB(migratorConfig.getTargetMongoConfig().getDbName()).getCollectionNames()) {
                 if ("system.indexes".equalsIgnoreCase(name)) continue;
+                if ("system.users".equalsIgnoreCase(name)) continue;
                 targetMongo.getDB(migratorConfig.getTargetMongoConfig().getDbName())
                            .getCollection(name).drop();
             }
