@@ -344,7 +344,7 @@ public class RetrieveAndProcessActorTest {
 
         doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
         doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
-        doReturn(null).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doThrow(new Exception("")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
@@ -373,8 +373,8 @@ public class RetrieveAndProcessActorTest {
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
             assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailStorageState());
         }};
     }
 
@@ -415,6 +415,8 @@ public class RetrieveAndProcessActorTest {
                 any(new byte[]{}.getClass()),
                 anyString());
 
+        doThrow(new RuntimeException("exceptio")).when(mediaStorageClientFail).createOrModify(any(MediaFile.class));
+
         final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
                 mediaMetaInfoExtractorFail,
                 thumbnailGeneratorFail,
@@ -440,7 +442,7 @@ public class RetrieveAndProcessActorTest {
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getMetaExtractionState());
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailStorageState());
         }};
     }
 
@@ -583,7 +585,7 @@ public class RetrieveAndProcessActorTest {
 
         doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
         doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
-        doReturn(null).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doThrow(new Exception("")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
@@ -612,8 +614,8 @@ public class RetrieveAndProcessActorTest {
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
             assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailStorageState());
         }};
     }
 
@@ -654,6 +656,8 @@ public class RetrieveAndProcessActorTest {
                 any(new byte[]{}.getClass()),
                 anyString());
 
+        doThrow(new RuntimeException("exceptio")).when(mediaStorageClientFail).createOrModify(any(MediaFile.class));
+
         final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
                 mediaMetaInfoExtractorFail,
                 thumbnailGeneratorFail,
@@ -679,7 +683,7 @@ public class RetrieveAndProcessActorTest {
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getMetaExtractionState());
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailStorageState());
         }};
     }
 
