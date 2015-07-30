@@ -1,20 +1,28 @@
 package eu.europeana.harvester.domain;
 
-import com.sun.org.apache.xalan.internal.xslt.*;
-
 public class ProcessingJobSubTaskStats {
 
+    private final String retrieveLog;
     private final ProcessingJobSubTaskState retrieveState;
+    private final String colorExtractionLog;
     private final ProcessingJobSubTaskState colorExtractionState;
+    private final String metaExtractionLog;
     private final ProcessingJobSubTaskState metaExtractionState;
+    private final String thumbnailGenerationLog;
     private final ProcessingJobSubTaskState thumbnailGenerationState;
+    private final String thumbnailStorageLog;
     private final ProcessingJobSubTaskState thumbnailStorageState;
 
     public ProcessingJobSubTaskStats() {
+        retrieveLog = null;
         retrieveState = ProcessingJobSubTaskState.NEVER_EXECUTED;
+        colorExtractionLog = null;
         colorExtractionState = ProcessingJobSubTaskState.NEVER_EXECUTED;
+        metaExtractionLog = null;
         metaExtractionState = ProcessingJobSubTaskState.NEVER_EXECUTED;
+        thumbnailGenerationLog = null;
         thumbnailGenerationState = ProcessingJobSubTaskState.NEVER_EXECUTED;
+        thumbnailStorageLog = null;
         thumbnailStorageState = ProcessingJobSubTaskState.NEVER_EXECUTED;
     }
 
@@ -24,10 +32,28 @@ public class ProcessingJobSubTaskStats {
                                      ProcessingJobSubTaskState thumbnailGenerationState,
                                      ProcessingJobSubTaskState thumbnailStorageState) {
 
+        retrieveLog = null;
         this.retrieveState = retrieveState;
+        colorExtractionLog = null;
         this.colorExtractionState = colorExtractionState;
+        metaExtractionLog = null;
         this.metaExtractionState = metaExtractionState;
+        thumbnailGenerationLog = null;
         this.thumbnailGenerationState = thumbnailGenerationState;
+        thumbnailStorageLog = null;
+        this.thumbnailStorageState = thumbnailStorageState;
+    }
+
+    public ProcessingJobSubTaskStats(String retrieveLog, ProcessingJobSubTaskState retrieveState, String colorExtractionLog, ProcessingJobSubTaskState colorExtractionState, String metaExtractionLog, ProcessingJobSubTaskState metaExtractionState, String thumbnailGenerationLog, ProcessingJobSubTaskState thumbnailGenerationState, String thumbnailStorageLog, ProcessingJobSubTaskState thumbnailStorageState) {
+        this.retrieveLog = retrieveLog;
+        this.retrieveState = retrieveState;
+        this.colorExtractionLog = colorExtractionLog;
+        this.colorExtractionState = colorExtractionState;
+        this.metaExtractionLog = metaExtractionLog;
+        this.metaExtractionState = metaExtractionState;
+        this.thumbnailGenerationLog = thumbnailGenerationLog;
+        this.thumbnailGenerationState = thumbnailGenerationState;
+        this.thumbnailStorageLog = thumbnailStorageLog;
         this.thumbnailStorageState = thumbnailStorageState;
     }
 
@@ -51,65 +77,122 @@ public class ProcessingJobSubTaskStats {
         return thumbnailStorageState;
     }
 
-    public ProcessingJobSubTaskStats withRetrieveState (ProcessingJobSubTaskState retrieveState) {
-        return new ProcessingJobSubTaskStats(retrieveState,
-                                             colorExtractionState,
-                                             metaExtractionState,
-                                             thumbnailGenerationState,
-                                             thumbnailStorageState
-                                             );
+    public String getRetrieveLog() {
+        return retrieveLog;
     }
 
-    public ProcessingJobSubTaskStats withColorExtractionState (ProcessingJobSubTaskState colorExtractionState) {
-        return new ProcessingJobSubTaskStats(retrieveState,
-                                             colorExtractionState,
-                                             metaExtractionState,
-                                             thumbnailGenerationState,
-                                             thumbnailStorageState
-                                             );
+    public String getColorExtractionLog() {
+        return colorExtractionLog;
     }
 
-    public ProcessingJobSubTaskStats withMetaExtractionState (ProcessingJobSubTaskState metaExtractionState) {
-        return new ProcessingJobSubTaskStats(retrieveState,
-                                             colorExtractionState,
-                                             metaExtractionState,
-                                             thumbnailGenerationState,
-                                             thumbnailStorageState
-                                             );
+    public String getMetaExtractionLog() {
+        return metaExtractionLog;
     }
 
-    public ProcessingJobSubTaskStats withThumbnailGenerationState (ProcessingJobSubTaskState thumbnailGenerationState) {
-        return new ProcessingJobSubTaskStats(retrieveState,
-                                             colorExtractionState,
-                                             metaExtractionState,
-                                             thumbnailGenerationState,
-                                             thumbnailStorageState
-                                             );
+    public String getThumbnailGenerationLog() {
+        return thumbnailGenerationLog;
+    }
+
+    public String getThumbnailStorageLog() {
+        return thumbnailStorageLog;
+    }
+
+    public ProcessingJobSubTaskStats withRetrieveState(final ProcessingJobSubTaskState newRetrieveState) {
+        return withRetrieveState(newRetrieveState, null);
+    }
+
+    public ProcessingJobSubTaskStats withRetrieveState(final ProcessingJobSubTaskState newRetrieveState, final Throwable t) {
+        return new ProcessingJobSubTaskStats((t != null) ? t.getMessage() : null,
+                newRetrieveState,
+                colorExtractionLog,
+                colorExtractionState,
+                metaExtractionLog,
+                metaExtractionState,
+                thumbnailGenerationLog,
+                thumbnailGenerationState,
+                thumbnailStorageLog,
+                thumbnailStorageState
+        );
+    }
+
+    public ProcessingJobSubTaskStats withColorExtractionState(final ProcessingJobSubTaskState newColorExtractionState) {
+        return withColorExtractionState(newColorExtractionState, null);
+    }
+
+    public ProcessingJobSubTaskStats withColorExtractionState(final ProcessingJobSubTaskState newColorExtractionState, final Throwable t) {
+        return new ProcessingJobSubTaskStats(
+                retrieveLog,
+                retrieveState,
+                (t != null) ? t.getMessage() : null,
+                newColorExtractionState,
+                metaExtractionLog,
+                metaExtractionState,
+                thumbnailGenerationLog,
+                thumbnailGenerationState,
+                thumbnailStorageLog,
+                thumbnailStorageState
+        );
+    }
+
+    public ProcessingJobSubTaskStats withMetaExtractionState(final ProcessingJobSubTaskState newMetaExtractionState) {
+        return withMetaExtractionState(newMetaExtractionState, null);
+    }
+
+    public ProcessingJobSubTaskStats withMetaExtractionState(final ProcessingJobSubTaskState newMetaExtractionState, final Throwable t) {
+        return new ProcessingJobSubTaskStats(
+                retrieveLog,
+                retrieveState,
+                colorExtractionLog,
+                colorExtractionState,
+                (t != null) ? t.getMessage() : null,
+                newMetaExtractionState,
+                thumbnailGenerationLog,
+                thumbnailGenerationState,
+                thumbnailStorageLog,
+                thumbnailStorageState
+        );
+    }
+
+    public ProcessingJobSubTaskStats withThumbnailGenerationState(final ProcessingJobSubTaskState newThumbnailGenerationState) {
+        return withThumbnailGenerationState(newThumbnailGenerationState, null);
+    }
+
+    public ProcessingJobSubTaskStats withThumbnailGenerationState(final ProcessingJobSubTaskState newThumbnailGenerationState, final Throwable t) {
+        return new ProcessingJobSubTaskStats(
+                retrieveLog,
+                retrieveState,
+                colorExtractionLog,
+                colorExtractionState,
+                metaExtractionLog,
+                metaExtractionState,
+                (t != null) ? t.getMessage() : null,
+                newThumbnailGenerationState,
+                thumbnailStorageLog,
+                thumbnailStorageState
+        );
+    }
+
+    public ProcessingJobSubTaskStats withThumbnailStorageState(final ProcessingJobSubTaskState newThumbnailStorageState) {
+        return withThumbnailStorageState(newThumbnailStorageState);
+    }
+
+    public ProcessingJobSubTaskStats withThumbnailStorageState(final ProcessingJobSubTaskState newThumbnailStorageState, final Throwable t) {
+        return new ProcessingJobSubTaskStats(
+                retrieveLog,
+                retrieveState,
+                colorExtractionLog,
+                colorExtractionState,
+                metaExtractionLog,
+                metaExtractionState,
+                thumbnailGenerationLog,
+                thumbnailGenerationState,
+                (t != null) ? t.getMessage() : null,
+                newThumbnailStorageState
+        );
     }
 
 
-    public ProcessingJobSubTaskStats withThumbnailStorageState (ProcessingJobSubTaskState thumbnailStorageState) {
-        return new ProcessingJobSubTaskStats(retrieveState,
-                                             colorExtractionState,
-                                             metaExtractionState,
-                                             thumbnailGenerationState,
-                                             thumbnailStorageState
-                                             );
-    }
-
-    public static ProcessingJobSubTaskStats withProcessingTasksError () {
-         return new ProcessingJobSubTaskStats(
-                                             ProcessingJobSubTaskState.SUCCESS,
-                                             ProcessingJobSubTaskState.ERROR,
-                                             ProcessingJobSubTaskState.ERROR,
-                                             ProcessingJobSubTaskState.ERROR,
-                                             ProcessingJobSubTaskState.ERROR
-                                             );
-
-
-    }
-
-    public static ProcessingJobSubTaskStats withRetrievelSuccess () {
-        return new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS);
+    public static ProcessingJobSubTaskStats withRetrievelSuccess() {
+        return new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS, null);
     }
 }

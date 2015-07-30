@@ -5,7 +5,6 @@ import eu.europeana.harvester.cluster.domain.ContentType;
 import eu.europeana.harvester.cluster.slave.SlaveMetrics;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.exceptiions.ColorExtractionException;
-import eu.europeana.harvester.cluster.slave.processing.exceptiions.LocaleException;
 import eu.europeana.harvester.cluster.slave.processing.exceptiions.MetaInfoExtractionException;
 import eu.europeana.harvester.cluster.slave.processing.exceptiions.ThumbnailGenerationException;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
@@ -51,75 +50,75 @@ public class SlaveProcessor {
                                          String originalFileUrl,
                                          byte[] originalFileContent,
                                          ResponseType responseType,
-                                         ReferenceOwner referenceOwner) throws LocaleException {
+                                         ReferenceOwner referenceOwner) {
 
         // (1) Locate tasks
         final ProcessingJobSubTask metaExtractionProcessingTask = locateMetaInfoExtractionProcessingTask(task);
         final ProcessingJobSubTask colorExtractionProcessingTask = locateColorExtractionProcessingTask(task);
         final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks = locateThumbnailExtractionProcessingTask(task);
 
-
-
         ProcessingJobSubTaskStats stats = new ProcessingJobSubTaskStats();
 
         // (2) Execute tasks
         MediaMetaInfoTuple mediaMetaInfoTuple = null;
         ImageMetaInfo imageColorMetaInfo = null;
-        Map <ProcessingJobSubTask, MediaFile> generatedThumbnails = null;
+        Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = null;
 
-        try {
-            if (null != metaExtractionProcessingTask) {
+        // Meta data extraction
+        if (null != metaExtractionProcessingTask) {
+            try {
                 mediaMetaInfoTuple = extractMetaInfo(originalFilePath, originalFileUrl, responseType,
-                                                     metaExtractionProcessingTask);
+                        metaExtractionProcessingTask);
 
                 if (null != mediaMetaInfoTuple && mediaMetaInfoTuple.isValid()) {
                     stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.SUCCESS);
+                } else {
+                    stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.FAILED);
                 }
-                else {
-                    stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.ERROR);
-                }
+            } catch (Exception e) {
+                stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.ERROR, e);
             }
+        }
 
-            if (null != colorExtractionProcessingTask) {
+        // Color extraction
+        if (null != colorExtractionProcessingTask) {
+            try {
                 imageColorMetaInfo = extractColor(originalFilePath);
 
                 if (null != imageColorMetaInfo && null != imageColorMetaInfo.getColorPalette() &&
-                    imageColorMetaInfo.getColorPalette().length > 0) {
-                   stats = stats.withColorExtractionState(ProcessingJobSubTaskState.SUCCESS);
+                        imageColorMetaInfo.getColorPalette().length > 0) {
+                    stats = stats.withColorExtractionState(ProcessingJobSubTaskState.SUCCESS);
+                } else {
+                    stats = stats.withColorExtractionState(ProcessingJobSubTaskState.FAILED);
                 }
-                else {
-                   stats = stats.withColorExtractionState(ProcessingJobSubTaskState.ERROR);
-                }
+            } catch (Exception e) {
+                stats = stats.withColorExtractionState(ProcessingJobSubTaskState.ERROR, e);
             }
+        }
 
-            if (null != thumbnailGenerationProcessingTasks && !thumbnailGenerationProcessingTasks.isEmpty()) {
+        // Thumbnail generation
+        if (null != thumbnailGenerationProcessingTasks && !thumbnailGenerationProcessingTasks.isEmpty()) {
+            try {
                 generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent,
-                                                         referenceOwner, thumbnailGenerationProcessingTasks);
+                        referenceOwner, thumbnailGenerationProcessingTasks);
 
                 if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
                     stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
+                } else {
+                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED);
                 }
-                else {
-                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR);
-                }
+            } catch (Exception e) {
+                stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR, e);
             }
         }
-        catch (MetaInfoExtractionException e) {
-            throw new LocaleException(stats.withMetaExtractionState(ProcessingJobSubTaskState.FAILED), e);
-        }
-        catch (ColorExtractionException e) {
-            throw new LocaleException(stats.withColorExtractionState(ProcessingJobSubTaskState.FAILED), e);
-        }
-        catch (ThumbnailGenerationException e) {
-            throw new LocaleException(stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED), e);
-        }
-
 
 
         // (3) Post task execution
 
         // (3.1) Insert the color palette in all the thumbnail meta infos if there is a color palette.
-        if (imageColorMetaInfo != null) {
+        if (imageColorMetaInfo != null)
+
+        {
             for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
                 generatedThumbnails.put(thumbnailEntry.getKey(), thumbnailEntry.getValue().withColorPalette(imageColorMetaInfo.getColorPalette()));
             }
@@ -129,52 +128,52 @@ public class SlaveProcessor {
         SlaveMetrics.Worker.Slave.Processing.thumbnailStorageCounter.inc();
         final Timer.Context thumbnailStorageDurationContext = SlaveMetrics.Worker.Slave.Processing.thumbnailStorageDuration.time();
 
-        try {
+        try
+
+        {
             for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
                 mediaStorageClient.createOrModify(thumbnailEntry.getValue());
             }
             stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
             thumbnailStorageDurationContext.stop();
-        }
-        catch (RuntimeException e) {
-            throw new LocaleException(stats.withThumbnailStorageState(ProcessingJobSubTaskState.FAILED), e);
-        }
-        finally {
+        } catch (Exception e) {
+            stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.ERROR, e);
+        } finally {
             try {
                 cacheOriginalImage(originalFilePath, originalFileUrl, originalFileContent, referenceOwner,
-                                   mediaMetaInfoTuple);
+                        mediaMetaInfoTuple);
 
             } catch (Exception e) {
-                throw new LocaleException(stats, e);
+                stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.ERROR, e);
             }
         }
 
-        return new ProcessingResultTuple(stats,
-                                         mediaMetaInfoTuple,
-                                         generatedThumbnails.values(),
-                                         imageColorMetaInfo
-                                        );
+        return new
+                ProcessingResultTuple(stats,
+                mediaMetaInfoTuple,
+                generatedThumbnails.values(),
+                imageColorMetaInfo
+        );
     }
 
-    private void cacheOriginalImage (String originalFilePath, String originalFileUrl, byte[] originalFileContent,
-                                     ReferenceOwner referenceOwner, MediaMetaInfoTuple mediaMetaInfoTuple) throws
-                                                                                                           NoSuchAlgorithmException,
-                                                                                                           IOException {// (3.3) Cache original if it is an image
+    private void cacheOriginalImage(String originalFilePath, String originalFileUrl, byte[] originalFileContent,
+                                    ReferenceOwner referenceOwner, MediaMetaInfoTuple mediaMetaInfoTuple) throws
+            NoSuchAlgorithmException,
+            IOException {// (3.3) Cache original if it is an image
         if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE) && mediaMetaInfoTuple != null) {
             SlaveMetrics.Worker.Slave.Processing.originalCachingCounter.inc();
             final Timer.Context originalCachingDurationContext = SlaveMetrics.Worker.Slave.Processing.originalCachingDuration
-                                                                         .time();
+                    .time();
             try {
                 final MediaFile mediaFile = generateOriginal(originalFilePath, originalFileUrl,
-                                                             originalFileContent, referenceOwner,
-                                                             mediaMetaInfoTuple.getImageMetaInfo());
+                        originalFileContent, referenceOwner,
+                        mediaMetaInfoTuple.getImageMetaInfo());
                 mediaStorageClient.createOrModify(mediaFile);
             } finally {
                 originalCachingDurationContext.stop();
                 Files.deleteIfExists(Paths.get(originalFilePath));
             }
-        }
-        else {
+        } else {
             Files.deleteIfExists(Paths.get(originalFilePath));
         }
     }
@@ -225,11 +224,9 @@ public class SlaveProcessor {
             final Timer.Context colorExtractionDurationContext = SlaveMetrics.Worker.Slave.Processing.colorExtractionDuration.time();
             try {
                 return colorExtractor.colorExtraction(originalFilePath);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new ColorExtractionException(e);
-            }
-            finally {
+            } finally {
                 colorExtractionDurationContext.stop();
             }
         }
@@ -247,11 +244,9 @@ public class SlaveProcessor {
         final Timer.Context metaInfoExtractionDurationContext = SlaveMetrics.Worker.Slave.Processing.metaInfoExtractionDuration.time();
         try {
             return metaInfoExtractor.extract(originalFilePath);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new MetaInfoExtractionException(e);
-        }
-        finally {
+        } finally {
             metaInfoExtractionDurationContext.stop();
         }
     }
@@ -286,11 +281,9 @@ public class SlaveProcessor {
                             config.getThumbnailConfig().getWidth(), referenceOwner.getExecutionId(), originalFileUrl,
                             originalFileContent, originalFilePath);
                     results.put(thumbnailGenerationTask, thumbnailMediaFile);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new ThumbnailGenerationException(e);
-                }
-                finally {
+                } finally {
                     thumbnailGenerationDurationContext.stop();
                 }
             }
