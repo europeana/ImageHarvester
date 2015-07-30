@@ -5,19 +5,20 @@ import com.mongodb.DBCollection;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import org.joda.time.DateTime;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import utils.MigratorUtils;
 import utils.MongoDBUtils;
 
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertEquals;
 
 public class MigrationManagerTest {
     private MigratorConfig migratorConfig;
     private MongoDBUtils mongoDBUtils; 
-
 
     @After
     public void tearDown () {
@@ -29,6 +30,7 @@ public class MigrationManagerTest {
     public void testDBIteration_AllDatabase () throws IOException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/allData/migration.conf");
         mongoDBUtils = new MongoDBUtils(migratorConfig);
+        mongoDBUtils.cleanMongoDatabase();
 
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/allData/record.json", "record");
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/allData/aggregation.json", "Aggregation");
@@ -59,6 +61,7 @@ public class MigrationManagerTest {
     public void testDBIteration_FilterByDate_BatchSize2_AllMinus2 () throws IOException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/filterSomeByDate/migration.conf");
         mongoDBUtils = new MongoDBUtils(migratorConfig.withBatchSize(2));
+        mongoDBUtils.cleanMongoDatabase();
 
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/filterSomeByDate/record.json", "record");
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/filterSomeByDate/aggregation.json",
@@ -97,6 +100,7 @@ public class MigrationManagerTest {
     public void testDBIteration_FilterByDate_BatchSize2_All () throws IOException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/filterNoOneByDate/migration.conf");
         mongoDBUtils = new MongoDBUtils(migratorConfig.withBatchSize(2));
+        mongoDBUtils.cleanMongoDatabase();
 
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/filterNoOneByDate/record.json", "record");
         mongoDBUtils.loadMongoData(MigratorUtils.PATH_PREFIX + "data-files/filterNoOneByDate/aggregation.json",
