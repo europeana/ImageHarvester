@@ -1,6 +1,8 @@
 package eu.europeana.harvester.domain;
 
-public class ProcessingJobSubTaskStats {
+import java.io.Serializable;
+
+public class ProcessingJobSubTaskStats implements Serializable {
 
     private final String retrieveLog;
     private final ProcessingJobSubTaskState retrieveState;
