@@ -41,7 +41,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-public class RetrieveAndProcessActorTests {
+public class RetrieveAndProcessActorTest {
     @Rule
     public TestRule watcher = new TestWatcher() {
         protected void starting(Description description) {
