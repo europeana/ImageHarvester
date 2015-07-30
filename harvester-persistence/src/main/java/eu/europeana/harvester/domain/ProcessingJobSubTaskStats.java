@@ -173,7 +173,18 @@ public class ProcessingJobSubTaskStats {
     }
 
     public ProcessingJobSubTaskStats withThumbnailStorageState(final ProcessingJobSubTaskState newThumbnailStorageState) {
-        return withThumbnailStorageState(newThumbnailStorageState);
+        return new ProcessingJobSubTaskStats(
+                                                    retrieveLog,
+                                                    retrieveState,
+                                                    colorExtractionLog,
+                                                    colorExtractionState,
+                                                    metaExtractionLog,
+                                                    metaExtractionState,
+                                                    thumbnailGenerationLog,
+                                                    thumbnailGenerationState,
+                                                    null,
+                                                    newThumbnailStorageState
+        );
     }
 
     public ProcessingJobSubTaskStats withThumbnailStorageState(final ProcessingJobSubTaskState newThumbnailStorageState, final Throwable t) {
