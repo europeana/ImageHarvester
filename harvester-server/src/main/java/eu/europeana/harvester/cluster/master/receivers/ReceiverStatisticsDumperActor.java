@@ -66,16 +66,6 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
 
 
     private ProcessingJobSubTaskStats computeStats (final DoneProcessing msg) {
-       if (!RetrievingState.ERROR.equals(msg.getRetrievingState())) {
-           return new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR);
-       }
-       else if (!RetrievingState.COMPLETED.equals(msg.getRetrievingState())) {
-           return new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.FAILED);
-       }
-       else if (DocumentReferenceTaskType.CHECK_LINK.equals(msg.getTaskType())) {
-            return ProcessingJobSubTaskStats.withRetrievelSuccess();
-       }
-
        return msg.getProcessingStats();
     }
 
@@ -103,7 +93,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
         final String docId = finishedDocument.getId();
         //LOG.info("save statistics for document with ID: {}",docId);
 
-        final ProcessingJobSubTaskStats subTaskStats = computeStats(msg);
+        final ProcessingJobSubTaskStats subTaskStats = msg.getProcessingStats();
 
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(

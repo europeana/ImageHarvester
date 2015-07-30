@@ -148,11 +148,10 @@ public class SlaveProcessor {
             }
         }
 
-        return new
-                ProcessingResultTuple(stats,
-                mediaMetaInfoTuple,
-                generatedThumbnails.values(),
-                imageColorMetaInfo
+        return new ProcessingResultTuple(stats,
+                                         mediaMetaInfoTuple,
+                                         generatedThumbnails.values(),
+                                         imageColorMetaInfo
         );
     }
 

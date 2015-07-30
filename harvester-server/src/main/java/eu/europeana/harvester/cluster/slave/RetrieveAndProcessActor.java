@@ -193,16 +193,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
                                                              );
                 }
 
-            } catch (LocaleException e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                        "Exception during processing. :  " + e.getLocalizedMessage(), e);
-
-                doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                                                           e.getSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
-                                                           null, null, null, null,
-                                                           e.getMessage()
-                                                          );
-            } catch (IOException | URISyntaxException e) {
+            }
+            catch (IOException | URISyntaxException e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                           "Exception during processing. :  " + e.getLocalizedMessage(), e);
 
@@ -219,8 +211,9 @@ public class RetrieveAndProcessActor extends UntypedActor {
                     "Processing stage skipped because retrieval involved only link checking or finished with non-complete state : " + response.getState() + " and reason " + response.getLog());
 
             doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                                                       new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
-                    null, null, null, null);
+                                                       new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR),
+                                                       null, null, null, null
+                                                      );
         }
 
         sender.tell(doneProcessingMessage, getSelf());
