@@ -13,6 +13,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import utils.MigratorUtils;
+import utils.MongoDBUtils;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -52,10 +53,10 @@ public class MigratorHarvesterDaoTest {
     }
 
     @After
-    public void tearDown() {
-        dataStore.delete(dataStore.createQuery(SourceDocumentReference.class));
-        dataStore.delete(dataStore.createQuery(ProcessingJob.class));
-        dataStore.delete(dataStore.createQuery(SourceDocumentReferenceProcessingProfile.class));
+    public void tearDown() throws UnknownHostException {
+        migratorConfig = MigratorUtils.createMigratorConfig("config-files/allData/migration.conf");
+        MongoDBUtils mongoDBUtils = new MongoDBUtils(migratorConfig);
+        mongoDBUtils.cleanMongoDatabase();
     }
 
     @Test
