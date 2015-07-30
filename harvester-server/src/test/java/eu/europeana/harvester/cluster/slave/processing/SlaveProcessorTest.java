@@ -502,6 +502,6 @@ public class SlaveProcessorTest {
         assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getMetaExtractionState());
         assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getColorExtractionState());
         assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getThumbnailGenerationState());
-        assertEquals(ProcessingJobSubTaskState.SUCCESS, tuple.getProcessingJobSubTaskStats().getThumbnailStorageState());
+        assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getThumbnailStorageState());
     }
 }
