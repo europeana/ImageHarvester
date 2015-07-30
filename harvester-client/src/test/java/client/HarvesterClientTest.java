@@ -224,7 +224,6 @@ public class HarvesterClientTest {
                                                            "",
                                                            null,
                                                            "",
-                                                           null,
                                                            null
                                                          );
 

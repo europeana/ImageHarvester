@@ -64,23 +64,6 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
         }
     }
 
-
-    private ProcessingJobSubTaskStats computeStats (final DoneProcessing msg) {
-       return msg.getProcessingStats();
-    }
-
-    private ProcessingStatus computeStatus (final ProcessingJobSubTaskStats stats) {
-        if (ProcessingJobSubTaskState.SUCCESS != stats.getColorExtractionState() ||
-            ProcessingJobSubTaskState.SUCCESS != stats.getMetaExtractionState() ||
-            ProcessingJobSubTaskState.SUCCESS != stats.getRetrieveState() ||
-            ProcessingJobSubTaskState.SUCCESS != stats.getThumbnailGenerationState() ||
-            ProcessingJobSubTaskState.SUCCESS != stats.getThumbnailStorageState()) {
-            return ProcessingStatus.Failure;
-        }
-        return ProcessingStatus.Success;
-    }
-
-
     /**
      * Marks task as done and save it's statistics in the DB.
      * If one job has finished all his tasks then the job also will be marked as done(FINISHED).
@@ -115,7 +98,6 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                         msg.getSourceIp(),
                         msg.getHttpResponseHeaders(),
                         msg.getLog(),
-                        computeStatus(subTaskStats),
                         subTaskStats
                 );
 
@@ -138,7 +120,6 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                                                        msg.getSocketConnectToDownloadStartDurationInMilliSecs(), msg.getRetrievalDurationInMilliSecs(),
                                                        msg.getCheckingDurationInMilliSecs(), msg.getSourceIp(), msg.getHttpResponseHeaders(),
                                                        msg.getLog(),
-                                                       computeStatus(subTaskStats),
                                                        subTaskStats
                                                       );
         }
@@ -149,7 +130,6 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                                 msg.getSocketConnectToDownloadStartDurationInMilliSecs(),
                                 msg.getRetrievalDurationInMilliSecs(), msg.getCheckingDurationInMilliSecs(),
                                 msg.getHttpResponseHeaders(), msg.getLog(),
-                                computeStatus(subTaskStats),
                                 subTaskStats
                                );
 

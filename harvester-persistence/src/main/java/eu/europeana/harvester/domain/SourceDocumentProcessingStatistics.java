@@ -112,8 +112,6 @@ public class SourceDocumentProcessingStatistics {
      */
     private final ProcessingJobSubTaskStats processingJobSubTaskStats;
 
-    private final ProcessingStatus taskStatus;
-
     public SourceDocumentProcessingStatistics() {
         this.id = null;
         this.createdAt = null;
@@ -135,7 +133,6 @@ public class SourceDocumentProcessingStatistics {
         this.httpResponseHeaders = null;
         this.log = null;
         this.processingJobSubTaskStats = null;
-        this.taskStatus = null;
     }
 
     public SourceDocumentProcessingStatistics(final Date createdAt, final Date updatedAt,
@@ -150,7 +147,6 @@ public class SourceDocumentProcessingStatistics {
                                               final Long checkingDurationInMilliSecs,
                                               final String sourceIp, final Map<String, String> httpResponseHeaders,
                                               final String log,
-                                              final ProcessingStatus taskStatus,
                                               final ProcessingJobSubTaskStats processingJobSubTaskStats) {
         this.active = active;
         this.taskType = taskType;
@@ -171,7 +167,6 @@ public class SourceDocumentProcessingStatistics {
         this.sourceIp = sourceIp;
         this.httpResponseHeaders = httpResponseHeaders;
         this.log = log;
-        this.taskStatus = taskStatus;
         this.processingJobSubTaskStats = processingJobSubTaskStats;
 
     }
@@ -188,7 +183,6 @@ public class SourceDocumentProcessingStatistics {
                                               final Long checkingDurationInMilliSecs,
                                               final String sourceIp, final Map<String, String> httpResponseHeaders,
                                               final String log,
-                                              final ProcessingStatus taskStatus,
                                               final ProcessingJobSubTaskStats processingJobSubTaskStats) {
         this.id = id;
         this.createdAt = createdAt;
@@ -209,7 +203,6 @@ public class SourceDocumentProcessingStatistics {
         this.sourceIp = sourceIp;
         this.httpResponseHeaders = httpResponseHeaders;
         this.log = log;
-        this.taskStatus = taskStatus;
         this.processingJobSubTaskStats = processingJobSubTaskStats;
 
     }
@@ -298,57 +291,32 @@ public class SourceDocumentProcessingStatistics {
                                                          final Long checkingDurationInMilliSecs,
                                                          final Map<String, String> httpResponseHeaders,
                                                          final String log,
-                                                         final ProcessingStatus taskStatus,
                                                          final ProcessingJobSubTaskStats processingJobSubTaskStats) {
         return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), this.active, this.taskType,
                 state, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId, jobId, responseCode,
                 this.httpResponseContentType, size, socketConnectToDownloadStartDurationInMilliSecs,
                 retrievalDurationInMilliSecs, checkingDurationInMilliSecs, this.sourceIp, httpResponseHeaders, log,
-                                                      taskStatus,
                                                       processingJobSubTaskStats);
     }
 
-    public SourceDocumentProcessingStatistics withState(final ProcessingState state) {
+    public SourceDocumentProcessingStatistics withState(final ProcessingState newState) {
         return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), this.active, this.taskType,
-                state, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId, this.processingJobId,
+                newState, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId, this.processingJobId,
                 this.httpResponseCode, this.httpResponseContentType, this.httpResponseContentSizeInBytes,
                 this.socketConnectToDownloadStartDurationInMilliSecs, this.retrievalDurationInMilliSecs,
-                this.checkingDurationInMilliSecs, this.sourceIp, this.httpResponseHeaders, this.log, this.taskStatus, this.processingJobSubTaskStats);
+                this.checkingDurationInMilliSecs, this.sourceIp, this.httpResponseHeaders, this.log, this.processingJobSubTaskStats);
     }
 
-    public SourceDocumentProcessingStatistics withActive(final Boolean active) {
-        return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), active, this.taskType,
+    public SourceDocumentProcessingStatistics withActive(final Boolean newActive) {
+        return new SourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), newActive, this.taskType,
                 this.state, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId,
                 this.processingJobId, this.httpResponseCode, this.httpResponseContentType,
                 this.httpResponseContentSizeInBytes, this.socketConnectToDownloadStartDurationInMilliSecs,
                 this.retrievalDurationInMilliSecs, this.checkingDurationInMilliSecs, this.sourceIp,
-                this.httpResponseHeaders, this.log, this.taskStatus, this.processingJobSubTaskStats);
+                this.httpResponseHeaders, this.log, this.processingJobSubTaskStats);
     }
 
-    public SourceDocumentProcessingStatistics withProcessingStatus (ProcessingStatus taskStatus) {
-        return new SourceDocumentProcessingStatistics(this.id,
-                                                      this.createdAt,
-                                                      new Date(),
-                                                      this.active,
-                                                      this.taskType,
-                                                      state,
-                                                      this.referenceOwner,
-                                                      this.urlSourceType,
-                                                      this.sourceDocumentReferenceId,
-                                                      this.processingJobId,
-                                                      this.httpResponseCode, this.httpResponseContentType,
-                                                      this.httpResponseContentSizeInBytes,
-                                                      this.socketConnectToDownloadStartDurationInMilliSecs,
-                                                      this.retrievalDurationInMilliSecs,
-                                                      this.checkingDurationInMilliSecs,
-                                                      this.sourceIp,
-                                                      this.httpResponseHeaders,
-                                                      this.log,
-                                                      taskStatus,
-                                                      this.processingJobSubTaskStats);
-    }
-
-    public SourceDocumentProcessingStatistics withProcessingJobSubTaskStats (ProcessingJobSubTaskStats subTaskStats) {
+    public SourceDocumentProcessingStatistics withProcessingJobSubTaskStats (ProcessingJobSubTaskStats newSubTaskStats) {
         return new SourceDocumentProcessingStatistics(this.id,
                                                       this.createdAt,
                                                       new Date(),
@@ -367,8 +335,7 @@ public class SourceDocumentProcessingStatistics {
                                                       this.sourceIp,
                                                       this.httpResponseHeaders,
                                                       this.log,
-                                                      this.taskStatus,
-                                                      subTaskStats
+                                                        newSubTaskStats
                                                      );
     }
 }
