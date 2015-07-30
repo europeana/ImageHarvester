@@ -39,6 +39,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 public class RetrieveAndProcessActorTest {
@@ -370,6 +371,72 @@ public class RetrieveAndProcessActorTest {
 
 
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getThumbnailStorageState());
+        }};
+    }
+
+    @Test
+    public void test_ConditionalDownload_TaskError() throws Exception {
+        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
+        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
+        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
+        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
+
+        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
+                colorExtractionSubTask,
+                metaInfoExtractionSubTask,
+                mediumThumbnailExtractionSubTask,
+                largeThumbnailExtractionSubTask
+        );
+
+        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
+        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
+        ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
+        MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+
+        doThrow(new Exception("ana are mere")).when(mediaMetaInfoExtractorFail).extract(anyString());
+        doThrow(new IOException("")).when(colorExtractorFail).colorExtraction(anyString());
+        doThrow(new Exception("bere")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+                anyString(),
+                any(new byte[]{}.getClass()),
+                anyString());
+
+        final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
+                mediaMetaInfoExtractorFail,
+                thumbnailGeneratorFail,
+                colorExtractorFail,
+                mediaStorageClientFail
+        )  ;
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),
+                    httpRetrieveResponseFactory,
+                    slaveProcessorFail);
+
+            subject.tell(taskWithConfig, getRef());
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getMetaExtractionState());
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getThumbnailGenerationState());
@@ -517,6 +584,72 @@ public class RetrieveAndProcessActorTest {
         doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
         doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
         doReturn(null).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+                anyString(),
+                any(new byte[]{}.getClass()),
+                anyString());
+
+        final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
+                mediaMetaInfoExtractorFail,
+                thumbnailGeneratorFail,
+                colorExtractorFail,
+                mediaStorageClientFail
+        )  ;
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),
+                    httpRetrieveResponseFactory,
+                    slaveProcessorFail);
+
+            subject.tell(taskWithConfig, getRef());
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getThumbnailStorageState());
+        }};
+    }
+
+    @Test
+    public void test_UnconditionalDownload_TaskError() throws Exception {
+        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
+        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
+        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
+        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
+
+        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
+                colorExtractionSubTask,
+                metaInfoExtractionSubTask,
+                mediumThumbnailExtractionSubTask,
+                largeThumbnailExtractionSubTask
+        );
+
+        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
+        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
+        ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
+        MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+
+        doThrow(new Exception("ana are mere")).when(mediaMetaInfoExtractorFail).extract(anyString());
+        doThrow(new IOException("")).when(colorExtractorFail).colorExtraction(anyString());
+        doThrow(new Exception("bere")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
