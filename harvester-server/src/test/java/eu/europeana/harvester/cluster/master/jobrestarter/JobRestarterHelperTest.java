@@ -20,6 +20,7 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -173,6 +174,9 @@ public class JobRestarterHelperTest {
 
                 assertTrue(profile.getToBeEvaluatedAt().before(newProfile.getToBeEvaluatedAt()));
 
+                assertNotNull (newProfile);
+                assertNotNull (newProfile.getToBeEvaluatedAt());
+                assertNotNull (newProfile.getToBeEvaluatedAt().getTime());
                 assertTrue (newProfile.getToBeEvaluatedAt().getTime() >= timestamp);
                 assertTrue (newProfile.getToBeEvaluatedAt().getTime() <= (timestamp + 200));
             }
