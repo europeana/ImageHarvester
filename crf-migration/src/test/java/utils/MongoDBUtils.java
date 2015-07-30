@@ -49,6 +49,10 @@ public class MongoDBUtils {
                                                   migratorConfig.getSourceMongoConfig().getUsername(),
                                                   migratorConfig.getSourceMongoConfig().getPassword());
 
+            for (String name: sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getDbName()).getCollectionNames()) {
+                sourceMongo.getDB(migratorConfig.getTargetMongoConfig().getDbName())
+                           .getCollection(name).drop();
+            }
             sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getDbName()).getCollection("record").drop();
             sourceMongo.getDB(migratorConfig.getSourceMongoConfig().getDbName()).getCollection("Aggregation").drop();
 
@@ -58,8 +62,12 @@ public class MongoDBUtils {
                                                   migratorConfig.getTargetMongoConfig().getPassword()
                                                  );
 
-            targetMongo.getDB(migratorConfig.getTargetMongoConfig().getDbName()).getCollection("ProcessingJob").drop();
-            targetMongo.getDB(migratorConfig.getTargetMongoConfig().getDbName()).getCollection("SourceDocumentReference").drop();
+            for (String name: targetMongo.getDB(migratorConfig.getTargetMongoConfig().getDbName()).getCollectionNames()) {
+                targetMongo.getDB(migratorConfig.getTargetMongoConfig().getDbName())
+                           .getCollection(name).drop();
+            }
+
+
 
         } catch (Exception e) {
             fail("Clean Mongo Database has failed with Exception: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
