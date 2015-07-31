@@ -11,6 +11,7 @@
       "collectionId" : "92004_Ag_EU_TEL_a0588_TEL_NKP_manuscriptorium",
       "recordId" : "/09003/57E1D4306174DDEF7C997B98CDF9B68439062788"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "sourceDocumentReferenceId" : "75a47a2953516381bd9d4d1220bdcfc3",
     "processingJobId" : "7b75ebc2-4ca2-4b6c-b0ba-9cae91de6b98",
     "httpResponseCode" : 200,
@@ -53,6 +54,7 @@
       "collectionId" : "92004_Ag_EU_TEL_a0588_TEL_NKP_manuscriptorium",
       "recordId" : "/09003/C14CC2D77FA15D60B24D24C4CA842F38E8E9ADF1"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "sourceDocumentReferenceId" : "903b31943b4e66f5578539bfa60f2b82",
     "processingJobId" : "cbf99521-ddc4-44cd-8768-aa4e46ba3da0",
     "httpResponseCode" : 200,
@@ -95,6 +97,7 @@
       "collectionId" : "92004_Ag_EU_TEL_a0588_TEL_NKP_manuscriptorium",
       "recordId" : "/09003/E0983F1AE15CF13D4D6474730E70A9FAAE63BC36"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "sourceDocumentReferenceId" : "902b31943b4e66f5578539bfa60f2b82",
     "processingJobId" : "cbf99521-ddc4-44cd-8768-aa4e46ba3da0",
     "httpResponseCode" : 200,
@@ -199,6 +202,7 @@
       "Cache-Control" : "public, max-age=15552000",
       "Pragma" : "no-cache"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "processingJobSubTaskStats" : {
       "retrieveState" : "SUCCESS",
       "colorExtractionState" : "SUCCESS",

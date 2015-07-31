@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,10 +58,12 @@ public class PublisherManagerTests {
             });
             f.get(5, TimeUnit.SECONDS);
 
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
             fail("Failed to execute: " + e.getMessage());
         } catch (TimeoutException e) {
-           System.out.println("Future timed out");
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
     }
 

@@ -11,6 +11,7 @@
       "collectionId" : "92004_Ag_EU_TEL_a0588_TEL_NKP_manuscriptorium",
       "recordId" : "/92004/BibliographicResource_2000059214900"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "sourceDocumentReferenceId" : "75a47a2953516381bd9d4d1220bdcfc3",
     "processingJobId" : "7b75ebc2-4ca2-4b6c-b0ba-9cae91de6b98",
     "httpResponseCode" : 200,
@@ -53,6 +54,7 @@
       "collectionId" : "92004_Ag_EU_TEL_a0588_TEL_NKP_manuscriptorium",
       "recordId" : "/93004/BibliographicResource_2000059204353"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "sourceDocumentReferenceId" : "903b31943b4e66f5578539bfa60f2b82",
     "processingJobId" : "cbf99521-ddc4-44cd-8768-aa4e46ba3da0",
     "httpResponseCode" : 200,
@@ -116,6 +118,7 @@
       "Cache-Control" : "no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
       "Pragma" : "no-cache"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "processingJobSubTaskStats" : {
       "retrieveState" : "SUCCESS",
       "colorExtractionState" : "SUCCESS",
@@ -161,7 +164,7 @@
       "metaExtractionState" : "NEVER_EXECUTED",
       "thumbnailGenerationState" : "SUCCESS",
       "thumbnailStorageState" : "SUCCESS"
-    }
+    },
     "log" : ""
   },
 
@@ -177,6 +180,7 @@
       "collectionId" : "2023831_AG-EU_LinkedHeritage_Rybinsk",
       "recordId" : "/2023831/kng_item_item_jsf_id_105436"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "sourceDocumentReferenceId" : "cc6103bee8aa27bfa11b851a2377a015",
     "processingJobId" : "5c1e6aaf-7663-4863-8733-c9e7f807acae",
     "httpResponseCode" : 200,
