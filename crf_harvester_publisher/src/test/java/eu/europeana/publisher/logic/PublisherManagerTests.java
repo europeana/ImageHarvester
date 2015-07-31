@@ -5,7 +5,6 @@ import com.mongodb.*;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.crf_faketags.extractor.MediaTypeEncoding;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.junit.Before;
 import utilities.inverseLogic.CommonPropertyExtractor;
 import utilities.inverseLogic.ImagePropertyExtractor;
 import utilities.inverseLogic.SoundPropertyExtractor;
@@ -19,7 +18,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,7 +37,7 @@ public class PublisherManagerTests {
 
     @After
     public void tearDown() {
-   //   cleanMongoDatabase(publisherConfig);
+      cleanMongoDatabase(publisherConfig);
       cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
     }
 
