@@ -46,8 +46,8 @@ public class PublisherEuropeanaDaoTest {
         europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json",
-                      "SourceDocumentReferenceMetaInfo");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
     }
 
     @After

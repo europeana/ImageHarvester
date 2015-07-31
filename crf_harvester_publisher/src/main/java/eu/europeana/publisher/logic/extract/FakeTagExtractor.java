@@ -81,7 +81,8 @@ public class FakeTagExtractor {
                     final ImageMetaInfo imageMetaInfo = metaInfo.getImageMetaInfo();
                     filterTags = ImageTagExtractor.getFilterTags(imageMetaInfo);
                     facetTags = ImageTagExtractor.getFacetTags(imageMetaInfo);
-                    hasThumbnails = isImageWithThumbnail(imageMetaInfo);
+                    hasThumbnails = ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailGenerationState() &&
+                                    ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailStorageState();
 
                     if (hasThumbnails) {
                         hasMedia = false;
@@ -107,13 +108,15 @@ public class FakeTagExtractor {
                     break;
             }
 
-            final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(document.getReferenceOwner().getRecordId(),
+            final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(
+                    document.getReferenceOwner().getRecordId(),
                     isFulltext,
                     hasThumbnails,
                     hasMedia,
                     filterTags,
-                    facetTags
-            );
+                    facetTags,
+                    document.getUrlSourceType(),
+                    document.getUrl());
 
 
             if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith(SkippedRecords.id)) {
@@ -124,40 +127,5 @@ public class FakeTagExtractor {
             }
         }
         return solrDocuments;
-    }
-
-    /**
-     * Checks if there were generated any thumbnail for this image
-     *
-     * @param imageMetaInfo the metainfo object
-     * @return true if there is a thumbnail
-     */
-    private static boolean isImageWithThumbnail(ImageMetaInfo imageMetaInfo) {
-        if (imageMetaInfo.getColorSpace() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getFileFormat() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getFileSize() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getHeight() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getWidth() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getMimeType() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getOrientation() != null) {
-            return false;
-        }
-        if (imageMetaInfo.getColorPalette() == null || imageMetaInfo.getColorPalette().length == 0) {
-            return false;
-        }
-
-        return true;
     }
 }

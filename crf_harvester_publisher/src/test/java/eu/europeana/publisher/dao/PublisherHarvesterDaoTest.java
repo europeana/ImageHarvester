@@ -1,9 +1,12 @@
 package eu.europeana.publisher.dao;
 
 import com.google.code.morphia.Morphia;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
 import com.mongodb.DBCursor;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
+import eu.europeana.harvester.domain.URLSourceType;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
@@ -46,6 +49,8 @@ public class PublisherHarvesterDaoTest {
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
@@ -75,7 +80,7 @@ public class PublisherHarvesterDaoTest {
 
     @After
     public void tearDown() {
-        DButils.cleanMongoDatabase(publisherConfig);
+       DButils.cleanMongoDatabase(publisherConfig);
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -98,6 +103,7 @@ public class PublisherHarvesterDaoTest {
     @Test
     public void test_Write_OneElement () {
         harvesterDao.writeMetaInfos(harvesterDocuments.subList(0, 1));
+        final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
 
         int idx = 0;
         for (final HarvesterDocument document: harvesterDocuments.subList(0, 1)) {
@@ -106,12 +112,18 @@ public class PublisherHarvesterDaoTest {
             final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
 
             ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
+
+            if (document.getUrlSourceType() == URLSourceType.ISSHOWNBY) {
+               final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
+               assertEquals(document.getUrl(), edmObject);
+            }
         }
     }
 
     @Test
     public void test_Write_TwoElements () {
         harvesterDao.writeMetaInfos(harvesterDocuments.subList(0, 2));
+        final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
 
         int idx = 0;
         for (final HarvesterDocument document: harvesterDocuments.subList(0, 2)) {
@@ -120,12 +132,18 @@ public class PublisherHarvesterDaoTest {
             final WebResourceMetaInfo correctMetaInfo =correctMetaInfos.get(idx++);
 
             ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
+
+            if (document.getUrlSourceType() == URLSourceType.ISSHOWNBY) {
+                final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
+                assertEquals(document.getUrl(), edmObject);
+            }
         }
     }
 
     @Test
     public void test_Write_AllElements () {
         harvesterDao.writeMetaInfos(harvesterDocuments);
+        final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
 
         int idx = 0;
         for (final HarvesterDocument document: harvesterDocuments) {
@@ -135,6 +153,11 @@ public class PublisherHarvesterDaoTest {
 
             ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
 
+            if (document.getUrlSourceType() == URLSourceType.ISSHOWNBY) {
+                System.out.println(document.getReferenceOwner().getRecordId());
+                final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
+                assertEquals(document.getUrl(), edmObject);
+            }
         }
     }
 }

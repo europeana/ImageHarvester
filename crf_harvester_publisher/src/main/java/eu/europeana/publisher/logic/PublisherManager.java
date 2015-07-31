@@ -181,7 +181,7 @@ public class PublisherManager {
             }
             else {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
-                          "There was a problem with writing this batch to solr. No metaerror was written to mongo. Maybe documents where empty ?");
+                          "There was a problem with writing this batch to solr. No meta info was written to mongo. Maybe documents where empty ?");
             }
         }
 

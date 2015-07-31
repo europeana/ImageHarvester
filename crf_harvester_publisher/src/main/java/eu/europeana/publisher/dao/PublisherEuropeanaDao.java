@@ -5,14 +5,14 @@ import com.google.code.morphia.Morphia;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCursor;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
+import eu.europeana.harvester.db.mongo.SourceDocumentReferenceDaoImpl;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
-import eu.europeana.harvester.domain.MongoConfig;
-import eu.europeana.harvester.domain.ProcessingState;
-import eu.europeana.harvester.domain.ReferenceOwner;
-import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.logic.PublisherMetrics;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +25,10 @@ import com.codahale.metrics.Timer.Context;
  * Created by salexandru on 03.06.2015.
  */
 public class PublisherEuropeanaDao {
-    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
-
     private DB mongoDB;
 
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
+    private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
 
     public PublisherEuropeanaDao (MongoConfig mongoConfig) throws UnknownHostException {
 
@@ -41,6 +40,7 @@ public class PublisherEuropeanaDao {
 
         final Datastore dataStore = new Morphia().createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
+        sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(dataStore);
     }
 
     public List<HarvesterDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final int batchSize) {
@@ -85,10 +85,26 @@ public class PublisherEuropeanaDao {
                 final String recordId = referenceOwnerTemp.getString("recordId");
                 final String executionId = referenceOwnerTemp.getString("executionId");
 
+                final BasicDBObject subTaskStatsTemp = (BasicDBObject) item.get("processingJobSubTaskStats");
+
+                final ProcessingJobSubTaskStats subTaskStats = new ProcessingJobSubTaskStats(
+                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("retrieveState")),
+                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("colorExtractionState")),
+                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("metaExtractionState")),
+                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("thumbnailGenerationState")),
+                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("thumbnailStorageState"))
+                );
+
+                final URLSourceType urlSourceType = URLSourceType.valueOf(item.getString("urlSourceType"));
+
                 documentStatistics.put(sourceDocumentReferenceId,
                                        new HarvesterDocument(sourceDocumentReferenceId, updatedAt,
-                                                             new ReferenceOwner(providerId, collectionId, recordId,
-                                                                                executionId), null));
+                                                             new ReferenceOwner(providerId, collectionId, recordId, executionId),
+                                                             null, subTaskStats,
+                                                             urlSourceType,
+                                                             readUrl(sourceDocumentReferenceId)
+                                                            )
+                                      );
             }
 
             return documentStatistics;
@@ -109,6 +125,17 @@ public class PublisherEuropeanaDao {
         finally {
             context.close();
         }
+    }
+
+    private String readUrl (final String sourceDocumentReferenceId) {
+        if (StringUtils.isBlank(sourceDocumentReferenceId)) return null;
+        final BasicDBObject findQuery = new BasicDBObject();
+        final BasicDBObject retrievedFields = new BasicDBObject();
+
+        findQuery.put("_id", sourceDocumentReferenceId);
+        retrievedFields.put("url", 1);
+        System.out.println(sourceDocumentReferenceId);
+        return (String)mongoDB.getCollection("SourceDocumentReference").findOne(findQuery, retrievedFields).get("url");
     }
 
     /**
@@ -139,6 +166,8 @@ public class PublisherEuropeanaDao {
 
         retrievedFields.put("sourceDocumentReferenceId", 1);
         retrievedFields.put("referenceOwner.recordId", 1);
+        retrievedFields.put("processingJobSubTaskStats", 1);
+        retrievedFields.put("urlSourceType", 1);
         retrievedFields.put("updatedAt", 1);
         retrievedFields.put("_id", 0);
 

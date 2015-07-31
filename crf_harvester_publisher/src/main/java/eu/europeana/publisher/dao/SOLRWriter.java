@@ -2,6 +2,7 @@ package eu.europeana.publisher.dao;
 
 import com.codahale.metrics.Timer;
 import eu.europeana.harvester.domain.ReferenceOwner;
+import eu.europeana.harvester.domain.URLSourceType;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
@@ -98,6 +99,10 @@ public class SOLRWriter {
 
                     update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
 
+                    if (updateEdmObjectUrl(CRFSolrDocument, publishingBatchId)) {
+                        update.addField("provider_aggregation_edm_object", CRFSolrDocument.getUrl());
+                    }
+
                     try {
                         server.add(update);
                         ++numberOfDocumentsToUpdate;
@@ -158,6 +163,16 @@ public class SOLRWriter {
         finally {
             context.close();
         }
+    }
+
+    private boolean updateEdmObjectUrl (CRFSolrDocument crfSolrDocument, String publishingBatchId) {
+        if (null == crfSolrDocument || null == crfSolrDocument.getUrlSourceType() || null == crfSolrDocument.getUrl()) {
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                       publishingBatchId, null, null),
+                      "Document with record Id : " + crfSolrDocument.getRecordId() + "has null url and/or urlSourceType");
+            return false;
+        }
+        return URLSourceType.ISSHOWNBY == crfSolrDocument.getUrlSourceType();
     }
 
     /**

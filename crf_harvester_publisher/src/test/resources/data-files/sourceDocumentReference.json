@@ -1,6 +1,5 @@
 [
   {
-    "_id" : "75a47a2953516381bd9d4d1220bdcfc3-7b75ebc2-4ca2-4b6c-b0ba-9cae91de6b98",
     "className" : "eu.europeana.harvester.domain.SourceDocumentProcessingStatistics",
     "createdAt" : "2015-03-09T06:48:30.235Z",
     "updatedAt" : "2015-03-09T06:48:30.235Z",
@@ -9,9 +8,10 @@
     "referenceOwner" : {
       "providerId" : "92004",
       "collectionId" : "92004_Ag_EU_TEL_a0588_TEL_NKP_manuscriptorium",
-      "recordId" : "/09003/57E1D4306174DDEF7C997B98CDF9B68439062788"
+      "recordId" : "/92004/BibliographicResource_2000059214900"
     },
-    "sourceDocumentReferenceId" : "75a47a2953516381bd9d4d1220bdcfc3",
+    "url": "http://www.google.com",
+    "_id" : "75a47a2953516381bd9d4d1220bdcfc3",
     "processingJobId" : "7b75ebc2-4ca2-4b6c-b0ba-9cae91de6b98",
     "httpResponseCode" : 200,
     "httpResponseContentType" : "text/html; charset=utf-8",
@@ -32,6 +32,7 @@
       "Cache-Control" : "no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
       "Pragma" : "no-cache"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "processingJobSubTaskStats" : {
       "retrieveState" : "SUCCESS",
       "colorExtractionState" : "SUCCESS",
@@ -42,7 +43,6 @@
     "log" : ""
   },
   {
-    "_id" : "902b31943b4e66f5578539bfa60f2b82-cbf99521-ddc4-44cd-8768-aa4e46ba3da0",
     "className" : "eu.europeana.harvester.domain.SourceDocumentProcessingStatistics",
     "createdAt" : "2015-03-08T06:47:50.174Z",
     "updatedAt" : "2015-03-08T06:47:50.174Z",
@@ -51,9 +51,9 @@
     "referenceOwner" : {
       "providerId" : "92004",
       "collectionId" : "92004_Ag_EU_TEL_a0588_TEL_NKP_manuscriptorium",
-      "recordId" : "/09003/C14CC2D77FA15D60B24D24C4CA842F38E8E9ADF1"
+      "recordId" : "/93004/BibliographicResource_2000059204353"
     },
-    "sourceDocumentReferenceId" : "903b31943b4e66f5578539bfa60f2b82",
+    "_id" : "903b31943b4e66f5578539bfa60f2b82",
     "processingJobId" : "cbf99521-ddc4-44cd-8768-aa4e46ba3da0",
     "httpResponseCode" : 200,
     "httpResponseContentType" : "text/html; charset=utf-8",
@@ -62,6 +62,7 @@
     "retrievalDurationInMilliSecs" : 110,
     "checkingDurationInMilliSecs" : 0,
     "sourceIp" : "193.85.211.98",
+    "url": "http://www.google.com",
     "httpResponseHeaders" : {
       "Date" : "Mon, 09 Mar 2015 06:21:03 GMT",
       "Content-Length" : "130107",
@@ -74,6 +75,7 @@
       "Cache-Control" : "no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
       "Pragma" : "no-cache"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "processingJobSubTaskStats" : {
       "retrieveState" : "SUCCESS",
       "colorExtractionState" : "SUCCESS",
@@ -84,7 +86,6 @@
     "log" : ""
   },
   {
-    "_id" : "902b31943b4e66f5578539bfa60f2b82-cbf99521-ddc4-44cd-8768-aa4e46ba3da0",
     "className" : "eu.europeana.harvester.domain.SourceDocumentProcessingStatistics",
     "createdAt" : "2015-03-09T06:47:50.174Z",
     "updatedAt" : "2015-03-09T06:47:50.174Z",
@@ -93,9 +94,10 @@
     "referenceOwner" : {
       "providerId" : "92004",
       "collectionId" : "92004_Ag_EU_TEL_a0588_TEL_NKP_manuscriptorium",
-      "recordId" : "/09003/E0983F1AE15CF13D4D6474730E70A9FAAE63BC36"
+      "recordId" : "/92004/BibliographicResource_2000059204353"
     },
-    "sourceDocumentReferenceId" : "902b31943b4e66f5578539bfa60f2b82",
+    "url": "http://www.google.com",
+    "_id" : "902b31943b4e66f5578539bfa60f2b82",
     "processingJobId" : "cbf99521-ddc4-44cd-8768-aa4e46ba3da0",
     "httpResponseCode" : 200,
     "httpResponseContentType" : "text/html; charset=utf-8",
@@ -116,6 +118,7 @@
       "Cache-Control" : "no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
       "Pragma" : "no-cache"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "processingJobSubTaskStats" : {
       "retrieveState" : "SUCCESS",
       "colorExtractionState" : "SUCCESS",
@@ -126,7 +129,6 @@
     "log" : ""
   },
   {
-    "_id" : "46787456ff68f404835064723a4d1cd9-0661cbac-127e-4a7a-8237-93998274d994",
     "className" : "eu.europeana.harvester.domain.SourceDocumentProcessingStatistics",
     "createdAt" : "2015-03-12T08:48:14.103Z",
     "updatedAt" : "2015-03-12T08:48:14.103Z",
@@ -136,10 +138,11 @@
     "referenceOwner" : {
       "providerId" : "09403",
       "collectionId" : "09403_Ag_AT_ELocal",
-      "recordId" : "/09003/F311AB06997F9D10F2F44BC5CC70052C567AF59E"
+      "recordId" : "/09403/deposit_d_nb_de_cgi_bin_dokserv_id_3624021_prov_M_dok_var_1_dok_ext_htm"
     },
+    "url": "http://www.google.com",
     "urlSourceType" : "ISSHOWNBY",
-    "sourceDocumentReferenceId" : "46787456ff68f404835064723a4d1cd9",
+    "_id" : "46787456ff68f404835064723a4d1cd9",
     "processingJobId" : "0661cbac-127e-4a7a-8237-93998274d994",
     "httpResponseCode" : 200,
     "httpResponseContentType" : "text/html;charset=UTF-8",
@@ -166,7 +169,6 @@
   },
 
   {
-    "_id" : "cc6103bee8aa27bfa11b851a2377a015-5c1e6aaf-7663-4863-8733-c9e7f807acae",
     "className" : "eu.europeana.harvester.domain.SourceDocumentProcessingStatistics",
     "createdAt" : "2015-03-21T07:57:35.315Z",
     "updatedAt" : "2015-03-21T07:57:35.315Z",
@@ -175,9 +177,10 @@
     "referenceOwner" : {
       "providerId" : "2023831",
       "collectionId" : "2023831_AG-EU_LinkedHeritage_Rybinsk",
-      "recordId" : "/09003/F4D6CF5DA47B4964FE936C7154D719D2A7174436"
+      "recordId" : "/2023831/kng_item_item_jsf_id_105436"
     },
-    "sourceDocumentReferenceId" : "cc6103bee8aa27bfa11b851a2377a015",
+    "url": "http://www.google.com",
+    "_id" : "cc6103bee8aa27bfa11b851a2377a015",
     "processingJobId" : "5c1e6aaf-7663-4863-8733-c9e7f807acae",
     "httpResponseCode" : 200,
     "httpResponseContentType" : "image/jpeg",
@@ -199,6 +202,7 @@
       "Cache-Control" : "public, max-age=15552000",
       "Pragma" : "no-cache"
     },
+    "urlSourceType" : "ISSHOWNBY",
     "processingJobSubTaskStats" : {
       "retrieveState" : "SUCCESS",
       "colorExtractionState" : "SUCCESS",
@@ -210,7 +214,6 @@
   },
 
   {
-    "_id" : "764fff8f4654274f9cff28280d7e0008-db9660f9-de05-4588-85d0-3f2668b6514c",
     "className" : "eu.europeana.harvester.domain.SourceDocumentProcessingStatistics",
     "createdAt" : "2015-03-21T20:46:17.919Z",
     "updatedAt" : "2015-03-21T20:46:17.919Z",
@@ -220,10 +223,11 @@
     "referenceOwner" : {
       "providerId" : "2023601",
       "collectionId" : "2023601_Ag_DE_DISMARC",
-      "recordId" : "/09003/CE725B9A2B9683A152E9002DFBB34CD8D02D063B"
+      "recordId" : "/2023601/oai_eu_dismarc_PRE_71728191126911959"
     },
+    "url": "http://www.google.com",
     "urlSourceType" : "ISSHOWNBY",
-    "sourceDocumentReferenceId" : "764fff8f4654274f9cff28280d7e0008",
+    "_id" : "764fff8f4654274f9cff28280d7e0008",
     "processingJobId" : "db9660f9-de05-4588-85d0-3f2668b6514c",
     "httpResponseCode" : 200,
     "httpResponseContentType" : "audio/mpeg, mp3",
@@ -255,7 +259,6 @@
     "log" : ""
   },
   {
-    "_id" : "2d74ba5b07344f9587b5c67693fcb3a5-6e5a1a9a-8ba5-4358-a42a-67a5e6e1b2a3",
     "className" : "eu.europeana.harvester.domain.SourceDocumentProcessingStatistics",
     "createdAt" : "2015-03-12T08:11:24.737Z",
     "updatedAt" : "2015-03-12T08:11:24.737Z",
@@ -265,10 +268,11 @@
     "referenceOwner" : {
       "providerId" : "2021601",
       "collectionId" : "2021601_Ag_NL_DNA_Open_Beelden",
-      "recordId" : "/09003/F56D65E32438EF5A93EA9F6B04F03E70A510DA46"
+      "recordId" : "/2021601/media_139792"
     },
+    "url": "http://www.google.com",
     "urlSourceType" : "ISSHOWNBY",
-    "sourceDocumentReferenceId" : "2d74ba5b07344f9587b5c67693fcb3a5",
+    "_id" : "2d74ba5b07344f9587b5c67693fcb3a5",
     "processingJobId" : "6e5a1a9a-8ba5-4358-a42a-67a5e6e1b2a3",
     "httpResponseCode" : 200,
     "httpResponseContentType" : "video/mpeg",

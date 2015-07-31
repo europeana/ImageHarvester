@@ -36,6 +36,7 @@ public class DButils {
 
             sourceMongo.getCollection("SourceDocumentProcessingStatistics").drop();
             sourceMongo.getCollection("SourceDocumentReferenceMetaInfo").drop();
+            sourceMongo.getCollection("SourceDocumentReference").drop();
 
             for (final DBTargetConfig targetConfig: config.getTargetDBConfig()) {
 
@@ -43,6 +44,7 @@ public class DButils {
 
                 targetMongo.getCollection("WebResourceMetaInfo").drop();
                 targetMongo.getCollection("WebResource").drop();
+                targetMongo.getCollection("Aggregation").drop();
             }
 
         } catch (Exception e) {

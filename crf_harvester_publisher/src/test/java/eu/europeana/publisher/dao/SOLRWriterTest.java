@@ -1,8 +1,8 @@
 package eu.europeana.publisher.dao;
 
 import com.mongodb.DBCursor;
-import eu.europeana.harvester.domain.ReferenceOwner;
-import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.domain.*;
+import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
@@ -51,9 +51,11 @@ public class SOLRWriterTest {
 
         DButils.loadSOLRData(DATA_PATH_PREFIX + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json",
-                "SourceDocumentProcessingStatistics");
+                      "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json",
                 "SourceDocumentReferenceMetaInfo");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
@@ -66,9 +68,19 @@ public class SOLRWriterTest {
             final ReferenceOwner referenceOwner = new ReferenceOwner(UUID.randomUUID().toString(),
                     UUID.randomUUID().toString(), UUID.randomUUID().toString());
 
+            ProcessingJobSubTaskStats subTaskStats = ProcessingJobSubTaskStats.withRetrievelSuccess()
+                                                                              .withColorExtractionState(ProcessingJobSubTaskState.SUCCESS)
+                                                                              .withMetaExtractionState(ProcessingJobSubTaskState.SUCCESS)
+                                                                              .withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS)
+                                                                              .withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
+
             harvesterDocuments.add(new HarvesterDocument(UUID.randomUUID().toString(), DateTime.now(),
-                            referenceOwner, new SourceDocumentReferenceMetaInfo("", null, null, null,
-                            null))
+                                                         referenceOwner,
+                                                         new SourceDocumentReferenceMetaInfo("", null, null, null, null),
+                                                         subTaskStats,
+                                                         0 == i % 2 ? URLSourceType.ISSHOWNBY: URLSourceType.ISSHOWNAT,
+                                                         "http://www.google.com"
+                                                        )
             );
         }
     }
@@ -76,7 +88,7 @@ public class SOLRWriterTest {
     @After
     public void tearDown() {
         DButils.cleanMongoDatabase(publisherConfig);
-        DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+    //    DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -106,7 +118,8 @@ public class SOLRWriterTest {
 
     @Test
     public void test_FilterDocuments_SomeAreInvalid() throws SolrServerException {
-        assertArrayEquals(validDocuments.toArray(), solrWriter.filterDocumentIds(harvesterDocuments, testBatchId).toArray());
+        assertArrayEquals(validDocuments.toArray(),
+                          solrWriter.filterDocumentIds(harvesterDocuments, testBatchId).toArray());
     }
 
     @Test
@@ -141,6 +154,34 @@ public class SOLRWriterTest {
 
         try {
             assertEquals(validDocuments.size(), solrServer.query(query).getResults().size());
+        } catch (SolrServerException e) {
+            fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
+        }
+    }
+
+    @Test
+    public void test_UpdateDocuments_UrlSourceBy() throws IOException {
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        final SolrQuery query = new SolrQuery();
+
+
+        solrWriter.updateDocuments(FakeTagExtractor.extractTags(validDocuments, testBatchId), testBatchId);
+
+
+        query.clear();
+        query.addField("provider_aggregation_edm_object");
+        query.addField("europeana_id");
+
+        try {
+
+            for (final HarvesterDocument document: validDocuments) {
+                query.setQuery("europeana_id:\"" + document.getReferenceOwner().getRecordId() + "\"");
+                if (URLSourceType.ISSHOWNBY == document.getUrlSourceType()) {
+                    assertEquals(Arrays.asList(document.getUrl()).toString(),
+                                 solrServer.query(query).getResults().get(0).get("provider_aggregation_edm_object").toString());
+                }
+            }
+
         } catch (SolrServerException e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
         }
@@ -230,10 +271,20 @@ public class SOLRWriterTest {
             final ReferenceOwner referenceOwner = new ReferenceOwner(UUID.randomUUID().toString(),
                     UUID.randomUUID().toString(), UUID.randomUUID().toString());
 
-            harvesterDocuments.add(new HarvesterDocument(UUID.randomUUID().toString(),
-                    DateTime.now(), referenceOwner,
-                    new SourceDocumentReferenceMetaInfo("", null, null, null,
-                            null)));
+            ProcessingJobSubTaskStats subTaskStats = ProcessingJobSubTaskStats.withRetrievelSuccess()
+                                                                              .withColorExtractionState(ProcessingJobSubTaskState.SUCCESS)
+                                                                              .withMetaExtractionState(ProcessingJobSubTaskState.SUCCESS)
+                                                                              .withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS)
+                                                                              .withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
+
+            harvesterDocuments.add(new HarvesterDocument(UUID.randomUUID().toString(), DateTime.now(),
+                                                         referenceOwner,
+                                                         new SourceDocumentReferenceMetaInfo("", null, null, null, null),
+                                                         subTaskStats,
+                                                         0 == i % 2 ? URLSourceType.ISSHOWNBY: URLSourceType.ISSHOWNAT,
+                                                         "http://www.google.com"
+                                   )
+                                  );
         }
     }
 }

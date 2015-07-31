@@ -1,5 +1,7 @@
 package eu.europeana.publisher.domain;
 
+import eu.europeana.harvester.domain.URLSourceType;
+
 import java.util.List;
 
 public class CRFSolrDocument {
@@ -34,14 +36,20 @@ public class CRFSolrDocument {
      */
     private final List<Integer> facetTags;
 
-    public CRFSolrDocument(final String recordId, final Boolean isFulltext, final Boolean hasThumbnails,
-                           final Boolean hasMedia, final List<Integer> filterTags, final List<Integer> facetTags) {
+    private final URLSourceType urlSourceType;
+    private final String url;
+
+    public CRFSolrDocument (final String recordId, final Boolean isFulltext, final Boolean hasThumbnails, final
+    Boolean hasMedia, final List<Integer> filterTags, final List<Integer> facetTags,
+                            URLSourceType urlSourceType, String url) {
         this.recordId = recordId;
         this.isFulltext = isFulltext;
         this.hasThumbnails = hasThumbnails;
         this.hasMedia = hasMedia;
         this.filterTags = filterTags;
         this.facetTags = facetTags;
+        this.urlSourceType = urlSourceType;
+        this.url = url;
     }
 
     public String getRecordId() {
@@ -68,4 +76,11 @@ public class CRFSolrDocument {
         return facetTags;
     }
 
+    public URLSourceType getUrlSourceType () {
+        return urlSourceType;
+    }
+
+    public String getUrl () {
+        return url;
+    }
 }

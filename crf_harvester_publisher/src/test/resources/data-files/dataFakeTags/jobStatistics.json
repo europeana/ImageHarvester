@@ -33,6 +33,13 @@
       "Cache-Control" : "public, max-age=15552000",
       "Pragma" : "no-cache"
     },
+    "processingJobSubTaskStats" : {
+      "retrieveState" : "SUCCESS",
+      "colorExtractionState" : "SUCCESS",
+      "metaExtractionState" : "NEVER_EXECUTED",
+      "thumbnailGenerationState" : "SUCCESS",
+      "thumbnailStorageState" : "SUCCESS"
+    },
     "log" : ""
   },
 
@@ -72,6 +79,13 @@
       "Cache-Control" : "no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
       "Pragma" : "no-cache"
     },
+    "processingJobSubTaskStats" : {
+      "retrieveState" : "SUCCESS",
+      "colorExtractionState" : "SUCCESS",
+      "metaExtractionState" : "NEVER_EXECUTED",
+      "thumbnailGenerationState" : "SUCCESS",
+      "thumbnailStorageState" : "SUCCESS"
+    },
     "log" : ""
   },
   {
@@ -107,6 +121,13 @@
       "Connection" : "close",
       "Accept-Ranges" : "bytes",
       "Server" : "Apache/2222 (Debian)"
+    },
+    "processingJobSubTaskStats" : {
+      "retrieveState" : "SUCCESS",
+      "colorExtractionState" : "SUCCESS",
+      "metaExtractionState" : "NEVER_EXECUTED",
+      "thumbnailGenerationState" : "SUCCESS",
+      "thumbnailStorageState" : "SUCCESS"
     },
     "log" : ""
   }

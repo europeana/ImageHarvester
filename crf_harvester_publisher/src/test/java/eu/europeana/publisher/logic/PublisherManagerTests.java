@@ -5,6 +5,7 @@ import com.mongodb.*;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.crf_faketags.extractor.MediaTypeEncoding;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.junit.Before;
 import utilities.inverseLogic.CommonPropertyExtractor;
 import utilities.inverseLogic.ImagePropertyExtractor;
 import utilities.inverseLogic.SoundPropertyExtractor;
@@ -32,6 +33,8 @@ import static utilities.ConfigUtils.*;
 @Category(IntegrationTest.class)
 public class PublisherManagerTests {
     private PublisherConfig publisherConfig;
+
+    private static final String DATA_PATH_PREFIX = "./src/test/resources/data-files/";
 
     @After
     public void tearDown() {
@@ -69,6 +72,8 @@ public class PublisherManagerTests {
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json",
                       "SourceDocumentReferenceMetaInfo");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
         loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
 
         runPublisher(publisherConfig);
@@ -111,7 +116,10 @@ public class PublisherManagerTests {
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData (pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(),
+                      DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
         runPublisher(publisherConfig);
         final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
@@ -161,7 +169,10 @@ public class PublisherManagerTests {
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData (pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(),
+                      DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
         runPublisher(publisherConfig);
         final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
@@ -203,6 +214,9 @@ public class PublisherManagerTests {
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json",
                       "SourceDocumentReferenceMetaInfo");
         loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(),
+                      DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
         runPublisher(publisherConfig);
         final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
@@ -251,7 +265,10 @@ public class PublisherManagerTests {
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData (pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(),
+                      DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
         runPublisher(publisherConfig);
 
