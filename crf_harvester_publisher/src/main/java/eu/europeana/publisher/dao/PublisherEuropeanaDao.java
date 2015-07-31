@@ -135,8 +135,7 @@ public class PublisherEuropeanaDao {
 
         findQuery.put("_id", sourceDocumentReferenceId);
         retrievedFields.put("url", 1);
-        System.out.println(sourceDocumentReferenceId);
-        return (String)mongoDB.getCollection("SourceDocumentReference").findOne(findQuery, retrievedFields).get("url");
+        return (String)mongoDB.getCollection("SourceDocumentReference").findOne(findQuery).get("url");
     }
 
     /**
