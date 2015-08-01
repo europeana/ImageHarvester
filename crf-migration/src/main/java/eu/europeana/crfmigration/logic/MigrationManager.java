@@ -63,6 +63,9 @@ public class MigrationManager {
             try {
                 final Timer.Context processedRecordsDurationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsDuration.time();
                 try {
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                            "Started retrieving records batch with expected {} records.",batch);
+
                     recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, migratingBatchId);
                     if (recordsRetrievedInBatch != null) numberOfRecordsRetrievedInBatch = recordsRetrievedInBatch.size();
                     maximalUpdatedTimestampInRecords = EuropeanaRecord.maximalTimestampUpdated(recordsRetrievedInBatch.values());
