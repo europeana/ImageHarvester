@@ -125,7 +125,14 @@ public class MigrationManager {
 
         //save jobs
         try {
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+                    "Started saving {} tuples from batch record.",processingJobTuples.size());
+
             migratorHarvesterDao.saveProcessingJobTuples(processingJobTuples, migratingBatchId);
+
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+                    "Finished saving {} tuples from batch record.",processingJobTuples.size());
+
         }
         finally {
            processedJobTuples.stop();
