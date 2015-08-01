@@ -42,7 +42,7 @@ public class MigratorHarvesterDao {
             }
         }
 
-        harvesterClient = new HarvesterClientImpl(datastore.getDatastore(), new HarvesterClientConfig(WriteConcern.SAFE));
+        harvesterClient = new HarvesterClientImpl(datastore.getDatastore(), new HarvesterClientConfig(WriteConcern.UNACKNOWLEDGED));
 
     }
 
