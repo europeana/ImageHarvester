@@ -68,6 +68,9 @@ public class MigrationManager {
                     maximalUpdatedTimestampInRecords = EuropeanaRecord.maximalTimestampUpdated(recordsRetrievedInBatch.values());
                     if (recordsRetrievedInBatch.isEmpty()) hasMoreRecords = false;
 
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                            "Finished retrieving records batch of {} records.",numberOfRecordsRetrievedInBatch);
+
                 } finally {
                     processedRecordsDurationTimerContext.stop();
                 }
