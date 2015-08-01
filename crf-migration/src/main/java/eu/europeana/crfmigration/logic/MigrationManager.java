@@ -111,6 +111,8 @@ public class MigrationManager {
         final Timer.Context processedEDMToJobTuplesConversion = MigrationMetrics.Migrator.Batch.processedEDMToJobTuplesConversionDuration.time();
 
         final List<ProcessingJobTuple> processingJobTuples = convertEDMObjectToJobs(edmObjectsOfRecords,migratingBatchId);
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+                "Finished generating {} tuples from batch record.",processingJobTuples.size());
 
         processedEDMToJobTuplesConversion.stop();
 
