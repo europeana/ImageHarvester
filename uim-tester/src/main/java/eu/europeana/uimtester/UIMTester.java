@@ -103,13 +103,7 @@ public class UIMTester {
 
         final Datastore dataStore = new Morphia().createDatastore(mongo, uimTesterConfig.getMongoDBName(),uimTesterConfig.getMongoDBUserName(),uimTesterConfig.getMongoDBPassword().toCharArray());
         final HarvesterClient harvesterClient =
-                new HarvesterClientImpl(new ProcessingJobDaoImpl(dataStore),
-                                        new MachineResourceReferenceDaoImpl(dataStore),
-                                        new SourceDocumentProcessingStatisticsDaoImpl(dataStore),
-                                        new LastSourceDocumentProcessingStatisticsDaoImpl(dataStore),
-                                        new SourceDocumentReferenceDaoImpl(dataStore),
-                                        new SourceDocumentReferenceMetaInfoDaoImpl(dataStore),
-                                        new SourceDocumentReferenceProcessingProfileDaoImpl(dataStore),
+                new HarvesterClientImpl(dataStore,
                                         new HarvesterClientConfig(uimTesterConfig.getWriteConcern())
                                        );
 

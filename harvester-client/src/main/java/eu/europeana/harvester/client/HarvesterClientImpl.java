@@ -32,6 +32,12 @@ public class HarvesterClientImpl implements HarvesterClient {
      */
     private final ProcessingJobDao processingJobDao;
 
+
+    /**
+     * DAO for CRUD with processing_job collection
+     */
+    private final HistoricalProcessingJobDao historicalProcessingJobDao;
+
     /**
      * DAO for CRUD with machine_resource_reference collection
      */
@@ -66,6 +72,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     public HarvesterClientImpl(final Datastore datastore, final HarvesterClientConfig harvesterClientConfig) {
         this(new ProcessingJobDaoImpl(datastore),
+                new HistoricalProcessingJobDaoImpl(datastore),
                 new MachineResourceReferenceDaoImpl(datastore),
                 new SourceDocumentProcessingStatisticsDaoImpl(datastore),
                 new LastSourceDocumentProcessingStatisticsDaoImpl(datastore),
@@ -75,7 +82,7 @@ public class HarvesterClientImpl implements HarvesterClient {
              harvesterClientConfig);
     }
 
-    public HarvesterClientImpl (ProcessingJobDao processingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
+    public HarvesterClientImpl (ProcessingJobDao processingJobDao,HistoricalProcessingJobDao historicalProcessingJobDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                 SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                 LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao,
                                 SourceDocumentReferenceDao SourceDocumentReferenceDao,
@@ -84,6 +91,7 @@ public class HarvesterClientImpl implements HarvesterClient {
                                 HarvesterClientConfig harvesterClientConfig) {
 
         this.processingJobDao = processingJobDao;
+        this.historicalProcessingJobDao = historicalProcessingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.lastSourceDocumentProcessingStatisticsDao = lastSourceDocumentProcessingStatisticsDao;

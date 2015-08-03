@@ -57,15 +57,7 @@ public class HarvesterClientTest {
         processingJobDao = new ProcessingJobDaoImpl(datastore);
         sourceDocumentReferenceProcessingProfileDao = new SourceDocumentReferenceProcessingProfileDaoImpl(datastore);
 
-        harvesterClient = new HarvesterClientImpl(processingJobDao,
-                                                  machineResourceReferenceDao,
-                                                  sourceDocumentProcessingStatisticsDao,
-                                                  lastSourceDocumentProcessingStatisticsDao,
-                                                  sourceDocumentReferenceDao,
-                                                  sourceDocumentReferenceMetaInfoDao,
-                                                  sourceDocumentReferenceProcessingProfileDao,
-                                                  new HarvesterClientConfig(WriteConcern.ACKNOWLEDGED)
-        );
+        harvesterClient = new HarvesterClientImpl(datastore,new HarvesterClientConfig(WriteConcern.ACKNOWLEDGED));
     }
 
     @After
