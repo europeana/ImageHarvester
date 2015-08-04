@@ -26,7 +26,6 @@ import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.MongoConfig;
-import eu.europeana.harvester.domain.SourceDocumentReferenceProcessingProfile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.Duration;
@@ -131,6 +130,7 @@ class Master {
         final Datastore datastore = new Morphia().createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());
 
         final ProcessingJobDao processingJobDao = new ProcessingJobDaoImpl(datastore);
+        final HistoricalProcessingJobDao historicalProcessingJobDao = new HistoricalProcessingJobDaoImpl(datastore);
         final MachineResourceReferenceDao machineResourceReferenceDao = new MachineResourceReferenceDaoImpl(datastore);
         final SourceDocumentReferenceDao sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(datastore);
         final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao = new LastSourceDocumentProcessingStatisticsDaoImpl(datastore);
@@ -157,6 +157,7 @@ class Master {
                 clusterMasterConfig,
                 ipExceptions,
                 processingJobDao,
+                historicalProcessingJobDao,
                 machineResourceReferenceDao,
                 sourceDocumentProcessingStatisticsDao,
                 lastSourceDocumentProcessingStatisticsDao,

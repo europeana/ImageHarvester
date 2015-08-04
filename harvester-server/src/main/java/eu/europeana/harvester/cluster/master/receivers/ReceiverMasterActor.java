@@ -39,6 +39,11 @@ public class ReceiverMasterActor extends UntypedActor {
     private final ProcessingJobDao processingJobDao;
 
     /**
+     * ProcessingJob DAO object which lets us to read and store data to and from the database.
+     */
+    private final HistoricalProcessingJobDao historicalProcessingJobDao;
+
+    /**
      * SourceDocumentProcessingStatistics DAO object which lets us to read and store data to and from the database.
      */
     private final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao;
@@ -73,6 +78,7 @@ public class ReceiverMasterActor extends UntypedActor {
                                final ActorRef accountantActor,
                                final ActorRef monitoringActor,
                                final ProcessingJobDao processingJobDao,
+                               final HistoricalProcessingJobDao historicalProcessingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao,
                                final SourceDocumentReferenceDao sourceDocumentReferenceDao,
@@ -85,6 +91,7 @@ public class ReceiverMasterActor extends UntypedActor {
         this.accountantActor = accountantActor;
         this.monitoringActor = monitoringActor;
         this.processingJobDao = processingJobDao;
+        this.historicalProcessingJobDao = historicalProcessingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.lastSourceDocumentProcessingStatisticsDao = lastSourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
@@ -99,7 +106,7 @@ public class ReceiverMasterActor extends UntypedActor {
                 "ReceiverMasterActor prestart");
 
         receiverJobDumper = getContext().actorOf(Props.create(ReceiverJobDumperActor.class, clusterMasterConfig,
-                accountantActor,  processingJobDao), "jobDumper");
+                accountantActor,  processingJobDao, historicalProcessingJobDao), "jobDumper");
 
         receiverStatisticsDumper = getContext().actorOf(Props.create(ReceiverStatisticsDumperActor.class, clusterMasterConfig,
                 sourceDocumentProcessingStatisticsDao, lastSourceDocumentProcessingStatisticsDao,

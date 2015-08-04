@@ -71,6 +71,19 @@ public class HistoricalProcessingJob {
         this.urlSourceType = null;
     }
 
+    public HistoricalProcessingJob(ProcessingJob job ) {
+        this.id = job.getId();
+        this.priority = job.getPriority();
+        this.expectedStartDate = job.getExpectedStartDate();
+        this.referenceOwner = job.getReferenceOwner();
+        this.tasks = job.getTasks();
+        this.state = job.getState();
+        this.limits = job.getLimits();
+        this.ipAddress = job.getIpAddress();
+        this.active = job.getActive();
+        this.urlSourceType = job.getUrlSourceType();
+    }
+
     public HistoricalProcessingJob(final int priority,
                                    final Date expectedStartDate,
                                    final ReferenceOwner referenceOwner,

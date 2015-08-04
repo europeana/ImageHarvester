@@ -114,6 +114,11 @@ public class ClusterMasterActor extends UntypedActor {
     private final ProcessingJobDao processingJobDao;
 
     /**
+     * ProcessingJob DAO object which lets us to read and store data to and from the database.
+     */
+    private final HistoricalProcessingJobDao historicalProcessingJobDao;
+
+    /**
      * MachineResourceReference DAO object which lets us to read and store data to and from the database.
      */
     private final MachineResourceReferenceDao machineResourceReferenceDao;
@@ -157,6 +162,7 @@ public class ClusterMasterActor extends UntypedActor {
     public ClusterMasterActor (final ClusterMasterConfig clusterMasterConfig,
                                final IPExceptions ipExceptions,
                                final ProcessingJobDao processingJobDao,
+                               final HistoricalProcessingJobDao historicalProcessingJobDao,
                                final MachineResourceReferenceDao machineResourceReferenceDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao,
@@ -172,6 +178,7 @@ public class ClusterMasterActor extends UntypedActor {
         this.ipExceptions = ipExceptions;
         this.clusterMasterConfig = clusterMasterConfig;
         this.processingJobDao = processingJobDao;
+        this.historicalProcessingJobDao = historicalProcessingJobDao;
         this.machineResourceReferenceDao = machineResourceReferenceDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.lastSourceDocumentProcessingStatisticsDao = lastSourceDocumentProcessingStatisticsDao;
@@ -197,7 +204,7 @@ public class ClusterMasterActor extends UntypedActor {
         accountantActor = getContext().system().actorOf(Props.create(AccountantDispatcherActor.class), "accountant");
 
         receiverActor = getContext().system().actorOf(Props.create(ReceiverMasterActor.class, clusterMasterConfig,
-                accountantActor, monitoringActor, processingJobDao,
+                accountantActor, monitoringActor, processingJobDao, historicalProcessingJobDao,
                 sourceDocumentProcessingStatisticsDao,
                 lastSourceDocumentProcessingStatisticsDao,
                 sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao

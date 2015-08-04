@@ -2,29 +2,17 @@ package eu.europeana.harvester.cluster.master.receivers;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akka.pattern.Patterns;
-import akka.util.Timeout;
+import com.mongodb.WriteConcern;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
-import eu.europeana.harvester.cluster.domain.TaskState;
-import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
-import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
-import eu.europeana.harvester.cluster.domain.messages.inner.GetTask;
-import eu.europeana.harvester.cluster.domain.messages.inner.GetTaskStatesPerJob;
 import eu.europeana.harvester.cluster.domain.messages.inner.MarkJobAsDone;
-import eu.europeana.harvester.cluster.domain.messages.inner.RemoveJob;
+import eu.europeana.harvester.db.interfaces.HistoricalProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
+import eu.europeana.harvester.domain.HistoricalProcessingJob;
 import eu.europeana.harvester.domain.JobState;
 import eu.europeana.harvester.domain.ProcessingJob;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.concurrent.Await;
-import scala.concurrent.Future;
-import scala.concurrent.duration.Duration;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class ReceiverJobDumperActor extends UntypedActor {
 
@@ -48,19 +36,23 @@ public class ReceiverJobDumperActor extends UntypedActor {
      */
     private final ProcessingJobDao processingJobDao;
 
+    private final HistoricalProcessingJobDao historicalProcessingJobDao;
+
 
 
 
 
     public ReceiverJobDumperActor(final ClusterMasterConfig clusterMasterConfig,
                                   final ActorRef accountantActor,
-                                  final ProcessingJobDao processingJobDao){
+                                  final ProcessingJobDao processingJobDao,
+                                  final HistoricalProcessingJobDao historicalProcessingJobDao){
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverJobDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;
         this.processingJobDao = processingJobDao;
+        this.historicalProcessingJobDao = historicalProcessingJobDao;
     }
 
     @Override
@@ -80,12 +72,14 @@ public class ReceiverJobDumperActor extends UntypedActor {
     /**
      * Marks task as done and save it's statistics in the DB.
      * If one job has finished all his tasks then the job also will be marked as done(FINISHED).
-     * @param msg - the message from the slave actor with url, jobId and other statistics
+     * @param jobId - the message from the slave actor with jobId
      */
     private void markDone(String jobId) {
         final ProcessingJob processingJob = processingJobDao.read(jobId);
         final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
-        processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
+        final HistoricalProcessingJob historicalProcessingJob = new HistoricalProcessingJob(newProcessingJob);
+        processingJobDao.delete(newProcessingJob.getId());
+        historicalProcessingJobDao.create(historicalProcessingJob, WriteConcern.NORMAL);
     }
 
 
