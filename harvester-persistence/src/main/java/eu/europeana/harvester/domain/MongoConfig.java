@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 
 public class MongoConfig {
 
@@ -55,7 +54,7 @@ public class MongoConfig {
 
 
     public Mongo connectToMongo() {
-       final Mongo mongo = new Mongo(mongoServerAddressList);
+       final Mongo mongo = new Mongo(mongoServerAddressList.get(0));
 
         if (StringUtils.isNotEmpty(username)) {
            if (!mongo.getDB("admin").authenticate(username, password.toCharArray())) {
