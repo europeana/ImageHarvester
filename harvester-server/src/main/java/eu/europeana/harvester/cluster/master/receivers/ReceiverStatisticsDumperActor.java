@@ -3,10 +3,7 @@ package eu.europeana.harvester.cluster.master.receivers;
 import akka.actor.UntypedActor;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
-import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
+import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.logging.LoggingComponent;
@@ -71,7 +68,18 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
      */
     private void saveStatistics(DoneProcessing msg) {
         final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.read(msg.getReferenceId());
+
         final ProcessingJob processingJob = processingJobDao.read(msg.getJobId());
+        ReferenceOwner referenceOwner=null;
+        URLSourceType urlSourceType=null;
+        if ( processingJob == null ) {
+            HistoricalProcessingJob h_processingJob = HistoricalProcessingJobDao.read(msg.getJobId());
+            referenceOwner = h_processingJob.getReferenceOwner();
+            urlSourceType = h_processingJob.getUrlSourceType();
+        } else {
+            referenceOwner = processingJob.getReferenceOwner();
+            urlSourceType = processingJob.getUrlSourceType();
+        }
 
         final String docId = finishedDocument.getId();
         //LOG.info("save statistics for document with ID: {}",docId);
@@ -85,8 +93,8 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                         finishedDocument.getActive(),
                         msg.getTaskType(),
                         msg.getProcessingState(),
-                        processingJob.getReferenceOwner(),
-                        processingJob.getUrlSourceType(),
+                        referenceOwner,
+                        urlSourceType,
                         docId,
                         msg.getJobId(),
                         msg.getHttpResponseCode(),
