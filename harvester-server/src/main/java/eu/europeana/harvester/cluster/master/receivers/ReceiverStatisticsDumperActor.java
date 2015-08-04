@@ -33,6 +33,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
     private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
 
     private final ProcessingJobDao processingJobDao;
+    private final HistoricalProcessingJobDao historicalProcessingJobDao;
     private final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao;
 
 
@@ -40,7 +41,8 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
                                          final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                          final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao,
                                          final SourceDocumentReferenceDao sourceDocumentReferenceDao,
-                                         final ProcessingJobDao processingJobDao){
+                                         final ProcessingJobDao processingJobDao,
+                                         final HistoricalProcessingJobDao historicalProcessingJobDao){
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverStatisticsDumperActor constructor");
 
@@ -49,6 +51,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
         this.lastSourceDocumentProcessingStatisticsDao = lastSourceDocumentProcessingStatisticsDao;
         this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
         this.processingJobDao = processingJobDao;
+        this.historicalProcessingJobDao = historicalProcessingJobDao;
     }
 
     @Override
@@ -73,7 +76,7 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
         ReferenceOwner referenceOwner=null;
         URLSourceType urlSourceType=null;
         if ( processingJob == null ) {
-            HistoricalProcessingJob h_processingJob = HistoricalProcessingJobDao.read(msg.getJobId());
+            HistoricalProcessingJob h_processingJob = historicalProcessingJobDao.read(msg.getJobId());
             referenceOwner = h_processingJob.getReferenceOwner();
             urlSourceType = h_processingJob.getUrlSourceType();
         } else {
