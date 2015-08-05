@@ -11,6 +11,8 @@ import eu.europeana.harvester.cluster.domain.messages.inner.MarkJobAsDone;
 import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.*;
+import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
+import eu.europeana.harvester.domain.ProcessingJobSubTaskStats;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
@@ -158,6 +160,38 @@ public class ReceiverMasterActor extends UntypedActor {
             removeTask(address, doneProcessing);
             MasterMetrics.Master.doneProcessingStateCounters.get(doneProcessing.getProcessingState()).mark();
             MasterMetrics.Master.doneProcessingTotalCounter.mark();
+
+            final ProcessingJobSubTaskStats subTaskStats = doneProcessing.getProcessingStats();
+            if (subTaskStats != null) {
+
+                if (subTaskStats.getRetrieveState() != null) {
+                    MasterMetrics.Master.doneProcessingRetrieveStateCounters.get(subTaskStats.getRetrieveState()).mark();
+                    if (subTaskStats.getRetrieveState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingRetrieveTotalCounter.mark();
+                }
+
+                if (subTaskStats.getColorExtractionState() != null) {
+                    MasterMetrics.Master.doneProcessingColorExtractionStateCounters.get(subTaskStats.getColorExtractionState()).mark();
+                    if (subTaskStats.getColorExtractionState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingColorExtractionTotalCounter.mark();
+                }
+
+
+                if (subTaskStats.getMetaExtractionState() != null) {
+                    MasterMetrics.Master.doneProcessingMetaExtractionStateCounters.get(subTaskStats.getMetaExtractionState()).mark();
+                    if (subTaskStats.getMetaExtractionState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingMetaExtractionTotalCounter.mark();
+                }
+
+                if (subTaskStats.getThumbnailGenerationState() != null) {
+                    MasterMetrics.Master.doneProcessingThumbnailGenerationStateCounters.get(subTaskStats.getThumbnailGenerationState()).mark();
+                    if (subTaskStats.getThumbnailGenerationState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingThumbnailGenerationTotalCounter.mark();
+                }
+
+                if (subTaskStats.getThumbnailStorageState() != null) {
+                    MasterMetrics.Master.doneProcessingThumbnailStorageStateCounters.get(subTaskStats.getThumbnailStorageState()).mark();
+                    if (subTaskStats.getThumbnailStorageState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingThumbnailStorageTotalCounter.mark();
+                }
+
+            }
+
             return;
         }
 
