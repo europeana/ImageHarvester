@@ -13,6 +13,39 @@ import java.util.Map;
  */
 public class DoneProcessing implements Serializable {
 
+
+    public static ProcessingState computeProcessingStateIncludingTheSubTaskState(final ProcessingState processingState,final ProcessingJobSubTaskStats stats) {
+        switch (processingState) {
+            case READY: /* fall through */
+            case PAUSED: /* fall through */
+            case DOWNLOADING: /* fall through */
+            case ERROR:
+                return processingState;
+            case SUCCESS:
+                return getSubTaskAwareProcessingState(stats);
+            default:
+                /* This should never happen */
+                return ProcessingState.ERROR;
+        }
+    }
+
+    private static ProcessingState getSubTaskAwareProcessingState(final ProcessingJobSubTaskStats subTaskStats) {
+        switch (subTaskStats.getOverallState()) {
+            case ERROR:
+                return ProcessingState.ERROR;
+            case FAILED:
+                return ProcessingState.ERROR;
+            case SUCCESS:
+                return ProcessingState.SUCCESS;
+            case NEVER_EXECUTED:
+                /* I cannot imagine when this can happen unless something bad happened */
+                return ProcessingState.ERROR;
+            default:
+                /* This should never happen */
+                return ProcessingState.ERROR;
+        }
+    }
+
     /**
      * The ID of the task.
      */
@@ -299,36 +332,9 @@ public class DoneProcessing implements Serializable {
         return textMetaInfo;
     }
 
-    public ProcessingState getProcessingState() {
-        switch (processingState) {
-            case READY: /* fall through */
-            case PAUSED: /* fall through */
-            case DOWNLOADING: /* fall through */
-            case ERROR:
-                return processingState;
-            case SUCCESS:
-                return getSubTaskAwareProcessingState();
-            default:
-                /* This should never happen */
-                return ProcessingState.ERROR;
-        }
-    }
 
-    private ProcessingState getSubTaskAwareProcessingState() {
-        switch (stats.getOverallState()) {
-            case ERROR:
-                return ProcessingState.ERROR;
-            case FAILED:
-                return ProcessingState.ERROR;
-            case SUCCESS:
-                return ProcessingState.SUCCESS;
-            case NEVER_EXECUTED:
-                /* I cannot imagine when this can happen unless something bad happened */
-                return ProcessingState.ERROR;
-            default:
-                /* This should never happen */
-                return ProcessingState.ERROR;
-        }
+    public ProcessingState getProcessingState() {
+        return computeProcessingStateIncludingTheSubTaskState(this.processingState,this.stats);
     }
 
     public String getLog() {
