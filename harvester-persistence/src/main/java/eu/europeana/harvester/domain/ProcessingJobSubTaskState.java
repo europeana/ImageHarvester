@@ -4,7 +4,6 @@ public enum ProcessingJobSubTaskState {
 
     SUCCESS,
     ERROR,
-    READY,
     FAILED,
     NEVER_EXECUTED
 }

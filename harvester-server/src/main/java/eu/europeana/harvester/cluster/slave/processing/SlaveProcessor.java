@@ -140,10 +140,10 @@ public class SlaveProcessor {
             else {
                 stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
             }
-            thumbnailStorageDurationContext.stop();
         } catch (Exception e) {
             stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.ERROR, e);
         } finally {
+            thumbnailStorageDurationContext.stop();
             try {
                 cacheOriginalImage(originalFilePath, originalFileUrl, originalFileContent, referenceOwner,
                         mediaMetaInfoTuple);

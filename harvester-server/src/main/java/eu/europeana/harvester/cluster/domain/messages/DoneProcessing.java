@@ -111,7 +111,8 @@ public class DoneProcessing implements Serializable {
     private final TextMetaInfo textMetaInfo;
 
     /**
-     * The state of the task.
+     * The state of the task. This has wider scope than the state of the individual sub tasks because it also
+     * covers all the rest of processing that goes outside the sub tasks.
      */
     private final ProcessingState processingState;
 
@@ -129,7 +130,7 @@ public class DoneProcessing implements Serializable {
                           final ProcessingJobSubTaskStats subTaskState,
                           final ImageMetaInfo imageMetaInfo,
                           final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo,
-                          final TextMetaInfo textMetaInfo,final String log) {
+                          final TextMetaInfo textMetaInfo, final String log) {
         this.taskType = doneDownload.getDocumentReferenceTask().getTaskType();
         final HttpRetrieveResponse httpRetrieveResponse = doneDownload.getHttpRetrieveResponse();
 
@@ -165,8 +166,7 @@ public class DoneProcessing implements Serializable {
                 default:
                     this.stats = new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.FAILED);
             }
-        }
-        else {
+        } else {
             this.stats = subTaskState;
         }
 
@@ -174,12 +174,12 @@ public class DoneProcessing implements Serializable {
 
         //TODO: change this because it is not correct from a logical point of view !!!!
         this.processingState = !(RetrievingState.COMPLETED.equals(doneDownload.getRetrieveState())) ? ProcessingState.ERROR :
-                                                                                                      ProcessingState.SUCCESS;
+                ProcessingState.SUCCESS;
         this.log = log;
     }
 
-    public DoneProcessing (final DoneDownload doneDownload) {
-        this (doneDownload, null, null, null, null, null);
+    public DoneProcessing(final DoneDownload doneDownload) {
+        this(doneDownload, null, null, null, null, null);
     }
 
 
@@ -188,13 +188,13 @@ public class DoneProcessing implements Serializable {
                           final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo,
                           final TextMetaInfo textMetaInfo) {
         this(doneDownload,
-             stats,
-             imageMetaInfo,
-             audioMetaInfo,
-             videoMetaInfo,
-             textMetaInfo,
-             doneDownload.getHttpRetrieveResponse().getLog()
-            );
+                stats,
+                imageMetaInfo,
+                audioMetaInfo,
+                videoMetaInfo,
+                textMetaInfo,
+                doneDownload.getHttpRetrieveResponse().getLog()
+        );
     }
 
     public DoneProcessing(final String taskID, final String url, String referenceId, final String jobId,
@@ -300,7 +300,35 @@ public class DoneProcessing implements Serializable {
     }
 
     public ProcessingState getProcessingState() {
-        return processingState;
+        switch (processingState) {
+            case READY: /* fall through */
+            case PAUSED: /* fall through */
+            case DOWNLOADING: /* fall through */
+            case ERROR:
+                return processingState;
+            case SUCCESS:
+                return getSubTaskAwareProcessingState();
+            default:
+                /* This should never happen */
+                return ProcessingState.ERROR;
+        }
+    }
+
+    private ProcessingState getSubTaskAwareProcessingState() {
+        switch (stats.getOverallState()) {
+            case ERROR:
+                return ProcessingState.ERROR;
+            case FAILED:
+                return ProcessingState.ERROR;
+            case SUCCESS:
+                return ProcessingState.SUCCESS;
+            case NEVER_EXECUTED:
+                /* I cannot imagine when this can happen unless something bad happened */
+                return ProcessingState.ERROR;
+            default:
+                /* This should never happen */
+                return ProcessingState.ERROR;
+        }
     }
 
     public String getLog() {
@@ -311,9 +339,13 @@ public class DoneProcessing implements Serializable {
         return taskID;
     }
 
-    public RetrievingState getRetrievingState() {return retrievingState;}
+    public RetrievingState getRetrievingState() {
+        return retrievingState;
+    }
 
-    public ProcessingJobSubTaskStats getProcessingStats() {return stats;}
+    public ProcessingJobSubTaskStats getProcessingStats() {
+        return stats;
+    }
 
     public DoneProcessing withNewState(ProcessingState newState, String log) {
         return new DoneProcessing(taskID, url, referenceId, jobId, taskType, httpResponseCode, httpResponseContentType,
@@ -326,6 +358,6 @@ public class DoneProcessing implements Serializable {
         return new DoneProcessing(taskID, url, referenceId, jobId, taskType, httpResponseCode, httpResponseContentType,
                 httpResponseContentSizeInBytes, socketConnectToDownloadStartDurationInMilliSecs,
                 retrievalDurationInMilliSecs, checkingDurationInMilliSecs, sourceIp, httpResponseHeaders,
-                redirectionPath, retrievingState, processingState, stats, log,  imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
+                redirectionPath, retrievingState, processingState, stats, log, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
     }
 }
