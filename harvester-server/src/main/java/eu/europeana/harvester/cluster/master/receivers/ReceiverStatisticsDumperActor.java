@@ -5,7 +5,6 @@ import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,8 +72,8 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
         final SourceDocumentReference finishedDocument = sourceDocumentReferenceDao.read(msg.getReferenceId());
 
         final ProcessingJob processingJob = processingJobDao.read(msg.getJobId());
-        ReferenceOwner referenceOwner=null;
-        URLSourceType urlSourceType=null;
+        ReferenceOwner referenceOwner;
+        URLSourceType urlSourceType;
         if ( processingJob == null ) {
             HistoricalProcessingJob h_processingJob = historicalProcessingJobDao.read(msg.getJobId());
             referenceOwner = h_processingJob.getReferenceOwner();
@@ -125,8 +124,8 @@ public class ReceiverStatisticsDumperActor extends UntypedActor {
         if (null == lastSourceDocumentProcessingStatistics) {
            lastSourceDocumentProcessingStatistics =
                    new LastSourceDocumentProcessingStatistics(new Date(), new Date(), finishedDocument.getActive(), msg.getTaskType(),
-                                                       msg.getProcessingState(), processingJob.getReferenceOwner(),
-                                                       processingJob.getUrlSourceType(), docId, msg.getJobId(), msg.getHttpResponseCode(),
+                                                       msg.getProcessingState(), referenceOwner,
+                                                       urlSourceType, docId, msg.getJobId(), msg.getHttpResponseCode(),
                                                        msg.getHttpResponseContentType(), msg.getHttpResponseContentSizeInBytes(),
                                                        msg.getSocketConnectToDownloadStartDurationInMilliSecs(), msg.getRetrievalDurationInMilliSecs(),
                                                        msg.getCheckingDurationInMilliSecs(), msg.getSourceIp(), msg.getHttpResponseHeaders(),
