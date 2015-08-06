@@ -64,7 +64,7 @@ public class SlaveProcessor {
         ImageMetaInfo imageColorMetaInfo = null;
         Map<ProcessingJobSubTask, MediaFile> generatedThumbnails = new HashMap<>();
 
-        // Meta data extraction
+        // Meta data extraction : This always happens if there is a task for it.
         if (null != metaExtractionProcessingTask) {
             try {
                 mediaMetaInfoTuple = extractMetaInfo(originalFilePath, originalFileUrl, responseType,
@@ -80,8 +80,10 @@ public class SlaveProcessor {
             }
         }
 
-        // Color extraction
-        if (null != colorExtractionProcessingTask) {
+        boolean isImage = (mediaMetaInfoTuple != null && mediaMetaInfoTuple.getImageMetaInfo() != null);
+
+        // Color extraction : This happens only for images.
+        if (isImage && (null != colorExtractionProcessingTask)) {
             try {
                 imageColorMetaInfo = extractColor(originalFilePath);
 
@@ -96,8 +98,8 @@ public class SlaveProcessor {
             }
         }
 
-        // Thumbnail generation
-        if (null != thumbnailGenerationProcessingTasks && !thumbnailGenerationProcessingTasks.isEmpty()) {
+        // Thumbnail generation : This happens only for images.
+        if (isImage && (null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty()) {
             try {
                 generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent,
                         referenceOwner, thumbnailGenerationProcessingTasks);
@@ -115,8 +117,8 @@ public class SlaveProcessor {
 
         // (3) Post task execution
 
-        // (3.1) Insert the color palette in all the thumbnail meta infos if there is a color palette.
-        if (imageColorMetaInfo != null)
+        // (3.1) Insert the color palette in all the thumbnail meta infos if there is a color palette : This happens only for images.
+        if (isImage && imageColorMetaInfo != null)
 
         {
             for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
@@ -164,7 +166,7 @@ public class SlaveProcessor {
                                     ReferenceOwner referenceOwner, MediaMetaInfoTuple mediaMetaInfoTuple) throws
             NoSuchAlgorithmException,
             IOException {// (3.3) Cache original if it is an image
-        if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE) && mediaMetaInfoTuple != null) {
+        if (mediaMetaInfoTuple != null && MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
             SlaveMetrics.Worker.Slave.Processing.originalCachingCounter.inc();
             final Timer.Context originalCachingDurationContext = SlaveMetrics.Worker.Slave.Processing.originalCachingDuration
                     .time();
