@@ -17,3 +17,5 @@ harvester-client/harvester-client.iml
 target/
 out/
 
+
+src/test/resources/downloader/image1.jpeg
