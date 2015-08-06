@@ -214,17 +214,14 @@ public class SlaveProcessorTest {
                                                                      fileUrl,
                                                                      imagesInBytes.get(Image1),
                                                                      ResponseType.DISK_STORAGE,
-                                                                     owner);
+                owner);
 
         assertNull(results.getMediaMetaInfoTuple());
-        assertNotNull(results.getImageColorMetaInfo());
-        assertNotNull(results.getGeneratedThumbnails());
+        assertNull(results.getImageColorMetaInfo());
+        assertTrue(results.getGeneratedThumbnails().isEmpty());
         assertFalse(new File(PATH_DOWNLOADED + Image1).exists());
-        assertEquals(2, results.getGeneratedThumbnails().size());
-        assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + Image1, PATH_COLORMAP).getPalette(),
-                          results.getImageColorMetaInfo().getColorPalette());
+        assertEquals(0, results.getGeneratedThumbnails().size());
 
-        checkThumbnails(Image1, results.getGeneratedThumbnails(), results.getImageColorMetaInfo().getColorPalette());
     }
 
     @Test
@@ -387,12 +384,12 @@ public class SlaveProcessorTest {
                                                                           PATH_DOWNLOADED + Image1, fileUrl,
                                                                           new byte[]{0}, ResponseType.DISK_STORAGE,
                                                                           new ReferenceOwner("", "", "", "")) ;
-        assertEquals (ProcessingJobSubTaskState.ERROR, e.getProcessingJobSubTaskStats().getColorExtractionState());
-        assertEquals(new IOException(exception).toString(), e.getProcessingJobSubTaskStats().getColorExtractionLog());
+        assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, e.getProcessingJobSubTaskStats().getColorExtractionState());
+        assertEquals(null, e.getProcessingJobSubTaskStats().getColorExtractionLog());
     }
 
     @Test
-    public void test_ThumbnailGeneratorFails() throws Exception{
+    public void test_ThumbnailGeneratorNeverExecutesWhenMetaInfoExtractionAndColorFails() throws Exception{
         final String fileUrl = GitHubUrl_PREFIX + Image1;
 
         subTasks.add(metaInfoExtractionSubTask);
@@ -424,8 +421,8 @@ public class SlaveProcessorTest {
                                                                           PATH_DOWNLOADED + Image1, fileUrl,
                                                                           new byte[]{0}, ResponseType.DISK_STORAGE,
                                                                           new ReferenceOwner("", "", "", "")) ;
-        assertEquals(ProcessingJobSubTaskState.ERROR, e.getProcessingJobSubTaskStats().getThumbnailGenerationState());
-        assertEquals (exception.toString(), e.getProcessingJobSubTaskStats().getThumbnailGenerationLog());
+        assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, e.getProcessingJobSubTaskStats().getThumbnailGenerationState());
+        assertEquals (null, e.getProcessingJobSubTaskStats().getThumbnailGenerationLog());
     }
 
     @Test
@@ -460,9 +457,9 @@ public class SlaveProcessorTest {
                                                                   new ReferenceOwner("", "", "", "")) ;
 
         assertEquals (ProcessingJobSubTaskState.FAILED, e.getProcessingJobSubTaskStats().getMetaExtractionState());
-        assertEquals (ProcessingJobSubTaskState.FAILED, e.getProcessingJobSubTaskStats().getColorExtractionState());
-        assertEquals (ProcessingJobSubTaskState.SUCCESS, e.getProcessingJobSubTaskStats().getThumbnailGenerationState());
-        assertEquals (ProcessingJobSubTaskState.ERROR, e.getProcessingJobSubTaskStats().getThumbnailStorageState());
+        assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, e.getProcessingJobSubTaskStats().getColorExtractionState());
+        assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, e.getProcessingJobSubTaskStats().getThumbnailGenerationState());
+        assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, e.getProcessingJobSubTaskStats().getThumbnailStorageState());
     }
 
     @Test
@@ -500,8 +497,8 @@ public class SlaveProcessorTest {
                                                                   new ReferenceOwner("", "", "", "")) ;
 
         assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getMetaExtractionState());
-        assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getColorExtractionState());
-        assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getThumbnailGenerationState());
+        assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getColorExtractionState());
+        assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getThumbnailGenerationState());
         assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getThumbnailStorageState());
     }
 }
