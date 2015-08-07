@@ -4,10 +4,12 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
+import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTuple;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
-import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.domain.SourceDocumentReference;
+import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,10 +78,21 @@ public class ReceiverMetaInfoDumperActor extends UntypedActor {
      */
     private void saveMetaInfo(final String docId, final DoneProcessing msg) {
         if (new MediaMetaInfoTuple(msg.getImageMetaInfo(), msg.getAudioMetaInfo(), msg.getVideoMetaInfo(), msg.getTextMetaInfo()).isValid()) {
-            final SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo =
-                    new SourceDocumentReferenceMetaInfo(docId, msg.getImageMetaInfo(),
-                            msg.getAudioMetaInfo(), msg.getVideoMetaInfo(), msg.getTextMetaInfo());
-            sourceDocumentReferenceMetaInfoDao.createOrModify(Collections.singleton(sourceDocumentReferenceMetaInfo),
+            final SourceDocumentReferenceMetaInfo newSourceDocumentReferenceMetaInfo = new SourceDocumentReferenceMetaInfo(docId, msg.getImageMetaInfo(),
+                    msg.getAudioMetaInfo(), msg.getVideoMetaInfo(), msg.getTextMetaInfo());
+            final SourceDocumentReferenceMetaInfo existingSourceDocumentReferenceMetaInfo = sourceDocumentReferenceMetaInfoDao.read(SourceDocumentReferenceMetaInfo.idFromUrl(msg.getUrl()));
+
+            // (Scenario 1) Merge existing meta info with new one as the new one as only color palette
+            if (existingSourceDocumentReferenceMetaInfo != null && newSourceDocumentReferenceMetaInfo.hasOnlyColorPalette()) {
+                final SourceDocumentReferenceMetaInfo toPersistSourceDocumentReferenceMetaInfo = SourceDocumentReferenceMetaInfo.mergeColorPalette(existingSourceDocumentReferenceMetaInfo, newSourceDocumentReferenceMetaInfo);
+                sourceDocumentReferenceMetaInfoDao.createOrModify(Collections.singleton(toPersistSourceDocumentReferenceMetaInfo),
+                        clusterMasterConfig.getWriteConcern());
+                MasterMetrics.Master.metaInfoColorPaletteMergeCounter.inc();
+                return;
+            }
+
+            // (Scenario 2) New meta info has something different that color palette => replaces the existing one
+            sourceDocumentReferenceMetaInfoDao.createOrModify(Collections.singleton(newSourceDocumentReferenceMetaInfo),
                     clusterMasterConfig.getWriteConcern());
         }
     }

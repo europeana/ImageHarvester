@@ -107,4 +107,16 @@ public class ImageMetaInfo implements Serializable {
     public ImageMetaInfo withColorPalette(final String[] newColorPalette) {
         return new ImageMetaInfo(width,height,mimeType,fileFormat,colorSpace,fileSize,newColorPalette,orientation);
     }
+
+    public boolean hasOnlyColorPalette() {
+        return (width == null) &&
+        (height == null) &&
+        (mimeType == null) &&
+        (fileFormat == null) &&
+        (colorSpace == null) &&
+        (fileSize == null) &&
+        (colorPalette != null && colorPalette.length > 0) &&
+        (orientation == null);
+    }
+
 }

@@ -12,6 +12,23 @@ import com.google.common.hash.Hashing;
  */
 public class SourceDocumentReferenceMetaInfo {
 
+    public static SourceDocumentReferenceMetaInfo mergeColorPalette(SourceDocumentReferenceMetaInfo existingDoc, SourceDocumentReferenceMetaInfo newDoc) {
+        if (existingDoc == null) throw new IllegalArgumentException("Cannot merge when existing doc is null");
+        if (newDoc == null) throw new IllegalArgumentException("Cannot merge when new doc is null");
+
+        if (newDoc.hasOnlyColorPalette()) {
+            ImageMetaInfo existingDocImageMetaInfo = existingDoc.getImageMetaInfo();
+            if (existingDocImageMetaInfo != null) {
+                existingDocImageMetaInfo = existingDocImageMetaInfo.withColorPalette(newDoc.getImageMetaInfo().getColorPalette());
+            } else {
+                existingDocImageMetaInfo = newDoc.getImageMetaInfo();
+            }
+            return existingDoc.withImageMetaInfo(existingDocImageMetaInfo);
+        } else {
+            return existingDoc;
+        }
+    }
+
     public static final String idFromUrl(final String url) {
         final HashFunction hf = Hashing.md5();
         final HashCode hc = hf.newHasher()
@@ -79,5 +96,15 @@ public class SourceDocumentReferenceMetaInfo {
 
     public TextMetaInfo getTextMetaInfo() {
         return textMetaInfo;
+    }
+
+    public boolean hasOnlyColorPalette() {
+        return (imageMetaInfo != null) && (imageMetaInfo.hasOnlyColorPalette()) && (audioMetaInfo == null) && (videoMetaInfo == null) && (textMetaInfo == null);
+    }
+
+    public SourceDocumentReferenceMetaInfo withImageMetaInfo(final ImageMetaInfo newImageMetaInfo
+    ) {
+        return new SourceDocumentReferenceMetaInfo(id, newImageMetaInfo,
+                audioMetaInfo, videoMetaInfo, textMetaInfo);
     }
 }
