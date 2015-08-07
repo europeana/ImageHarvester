@@ -12,7 +12,6 @@ import java.util.Map;
  * Created by salexandru on 29.05.2015.
  */
 public class TestUtils {
-
     public static final String PATH_PREFIX = Paths.get("./src/test/resources/").toAbsolutePath().toString() + "/";
     public static String PATH_COLORMAP = PATH_PREFIX + "colormap.png";
     public static final String PATH_DOWNLOADED = PATH_PREFIX + "downloader/";
