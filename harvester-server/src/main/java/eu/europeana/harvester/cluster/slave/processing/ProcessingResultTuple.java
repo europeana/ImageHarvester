@@ -8,17 +8,15 @@ import java.util.Collection;
 public class ProcessingResultTuple {
     private final MediaMetaInfoTuple mediaMetaInfoTuple;
     private final Collection<MediaFile> generatedThumbnails;
-    private final ImageMetaInfo imageColorMetaInfo;
     private final ProcessingJobSubTaskStats processingJobSubTaskStats;
 
     public ProcessingResultTuple(ProcessingJobSubTaskStats processingJobSubTaskStats,
                                  MediaMetaInfoTuple mediaMetaInfoTuple,
-                                 Collection<MediaFile> generatedThumbnails,
-                                 ImageMetaInfo imageColorMetaInfo) {
+                                 Collection<MediaFile> generatedThumbnails
+                                 ) {
         this.processingJobSubTaskStats = processingJobSubTaskStats;
         this.mediaMetaInfoTuple = mediaMetaInfoTuple;
         this.generatedThumbnails = generatedThumbnails;
-        this.imageColorMetaInfo = imageColorMetaInfo;
     }
 
     public MediaMetaInfoTuple getMediaMetaInfoTuple() {
@@ -27,10 +25,6 @@ public class ProcessingResultTuple {
 
     public Collection<MediaFile> getGeneratedThumbnails() {
         return generatedThumbnails;
-    }
-
-    public ImageMetaInfo getImageColorMetaInfo() {
-        return imageColorMetaInfo;
     }
 
     public ProcessingJobSubTaskStats getProcessingJobSubTaskStats () {

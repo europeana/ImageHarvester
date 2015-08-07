@@ -89,7 +89,7 @@ public class SlaveProcessor {
                         imageColorMetaInfo.getColorPalette().length > 0) {
                     stats = stats.withColorExtractionState(ProcessingJobSubTaskState.SUCCESS);
                 } else {
-                    stats = stats.withColorExtractionState(ProcessingJobSubTaskState.FAILED,new Exception("imageColorMetaInfo is null OR imageColorMetaInfo.colorPalette is null OR  imageColorMetaInfo.colorPalette is empty"));
+                    stats = stats.withColorExtractionState(ProcessingJobSubTaskState.FAILED, new Exception("imageColorMetaInfo is null OR imageColorMetaInfo.colorPalette is null OR  imageColorMetaInfo.colorPalette is empty"));
                 }
             } catch (Exception e) {
                 stats = stats.withColorExtractionState(ProcessingJobSubTaskState.ERROR, e);
@@ -97,9 +97,11 @@ public class SlaveProcessor {
         }
 
         // Insert the extracted colors in the media meta info or create the meta info & insert it if missing.
-        if (imageColorMetaInfo != null){
-            if (mediaMetaInfoTuple == null) mediaMetaInfoTuple = new MediaMetaInfoTuple(imageColorMetaInfo,null,null,null);
-            else mediaMetaInfoTuple = mediaMetaInfoTuple.withImageMetaInfo(mediaMetaInfoTuple.getImageMetaInfo().withColorPalette(imageColorMetaInfo.getColorPalette()));
+        if (imageColorMetaInfo != null) {
+            if (mediaMetaInfoTuple == null)
+                mediaMetaInfoTuple = new MediaMetaInfoTuple(imageColorMetaInfo, null, null, null);
+            else
+                mediaMetaInfoTuple = mediaMetaInfoTuple.withImageMetaInfo(mediaMetaInfoTuple.getImageMetaInfo().withColorPalette(imageColorMetaInfo.getColorPalette()));
         }
 
         // Thumbnail generation : This happens only for images where color extraction was successful.
@@ -111,7 +113,7 @@ public class SlaveProcessor {
                 if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
                     stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
                 } else {
-                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED,new Exception("thumbnailGenerationProcessingTasks is null OR empty OR imageColorMetaInfo is null"));
+                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED, new Exception("thumbnailGenerationProcessingTasks is null OR empty OR imageColorMetaInfo is null"));
                 }
             } catch (Exception e) {
                 stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR, e);
@@ -142,8 +144,7 @@ public class SlaveProcessor {
             }
             if (null == generatedThumbnails || generatedThumbnails.isEmpty()) {
                 stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.NEVER_EXECUTED);
-            }
-            else {
+            } else {
                 stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.SUCCESS);
             }
         } catch (Exception e) {
@@ -161,9 +162,9 @@ public class SlaveProcessor {
         }
 
         return new ProcessingResultTuple(stats,
-                                         mediaMetaInfoTuple,
-                                         generatedThumbnails.values(),
-                                         imageColorMetaInfo
+                mediaMetaInfoTuple,
+                generatedThumbnails.values()
+
         );
     }
 

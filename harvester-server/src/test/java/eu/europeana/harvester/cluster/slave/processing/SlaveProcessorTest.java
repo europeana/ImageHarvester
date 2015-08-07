@@ -189,14 +189,14 @@ public class SlaveProcessorTest {
                                                                     owner);
 
         assertNotNull(results.getMediaMetaInfoTuple());
-        assertNotNull(results.getImageColorMetaInfo());
+        assertNotNull(results.getMediaMetaInfoTuple().getImageMetaInfo().getColorPalette());
         assertNotNull(results.getGeneratedThumbnails());
         assertTrue(new File(PATH_DOWNLOADED + Image1).exists());
         assertEquals(2, results.getGeneratedThumbnails().size());
         assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + Image1, PATH_COLORMAP).getPalette(),
-                          results.getImageColorMetaInfo().getColorPalette());
+                          results.getMediaMetaInfoTuple().getImageMetaInfo().getColorPalette());
 
-        checkThumbnails(Image1, results.getGeneratedThumbnails(), results.getImageColorMetaInfo().getColorPalette());
+        checkThumbnails(Image1, results.getGeneratedThumbnails(), results.getMediaMetaInfoTuple().getImageMetaInfo().getColorPalette());
 
         final ImageMetaInfo metaInfo = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + Image1).getImageMetaInfo();
         assertTrue(EqualsBuilder.reflectionEquals(metaInfo, results.getMediaMetaInfoTuple().getImageMetaInfo()));
@@ -219,8 +219,7 @@ public class SlaveProcessorTest {
                                                                      ResponseType.DISK_STORAGE,
                 owner);
 
-        assertNull(results.getMediaMetaInfoTuple());
-        assertNotNull(results.getImageColorMetaInfo());
+        assertNotNull(results.getMediaMetaInfoTuple().getImageMetaInfo().getColorPalette());
         assertFalse(results.getGeneratedThumbnails().isEmpty());
         assertTrue(new File(PATH_DOWNLOADED + Image1).exists());
         assertEquals(2, results.getGeneratedThumbnails().size());
@@ -246,7 +245,7 @@ public class SlaveProcessorTest {
                                                                      owner);
 
         assertNotNull(results.getMediaMetaInfoTuple());
-        assertNull(results.getImageColorMetaInfo());
+        assertNull(results.getMediaMetaInfoTuple().getImageMetaInfo());
         assertTrue(new File(PATH_DOWNLOADED + Audio1).exists());
 
         assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
@@ -275,7 +274,7 @@ public class SlaveProcessorTest {
                                                                      ResponseType.DISK_STORAGE, owner);
 
         assertNotNull(results.getMediaMetaInfoTuple());
-        assertNull(results.getImageColorMetaInfo());
+        assertNull(results.getMediaMetaInfoTuple().getImageMetaInfo());
         assertTrue(new File(PATH_DOWNLOADED + Video1).exists());
 
         assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
@@ -305,7 +304,7 @@ public class SlaveProcessorTest {
                                                                                         "unknown"));
 
         assertNotNull(results.getMediaMetaInfoTuple());
-        assertNull(results.getImageColorMetaInfo());
+        assertNull(results.getMediaMetaInfoTuple().getImageMetaInfo());
         assertTrue(new File(PATH_DOWNLOADED + Text2).exists());
 
         assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
