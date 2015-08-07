@@ -155,7 +155,10 @@ public class SlaveProcessorTest {
             boolean ok = false;
             for (final ThumbnailType type: ThumbnailType.values()) {
                 if (thumbnail.getSize() == type.getWidth()) {
-                    assertArrayEquals(thumbnails.get(type), thumbnail.getContent());
+                    final byte[] first = thumbnails.get(type);
+                    final byte[] second = thumbnail.getContent();
+                    /* Because of the way compression for images is done two successive compressions are never guaranteed to be identical */
+                    assertTrue((first.length / second.length > 0.95) || (second.length / first.length > 0.95));
                     ok = true;
                     break;
                 }
@@ -188,7 +191,7 @@ public class SlaveProcessorTest {
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNotNull(results.getImageColorMetaInfo());
         assertNotNull(results.getGeneratedThumbnails());
-        assertFalse(new File(PATH_DOWNLOADED + Image1).exists());
+        assertTrue(new File(PATH_DOWNLOADED + Image1).exists());
         assertEquals(2, results.getGeneratedThumbnails().size());
         assertArrayEquals(MediaChecker.getImageInfo(PATH_PREFIX + Image1, PATH_COLORMAP).getPalette(),
                           results.getImageColorMetaInfo().getColorPalette());
@@ -217,10 +220,10 @@ public class SlaveProcessorTest {
                 owner);
 
         assertNull(results.getMediaMetaInfoTuple());
-        assertNull(results.getImageColorMetaInfo());
-        assertTrue(results.getGeneratedThumbnails().isEmpty());
-        assertFalse(new File(PATH_DOWNLOADED + Image1).exists());
-        assertEquals(0, results.getGeneratedThumbnails().size());
+        assertNotNull(results.getImageColorMetaInfo());
+        assertFalse(results.getGeneratedThumbnails().isEmpty());
+        assertTrue(new File(PATH_DOWNLOADED + Image1).exists());
+        assertEquals(2, results.getGeneratedThumbnails().size());
 
     }
 
@@ -244,7 +247,7 @@ public class SlaveProcessorTest {
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNull(results.getImageColorMetaInfo());
-        assertFalse(new File(PATH_DOWNLOADED + Audio1).exists());
+        assertTrue(new File(PATH_DOWNLOADED + Audio1).exists());
 
         assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
                                                                                          .toArray()));
@@ -273,7 +276,7 @@ public class SlaveProcessorTest {
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNull(results.getImageColorMetaInfo());
-        assertFalse(new File(PATH_DOWNLOADED + Video1).exists());
+        assertTrue(new File(PATH_DOWNLOADED + Video1).exists());
 
         assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
                                                                                          .toArray()));
@@ -303,7 +306,7 @@ public class SlaveProcessorTest {
 
         assertNotNull(results.getMediaMetaInfoTuple());
         assertNull(results.getImageColorMetaInfo());
-        assertFalse(new File(PATH_DOWNLOADED + Text2).exists());
+        assertTrue(new File(PATH_DOWNLOADED + Text2).exists());
 
         assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
                                                                                          .toArray()));
@@ -384,8 +387,8 @@ public class SlaveProcessorTest {
                                                                           PATH_DOWNLOADED + Image1, fileUrl,
                                                                           new byte[]{0}, ResponseType.DISK_STORAGE,
                                                                           new ReferenceOwner("", "", "", "")) ;
-        assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, e.getProcessingJobSubTaskStats().getColorExtractionState());
-        assertEquals(null, e.getProcessingJobSubTaskStats().getColorExtractionLog());
+        assertEquals (ProcessingJobSubTaskState.ERROR, e.getProcessingJobSubTaskStats().getColorExtractionState());
+        assertNotNull(e.getProcessingJobSubTaskStats().getColorExtractionLog());
     }
 
     @Test
@@ -457,7 +460,7 @@ public class SlaveProcessorTest {
                                                                   new ReferenceOwner("", "", "", "")) ;
 
         assertEquals (ProcessingJobSubTaskState.FAILED, e.getProcessingJobSubTaskStats().getMetaExtractionState());
-        assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, e.getProcessingJobSubTaskStats().getColorExtractionState());
+        assertEquals (ProcessingJobSubTaskState.FAILED, e.getProcessingJobSubTaskStats().getColorExtractionState());
         assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, e.getProcessingJobSubTaskStats().getThumbnailGenerationState());
         assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, e.getProcessingJobSubTaskStats().getThumbnailStorageState());
     }
@@ -497,7 +500,7 @@ public class SlaveProcessorTest {
                                                                   new ReferenceOwner("", "", "", "")) ;
 
         assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getMetaExtractionState());
-        assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getColorExtractionState());
+        assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getColorExtractionState());
         assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getThumbnailGenerationState());
         assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getThumbnailStorageState());
     }

@@ -96,8 +96,8 @@ public class SlaveProcessor {
             }
         }
 
-        // Thumbnail generation : This happens only for images.
-        if ((null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty()) {
+        // Thumbnail generation : This happens only for images where color extraction was successful.
+        if ((null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty() && (imageColorMetaInfo != null)) {
             try {
                 generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent,
                         referenceOwner, thumbnailGenerationProcessingTasks);
