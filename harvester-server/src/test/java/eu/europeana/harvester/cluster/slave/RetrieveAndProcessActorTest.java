@@ -515,7 +515,7 @@ public class RetrieveAndProcessActorTest {
     }
 
     @Test
-    public void test_UnconditionalDownload_Success_Without_MetaInfo() throws InterruptedException, NoSuchAlgorithmException, IOException {
+    public void test_UnconditionalDownload_Success_Without_MetaInfo_ButMetaInfoInsertedAsAHack() throws InterruptedException, NoSuchAlgorithmException, IOException {
         final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
         final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
         final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
@@ -552,8 +552,8 @@ public class RetrieveAndProcessActorTest {
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
             assertEquals(msg2.getImageMetaInfo().getColorPalette().length,6);
-            assertNull(msg2.getImageMetaInfo().getHeight());
-            assertNull(msg2.getImageMetaInfo().getMimeType());
+            assertEquals(new Integer(1737), msg2.getImageMetaInfo().getHeight());
+            assertEquals("image/jpeg", msg2.getImageMetaInfo().getMimeType());
 
             // TODO : Re-enable checking for the original
             // final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
@@ -563,7 +563,7 @@ public class RetrieveAndProcessActorTest {
             assertEquals (200, msg2.getHttpResponseCode().intValue());
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getMetaExtractionState());
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailGenerationState());
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailStorageState());
 

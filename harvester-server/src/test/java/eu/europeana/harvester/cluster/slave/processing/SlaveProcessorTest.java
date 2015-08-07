@@ -354,6 +354,46 @@ public class SlaveProcessorTest {
     }
 
     @Test
+    public void test_WhenColorExtractionIsPresentAndMetaInfoExtractionNotThenTheMetaInfoIsInsertedArtificiallyAsAHack() throws Exception{
+        final String fileUrl = GitHubUrl_PREFIX + Image1;
+
+        subTasks.add(colorExtractionSubTask);
+        subTasks.add(mediumThumbnailExtractionSubTask);
+        subTasks.add(largeThumbnailExtractionSubTask);
+
+        MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
+        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
+        ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
+        MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+
+
+
+        doThrow(exception).when(mediaMetaInfoExtractorFail).extract(anyString());
+        doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
+        doReturn(null).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+                anyString(),
+                any(new byte[]{}.getClass()),
+                anyString());
+
+        SlaveProcessor slaveProcessorAlwaysFail = new SlaveProcessor(mediaMetaInfoExtractorFail,
+                thumbnailGeneratorFail,
+                colorExtractorFail,
+                mediaStorageClientFail);
+
+
+
+        ProcessingResultTuple e = slaveProcessorAlwaysFail.process(taskDocumentReference, PATH_DOWNLOADED + Image1, fileUrl,
+                new byte[]{0}, ResponseType.DISK_STORAGE,
+                new ReferenceOwner("", "", "", "")) ;
+
+        assertEquals (ProcessingJobSubTaskState.ERROR, e.getProcessingJobSubTaskStats().getMetaExtractionState());
+        assertEquals (exception.toString(), e.getProcessingJobSubTaskStats().getMetaExtractionLog());
+
+    }
+
+
+
+    @Test
     public void test_ColorExtractionFails() throws Exception{
         final String fileUrl = GitHubUrl_PREFIX + Image1;
 

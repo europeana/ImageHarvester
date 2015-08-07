@@ -39,8 +39,6 @@ public class MasterMetrics {
     public static final String DONE_PROCESSING_THUMBNAIL_GENERATION = "doneProcessing.thumbnailGeneration";
     public static final String DONE_PROCESSING_THUMBNAIL_STORAGE = "doneProcessing.thumbnailStorage";
 
-    public static final String META_INFO_COLOR_PALETTE_MERGE = "metaInfoColorPaletteMerge";
-
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
 
     public static class Master {
@@ -141,7 +139,6 @@ public class MasterMetrics {
 
         public static final Meter doneProcessingThumbnailStorageTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_THUMBNAIL_STORAGE, TOTAL, COUNTER));
 
-        public static final Counter metaInfoColorPaletteMergeCounter = METRIC_REGISTRY.counter(name(Master.NAME, META_INFO_COLOR_PALETTE_MERGE, COUNTER));
 
     }
 }

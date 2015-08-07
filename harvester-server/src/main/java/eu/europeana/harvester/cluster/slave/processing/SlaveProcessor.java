@@ -53,8 +53,8 @@ public class SlaveProcessor {
                                          ReferenceOwner referenceOwner) {
 
         // (1) Locate tasks
-        final ProcessingJobSubTask metaExtractionProcessingTask = locateMetaInfoExtractionProcessingTask(task);
         final ProcessingJobSubTask colorExtractionProcessingTask = locateColorExtractionProcessingTask(task);
+        final ProcessingJobSubTask metaExtractionProcessingTask = SlaveProcessorHack.artificialMetaInfoTask(locateMetaInfoExtractionProcessingTask(task),colorExtractionProcessingTask);
         final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks = locateThumbnailExtractionProcessingTask(task);
 
         ProcessingJobSubTaskStats stats = new ProcessingJobSubTaskStats();
