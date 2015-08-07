@@ -372,7 +372,7 @@ public class RetrieveAndProcessActorTest {
 
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
             assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
         }};
@@ -439,7 +439,7 @@ public class RetrieveAndProcessActorTest {
 
 
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getMetaExtractionState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
@@ -613,7 +613,7 @@ public class RetrieveAndProcessActorTest {
 
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
             assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
         }};
@@ -681,7 +681,7 @@ public class RetrieveAndProcessActorTest {
 
             assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
             assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
         }};
