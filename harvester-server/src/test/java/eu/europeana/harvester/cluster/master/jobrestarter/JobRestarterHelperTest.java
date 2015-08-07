@@ -178,7 +178,6 @@ public class JobRestarterHelperTest {
                 assertNotNull (newProfile.getToBeEvaluatedAt());
                 assertNotNull (newProfile.getToBeEvaluatedAt().getTime());
                 assertTrue (newProfile.getToBeEvaluatedAt().getTime() >= timestamp);
-                assertTrue (newProfile.getToBeEvaluatedAt().getTime() <= (timestamp + 200));
             }
         }
 
