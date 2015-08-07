@@ -80,10 +80,8 @@ public class SlaveProcessor {
             }
         }
 
-        boolean isImage = (mediaMetaInfoTuple != null && mediaMetaInfoTuple.getImageMetaInfo() != null);
-
         // Color extraction : This happens only for images.
-        if (isImage && (null != colorExtractionProcessingTask)) {
+        if ((null != colorExtractionProcessingTask)) {
             try {
                 imageColorMetaInfo = extractColor(originalFilePath);
 
@@ -99,7 +97,7 @@ public class SlaveProcessor {
         }
 
         // Thumbnail generation : This happens only for images.
-        if (isImage && (null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty()) {
+        if ((null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty()) {
             try {
                 generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent,
                         referenceOwner, thumbnailGenerationProcessingTasks);
@@ -118,7 +116,7 @@ public class SlaveProcessor {
         // (3) Post task execution
 
         // (3.1) Insert the color palette in all the thumbnail meta infos if there is a color palette : This happens only for images.
-        if (isImage && imageColorMetaInfo != null)
+        if (imageColorMetaInfo != null)
 
         {
             for (final Map.Entry<ProcessingJobSubTask, MediaFile> thumbnailEntry : generatedThumbnails.entrySet()) {
