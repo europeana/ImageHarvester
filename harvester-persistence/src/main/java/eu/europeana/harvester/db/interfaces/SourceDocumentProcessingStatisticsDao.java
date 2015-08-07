@@ -16,6 +16,13 @@ import java.util.Map;
  public interface SourceDocumentProcessingStatisticsDao {
 
     /**
+     * Counts the number of docs in the collection.
+     * @return returns the number of documents in the collection.
+     *
+     */
+    public Long getCount();
+
+    /**
      * Persists a SourceDocumentProcessingStatistics object
      * @param sourceDocumentProcessingStatistics - a new object
      * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write

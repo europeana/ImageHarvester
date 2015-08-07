@@ -14,6 +14,13 @@ import java.util.Map;
 public interface ProcessingJobDao {
 
     /**
+     * Counts the number of docs in the collection.
+     * @return returns the number of documents in the processing job
+     *
+     */
+    public Long getCount();
+
+    /**
      * Persists a ProcessingJob object
      *
      * @param processingJob - a new object

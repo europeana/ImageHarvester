@@ -28,6 +28,11 @@ public class SourceDocumentReferenceMetaInfoDaoImpl implements SourceDocumentRef
     }
 
     @Override
+    public Long getCount() {
+        return datastore.getCount(SourceDocumentReferenceMetaInfo.class);
+    }
+
+    @Override
     public boolean create(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo, WriteConcern writeConcern) {
         if(read(sourceDocumentReferenceMetaInfo.getId()) == null) {
             datastore.save(sourceDocumentReferenceMetaInfo, writeConcern);

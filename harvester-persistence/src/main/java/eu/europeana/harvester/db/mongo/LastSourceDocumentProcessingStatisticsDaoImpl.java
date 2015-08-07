@@ -26,6 +26,11 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
     }
 
     @Override
+    public Long getCount() {
+        return datastore.getCount(LastSourceDocumentProcessingStatistics.class);
+    }
+
+    @Override
     public boolean create(LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatisticss, WriteConcern writeConcern) {
         if(read(lastSourceDocumentProcessingStatisticss.getId()) == null) {
             datastore.save(lastSourceDocumentProcessingStatisticss);

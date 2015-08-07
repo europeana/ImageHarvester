@@ -14,6 +14,13 @@ import java.util.List;
 public interface SourceDocumentReferenceDao {
 
     /**
+     * Counts the number of docs in the collection.
+     * @return returns the number of documents in the collection.
+     *
+     */
+    public Long getCount();
+
+    /**
      * Persists a SourceDocumentReference object only if it's not created yet
      *
      * @param sourceDocumentReference - a new object

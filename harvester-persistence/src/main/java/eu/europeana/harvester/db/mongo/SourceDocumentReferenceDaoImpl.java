@@ -7,6 +7,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.ReferenceOwner;
+import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 import eu.europeana.harvester.domain.SourceDocumentReference;
 
 import java.util.ArrayList;
@@ -27,6 +28,11 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
 
     public SourceDocumentReferenceDaoImpl(Datastore datastore) {
         this.datastore = datastore;
+    }
+
+    @Override
+    public Long getCount() {
+        return datastore.getCount(SourceDocumentReference.class);
     }
 
     @Override

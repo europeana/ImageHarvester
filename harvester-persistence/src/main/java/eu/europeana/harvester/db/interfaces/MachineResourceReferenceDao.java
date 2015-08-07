@@ -14,6 +14,13 @@ import java.util.List;
 public interface MachineResourceReferenceDao {
 
     /**
+     * Counts the number of docs in the collection.
+     * @return returns the number of documents in the collection.
+     *
+     */
+    public Long getCount();
+
+    /**
      * Persists a MachineResourceReference object
      *
      * @param machineResourceReference - a new object

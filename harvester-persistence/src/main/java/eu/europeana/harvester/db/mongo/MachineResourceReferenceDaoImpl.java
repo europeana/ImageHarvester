@@ -5,6 +5,7 @@ import com.google.code.morphia.query.Query;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
+import eu.europeana.harvester.domain.LastSourceDocumentProcessingStatistics;
 import eu.europeana.harvester.domain.MachineResourceReference;
 import eu.europeana.harvester.domain.Page;
 
@@ -25,6 +26,11 @@ public class MachineResourceReferenceDaoImpl implements MachineResourceReference
 
     public MachineResourceReferenceDaoImpl(Datastore datastore) {
         this.datastore = datastore;
+    }
+
+    @Override
+    public Long getCount() {
+        return datastore.getCount(MachineResourceReference.class);
     }
 
     @Override

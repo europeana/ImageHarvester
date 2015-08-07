@@ -25,6 +25,11 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
     }
 
     @Override
+    public Long getCount() {
+        return datastore.getCount(ProcessingJob.class);
+    }
+
+    @Override
     public boolean create(ProcessingJob processingJob, WriteConcern writeConcern) {
         if(read(processingJob.getId()) == null) {
             datastore.save(processingJob, writeConcern);

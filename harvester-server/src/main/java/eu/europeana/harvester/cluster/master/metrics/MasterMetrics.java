@@ -46,6 +46,18 @@ public class MasterMetrics {
 
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
 
+    public static class MasterDatabase {
+        public static final String NAME = "MasterMetrics" + "." + "MasterDatabase";
+        public static final LazyGauge HistoricalProcessingJobCollectionSize = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,"HistoricalProcessingJobCollectionSize",COUNTER));
+        public static final LazyGauge ProcessingJobCollectionSize = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,"ProcessingJobCollectionSize",COUNTER));
+        public static final LazyGauge LastSourceDocumentProcessingStatisticsCollectionSize = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,"LastSourceDocumentProcessingStatisticsCollectionSize",COUNTER));
+        public static final LazyGauge MachineResourceReferenceCollectionSize = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,"MachineResourceReferenceCollectionSize",COUNTER));
+        public static final LazyGauge SourceDocumentProcessingStatisticsCollectionSize = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,"SourceDocumentProcessingStatisticsCollectionSize",COUNTER));
+        public static final LazyGauge SourceDocumentReferenceCollectionSize = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,"SourceDocumentReferenceCollectionSize",COUNTER));
+        public static final LazyGauge SourceDocumentReferenceMetaInfoCollectionSize = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,"SourceDocumentReferenceMetaInfoCollectionSize",COUNTER));
+        public static final LazyGauge SourceDocumentReferenceProcessingProfileCollectionSize = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,"SourceDocumentReferenceProcessingProfileCollectionSize",COUNTER));
+    }
+
     public static class Master {
         public static final String NAME = "MasterMetrics" + "." + "Master";
         public static final Timer sendJobSetToSlaveDuration = METRIC_REGISTRY.timer(name(Master.NAME, SEND_JOBS_SET_TO_SLAVE, DURATION));

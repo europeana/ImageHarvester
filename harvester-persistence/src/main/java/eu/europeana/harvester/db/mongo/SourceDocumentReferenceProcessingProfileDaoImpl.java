@@ -21,6 +21,11 @@ public class SourceDocumentReferenceProcessingProfileDaoImpl implements SourceDo
     public SourceDocumentReferenceProcessingProfileDaoImpl (Datastore datastore) {this.datastore = datastore;}
 
     @Override
+    public Long getCount() {
+        return datastore.getCount(SourceDocumentReferenceProcessingProfile.class);
+    }
+
+    @Override
     public boolean create (SourceDocumentReferenceProcessingProfile sourceDocumentReferenceProcessingProfile,
                            WriteConcern writeConcern) {
         if (null == read(sourceDocumentReferenceProcessingProfile.getId())) {

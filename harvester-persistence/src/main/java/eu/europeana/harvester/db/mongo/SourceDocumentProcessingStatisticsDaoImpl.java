@@ -5,6 +5,7 @@ import com.google.code.morphia.query.Query;
 import com.google.code.morphia.query.UpdateOperations;
 import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
+import eu.europeana.harvester.domain.MachineResourceReference;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
 
@@ -23,6 +24,11 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
 
     public SourceDocumentProcessingStatisticsDaoImpl(Datastore datastore) {
         this.datastore = datastore;
+    }
+
+    @Override
+    public Long getCount() {
+        return datastore.getCount(SourceDocumentProcessingStatistics.class);
     }
 
     @Override

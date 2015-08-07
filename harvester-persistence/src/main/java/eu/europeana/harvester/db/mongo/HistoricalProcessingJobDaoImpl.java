@@ -26,6 +26,11 @@ public class HistoricalProcessingJobDaoImpl implements HistoricalProcessingJobDa
     }
 
     @Override
+    public Long getCount() {
+        return datastore.getCount(HistoricalProcessingJob.class);
+    }
+
+    @Override
     public boolean create(HistoricalProcessingJob historicalProcessingJob, WriteConcern writeConcern) {
         if(read(historicalProcessingJob.getId()) == null) {
             datastore.save(historicalProcessingJob, writeConcern);

@@ -14,6 +14,13 @@ import java.util.Map;
 public interface HistoricalProcessingJobDao {
 
     /**
+     * Counts the number of docs in the collection.
+     * @return returns the number of documents in the historical processing job
+     *
+     */
+     public Long getCount();
+
+    /**
      * Persists a HistoricalProcessingJob object
      *
      * @param historicalProcessingJob - a new object

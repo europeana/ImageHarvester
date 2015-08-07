@@ -13,6 +13,13 @@ import java.util.List;
 public interface SourceDocumentReferenceMetaInfoDao {
 
     /**
+     * Counts the number of docs in the collection.
+     * @return returns the number of documents in the collection.
+     *
+     */
+    public Long getCount();
+
+    /**
      * Persists a SourceDocumentReferenceMetaInfo object
      * @param sourceDocumentReferenceMetaInfo - a new object
      * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write

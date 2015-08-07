@@ -13,6 +13,13 @@ import java.util.List;
  */
 public interface SourceDocumentReferenceProcessingProfileDao {
     /**
+     * Counts the number of docs in the collection.
+     * @return returns the number of documents in the collection.
+     *
+     */
+    public Long getCount();
+
+    /**
      * Persists a SourceDocumentReferenceProcessingProfile object only if it's not created yet
      *
      * @param sourceDocumentReference - a new object

@@ -249,6 +249,125 @@ public class ClusterMasterActor extends UntypedActor {
                 return cluster.state().members().size();
             }
         });
+
+
+        setMasterDatabaseMetrics()();
+    }
+
+    private void setMasterDatabaseMetrics() {
+        MasterMetrics.MasterDatabase.HistoricalProcessingJobCollectionSize.registerHandler(new Gauge<Long>() {
+
+            DateTime lastTimeComputed = DateTime.now();
+            Long lastValueComputed = 0l;
+            @Override
+            public Long getValue() {
+                if (lastTimeComputed.plusMinutes(1).isBefore(DateTime.now())) {
+                    lastTimeComputed = DateTime.now();
+                    lastValueComputed = historicalProcessingJobDao.getCount();
+                }
+                return lastValueComputed;
+            }
+        });
+
+        MasterMetrics.MasterDatabase.ProcessingJobCollectionSize.registerHandler(new Gauge<Long>() {
+
+            DateTime lastTimeComputed = DateTime.now();
+            Long lastValueComputed = 0l;
+            @Override
+            public Long getValue() {
+                if (lastTimeComputed.plusMinutes(1).isBefore(DateTime.now())) {
+                    lastTimeComputed = DateTime.now();
+                    lastValueComputed = processingJobDao.getCount();
+                }
+                return lastValueComputed;
+            }
+        });
+
+        MasterMetrics.MasterDatabase.LastSourceDocumentProcessingStatisticsCollectionSize.registerHandler(new Gauge<Long>() {
+
+            DateTime lastTimeComputed = DateTime.now();
+            Long lastValueComputed = 0l;
+            @Override
+            public Long getValue() {
+                if (lastTimeComputed.plusMinutes(1).isBefore(DateTime.now())) {
+                    lastTimeComputed = DateTime.now();
+                    lastValueComputed = lastSourceDocumentProcessingStatisticsDao.getCount();
+                }
+                return lastValueComputed;
+            }
+        });
+
+        MasterMetrics.MasterDatabase.MachineResourceReferenceCollectionSize.registerHandler(new Gauge<Long>() {
+
+            DateTime lastTimeComputed = DateTime.now();
+            Long lastValueComputed = 0l;
+            @Override
+            public Long getValue() {
+                if (lastTimeComputed.plusMinutes(1).isBefore(DateTime.now())) {
+                    lastTimeComputed = DateTime.now();
+                    lastValueComputed = machineResourceReferenceDao.getCount();
+                }
+                return lastValueComputed;
+            }
+        });
+
+        MasterMetrics.MasterDatabase.SourceDocumentProcessingStatisticsCollectionSize.registerHandler(new Gauge<Long>() {
+
+            DateTime lastTimeComputed = DateTime.now();
+            Long lastValueComputed = 0l;
+            @Override
+            public Long getValue() {
+                if (lastTimeComputed.plusMinutes(1).isBefore(DateTime.now())) {
+                    lastTimeComputed = DateTime.now();
+                    lastValueComputed = sourceDocumentProcessingStatisticsDao.getCount();
+                }
+                return lastValueComputed;
+            }
+        });
+
+        MasterMetrics.MasterDatabase.SourceDocumentReferenceCollectionSize.registerHandler(new Gauge<Long>() {
+
+            DateTime lastTimeComputed = DateTime.now();
+            Long lastValueComputed = 0l;
+            @Override
+            public Long getValue() {
+                if (lastTimeComputed.plusMinutes(1).isBefore(DateTime.now())) {
+                    lastTimeComputed = DateTime.now();
+                    lastValueComputed = sourceDocumentReferenceDao.getCount();
+                }
+                return lastValueComputed;
+            }
+        });
+
+        MasterMetrics.MasterDatabase.SourceDocumentReferenceMetaInfoCollectionSize.registerHandler(new Gauge<Long>() {
+
+            DateTime lastTimeComputed = DateTime.now();
+            Long lastValueComputed = 0l;
+            @Override
+            public Long getValue() {
+                if (lastTimeComputed.plusMinutes(1).isBefore(DateTime.now())) {
+                    lastTimeComputed = DateTime.now();
+                    lastValueComputed = sourceDocumentReferenceMetaInfoDao.getCount();
+                }
+                return lastValueComputed;
+            }
+        });
+
+
+        MasterMetrics.MasterDatabase.SourceDocumentReferenceProcessingProfileCollectionSize.registerHandler(new Gauge<Long>() {
+
+            DateTime lastTimeComputed = DateTime.now();
+            Long lastValueComputed = 0l;
+            @Override
+            public Long getValue() {
+                if (lastTimeComputed.plusMinutes(1).isBefore(DateTime.now())) {
+                    lastTimeComputed = DateTime.now();
+                    lastValueComputed = sourceDocumentProcessingProfileDao.getCount();
+                }
+                return lastValueComputed;
+            }
+        });
+
     }
 
     @Override
