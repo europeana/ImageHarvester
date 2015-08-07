@@ -251,7 +251,7 @@ public class ClusterMasterActor extends UntypedActor {
         });
 
 
-        setMasterDatabaseMetrics()();
+        setMasterDatabaseMetrics();
     }
 
     private void setMasterDatabaseMetrics() {
