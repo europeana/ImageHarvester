@@ -96,6 +96,12 @@ public class SlaveProcessor {
             }
         }
 
+        // Insert the extracted colors in the media meta info or create the meta info & insert it if missing.
+        if (imageColorMetaInfo != null){
+            if (mediaMetaInfoTuple == null) mediaMetaInfoTuple = new MediaMetaInfoTuple(imageColorMetaInfo,null,null,null);
+            else mediaMetaInfoTuple = mediaMetaInfoTuple.withImageMetaInfo(mediaMetaInfoTuple.getImageMetaInfo().withColorPalette(imageColorMetaInfo.getColorPalette()));
+        }
+
         // Thumbnail generation : This happens only for images where color extraction was successful.
         if ((null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty() && (imageColorMetaInfo != null)) {
             try {

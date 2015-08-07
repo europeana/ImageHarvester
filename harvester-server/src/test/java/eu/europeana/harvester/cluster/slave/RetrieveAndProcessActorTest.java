@@ -515,6 +515,69 @@ public class RetrieveAndProcessActorTest {
     }
 
     @Test
+    public void test_UnconditionalDownload_Success_Without_MetaInfo() throws InterruptedException, NoSuchAlgorithmException, IOException {
+        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
+        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
+        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
+
+        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
+                colorExtractionSubTask,
+                mediumThumbnailExtractionSubTask,
+                largeThumbnailExtractionSubTask
+        );
+
+        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
+
+            subject.tell(taskWithConfig, getRef());
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
+            assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
+            assertEquals(msg1.getRetrieveState(), RetrievingState.COMPLETED);
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+            assertEquals(msg2.getImageMetaInfo().getColorPalette().length,6);
+            assertNull(msg2.getImageMetaInfo().getHeight());
+            assertNull(msg2.getImageMetaInfo().getMimeType());
+
+            // TODO : Re-enable checking for the original
+            // final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
+            final MediaFile mediumStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"MEDIUM"),true);
+            final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
+
+            assertEquals (200, msg2.getHttpResponseCode().intValue());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailStorageState());
+
+            // TODO : Re-enable checking for the original
+            // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
+            assertNotNull(mediumStoredContent);
+            assertNotNull(largeStoredContent);
+
+        }};
+    }
+
+
+
+    @Test
     public void test_UnconditionalDownload_LinkFail() throws InterruptedException, NoSuchAlgorithmException, IOException {
         final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
         final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);

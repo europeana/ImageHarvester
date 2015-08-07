@@ -55,8 +55,12 @@ public class MediaMetaInfoTuple {
 
     public boolean isValid() {
         return null != getAudioMetaInfo() ||
-               null != getImageMetaInfo() ||
-               null != getTextMetaInfo()  ||
-               null != getVideoMetaInfo();
+                null != getImageMetaInfo() ||
+                null != getTextMetaInfo() ||
+                null != getVideoMetaInfo();
+    }
+
+    public MediaMetaInfoTuple withImageMetaInfo(ImageMetaInfo newImageMetaInfo) {
+        return new MediaMetaInfoTuple(newImageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
     }
 }

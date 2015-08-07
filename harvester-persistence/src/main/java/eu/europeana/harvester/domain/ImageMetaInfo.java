@@ -103,4 +103,8 @@ public class ImageMetaInfo implements Serializable {
     public ImageOrientation getOrientation() {
         return orientation;
     }
+
+    public ImageMetaInfo withColorPalette(final String[] newColorPalette) {
+        return new ImageMetaInfo(width,height,mimeType,fileFormat,colorSpace,fileSize,newColorPalette,orientation);
+    }
 }
