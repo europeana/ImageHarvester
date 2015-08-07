@@ -1,16 +1,13 @@
 package eu.europeana.uimtester.reportprocessingjobs.domain;
 
-import eu.europeana.harvester.domain.ProcessingJob;
-import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
-import eu.europeana.harvester.domain.SourceDocumentReference;
-import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.domain.*;
 
 import java.util.List;
 import java.util.Map;
 
 public class ProcessingJobWithStatsAndResults {
 
-    private final ProcessingJob processingJob;
+    private final HistoricalProcessingJob processingJob;
 
     private final List<SourceDocumentReference> sourceDocumentReferenceList;
 
@@ -18,14 +15,14 @@ public class ProcessingJobWithStatsAndResults {
 
     private final Map<String,SourceDocumentReferenceMetaInfo> sourceDocumentReferenceIdTometaInfoMap;
 
-    public ProcessingJobWithStatsAndResults(ProcessingJob processingJob, List<SourceDocumentReference> sourceDocumentReferenceList, Map<String, SourceDocumentProcessingStatistics> sourceDocumentReferenceIdToStatsMap, Map<String, SourceDocumentReferenceMetaInfo> sourceDocumentReferenceIdTometaInfoMap) {
+    public ProcessingJobWithStatsAndResults(HistoricalProcessingJob processingJob, List<SourceDocumentReference> sourceDocumentReferenceList, Map<String, SourceDocumentProcessingStatistics> sourceDocumentReferenceIdToStatsMap, Map<String, SourceDocumentReferenceMetaInfo> sourceDocumentReferenceIdTometaInfoMap) {
         this.processingJob = processingJob;
         this.sourceDocumentReferenceList = sourceDocumentReferenceList;
         this.sourceDocumentReferenceIdToStatsMap = sourceDocumentReferenceIdToStatsMap;
         this.sourceDocumentReferenceIdTometaInfoMap = sourceDocumentReferenceIdTometaInfoMap;
     }
 
-    public ProcessingJob getProcessingJob() {
+    public HistoricalProcessingJob getProcessingJob() {
         return processingJob;
     }
 

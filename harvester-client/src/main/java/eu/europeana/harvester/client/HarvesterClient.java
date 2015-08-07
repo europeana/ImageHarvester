@@ -77,6 +77,14 @@ public interface HarvesterClient {
      ProcessingJob retrieveProcessingJob(String jobId);
 
     /**
+     * Retrieves a historical job.
+     *
+     * @param jobId the unique id of the job
+     * @return the job
+     */
+    HistoricalProcessingJob retrieveHistoricalProcessingJob(String jobId);
+
+    /**
      * Not implemented yet.
      */
     List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) throws Exception;

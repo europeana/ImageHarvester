@@ -198,6 +198,11 @@ public class HarvesterClientImpl implements HarvesterClient {
 
 
     @Override
+    public HistoricalProcessingJob retrieveHistoricalProcessingJob(String jobId) {
+        return historicalProcessingJobDao.read(jobId);
+    }
+
+    @Override
     public SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url,String recordId) {
         return sourceDocumentReferenceDao.read(SourceDocumentReference.idFromUrl(url,recordId));
     }

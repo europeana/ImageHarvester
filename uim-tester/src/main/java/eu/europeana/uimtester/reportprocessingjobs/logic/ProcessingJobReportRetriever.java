@@ -1,10 +1,7 @@
 package eu.europeana.uimtester.reportprocessingjobs.logic;
 
 import eu.europeana.harvester.client.HarvesterClient;
-import eu.europeana.harvester.domain.ProcessingJob;
-import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
-import eu.europeana.harvester.domain.SourceDocumentReference;
-import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.uimtester.reportprocessingjobs.domain.ProcessingJobWithStatsAndResults;
 
 import java.util.ArrayList;
@@ -25,7 +22,11 @@ public class ProcessingJobReportRetriever {
 
         // Retrieve jobs
         for (final String jobId : jobIds) {
-            final ProcessingJob processingJob = harvesterClient.retrieveProcessingJob(jobId);
+            HistoricalProcessingJob processingJob = harvesterClient.retrieveHistoricalProcessingJob(jobId);
+            if (processingJob == null) {
+                ProcessingJob retrievedJob = harvesterClient.retrieveProcessingJob(jobId);
+                processingJob = (retrievedJob != null) ? new HistoricalProcessingJob(retrievedJob) : null;
+            }
             final List<SourceDocumentReference> sourceDocumentReferenceList = new ArrayList<>();
             final Map<String, SourceDocumentProcessingStatistics> sourceDocumentReferenceIdToStatsMap = new HashMap();
             final Map<String, SourceDocumentReferenceMetaInfo> sourceDocumentReferenceIdToMetaInfoMap = new HashMap<>();
