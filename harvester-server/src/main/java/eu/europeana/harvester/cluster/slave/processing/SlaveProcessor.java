@@ -147,8 +147,9 @@ public class SlaveProcessor {
         } finally {
             thumbnailStorageDurationContext.stop();
             try {
-                cacheOriginalImage(originalFilePath, originalFileUrl, originalFileContent, referenceOwner,
-                        mediaMetaInfoTuple);
+//  TODO : Re-enable when harvesting finished!
+//                cacheOriginalImage(originalFilePath, originalFileUrl, originalFileContent, referenceOwner,
+//                        mediaMetaInfoTuple);
 
             } catch (Exception e) {
                 stats = stats.withThumbnailStorageState(ProcessingJobSubTaskState.ERROR, e);
