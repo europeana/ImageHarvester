@@ -167,6 +167,7 @@ class Master {
                 defaultLimits,
                 cleanupInterval,
                 delayForCountingTheStateOfDocuments ), "clusterMaster");
+
     }
 
     public void start() {

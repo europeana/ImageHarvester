@@ -1,6 +1,9 @@
 package eu.europeana.harvester.cluster.master.metrics;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
@@ -39,6 +42,8 @@ public class MasterMetrics {
     public static final String DONE_PROCESSING_THUMBNAIL_GENERATION = "doneProcessing.thumbnailGeneration";
     public static final String DONE_PROCESSING_THUMBNAIL_STORAGE = "doneProcessing.thumbnailStorage";
 
+    public static final String CONNECTED_NODES_IN_CLUSTER = "connectedNodesInCluster";
+
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
 
     public static class Master {
@@ -53,10 +58,11 @@ public class MasterMetrics {
         public static final Timer loadFastLaneJobTasksFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_FASTLANEJOBS_TASKS_FROM_DB, COUNTER));
         public static final Timer loadFastLaneJobResourcesFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_FASTLANEJOBS_RESOURCES_FROM_DB, COUNTER));
 
-        public static final LazyGauge jobsPersistenceReadyCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "READY"+"."+COUNTER);
-        public static final LazyGauge jobsPersistenceFinishedWithSuccessCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_SUCCESS"+"."+COUNTER);
-        public static final LazyGauge jobsPersistenceErrorCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_ERROR"+"."+COUNTER);
+        public static final LazyGauge jobsPersistenceReadyCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "READY" + "." + COUNTER);
+        public static final LazyGauge jobsPersistenceFinishedWithSuccessCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_SUCCESS" + "." + COUNTER);
+        public static final LazyGauge jobsPersistenceErrorCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_ERROR" + "." + COUNTER);
 
+        public static final LazyGauge connectedNodesInClusterCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, CONNECTED_NODES_IN_CLUSTER, COUNTER));
 
         public static final Map<RetrievingState, Meter> doneDownloadStateCounters = new HashMap();
 

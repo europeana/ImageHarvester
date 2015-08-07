@@ -10,8 +10,10 @@ import akka.cluster.ClusterEvent.MemberEvent;
 import akka.cluster.ClusterEvent.MemberRemoved;
 import akka.cluster.ClusterEvent.MemberUp;
 import akka.cluster.ClusterEvent.UnreachableMember;
+import akka.cluster.Member;
 import akka.remote.AssociatedEvent;
 import akka.remote.DisassociatedEvent;
+import com.codahale.metrics.Gauge;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
@@ -19,6 +21,7 @@ import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.master.accountants.AccountantDispatcherActor;
 import eu.europeana.harvester.cluster.master.jobrestarter.JobRestarterActor;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
+import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.cluster.master.metrics.ProcessingJobStateStatisticsActor;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
 import eu.europeana.harvester.cluster.master.senders.JobSenderActor;
@@ -239,6 +242,13 @@ public class ClusterMasterActor extends UntypedActor {
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,
                 TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
 
+
+        MasterMetrics.Master.connectedNodesInClusterCount.registerHandler(new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return cluster.state().members().size();
+            }
+        });
     }
 
     @Override
