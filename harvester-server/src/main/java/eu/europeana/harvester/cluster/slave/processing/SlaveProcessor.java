@@ -73,7 +73,7 @@ public class SlaveProcessor {
                 if (null != mediaMetaInfoTuple && mediaMetaInfoTuple.isValid()) {
                     stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.SUCCESS);
                 } else {
-                    stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.FAILED);
+                    stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.FAILED, new Exception("mediaMetaInfoTuple is null OR mediaMetaInfoTuple is not valid"));
                 }
             } catch (Exception e) {
                 stats = stats.withMetaExtractionState(ProcessingJobSubTaskState.ERROR, e);
@@ -89,7 +89,7 @@ public class SlaveProcessor {
                         imageColorMetaInfo.getColorPalette().length > 0) {
                     stats = stats.withColorExtractionState(ProcessingJobSubTaskState.SUCCESS);
                 } else {
-                    stats = stats.withColorExtractionState(ProcessingJobSubTaskState.FAILED);
+                    stats = stats.withColorExtractionState(ProcessingJobSubTaskState.FAILED,new Exception("imageColorMetaInfo is null OR imageColorMetaInfo.colorPalette is null OR  imageColorMetaInfo.colorPalette is empty"));
                 }
             } catch (Exception e) {
                 stats = stats.withColorExtractionState(ProcessingJobSubTaskState.ERROR, e);
@@ -105,7 +105,7 @@ public class SlaveProcessor {
                 if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
                     stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
                 } else {
-                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED);
+                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED,new Exception("thumbnailGenerationProcessingTasks is null OR empty OR imageColorMetaInfo is null"));
                 }
             } catch (Exception e) {
                 stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR, e);
