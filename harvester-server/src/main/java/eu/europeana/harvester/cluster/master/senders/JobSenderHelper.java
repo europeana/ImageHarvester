@@ -34,19 +34,6 @@ public class JobSenderHelper  {
     public static void handleRequest(ActorRef sender, ActorRef accountantActor, ActorRef receiverActor, ActorRef jobLoaderActor,
                                DefaultLimits defaultLimits, HashMap<String, Boolean> ipsWithJobs, Logger LOG, IPExceptions ipExceptions) {
 
-//        final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-//        final Future<Object> future = Patterns.ask(accountantActor, new CheckIPsWithJobs(ipsWithJobs), timeout);
-//        Double percentage;
-//        try {
-//            percentage = (Double) Await.result(future, timeout.duration());
-//        } catch (Exception e) {
-//            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
-//                    "Exception while responding to get tasks request",e);
-//
-//            percentage = 0.0;
-//        }
-
-        //LOG.info ("creating bag of tasks");
 
         // we send a loadjobs message to the loader reagrdless and let him deal with it.
 
@@ -61,14 +48,6 @@ public class JobSenderHelper  {
         final BagOfTasks bagOfTasks = new BagOfTasks(tasksToSend);
         sender.tell(bagOfTasks, receiverActor);
 
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
-//                "Percentage of IPs which has loaded requests: {}% load when it's below: {}",
-//                percentage, defaultLimits.getMinTasksPerIPPercentage());
-//
-//        if(percentage < defaultLimits.getMinTasksPerIPPercentage()) {
-//            //accountantActor.tell(new CleanIPs(), getSelf());
-//            jobLoaderActor.tell(new LoadJobs(), ActorRef.noSender());
-//        }
     }
 
     /**
@@ -102,6 +81,7 @@ public class JobSenderHelper  {
                 List<String> tasksFromIP;
                 try {
                     tasksFromIP = (List<String>) Await.result(future2, timeout.duration());
+
                 } catch (Exception e) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
                             "Error at startTasks->getTasksFromIP.", e);
@@ -132,7 +112,6 @@ public class JobSenderHelper  {
 
 
             }
-
             // if we didn't reached the maximum size from the fastlane, we continue with normal loading
             if ( tasksToSend.size() < maxToSend ) {
                 // Each server is a different case. We treat them different.
@@ -140,7 +119,6 @@ public class JobSenderHelper  {
                 List<String> IPs = new ArrayList(ipsWithJobs.keySet());
                 Collections.shuffle(IPs);
                 //LOG.info ("IPs with jobs size "+IPs.size());
-
                 for (final String IP : IPs) {
 
 
@@ -149,6 +127,7 @@ public class JobSenderHelper  {
                     List<String> tasksFromIP;
                     try {
                         tasksFromIP = (List<String>) Await.result(future3, timeout.duration());
+
                     } catch (Exception e) {
                         LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
                                 "Error at startTasks->getTasksFromIP.", e);
@@ -226,54 +205,6 @@ public class JobSenderHelper  {
     }
 
 
-    /**
-     * Checks for tasks which was not acknowledged by any slave so they will be reloaded.
-     */
-//    private void checkForMissedTasks() {
-//        final DateTime currentTime = new DateTime();
-//
-//        List<String> tasksToRemove = new ArrayList<>();
-//
-//        try {
-//            final Map<String, DateTime> tasks = new HashMap<>(tasksPerTime);
-//
-//            for (final String task : tasks.keySet()) {
-//                final DateTime timeout =
-//                        tasks.get(task).plusMillis(clusterMasterConfig.getResponseTimeoutFromSlaveInMillis());
-//                if (timeout.isBefore(currentTime)) {
-//                    tasksToRemove.add(task);
-//
-//                    accountantActor.tell(new ModifyState(task, TaskState.READY), getSelf());
-//                }
-//            }
-//
-//            for(final String task : tasksToRemove) {
-//                tasksPerTime.remove(task);
-//            }
-//        } catch (Exception e) {
-//            LOG.error(e.getMessage());
-//        }
-//
-//        final int period = clusterMasterConfig.getResponseTimeoutFromSlaveInMillis()/1000;
-//        getContext().system().scheduler().scheduleOnce(Duration.create(period,
-//                TimeUnit.SECONDS), getSelf(), new CheckForTaskTimeout(), getContext().system().dispatcher(), getSelf());
-//    }
-
-
-    /**
-     * Recovers the tasks if an actor system crashes.
-     * @param address the address of the actor system.
-     */
-//    private void recoverTasks(final Address address) {
-//        final HashSet<String> tasks = tasksPerAddress.get(address);
-//        if(tasks != null) {
-//            for (final String taskID : tasks) {
-//                accountantActor.tell(new ModifyState(taskID, TaskState.READY), getSelf());
-//                accountantActor.tell(new RemoveDownloadSpeed(taskID), getSelf());
-//            }
-//        }
-//        tasksPerAddress.remove(address);
-//    }
 
 
 

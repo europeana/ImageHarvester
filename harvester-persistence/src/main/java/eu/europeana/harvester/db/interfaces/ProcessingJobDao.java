@@ -101,7 +101,7 @@ public interface ProcessingJobDao {
      * @param page     an object which contains the number of records needed and the offset.
      * @return - list of ProcessingJobs
      */
-     List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs);
+     List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution);
 
 
      /**

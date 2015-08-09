@@ -92,8 +92,11 @@ public class JobLoaderExecutorHelper {
             final Timer.Context loadJobTasksFromDBDuration = MasterMetrics.Master.loadJobTasksFromDBDuration.time();
             final Page page = new Page(0, clusterMasterConfig.getJobsPerIP() * tempDistribution.size());
             final List<ProcessingJob> all =
-                    processingJobDao.getDiffusedJobsWithState(jobPriority, JobState.READY, page, tempDistribution, ipsWithJobs);
+                    processingJobDao.getDiffusedJobsWithState(jobPriority, JobState.READY, page, tempDistribution);
             loadJobTasksFromDBDuration.stop();
+
+            // Update the IP with jobs distributed state
+            for (ProcessingJob job : all) ipsWithJobs.put(job.getIpAddress(),true);
 
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "{} priority - Done with loading {} priority jobs. Creating tasks from them.", jobPriority.name(), all.size());

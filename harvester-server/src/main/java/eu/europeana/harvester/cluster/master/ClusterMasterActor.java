@@ -22,7 +22,6 @@ import eu.europeana.harvester.cluster.master.accountants.AccountantDispatcherAct
 import eu.europeana.harvester.cluster.master.jobrestarter.JobRestarterActor;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
-import eu.europeana.harvester.cluster.master.metrics.ProcessingJobStateStatisticsActor;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
 import eu.europeana.harvester.cluster.master.senders.JobSenderActor;
 import eu.europeana.harvester.db.interfaces.*;
@@ -217,11 +216,6 @@ public class ClusterMasterActor extends UntypedActor {
                 clusterMasterConfig, accountantActor, processingJobDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
                 defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
-
-        processingJobStateStatisticsActor = getContext().system().actorOf(Props.create(ProcessingJobStateStatisticsActor.class,
-                                                                                       sourceDocumentProcessingStatisticsDao,
-                                                                                       delayForCountingTheStateOfDocuments),
-                                                                          "processingJobStateStatistics");
 
         jobRestarterActor = getContext().system().actorOf(Props.create(JobRestarterActor.class,
                                                                        clusterMasterConfig.getJobRestarterConfig(),

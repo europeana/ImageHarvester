@@ -6,6 +6,7 @@ import akka.pattern.Patterns;
 import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.CleanUp;
+import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
@@ -164,6 +165,7 @@ public class AccountantAllTasksActor extends UntypedActor {
 
             if (message instanceof ModifyState) {
                 final String taskID = ((ModifyState) message).getTaskID();
+                final DoneProcessing doneProcessing = ((ModifyState) message).getDoneProcessing();
 
                 if (allTasks.containsKey(taskID)) {
                     final String jobID = ((ModifyState) message).getJobId();
@@ -196,7 +198,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                                 foundTask = true;
                         }
                         // ModifyState with task status done should be called from a future, so we bang back the answer
-                        getSender().tell(new MarkJobAsDone(jobID), ActorRef.noSender());
+                        getSender().tell(new MarkJobAsDone(doneProcessing), ActorRef.noSender());
                         // at this moment, if foundTask is false, it means all tasks from that specific job are done
                         // we signal that back to the asker and remove the job and it's subsequent tasks
                         if (!foundTask) {
@@ -211,6 +213,9 @@ public class AccountantAllTasksActor extends UntypedActor {
 
 
                     }
+                } else {
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+                            "AccountantAllTasksActor done processing for task {} received and if found {} in allTasks with size {}",taskID,allTasks.containsKey(taskID),allTasks.size());
                 }
                 return;
             }

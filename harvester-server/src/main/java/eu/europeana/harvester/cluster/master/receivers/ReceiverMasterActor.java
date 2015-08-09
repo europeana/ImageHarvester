@@ -13,7 +13,6 @@ import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskStats;
-import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,20 +60,8 @@ public class ReceiverMasterActor extends UntypedActor {
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
     private ActorRef receiverJobDumper;
-    private ActorRef receiverStatisticsDumper;
-    private ActorRef receiverMetaInfoDumper;
 
     private ActorRef monitoringActor;
-
-    /**
-     * ONLY FOR DEBUG
-     *
-     * Number of finished tasks.
-     * Number of finished tasks with error.
-     */
-    private Integer success = 0;
-    private Integer error = 0;
-    int counter = 0;
 
     public ReceiverMasterActor(final ClusterMasterConfig clusterMasterConfig,
                                final ActorRef accountantActor,
@@ -107,15 +94,11 @@ public class ReceiverMasterActor extends UntypedActor {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverMasterActor prestart");
 
+
+
+
         receiverJobDumper = getContext().actorOf(Props.create(ReceiverJobDumperActor.class, clusterMasterConfig,
-                accountantActor,  processingJobDao, historicalProcessingJobDao), "jobDumper");
-
-        receiverStatisticsDumper = getContext().actorOf(Props.create(ReceiverStatisticsDumperActor.class, clusterMasterConfig,
-                sourceDocumentProcessingStatisticsDao, lastSourceDocumentProcessingStatisticsDao,
-                sourceDocumentReferenceDao, processingJobDao, historicalProcessingJobDao ), "statisticsDumper");
-
-        receiverMetaInfoDumper = getContext().actorOf(Props.create(ReceiverMetaInfoDumperActor.class, clusterMasterConfig,
-                accountantActor, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "metaInfoDumper");
+                processingJobDao, historicalProcessingJobDao,sourceDocumentProcessingStatisticsDao, lastSourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao), "jobDumper");
 
     }
 
@@ -126,8 +109,6 @@ public class ReceiverMasterActor extends UntypedActor {
                 "ReceiverMasterActor prestart");
 
         getContext().system().stop(receiverJobDumper);
-        getContext().system().stop(receiverMetaInfoDumper);
-        getContext().system().stop(receiverStatisticsDumper);
     }
 
 
@@ -144,7 +125,7 @@ public class ReceiverMasterActor extends UntypedActor {
         }
         if(message instanceof DownloadConfirmation) {
             final DownloadConfirmation downloadConfirmation = (DownloadConfirmation) message;
-            accountantActor.tell(new ModifyState(downloadConfirmation.getTaskID(),"", "", TaskState.PROCESSING), getSelf());
+            accountantActor.tell(new ModifyState(downloadConfirmation.getTaskID(),"", "",null, TaskState.PROCESSING), getSelf());
             MasterMetrics.Master.doneDownloadStateCounters.get(downloadConfirmation.getState()).inc();
             MasterMetrics.Master.doneDownloadTotalCounter.inc();
 
@@ -207,17 +188,6 @@ public class ReceiverMasterActor extends UntypedActor {
      * @param actorRef reference to an actor from the actor system
      */
     private void addAddress(final Address address, final ActorRef actorRef) {
-//        if(actorsPerAddress.containsKey(address)) {
-//            final HashSet<ActorRef> actorRefs = actorsPerAddress.get(address);
-//            actorRefs.add(actorRef);
-//
-//            actorsPerAddress.put(address, actorRefs);
-//        } else {
-//            final HashSet<ActorRef> actorRefs = new HashSet<>();
-//            actorRefs.add(actorRef);
-//
-//            actorsPerAddress.put(address, actorRefs);
-//        }
         monitoringActor.tell(new AddAddressToMonitor(address, actorRef), ActorRef.noSender());
     }
 
@@ -227,19 +197,6 @@ public class ReceiverMasterActor extends UntypedActor {
      * @param startedTask started task
      */
     private void addTask(final Address address, final StartedTask startedTask) {
-//        tasksPerTime.remove(startedTask.getTaskID());
-//
-//        if(tasksPerAddress.containsKey(address)) {
-//            final HashSet<String> tasks = tasksPerAddress.get(address);
-//            tasks.add(startedTask.getTaskID());
-//
-//            tasksPerAddress.put(address, tasks);
-//        } else {
-//            final HashSet<String> tasks = new HashSet<>();
-//            tasks.add(startedTask.getTaskID());
-//
-//            tasksPerAddress.put(address, tasks);
-//        }
         monitoringActor.tell(new AddTaskToMonitor(address,startedTask.getTaskID()), ActorRef.noSender());
     }
 
@@ -249,12 +206,6 @@ public class ReceiverMasterActor extends UntypedActor {
      * @param processing response object
      */
     private void removeTask(final Address address, final DoneProcessing processing) {
-//        if(tasksPerAddress.containsKey(address)) {
-//            final HashSet<String> tasks = tasksPerAddress.get(address);
-//            tasks.remove(processing.getTaskID());
-//
-//            tasksPerAddress.put(address, tasks);
-//        }
         monitoringActor.tell(new RemoveTaskFromMonitor(address,processing.getTaskID()), ActorRef.noSender());
     }
 
@@ -266,56 +217,7 @@ public class ReceiverMasterActor extends UntypedActor {
      * @param msg - the message from the slave actor with url, jobId and other statistics
      */
     private void markDone(DoneProcessing msg) {
-
-        try {
-            // save the data in Mongo
-            //receiverJobDumper.tell(msg,ActorRef.noSender());
-            receiverMetaInfoDumper.tell(msg, ActorRef.noSender());
-            receiverStatisticsDumper.tell(msg, ActorRef.noSender());
-            //update accountant
-            accountantActor.tell(new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(), TaskState.DONE), getSelf());
-
-
-//            Boolean haveTasks = true;
-//
-//            final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-//
-//            Future<Object> future = Patterns.ask(accountantActor, new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(), TaskState.DONE), timeout);
-//            try {
-//                haveTasks = (Boolean) Await.result(future, timeout.duration());
-//            } catch (Exception e) {
-//                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-//                        "Error at markDone->ModifyState.", e);
-//                // TODO : Investigate if it make sense to hide the exception here.
-//            }
-//
-//            // if at this moment haveTasks is false, it means that we exhausted all tasks for that specific job
-//            // so we can mark it as finished in the DB
-//            if(!haveTasks) {
-//                final ProcessingJob processingJob = processingJobDao.read(msg.getJobId());
-//                final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
-//                processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
-//            }
-
-            if ((ProcessingState.SUCCESS).equals(msg.getProcessingState())) {
-                success++;
-            } else {
-                error++;
-            }
-
-            if ( counter+100 < success + error) {
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-                        "Finished 100+ tasks with success: {}, with error: {}", success, error);
-
-                counter = success+error;
-            }
-
-        } catch (Exception e) {
-            LOG.error(e.getMessage());
-            return;
-        }
-
-
+            accountantActor.tell(new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(),msg, TaskState.DONE), getSelf());
 
     }
 

@@ -91,14 +91,18 @@ public class NodeSupervisor extends UntypedActor {
         final Cluster cluster = Cluster.get(getContext().system());
         cluster.subscribe(getSelf(), ClusterEvent.initialStateAsEvents(),
                 ClusterEvent.MemberEvent.class, ClusterEvent.UnreachableMember.class, AssociatedEvent.class);
-        getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(3,
-                TimeUnit.MINUTES), getSelf(), new SendHearbeat(), getContext().system().dispatcher(), getSelf());
+        getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+                TimeUnit.SECONDS), getSelf(), new SendHearbeat(), getContext().system().dispatcher(), getSelf());
 
     }
 
     @Override
     public void onReceive(Object message) throws Exception {
         if (message instanceof BagOfTasks) {
+            final BagOfTasks m = (BagOfTasks)message;
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
+                    "Slave supervisor received bag of tasks with size {} .",m.getTasks().size());
+
             onBagOfTasksReceived((BagOfTasks) message);
             return;
         }

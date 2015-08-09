@@ -283,6 +283,10 @@ public class SourceDocumentProcessingStatistics {
         return log;
     }
 
+    public ProcessingJobSubTaskStats getProcessingJobSubTaskStats() {
+        return processingJobSubTaskStats;
+    }
+
     public SourceDocumentProcessingStatistics withUpdate(final ProcessingState state,
                                                          final String jobId, final Integer responseCode,
                                                          final Long size,

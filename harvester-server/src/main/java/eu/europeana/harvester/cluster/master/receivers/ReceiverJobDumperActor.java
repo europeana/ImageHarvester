@@ -4,15 +4,17 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import com.mongodb.WriteConcern;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
+import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.inner.MarkJobAsDone;
-import eu.europeana.harvester.db.interfaces.HistoricalProcessingJobDao;
-import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
-import eu.europeana.harvester.domain.HistoricalProcessingJob;
-import eu.europeana.harvester.domain.JobState;
-import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTuple;
+import eu.europeana.harvester.db.interfaces.*;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.Date;
 
 public class ReceiverJobDumperActor extends UntypedActor {
 
@@ -23,13 +25,6 @@ public class ReceiverJobDumperActor extends UntypedActor {
      */
     private final ClusterMasterConfig clusterMasterConfig;
 
-    /**
-     * A wrapper class for all important data (ips, loaded jobs, jobs in progress etc.)
-     */
-    private ActorRef accountantActor;
-
-
-
 
     /**
      * ProcessingJob DAO object which lets us to read and store data to and from the database.
@@ -38,29 +33,38 @@ public class ReceiverJobDumperActor extends UntypedActor {
 
     private final HistoricalProcessingJobDao historicalProcessingJobDao;
 
-
-
+    private final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao;
+    private final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao;
+    private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
+    private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
 
     public ReceiverJobDumperActor(final ClusterMasterConfig clusterMasterConfig,
-                                  final ActorRef accountantActor,
                                   final ProcessingJobDao processingJobDao,
-                                  final HistoricalProcessingJobDao historicalProcessingJobDao){
+                                  final HistoricalProcessingJobDao historicalProcessingJobDao,
+                                  final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
+                                  final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao,
+                                  final SourceDocumentReferenceDao sourceDocumentReferenceDao,
+                                  final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao
+    ) {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
                 "ReceiverJobDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
-        this.accountantActor = accountantActor;
         this.processingJobDao = processingJobDao;
         this.historicalProcessingJobDao = historicalProcessingJobDao;
+        this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
+        this.lastSourceDocumentProcessingStatisticsDao = lastSourceDocumentProcessingStatisticsDao;
+        this.sourceDocumentReferenceDao = sourceDocumentReferenceDao;
+        this.sourceDocumentReferenceMetaInfoDao = sourceDocumentReferenceMetaInfoDao;
     }
 
     @Override
     public void onReceive(Object message) throws Exception {
 
         if (message instanceof MarkJobAsDone) {
-            String jobId = ((MarkJobAsDone)message).getJobID();
-            markDone(jobId);
+            DoneProcessing doneProcessing = ((MarkJobAsDone) message).getDoneProcessing();
+            markDone(doneProcessing);
 
         }
 
@@ -68,19 +72,98 @@ public class ReceiverJobDumperActor extends UntypedActor {
     }
 
 
-
     /**
      * Marks task as done and save it's statistics in the DB.
      * If one job has finished all his tasks then the job also will be marked as done(FINISHED).
-     * @param jobId - the message from the slave actor with jobId
+     *
+     * @param doneProcessing - the message from the slave actor with jobId
      */
-    private void markDone(String jobId) {
-        final ProcessingJob processingJob = processingJobDao.read(jobId);
+    private void markDone(DoneProcessing doneProcessing) {
+        // (Step 1) Updating processing jobs
+        final ProcessingJob processingJob = processingJobDao.read(doneProcessing.getJobId());
         final ProcessingJob newProcessingJob = processingJob.withState(JobState.FINISHED);
         final HistoricalProcessingJob historicalProcessingJob = new HistoricalProcessingJob(newProcessingJob);
         historicalProcessingJobDao.create(historicalProcessingJob, WriteConcern.NORMAL);
         processingJobDao.delete(newProcessingJob.getId());
 
+        // (Step 2) Updating statistics jobs
+        final SourceDocumentReference sourceDocumentReference = saveStatistics(doneProcessing,processingJob);
+
+        // (Step 3) Updating the stats jobs
+        saveMetaInfo(doneProcessing);
+    }
+
+    /**
+     * Marks task as done and save it's statistics in the DB.
+     * If one job has finished all his tasks then the job also will be marked as done(FINISHED).
+     *
+     * @param msg - the message from the slave actor with url, jobId and other statistics
+     */
+    private SourceDocumentReference saveStatistics(DoneProcessing msg, ProcessingJob processingJob) {
+        final String docId = msg.getReferenceId();
+        //LOG.info("save statistics for document with ID: {}",docId);
+
+        final ProcessingJobSubTaskStats subTaskStats = msg.getProcessingStats();
+
+        final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
+                new SourceDocumentProcessingStatistics(
+                        new Date(),
+                        new Date(),
+                        true,
+                        msg.getTaskType(),
+                        msg.getProcessingState(),
+                        processingJob.getReferenceOwner(),
+                        processingJob.getUrlSourceType(),
+                        docId,
+                        msg.getJobId(),
+                        msg.getHttpResponseCode(),
+                        msg.getHttpResponseContentType(),
+                        msg.getHttpResponseContentSizeInBytes(),
+                        msg.getSocketConnectToDownloadStartDurationInMilliSecs(),
+                        msg.getRetrievalDurationInMilliSecs(),
+                        msg.getCheckingDurationInMilliSecs(),
+                        msg.getSourceIp(),
+                        msg.getHttpResponseHeaders(),
+                        msg.getLog(),
+                        subTaskStats
+                );
+
+        final LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatistics = new LastSourceDocumentProcessingStatistics(sourceDocumentProcessingStatistics);
+
+        SourceDocumentReference sourceDocumentReference = sourceDocumentReferenceDao.read(docId);
+        if (sourceDocumentReference != null) {
+            sourceDocumentReference = sourceDocumentReference.withLastStatsId(sourceDocumentProcessingStatistics.getId()).withRedirectionPath(msg.getRedirectionPath());
+        }
+
+        sourceDocumentProcessingStatisticsDao.createOrModify(sourceDocumentProcessingStatistics,
+                clusterMasterConfig.getWriteConcern());
+
+        lastSourceDocumentProcessingStatisticsDao.createOrModify(lastSourceDocumentProcessingStatistics, clusterMasterConfig.getWriteConcern());
+
+        sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, clusterMasterConfig.getWriteConcern());
+
+        return sourceDocumentReference;
+
+    }
+
+    /**
+     * Saves the meta information of a document
+     *
+\     * @param msg   all the information retrieved while downloading
+     */
+    private void saveMetaInfo(final DoneProcessing msg) {
+        if (new MediaMetaInfoTuple(msg.getImageMetaInfo(), msg.getAudioMetaInfo(), msg.getVideoMetaInfo(), msg.getTextMetaInfo()).isValid()) {
+            final SourceDocumentReferenceMetaInfo newSourceDocumentReferenceMetaInfo = new SourceDocumentReferenceMetaInfo(msg.getReferenceId(), msg.getImageMetaInfo(),
+                    msg.getAudioMetaInfo(), msg.getVideoMetaInfo(), msg.getTextMetaInfo());
+            sourceDocumentReferenceMetaInfoDao.createOrModify(Collections.singleton(newSourceDocumentReferenceMetaInfo),
+                    clusterMasterConfig.getWriteConcern());
+        } else {
+            if (msg.getTaskType() != DocumentReferenceTaskType.CHECK_LINK) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+                        "ReceiverJobDumperActor : the meta info for task {} and job {} is invalid so cannot be saved.", msg.getTaskID(), msg.getJobId());
+
+            }
+        }
     }
 
 

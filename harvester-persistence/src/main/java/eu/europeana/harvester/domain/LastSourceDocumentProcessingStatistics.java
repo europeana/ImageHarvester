@@ -113,7 +113,31 @@ public class LastSourceDocumentProcessingStatistics {
      */
     private final ProcessingJobSubTaskStats processingJobSubTaskStats;
 
-    public LastSourceDocumentProcessingStatistics() {
+    public LastSourceDocumentProcessingStatistics(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics) {
+        this.id = sourceDocumentProcessingStatistics.getId();
+        this.createdAt = sourceDocumentProcessingStatistics.getCreatedAt();
+        this.updatedAt = sourceDocumentProcessingStatistics.getUpdatedAt();
+        this.active = sourceDocumentProcessingStatistics.getActive();
+        this.taskType = sourceDocumentProcessingStatistics.getTaskType();
+        this.state = sourceDocumentProcessingStatistics.getState();
+        this.referenceOwner = sourceDocumentProcessingStatistics.getReferenceOwner();
+        this.urlSourceType = sourceDocumentProcessingStatistics.getUrlSourceType();
+        this.sourceDocumentReferenceId = sourceDocumentProcessingStatistics.getSourceDocumentReferenceId();
+        this.processingJobId = sourceDocumentProcessingStatistics.getProcessingJobId();
+        this.httpResponseCode = sourceDocumentProcessingStatistics.getHttpResponseCode();
+        this.httpResponseContentType = sourceDocumentProcessingStatistics.getHttpResponseContentType();
+        this.httpResponseContentSizeInBytes = sourceDocumentProcessingStatistics.getHttpResponseContentSizeInBytes();
+        this.socketConnectToDownloadStartDurationInMilliSecs = sourceDocumentProcessingStatistics.getSocketConnectToDownloadStartDurationInMilliSecs();
+        this.retrievalDurationInMilliSecs = sourceDocumentProcessingStatistics.getRetrievalDurationInMilliSecs();
+        this.checkingDurationInMilliSecs = sourceDocumentProcessingStatistics.getCheckingDurationInMilliSecs();
+        this.sourceIp = sourceDocumentProcessingStatistics.getSourceIp();
+        this.httpResponseHeaders = sourceDocumentProcessingStatistics.getHttpResponseHeaders();
+        this.log = sourceDocumentProcessingStatistics.getLog();
+        this.processingJobSubTaskStats = sourceDocumentProcessingStatistics.getProcessingJobSubTaskStats();
+
+    }
+
+        public LastSourceDocumentProcessingStatistics() {
         this.id = null;
         this.createdAt = null;
         this.updatedAt = null;

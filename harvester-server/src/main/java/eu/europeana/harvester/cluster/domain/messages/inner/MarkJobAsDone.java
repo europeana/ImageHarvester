@@ -1,20 +1,18 @@
 package eu.europeana.harvester.cluster.domain.messages.inner;
 
+import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
+
 import java.io.Serializable;
 
 public class MarkJobAsDone implements Serializable {
 
-    private final String jobID;
+    private final DoneProcessing doneProcessing;
 
-
-    public MarkJobAsDone(String jobID) {
-
-        this.jobID = jobID;
-
+    public MarkJobAsDone(DoneProcessing doneProcessing) {
+        this.doneProcessing = doneProcessing;
     }
 
-    public String getJobID() {
-        return jobID;
+    public DoneProcessing getDoneProcessing() {
+        return doneProcessing;
     }
-
 }

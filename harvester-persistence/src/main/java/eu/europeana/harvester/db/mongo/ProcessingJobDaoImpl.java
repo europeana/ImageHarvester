@@ -126,7 +126,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
     }
 
     @Override
-    public List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs) {
+    public List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution) {
 
         final Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
         query.criteria("priority").equal(jobPriority.getPriority());
