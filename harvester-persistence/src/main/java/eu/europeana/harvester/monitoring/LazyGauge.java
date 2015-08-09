@@ -19,7 +19,7 @@ public class LazyGauge {
 
     public <T> boolean registerHandler(final Gauge<T> handler) {
         if (gauge == null) {
-            gauge = metricRegistry.register(metricRegistry.name(LazyGauge.class, name), handler);
+            gauge = metricRegistry.register(metricRegistry.name(name), handler);
             return true;
         } else {
             return false;

@@ -307,8 +307,8 @@ public class NodeMasterActor extends UntypedActor {
 
             }
         }
-        SlaveMetrics.Worker.Master.doneDownloadStateCounters.get(message.getHttpRetrieveResponse().getState()).mark();
-        SlaveMetrics.Worker.Master.doneDownloadTotalCounter.mark();
+        SlaveMetrics.Worker.Master.doneDownloadStateCounters.get(message.getHttpRetrieveResponse().getState()).inc();
+        SlaveMetrics.Worker.Master.doneDownloadTotalCounter.inc();
     }
 
     private void onDoneProcessingReceived(Object message) {
@@ -323,8 +323,8 @@ public class NodeMasterActor extends UntypedActor {
                     "Slave sending DoneProcessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
         }
 
-        SlaveMetrics.Worker.Master.doneProcessingStateCounters.get(doneProcessing.getProcessingState()).mark();
-        SlaveMetrics.Worker.Master.doneProcessingTotalCounter.mark();
+        SlaveMetrics.Worker.Master.doneProcessingStateCounters.get(doneProcessing.getProcessingState()).inc();
+        SlaveMetrics.Worker.Master.doneProcessingTotalCounter.inc();
     }
 
     private void onCleanReceived() {

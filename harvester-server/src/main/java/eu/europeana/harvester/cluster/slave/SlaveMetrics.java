@@ -48,25 +48,25 @@ public class SlaveMetrics {
 
             public static final LazyGauge activeWorkerSlavesCounter = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + "actors" + "." + "size");
 
-            public static final Map<RetrievingState, Meter> doneDownloadStateCounters = new HashMap();
+            public static final Map<RetrievingState, Counter> doneDownloadStateCounters = new HashMap();
 
             static {
                 for (final RetrievingState state : RetrievingState.values()) {
-                    doneDownloadStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_DOWNLOAD, state.name(), COUNTER)));
+                    doneDownloadStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_DOWNLOAD, state.name(), COUNTER)));
                 }
             }
 
-            public static final Meter doneDownloadTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_DOWNLOAD, TOTAL, COUNTER));
+            public static final Counter doneDownloadTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_DOWNLOAD, TOTAL, COUNTER));
 
-            public static final Map<ProcessingState, Meter> doneProcessingStateCounters = new HashMap();
+            public static final Map<ProcessingState, Counter> doneProcessingStateCounters = new HashMap();
 
             static {
                 for (final ProcessingState state : ProcessingState.values()) {
-                    doneProcessingStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING, state.name(), COUNTER)));
+                    doneProcessingStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING, state.name(), COUNTER)));
                 }
             }
 
-            public static final Meter doneProcessingTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING, TOTAL, COUNTER));
+            public static final Counter doneProcessingTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING, TOTAL, COUNTER));
 
         }
 

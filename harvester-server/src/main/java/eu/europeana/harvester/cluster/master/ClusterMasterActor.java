@@ -243,6 +243,13 @@ public class ClusterMasterActor extends UntypedActor {
                 TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
 
 
+        MasterMetrics.Master.unreachableNodesInClusterCount.registerHandler(new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return cluster.state().unreachable().size();
+            }
+        });
+
         MasterMetrics.Master.connectedNodesInClusterCount.registerHandler(new Gauge<Integer>() {
             @Override
             public Integer getValue() {
@@ -250,14 +257,13 @@ public class ClusterMasterActor extends UntypedActor {
             }
         });
 
-
         setMasterDatabaseMetrics();
     }
 
     private void setMasterDatabaseMetrics() {
         MasterMetrics.MasterDatabase.HistoricalProcessingJobCollectionSize.registerHandler(new Gauge<Long>() {
 
-            DateTime lastTimeComputed = DateTime.now();
+            DateTime lastTimeComputed = DateTime.now().minusMinutes(5);
             Long lastValueComputed = 0l;
             @Override
             public Long getValue() {
@@ -271,7 +277,7 @@ public class ClusterMasterActor extends UntypedActor {
 
         MasterMetrics.MasterDatabase.ProcessingJobCollectionSize.registerHandler(new Gauge<Long>() {
 
-            DateTime lastTimeComputed = DateTime.now();
+            DateTime lastTimeComputed = DateTime.now().minusMinutes(5);;
             Long lastValueComputed = 0l;
             @Override
             public Long getValue() {
@@ -285,7 +291,7 @@ public class ClusterMasterActor extends UntypedActor {
 
         MasterMetrics.MasterDatabase.LastSourceDocumentProcessingStatisticsCollectionSize.registerHandler(new Gauge<Long>() {
 
-            DateTime lastTimeComputed = DateTime.now();
+            DateTime lastTimeComputed = DateTime.now().minusMinutes(5);;
             Long lastValueComputed = 0l;
             @Override
             public Long getValue() {
@@ -299,7 +305,7 @@ public class ClusterMasterActor extends UntypedActor {
 
         MasterMetrics.MasterDatabase.MachineResourceReferenceCollectionSize.registerHandler(new Gauge<Long>() {
 
-            DateTime lastTimeComputed = DateTime.now();
+            DateTime lastTimeComputed = DateTime.now().minusMinutes(5);;
             Long lastValueComputed = 0l;
             @Override
             public Long getValue() {
@@ -313,7 +319,7 @@ public class ClusterMasterActor extends UntypedActor {
 
         MasterMetrics.MasterDatabase.SourceDocumentProcessingStatisticsCollectionSize.registerHandler(new Gauge<Long>() {
 
-            DateTime lastTimeComputed = DateTime.now();
+            DateTime lastTimeComputed = DateTime.now().minusMinutes(5);;
             Long lastValueComputed = 0l;
             @Override
             public Long getValue() {
@@ -327,7 +333,7 @@ public class ClusterMasterActor extends UntypedActor {
 
         MasterMetrics.MasterDatabase.SourceDocumentReferenceCollectionSize.registerHandler(new Gauge<Long>() {
 
-            DateTime lastTimeComputed = DateTime.now();
+            DateTime lastTimeComputed = DateTime.now().minusMinutes(5);;
             Long lastValueComputed = 0l;
             @Override
             public Long getValue() {
@@ -341,7 +347,7 @@ public class ClusterMasterActor extends UntypedActor {
 
         MasterMetrics.MasterDatabase.SourceDocumentReferenceMetaInfoCollectionSize.registerHandler(new Gauge<Long>() {
 
-            DateTime lastTimeComputed = DateTime.now();
+            DateTime lastTimeComputed = DateTime.now().minusMinutes(5);;
             Long lastValueComputed = 0l;
             @Override
             public Long getValue() {
@@ -356,7 +362,7 @@ public class ClusterMasterActor extends UntypedActor {
 
         MasterMetrics.MasterDatabase.SourceDocumentReferenceProcessingProfileCollectionSize.registerHandler(new Gauge<Long>() {
 
-            DateTime lastTimeComputed = DateTime.now();
+            DateTime lastTimeComputed = DateTime.now().minusMinutes(5);;
             Long lastValueComputed = 0l;
             @Override
             public Long getValue() {

@@ -14,9 +14,6 @@ import java.util.Map;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-/**
- * Created by paul on 04/06/15.
- */
 public class MasterMetrics {
     public static final String COUNTER = "counter";
     public static final String DURATION = "duration";
@@ -42,6 +39,7 @@ public class MasterMetrics {
     public static final String DONE_PROCESSING_THUMBNAIL_GENERATION = "doneProcessing.thumbnailGeneration";
     public static final String DONE_PROCESSING_THUMBNAIL_STORAGE = "doneProcessing.thumbnailStorage";
 
+    public static final String UNREACHABLE_NODES_IN_CLUSTER = "unreachableNodesInCluster";
     public static final String CONNECTED_NODES_IN_CLUSTER = "connectedNodesInCluster";
 
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
@@ -74,88 +72,89 @@ public class MasterMetrics {
         public static final LazyGauge jobsPersistenceFinishedWithSuccessCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_SUCCESS" + "." + COUNTER);
         public static final LazyGauge jobsPersistenceErrorCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_ERROR" + "." + COUNTER);
 
+        public static final LazyGauge unreachableNodesInClusterCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, UNREACHABLE_NODES_IN_CLUSTER, COUNTER));
         public static final LazyGauge connectedNodesInClusterCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, CONNECTED_NODES_IN_CLUSTER, COUNTER));
 
-        public static final Map<RetrievingState, Meter> doneDownloadStateCounters = new HashMap();
+        public static final Map<RetrievingState, Counter> doneDownloadStateCounters = new HashMap();
 
         static {
             for (final RetrievingState state : RetrievingState.values()) {
-                doneDownloadStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_DOWNLOAD, state.name(), COUNTER)));
+                doneDownloadStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_DOWNLOAD, state.name(), COUNTER)));
             }
         }
 
-        public static final Meter doneDownloadTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_DOWNLOAD, TOTAL, COUNTER));
+        public static final Counter doneDownloadTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_DOWNLOAD, TOTAL, COUNTER));
 
-        public static final Map<ProcessingState, Meter> doneProcessingStateCounters = new HashMap();
+        public static final Map<ProcessingState, Counter> doneProcessingStateCounters = new HashMap();
 
         static {
             for (final ProcessingState state : ProcessingState.values()) {
-                doneProcessingStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING, state.name(), COUNTER)));
+                doneProcessingStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING, state.name(), COUNTER)));
             }
         }
 
-        public static final Meter doneProcessingTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING, TOTAL, COUNTER));
+        public static final Counter doneProcessingTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING, TOTAL, COUNTER));
 
         // Sub tasks counters
 
         /* RETRIEVE SUB TASK */
-        public static final Map<ProcessingJobSubTaskState, Meter> doneProcessingRetrieveStateCounters = new HashMap();
+        public static final Map<ProcessingJobSubTaskState, Counter> doneProcessingRetrieveStateCounters = new HashMap();
 
         static {
             for (final ProcessingJobSubTaskState state : ProcessingJobSubTaskState.values()) {
-                doneProcessingRetrieveStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_RETRIEVE, state.name(), COUNTER)));
+                doneProcessingRetrieveStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_RETRIEVE, state.name(), COUNTER)));
             }
         }
 
-        public static final Meter doneProcessingRetrieveTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_RETRIEVE, TOTAL, COUNTER));
+        public static final Counter doneProcessingRetrieveTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_RETRIEVE, TOTAL, COUNTER));
 
         /* COLOR EXTRACTION SUB TASK */
-        public static final Map<ProcessingJobSubTaskState, Meter> doneProcessingColorExtractionStateCounters = new HashMap();
+        public static final Map<ProcessingJobSubTaskState, Counter> doneProcessingColorExtractionStateCounters = new HashMap();
 
         static {
             for (final ProcessingJobSubTaskState state : ProcessingJobSubTaskState.values()) {
-                doneProcessingColorExtractionStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_COLOR_EXTRACTION, state.name(), COUNTER)));
+                doneProcessingColorExtractionStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_COLOR_EXTRACTION, state.name(), COUNTER)));
             }
         }
 
-        public static final Meter doneProcessingColorExtractionTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_COLOR_EXTRACTION, TOTAL, COUNTER));
+        public static final Counter doneProcessingColorExtractionTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_COLOR_EXTRACTION, TOTAL, COUNTER));
 
         /* META INFO EXTRACTION SUB TASK */
 
-        public static final Map<ProcessingJobSubTaskState, Meter> doneProcessingMetaExtractionStateCounters = new HashMap();
+        public static final Map<ProcessingJobSubTaskState, Counter> doneProcessingMetaExtractionStateCounters = new HashMap();
 
         static {
             for (final ProcessingJobSubTaskState state : ProcessingJobSubTaskState.values()) {
-                doneProcessingMetaExtractionStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_META_EXTRACTION, state.name(), COUNTER)));
+                doneProcessingMetaExtractionStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_META_EXTRACTION, state.name(), COUNTER)));
             }
         }
 
-        public static final Meter doneProcessingMetaExtractionTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_META_EXTRACTION, TOTAL, COUNTER));
+        public static final Counter doneProcessingMetaExtractionTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_META_EXTRACTION, TOTAL, COUNTER));
 
         /* THUMBNAIL GENERATION SUB TASK */
 
-        public static final Map<ProcessingJobSubTaskState, Meter> doneProcessingThumbnailGenerationStateCounters = new HashMap();
+        public static final Map<ProcessingJobSubTaskState, Counter> doneProcessingThumbnailGenerationStateCounters = new HashMap();
 
         static {
             for (final ProcessingJobSubTaskState state : ProcessingJobSubTaskState.values()) {
-                doneProcessingThumbnailGenerationStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_THUMBNAIL_GENERATION, state.name(), COUNTER)));
+                doneProcessingThumbnailGenerationStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_THUMBNAIL_GENERATION, state.name(), COUNTER)));
             }
         }
 
-        public static final Meter doneProcessingThumbnailGenerationTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_THUMBNAIL_GENERATION, TOTAL, COUNTER));
+        public static final Counter doneProcessingThumbnailGenerationTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_THUMBNAIL_GENERATION, TOTAL, COUNTER));
 
 
         /* THUMBNAIL STORAGE SUB TASK */
 
-        public static final Map<ProcessingJobSubTaskState, Meter> doneProcessingThumbnailStorageStateCounters = new HashMap();
+        public static final Map<ProcessingJobSubTaskState, Counter> doneProcessingThumbnailStorageStateCounters = new HashMap();
 
         static {
             for (final ProcessingJobSubTaskState state : ProcessingJobSubTaskState.values()) {
-                doneProcessingThumbnailStorageStateCounters.put(state, METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_THUMBNAIL_STORAGE, state.name(), COUNTER)));
+                doneProcessingThumbnailStorageStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_THUMBNAIL_STORAGE, state.name(), COUNTER)));
             }
         }
 
-        public static final Meter doneProcessingThumbnailStorageTotalCounter = METRIC_REGISTRY.meter(name(Master.NAME, DONE_PROCESSING_THUMBNAIL_STORAGE, TOTAL, COUNTER));
+        public static final Counter doneProcessingThumbnailStorageTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_THUMBNAIL_STORAGE, TOTAL, COUNTER));
 
 
     }

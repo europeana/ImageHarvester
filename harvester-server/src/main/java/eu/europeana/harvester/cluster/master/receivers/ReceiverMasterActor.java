@@ -145,8 +145,8 @@ public class ReceiverMasterActor extends UntypedActor {
         if(message instanceof DownloadConfirmation) {
             final DownloadConfirmation downloadConfirmation = (DownloadConfirmation) message;
             accountantActor.tell(new ModifyState(downloadConfirmation.getTaskID(),"", "", TaskState.PROCESSING), getSelf());
-            MasterMetrics.Master.doneDownloadStateCounters.get(downloadConfirmation.getState()).mark();
-            MasterMetrics.Master.doneDownloadTotalCounter.mark();
+            MasterMetrics.Master.doneDownloadStateCounters.get(downloadConfirmation.getState()).inc();
+            MasterMetrics.Master.doneDownloadTotalCounter.inc();
 
             return;
         }
@@ -158,36 +158,36 @@ public class ReceiverMasterActor extends UntypedActor {
             markDone(doneProcessing);
 
             removeTask(address, doneProcessing);
-            MasterMetrics.Master.doneProcessingStateCounters.get(doneProcessing.getProcessingState()).mark();
-            MasterMetrics.Master.doneProcessingTotalCounter.mark();
+            MasterMetrics.Master.doneProcessingStateCounters.get(doneProcessing.getProcessingState()).inc();
+            MasterMetrics.Master.doneProcessingTotalCounter.inc();
 
             final ProcessingJobSubTaskStats subTaskStats = doneProcessing.getProcessingStats();
             if (subTaskStats != null) {
 
                 if (subTaskStats.getRetrieveState() != null) {
-                    MasterMetrics.Master.doneProcessingRetrieveStateCounters.get(subTaskStats.getRetrieveState()).mark();
-                    if (subTaskStats.getRetrieveState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingRetrieveTotalCounter.mark();
+                    MasterMetrics.Master.doneProcessingRetrieveStateCounters.get(subTaskStats.getRetrieveState()).inc();
+                    if (subTaskStats.getRetrieveState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingRetrieveTotalCounter.inc();
                 }
 
                 if (subTaskStats.getColorExtractionState() != null) {
-                    MasterMetrics.Master.doneProcessingColorExtractionStateCounters.get(subTaskStats.getColorExtractionState()).mark();
-                    if (subTaskStats.getColorExtractionState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingColorExtractionTotalCounter.mark();
+                    MasterMetrics.Master.doneProcessingColorExtractionStateCounters.get(subTaskStats.getColorExtractionState()).inc();
+                    if (subTaskStats.getColorExtractionState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingColorExtractionTotalCounter.inc();
                 }
 
 
                 if (subTaskStats.getMetaExtractionState() != null) {
-                    MasterMetrics.Master.doneProcessingMetaExtractionStateCounters.get(subTaskStats.getMetaExtractionState()).mark();
-                    if (subTaskStats.getMetaExtractionState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingMetaExtractionTotalCounter.mark();
+                    MasterMetrics.Master.doneProcessingMetaExtractionStateCounters.get(subTaskStats.getMetaExtractionState()).inc();
+                    if (subTaskStats.getMetaExtractionState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingMetaExtractionTotalCounter.inc();
                 }
 
                 if (subTaskStats.getThumbnailGenerationState() != null) {
-                    MasterMetrics.Master.doneProcessingThumbnailGenerationStateCounters.get(subTaskStats.getThumbnailGenerationState()).mark();
-                    if (subTaskStats.getThumbnailGenerationState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingThumbnailGenerationTotalCounter.mark();
+                    MasterMetrics.Master.doneProcessingThumbnailGenerationStateCounters.get(subTaskStats.getThumbnailGenerationState()).inc();
+                    if (subTaskStats.getThumbnailGenerationState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingThumbnailGenerationTotalCounter.inc();
                 }
 
                 if (subTaskStats.getThumbnailStorageState() != null) {
-                    MasterMetrics.Master.doneProcessingThumbnailStorageStateCounters.get(subTaskStats.getThumbnailStorageState()).mark();
-                    if (subTaskStats.getThumbnailStorageState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingThumbnailStorageTotalCounter.mark();
+                    MasterMetrics.Master.doneProcessingThumbnailStorageStateCounters.get(subTaskStats.getThumbnailStorageState()).inc();
+                    if (subTaskStats.getThumbnailStorageState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingThumbnailStorageTotalCounter.inc();
                 }
 
             }
