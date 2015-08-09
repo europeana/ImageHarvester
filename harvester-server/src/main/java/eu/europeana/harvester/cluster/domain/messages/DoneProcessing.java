@@ -14,7 +14,25 @@ import java.util.Map;
 public class DoneProcessing implements Serializable {
 
 
-    public static ProcessingState computeProcessingStateIncludingTheSubTaskState(final ProcessingState processingState,final ProcessingJobSubTaskStats stats) {
+    public final static JobState convertProcessingStateToJobState(final ProcessingState processingState) {
+        switch (processingState) {
+            case READY:
+                return JobState.READY;
+            case PAUSED:
+                return JobState.PAUSED;
+            case DOWNLOADING:
+                return JobState.RUNNING;
+            case SUCCESS:
+                return JobState.FINISHED;
+            case ERROR:
+                return JobState.ERROR;
+            default:
+                return JobState.ERROR;
+        }
+
+    }
+
+    public static ProcessingState computeProcessingStateIncludingTheSubTaskState(final ProcessingState processingState, final ProcessingJobSubTaskStats stats) {
         switch (processingState) {
             case READY: /* fall through */
             case PAUSED: /* fall through */
@@ -334,7 +352,7 @@ public class DoneProcessing implements Serializable {
 
 
     public ProcessingState getProcessingState() {
-        return computeProcessingStateIncludingTheSubTaskState(this.processingState,this.stats);
+        return computeProcessingStateIncludingTheSubTaskState(this.processingState, this.stats);
     }
 
     public String getLog() {
