@@ -51,11 +51,15 @@ public class DoneDownload implements Serializable {
 
     private final String ipAddress;
 
+    private final ProcessingJobSubTaskStats subTaskStats;
+
     public DoneDownload(final String taskID, final String url, final String referenceId, final String jobId,
                         final RetrievingState retrieveState,
                         final HttpRetrieveResponse httpRetrieveResponse,
                         final ProcessingJobTaskDocumentReference documentReferenceTask,
-                        final String ipAddress) {
+                        final String ipAddress,
+                        final ProcessingJobSubTaskStats subTaskStats
+                        ) {
         this.taskID = taskID;
         this.url = url;
         this.referenceId = referenceId;
@@ -64,6 +68,7 @@ public class DoneDownload implements Serializable {
         this.httpRetrieveResponse = httpRetrieveResponse;
         this.documentReferenceTask = documentReferenceTask;
         this.ipAddress = ipAddress;
+        this.subTaskStats = subTaskStats;
     }
 
     public String getUrl() {
@@ -96,5 +101,9 @@ public class DoneDownload implements Serializable {
 
     public String getTaskID() {
         return taskID;
+    }
+
+    public ProcessingJobSubTaskStats getSubTaskStats() {
+        return subTaskStats;
     }
 }

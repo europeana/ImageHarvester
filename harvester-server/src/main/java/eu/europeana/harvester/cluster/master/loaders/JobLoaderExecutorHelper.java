@@ -218,13 +218,15 @@ public class JobLoaderExecutorHelper {
                                final ClusterMasterConfig clusterMasterConfig, final ProcessingJobDao processingJobDao,
                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                final ActorRef accountantActor, Logger LOG) {
+
+        // (Step 1) Generate the tasks.
         final List<ProcessingJobTaskDocumentReference> tasks = job.getTasks();
 
-        final List<String> taskIDs = new ArrayList<>();
+        final List<RetrieveUrl> generatedTasks = new ArrayList<>();
         for (final ProcessingJobTaskDocumentReference task : tasks) {
-            final String ID = processTask(job, task, resources, lastJobProcessingStatistics, accountantActor, LOG);
-            if (ID != null) {
-                taskIDs.add(ID);
+            final RetrieveUrl retrieveUrl = generateTask(job, task, resources, lastJobProcessingStatistics, LOG);
+            if (retrieveUrl != null) {
+                generatedTasks.add(retrieveUrl);
             }
         }
 
@@ -232,7 +234,19 @@ public class JobLoaderExecutorHelper {
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                     "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
-        accountantActor.tell(new AddTasksToJob(job.getId(), jobPriority, taskIDs), ActorRef.noSender());
+        final List<String> taskIds = new ArrayList<>();
+        for (final RetrieveUrl retrieveUrl : generatedTasks) {
+            taskIds.add(retrieveUrl.getId());
+        }
+
+        // (Step 2) Send the tasks to accountant
+        accountantActor.tell(new AddTasksToJob(job.getId(), jobPriority, taskIds), ActorRef.noSender());
+
+        for (final RetrieveUrl retrieveUrl : generatedTasks) {
+            accountantActor.tell(new AddTask(job.getPriority(), retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender());
+        }
+
+
     }
 
     /**
@@ -242,10 +256,10 @@ public class JobLoaderExecutorHelper {
      * @param task the concrete task to load
      * @return generated task ID
      */
-    private static String processTask(final ProcessingJob job, final ProcessingJobTaskDocumentReference task,
-                                      final Map<String, SourceDocumentReference> resources,
-                                      final Map<String, SourceDocumentProcessingStatistics> lastJobProcessingStatistics,
-                                      ActorRef accountantActor, Logger LOG) {
+    private static RetrieveUrl generateTask(final ProcessingJob job, final ProcessingJobTaskDocumentReference task,
+                                            final Map<String, SourceDocumentReference> resources,
+                                            final Map<String, SourceDocumentProcessingStatistics> lastJobProcessingStatistics,
+                                            Logger LOG) {
         final String sourceDocId = task.getSourceDocumentReferenceID();
 
         final SourceDocumentReference sourceDocumentReference = resources.get(sourceDocId);
@@ -259,9 +273,7 @@ public class JobLoaderExecutorHelper {
                 job.getId(), task.getSourceDocumentReferenceID(),
                 headers, task, ipAddress, sourceDocumentReference.getReferenceOwner());
 
-        accountantActor.tell(new AddTask(job.getPriority(), retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender());
-
-        return retrieveUrl.getId();
+        return retrieveUrl;
     }
 
 

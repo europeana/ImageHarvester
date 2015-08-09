@@ -160,7 +160,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
             if (response != null) {
                 doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(),
                                                        response.getState(),
-                        response, task.getDocumentReferenceTask(), task.getIpAddress());
+                        response, task.getDocumentReferenceTask(), task.getIpAddress(), new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS));
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                         "Retrieval url finished with success and the temporary file is stored on disk at {}", taskWithProcessingConfig.getDownloadPath());
             } else {
@@ -176,7 +176,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                                                    RetrievingState.ERROR,
                                                    response,
                                                    task.getDocumentReferenceTask(),
-                                                   task.getIpAddress());
+                                                   task.getIpAddress(),new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR,e));
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                     "Exception during retrieval. The http retrieve response could not be created. Probable cause : wrong configuration argument in the slave.", e);
         } finally {
@@ -220,7 +220,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                           "Exception during processing. :  " + e.getLocalizedMessage(), e);
 
                 doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                                                           ProcessingJobSubTaskStats.withRetrievelSuccess(),
+                                                           new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR,e),
                                                            null, null, null, null,
                                                            e.getMessage());
             } finally {

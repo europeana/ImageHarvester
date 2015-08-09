@@ -230,7 +230,7 @@ public class DoneProcessing implements Serializable {
     }
 
     public DoneProcessing(final DoneDownload doneDownload) {
-        this(doneDownload, null, null, null, null, null);
+        this(doneDownload, doneDownload.getSubTaskStats(), null, null, null, null);
     }
 
 

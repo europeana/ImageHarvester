@@ -35,10 +35,10 @@ public class AccountantAllTasksActor extends UntypedActor {
      * Maps all tasks ids with a pair of task and its state.
      */
     private final Map<String, Pair<RetrieveUrl, TaskState>> allTasks = new HashMap<>();
-    private final Map<String,Long> allTasksTimer = new HashMap<>();
+    private final Map<String, Long> allTasksTimer = new HashMap<>();
 
     @Override
-    public void preStart(){
+    public void preStart() {
 
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
                 TimeUnit.MINUTES), getSelf(), new CleanUp(), getContext().system().dispatcher(), getSelf());
@@ -47,7 +47,7 @@ public class AccountantAllTasksActor extends UntypedActor {
 
 
     @Override
-    public void postRestart(Throwable reason){
+    public void postRestart(Throwable reason) {
 
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
                 TimeUnit.MINUTES), getSelf(), new CleanUp(), getContext().system().dispatcher(), getSelf());
@@ -63,7 +63,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 Integer nr = 0;
                 for (final Map.Entry<String, Pair<RetrieveUrl, TaskState>> entry : allTasks.entrySet()) {
                     final TaskState current = entry.getValue().getValue();
-                    if (current.equals(TaskState.READY) || current.equals(TaskState.DOWNLOADING) )
+                    if (current.equals(TaskState.READY) || current.equals(TaskState.DOWNLOADING))
                         nr++;
 
                 }
@@ -96,7 +96,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                     getSender().tell(retrieveUrl, getSelf());
                     return;
                 }
-                RetrieveUrl retrieveUrl = new RetrieveUrl("",  new ProcessingJobLimits(), null, "", "", null, null, "",referenceOwner);
+                RetrieveUrl retrieveUrl = new RetrieveUrl("", new ProcessingJobLimits(), null, "", "", null, null, "", referenceOwner);
                 getSender().tell(retrieveUrl, getSelf());
                 return;
             }
@@ -167,16 +167,22 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final String taskID = ((ModifyState) message).getTaskID();
                 final DoneProcessing doneProcessing = ((ModifyState) message).getDoneProcessing();
 
+
+                if (((ModifyState) message).getState() == TaskState.DONE) {
+                    // ModifyState with task status done should be called from a future, so we bang back the answer
+                    getSender().tell(new MarkJobAsDone(doneProcessing), ActorRef.noSender());
+                }
+
                 if (allTasks.containsKey(taskID)) {
                     final String jobID = ((ModifyState) message).getJobId();
                     final String IP = ((ModifyState) message).getIP();
                     final TaskState state = ((ModifyState) message).getState();
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
                     allTasks.put(taskID, new Pair<>(retrieveUrl, state));
-                    if ( state==TaskState.DOWNLOADING || state==TaskState.PROCESSING)
+                    if (state == TaskState.DOWNLOADING || state == TaskState.PROCESSING)
                         allTasksTimer.put(taskID, new Long(System.currentTimeMillis()));
 
-                    if ( state==TaskState.DONE ) {
+                    if (state == TaskState.DONE) {
                         // we check if all tasks from that job are done
                         // if true, remove the job
                         List<String> tasks = new ArrayList<>();
@@ -192,13 +198,12 @@ public class AccountantAllTasksActor extends UntypedActor {
                             // TODO : Investigate if it make sense to hide the exception here.
                         }
 
-                        boolean foundTask = false ;
-                        for ( String task: tasks) {
-                            if ( allTasks.get(task).getValue() != TaskState.DONE )
+                        boolean foundTask = false;
+                        for (String task : tasks) {
+                            if (allTasks.get(task).getValue() != TaskState.DONE)
                                 foundTask = true;
                         }
-                        // ModifyState with task status done should be called from a future, so we bang back the answer
-                        getSender().tell(new MarkJobAsDone(doneProcessing), ActorRef.noSender());
+
                         // at this moment, if foundTask is false, it means all tasks from that specific job are done
                         // we signal that back to the asker and remove the job and it's subsequent tasks
                         if (!foundTask) {
@@ -215,7 +220,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                     }
                 } else {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-                            "AccountantAllTasksActor done processing for task {} received and if found {} in allTasks with size {}",taskID,allTasks.containsKey(taskID),allTasks.size());
+                            "AccountantAllTasksActor done processing for task {} received and if found {} in allTasks with size {}", taskID, allTasks.containsKey(taskID), allTasks.size());
                 }
                 return;
             }
@@ -227,7 +232,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 allTasks.put(taskID, taskWithState);
                 final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
                 final RetrieveUrl retrieveUrl = taskWithState.getKey();
-                accountantPerIP.tell( new AddTasksToIP(retrieveUrl.getIpAddress(), retrieveUrl.getId()), ActorRef.noSender());
+                accountantPerIP.tell(new AddTasksToIP(retrieveUrl.getIpAddress(), retrieveUrl.getId()), ActorRef.noSender());
 
                 return;
             }
@@ -293,47 +298,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 final String taskID = m.getTaskID();
 
                 RetrieveUrl retrieveUrl = new RetrieveUrl("", "", null, new ProcessingJobLimits(), "", "", null, null, "",
-                        new ReferenceOwner("unknown","unknown","unknown"));
-//                List<String> tasksFromIP = null;
-//
-//                final Timeout timeout = new Timeout(Duration.create(10, TimeUnit.SECONDS));
-//                final ActorRef accountantPerIP = getContext().actorFor("../accountantPerIP");
-//
-//                final Future<Object> future = Patterns.ask(accountantPerIP, new GetTasksFromIP(IP), timeout);
-//
-//                try {
-//                    tasksFromIP = (List<String>) Await.result(future, timeout.duration());
-//                } catch (Exception e) {
-//                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
-//                            "Exception while waiting for answer for getting tasks per IP.", e);
-//                    // TODO : Evaluate if it is acceptable to hide the exception here.
-//                }
-//
-//
-//                try {
-//
-//
-//                    int nr = 0;
-//
-//                    if (tasksFromIP != null) {
-//                        for (final String task : tasksFromIP) {
-//                            if (allTasks.containsKey(task) && allTasks.get(task).getValue().equals(TaskState.DOWNLOADING)) {
-//                                nr += 1;
-//                            }
-//                        }
-//                    }
-//
-//
-//                    if ((!isException) && (nr >= defaultLimit)) {
-//                        getSender().tell(retrieveUrl, getSelf());
-//                        return;
-//                    }
-//
-//
-//                    if (isException && (nr > exceptionLimit)) {
-//                        getSender().tell(retrieveUrl, getSelf());
-//                        return;
-//                    }
+                        new ReferenceOwner("unknown", "unknown", "unknown"));
 
                 try {
                     TaskState state = TaskState.DONE;
@@ -405,12 +370,12 @@ public class AccountantAllTasksActor extends UntypedActor {
 
     // to be calles every x minutes to do the cleanup
     // marks old tasks that aren't done yet as Done so they can be removed
-    private void cleanTasks () {
+    private void cleanTasks() {
         long currentTime = System.currentTimeMillis();
         ArrayList<String> toRemove = new ArrayList<>();
-        for ( String taskID: allTasksTimer.keySet()) {
+        for (String taskID : allTasksTimer.keySet()) {
             Long sinceWhen = allTasksTimer.get(taskID);
-            if ( currentTime-sinceWhen.longValue() > 60*60*1000 ) {
+            if (currentTime - sinceWhen.longValue() > 60 * 60 * 1000) {
                 toRemove.add(taskID);
                 if (allTasks.containsKey(taskID)) {
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
@@ -418,7 +383,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 }
             }
         }
-        for (String task: toRemove)
+        for (String task : toRemove)
             allTasksTimer.remove(task);
     }
 
