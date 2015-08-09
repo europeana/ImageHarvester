@@ -82,9 +82,7 @@ public class ReceiverJobDumperActor extends UntypedActor {
         // (Step 1) Updating processing jobs
         final ProcessingJob processingJob = processingJobDao.read(doneProcessing.getJobId());
         final ProcessingJob newProcessingJob = processingJob.withState(DoneProcessing.convertProcessingStateToJobState(doneProcessing.getProcessingState()));
-        final HistoricalProcessingJob historicalProcessingJob = new HistoricalProcessingJob(newProcessingJob);
-        historicalProcessingJobDao.create(historicalProcessingJob, WriteConcern.NORMAL);
-        processingJobDao.delete(newProcessingJob.getId());
+        processingJobDao.createOrModify(newProcessingJob, WriteConcern.NORMAL);
 
         // (Step 2) Updating statistics jobs
         final SourceDocumentReference sourceDocumentReference = saveStatistics(doneProcessing,processingJob);
