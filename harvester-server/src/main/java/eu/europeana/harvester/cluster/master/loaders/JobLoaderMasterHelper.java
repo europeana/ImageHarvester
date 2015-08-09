@@ -230,26 +230,7 @@ public class JobLoaderMasterHelper  {
                                              Logger LOG ) {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "Checking for abandoned jobs in database");
-        final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
-        List<ProcessingJob> all;
-        do {
-            all = processingJobDao.getJobsWithState(JobState.RUNNING, page);
-
-            for (final ProcessingJob job : all) {
-                final ProcessingJob newProcessingJob = job.withState(JobState.READY);
-                processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
-            }
-        } while (all.size() != 0);
-
-        do {
-            all = processingJobDao.getJobsWithState(JobState.LOADED, page);
-
-            for (final ProcessingJob job : all) {
-                final ProcessingJob newProcessingJob = job.withState(JobState.READY);
-                processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
-            }
-        } while (all.size() != 0);
-
+        processingJobDao.modifyStateOfJobs(JobState.RUNNING,JobState.READY);
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "Done with checking for abandoned jobs in database");
     }

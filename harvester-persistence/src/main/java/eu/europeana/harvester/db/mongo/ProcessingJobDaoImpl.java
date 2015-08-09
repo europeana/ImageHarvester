@@ -31,7 +31,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
     @Override
     public boolean create(ProcessingJob processingJob, WriteConcern writeConcern) {
-        if(read(processingJob.getId()) == null) {
+        if (read(processingJob.getId()) == null) {
             datastore.save(processingJob, writeConcern);
             return true;
         } else {
@@ -59,7 +59,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
     @Override
     public boolean update(ProcessingJob processingJob, WriteConcern writeConcern) {
-        if(read(processingJob.getId()) != null) {
+        if (read(processingJob.getId()) != null) {
             datastore.save(processingJob, writeConcern);
 
             return true;
@@ -83,6 +83,22 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
         return query.asList();
     }
 
+    @Override
+    public void modifyStateOfJobsWithIds(JobState newJobState,final List<String> jobIds) {
+        if (jobIds.isEmpty()) return;
+        final Query<ProcessingJob> query = datastore.createQuery(ProcessingJob.class).field("_id").in(new ArrayList<>(jobIds));
+        final UpdateOperations<ProcessingJob> ops = datastore.createUpdateOperations(ProcessingJob.class).set("state", newJobState);
+        datastore.update(query, ops);
+    }
+
+    @Override
+    public void modifyStateOfJobs(JobState oldJobState, JobState newJobState) {
+        final Query<ProcessingJob> query = datastore.createQuery(ProcessingJob.class).field("state").equal(oldJobState);
+        final UpdateOperations<ProcessingJob> ops = datastore.createUpdateOperations(ProcessingJob.class).set("state", newJobState);
+        datastore.update(query, ops);
+    }
+
+
     public Map<String, Integer> getIpDistribution() {
         final DB db = datastore.getDB();
         final DBCollection processingJobCollection = db.getCollection("ProcessingJob");
@@ -101,7 +117,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
             for (DBObject result : output.results()) {
                 final String ip = (String) result.get("_id");
                 final Integer count = (Integer) result.get("total");
-                if(ip!=null)
+                if (ip != null)
                     jobsPerIP.put(ip, count);
             }
         }
@@ -111,30 +127,19 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
     @Override
     public List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution, Map<String, Boolean> ipsWithJobs) {
-        final List<ProcessingJob> processingJobs = new ArrayList<>();
 
-        for(Map.Entry<String, Integer> ip: ipDistribution.entrySet()) {
-            final Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
-            query.criteria("priority").equal(jobPriority.getPriority());
-            query.criteria("state").equal(jobState);
-            query.criteria("ipAddress").equal(ip.getKey());
-            query.limit(page.getLimit());
-            final List<ProcessingJob> temp = query.asList();
-
-            if(temp.size() == 0) {
-                ipsWithJobs.put(ip.getKey(), false);
-            } else {
-                ipsWithJobs.put(ip.getKey(), true);
-            }
-
-            processingJobs.addAll(temp);
-        }
+        final Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
+        query.criteria("priority").equal(jobPriority.getPriority());
+        query.criteria("state").equal(jobState);
+        query.criteria("ipAddress").in(ipDistribution.keySet());
+        query.limit(page.getLimit());
+        final List<ProcessingJob> processingJobs = query.asList();
 
         return processingJobs;
     }
 
     @Override
-    public List<ProcessingJob> deactivateJobs (final ReferenceOwner owner, final WriteConcern writeConcern) {
+    public List<ProcessingJob> deactivateJobs(final ReferenceOwner owner, final WriteConcern writeConcern) {
         if (null == owner || (owner.equals(new ReferenceOwner()))) {
             throw new IllegalArgumentException("The reference owner cannot be null and must have at least one field not null");
         }
@@ -165,8 +170,6 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
         return query.asList();
     }
-
-
 
 
 }

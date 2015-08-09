@@ -8,6 +8,7 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDa
 import eu.europeana.harvester.domain.MachineResourceReference;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
+import eu.europeana.harvester.domain.SourceDocumentReference;
 
 import java.util.*;
 
@@ -45,6 +46,22 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     public SourceDocumentProcessingStatistics read(String id) {
         return datastore.get(SourceDocumentProcessingStatistics.class, id);
     }
+
+    @Override
+    public List<SourceDocumentProcessingStatistics> read(List<String> ids) {
+        if(ids.size()==0)
+            return new ArrayList<>(0);
+        else {
+            final Query<SourceDocumentProcessingStatistics> query = datastore.createQuery(SourceDocumentProcessingStatistics.class)
+                    .field("_id").hasAnyOf(ids)
+                    .hintIndex("_id_");
+            if (query == null) {
+                return new ArrayList<>(0);
+            }
+            return query.asList();
+        }
+    }
+
 
     @Override
     public boolean update(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern) {

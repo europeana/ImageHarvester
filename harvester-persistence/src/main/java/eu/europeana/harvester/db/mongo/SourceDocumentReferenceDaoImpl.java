@@ -69,7 +69,7 @@ public class SourceDocumentReferenceDaoImpl implements SourceDocumentReferenceDa
             return new ArrayList<>(0);
         else {
             final Query<SourceDocumentReference> query = datastore.createQuery(SourceDocumentReference.class)
-                    .field("_id").hasAnyOf(ids).retrievedFields(true, "id", "referenceOwner",  "url", "ipAddress", "lastStatsId", "redirectPathDepth", "redirectionPath", "active")
+                    .field("_id").hasAnyOf(ids)
                     .hintIndex("_id_");
             if (query == null) {
                 return new ArrayList<>(0);

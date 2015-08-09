@@ -85,6 +85,10 @@ public interface ProcessingJobDao {
      */
      List<ProcessingJob> getJobsWithState(JobState jobState, Page page);
 
+    void modifyStateOfJobsWithIds(JobState newJobState,List<String> jobIds);
+
+    void modifyStateOfJobs(JobState oldJobState, JobState newJobState);
+
     /**
      * @return a map which maps each IP address with the number of processingJobs from that IP address
      */
