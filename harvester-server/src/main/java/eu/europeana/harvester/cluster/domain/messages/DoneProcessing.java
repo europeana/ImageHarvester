@@ -2,7 +2,6 @@ package eu.europeana.harvester.cluster.domain.messages;
 
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
-import eu.europeana.harvester.httpclient.response.RetrievingState;
 
 import java.io.Serializable;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.Map;
  * Message sent by slave actor and node master actor after the download is done.
  */
 public class DoneProcessing implements Serializable {
-
 
     public final static JobState convertProcessingStateToJobState(final ProcessingState processingState) {
         switch (processingState) {
@@ -26,33 +24,20 @@ public class DoneProcessing implements Serializable {
                 return JobState.FINISHED;
             case ERROR:
                 return JobState.ERROR;
+            case FAILED:
+                return JobState.FAILED;
             default:
                 return JobState.ERROR;
         }
 
     }
 
-    public static ProcessingState computeProcessingStateIncludingTheSubTaskState(final ProcessingState processingState, final ProcessingJobSubTaskStats stats) {
-        switch (processingState) {
-            case READY: /* fall through */
-            case PAUSED: /* fall through */
-            case DOWNLOADING: /* fall through */
-            case ERROR:
-                return processingState;
-            case SUCCESS:
-                return getSubTaskAwareProcessingState(stats);
-            default:
-                /* This should never happen */
-                return ProcessingState.ERROR;
-        }
-    }
-
-    private static ProcessingState getSubTaskAwareProcessingState(final ProcessingJobSubTaskStats subTaskStats) {
+    public static ProcessingState getSubTaskAwareProcessingState(final ProcessingJobSubTaskStats subTaskStats) {
         switch (subTaskStats.getOverallState()) {
             case ERROR:
                 return ProcessingState.ERROR;
             case FAILED:
-                return ProcessingState.ERROR;
+                return ProcessingState.FAILED;
             case SUCCESS:
                 return ProcessingState.SUCCESS;
             case NEVER_EXECUTED:
@@ -161,14 +146,6 @@ public class DoneProcessing implements Serializable {
      */
     private final TextMetaInfo textMetaInfo;
 
-    /**
-     * The state of the task. This has wider scope than the state of the individual sub tasks because it also
-     * covers all the rest of processing that goes outside the sub tasks.
-     */
-    private final ProcessingState processingState;
-
-    private final RetrievingState retrievingState;
-
     private final ProcessingJobSubTaskStats stats;
 
     /**
@@ -176,77 +153,37 @@ public class DoneProcessing implements Serializable {
      */
     private final String log;
 
-
-    public DoneProcessing(final DoneDownload doneDownload,
-                          final ProcessingJobSubTaskStats subTaskState,
-                          final ImageMetaInfo imageMetaInfo,
-                          final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo,
-                          final TextMetaInfo textMetaInfo, final String log) {
-        this.taskType = doneDownload.getDocumentReferenceTask().getTaskType();
-        final HttpRetrieveResponse httpRetrieveResponse = doneDownload.getHttpRetrieveResponse();
-
-        this.taskID = doneDownload.getTaskID();
-        this.url = doneDownload.getUrl();
-        this.referenceId = doneDownload.getReferenceId();
-        this.jobId = doneDownload.getJobId();
-        this.httpResponseCode = httpRetrieveResponse.getHttpResponseCode();
-        this.httpResponseContentType = httpRetrieveResponse.getHttpResponseContentType();
-        this.httpResponseContentSizeInBytes = httpRetrieveResponse.getContentSizeInBytes();
+    public DoneProcessing(
+            final String taskID, final String url, String referenceId, final String jobId,
+            final DocumentReferenceTaskType taskType,
+            final HttpRetrieveResponse httpRetrieveResponse,
+            final ProcessingJobSubTaskStats subTaskState,
+            final ImageMetaInfo imageMetaInfo,
+            final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo,
+            final TextMetaInfo textMetaInfo, final String log) {
+        this.taskType = taskType;
+        this.taskID = taskID;
+        this.url = url;
+        this.referenceId = referenceId;
+        this.jobId = jobId;
+        this.httpResponseCode = (httpRetrieveResponse != null) ? httpRetrieveResponse.getHttpResponseCode() : -1;
+        this.httpResponseContentType = (httpRetrieveResponse != null) ? httpRetrieveResponse.getHttpResponseContentType() : null;
+        this.httpResponseContentSizeInBytes = (httpRetrieveResponse != null) ? httpRetrieveResponse.getContentSizeInBytes() : -1;
         this.socketConnectToDownloadStartDurationInMilliSecs =
-                httpRetrieveResponse.getSocketConnectToDownloadStartDurationInMilliSecs();
-        this.retrievalDurationInMilliSecs = httpRetrieveResponse.getRetrievalDurationInMilliSecs();
-        this.checkingDurationInMilliSecs = httpRetrieveResponse.getCheckingDurationInMilliSecs();
-        this.sourceIp = httpRetrieveResponse.getSourceIp();
-        this.httpResponseHeaders = httpRetrieveResponse.getResponseHeaders();
-        this.redirectionPath = httpRetrieveResponse.getRedirectionPath();
+                (httpRetrieveResponse != null) ? httpRetrieveResponse.getSocketConnectToDownloadStartDurationInMilliSecs() : -1;
+        this.retrievalDurationInMilliSecs = (httpRetrieveResponse != null) ? httpRetrieveResponse.getRetrievalDurationInMilliSecs() : -1;
+        this.checkingDurationInMilliSecs = (httpRetrieveResponse != null) ? httpRetrieveResponse.getCheckingDurationInMilliSecs() : -1;
+        this.sourceIp = (httpRetrieveResponse != null) ? httpRetrieveResponse.getSourceIp() : null;
+        this.httpResponseHeaders = (httpRetrieveResponse != null) ? httpRetrieveResponse.getResponseHeaders() : null;
+        this.redirectionPath = (httpRetrieveResponse != null) ? httpRetrieveResponse.getRedirectionPath() : null;
         this.imageMetaInfo = imageMetaInfo;
         this.audioMetaInfo = audioMetaInfo;
         this.videoMetaInfo = videoMetaInfo;
         this.textMetaInfo = textMetaInfo;
-
-        if (null == subTaskState) {
-            switch (doneDownload.getRetrieveState()) {
-                case COMPLETED:
-                    this.stats = new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS);
-                    break;
-
-                case ERROR:
-                    this.stats = new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR);
-                    break;
-
-                default:
-                    this.stats = new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.FAILED);
-            }
-        } else {
-            this.stats = subTaskState;
-        }
-
-        this.retrievingState = doneDownload.getRetrieveState();
-
-        //TODO: change this because it is not correct from a logical point of view !!!!
-        this.processingState = !(RetrievingState.COMPLETED.equals(doneDownload.getRetrieveState())) ? ProcessingState.ERROR :
-                ProcessingState.SUCCESS;
+        this.stats = subTaskState;
         this.log = log;
     }
 
-    public DoneProcessing(final DoneDownload doneDownload) {
-        this(doneDownload, doneDownload.getSubTaskStats(), null, null, null, null);
-    }
-
-
-    public DoneProcessing(final DoneDownload doneDownload, final ProcessingJobSubTaskStats stats,
-                          final ImageMetaInfo imageMetaInfo,
-                          final AudioMetaInfo audioMetaInfo, final VideoMetaInfo videoMetaInfo,
-                          final TextMetaInfo textMetaInfo) {
-        this(doneDownload,
-                stats,
-                imageMetaInfo,
-                audioMetaInfo,
-                videoMetaInfo,
-                textMetaInfo,
-                doneDownload.getHttpRetrieveResponse().getLog()
-        );
-    }
 
     public DoneProcessing(final String taskID, final String url, String referenceId, final String jobId,
                           final DocumentReferenceTaskType taskType, final Integer httpResponseCode,
@@ -254,8 +191,8 @@ public class DoneProcessing implements Serializable {
                           final Long socketConnectToDownloadStartDurationInMilliSecs,
                           final Long retrievalDurationInMilliSecs, final Long checkingDurationInMilliSecs,
                           final String sourceIp, final Map<String, String> httpResponseHeaders,
-                          final List<String> redirectionPath, final RetrievingState retrievingState,
-                          final ProcessingState processingState, final ProcessingJobSubTaskStats stats, final String log,
+                          final List<String> redirectionPath,
+                          final ProcessingJobSubTaskStats stats, final String log,
                           final ImageMetaInfo imageMetaInfo, final AudioMetaInfo audioMetaInfo,
                           final VideoMetaInfo videoMetaInfo, final TextMetaInfo textMetaInfo) {
         this.taskID = taskID;
@@ -276,8 +213,6 @@ public class DoneProcessing implements Serializable {
         this.audioMetaInfo = audioMetaInfo;
         this.videoMetaInfo = videoMetaInfo;
         this.textMetaInfo = textMetaInfo;
-        this.retrievingState = retrievingState;
-        this.processingState = processingState;
         this.stats = stats;
         this.log = log;
     }
@@ -350,9 +285,12 @@ public class DoneProcessing implements Serializable {
         return textMetaInfo;
     }
 
+    public ProcessingJobSubTaskStats getStats() {
+        return stats;
+    }
 
     public ProcessingState getProcessingState() {
-        return computeProcessingStateIncludingTheSubTaskState(this.processingState, this.stats);
+        return getSubTaskAwareProcessingState(this.stats);
     }
 
     public String getLog() {
@@ -363,25 +301,19 @@ public class DoneProcessing implements Serializable {
         return taskID;
     }
 
-    public RetrievingState getRetrievingState() {
-        return retrievingState;
-    }
-
-    public ProcessingJobSubTaskStats getProcessingStats() {
-        return stats;
-    }
-
-    public DoneProcessing withNewState(ProcessingState newState, String log) {
-        return new DoneProcessing(taskID, url, referenceId, jobId, taskType, httpResponseCode, httpResponseContentType,
-                httpResponseContentSizeInBytes, socketConnectToDownloadStartDurationInMilliSecs,
-                retrievalDurationInMilliSecs, checkingDurationInMilliSecs, sourceIp, httpResponseHeaders,
-                redirectionPath, retrievingState, newState, stats, log, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
-    }
-
-    public DoneProcessing withColorPalette(ImageMetaInfo imageMetaInfo) {
-        return new DoneProcessing(taskID, url, referenceId, jobId, taskType, httpResponseCode, httpResponseContentType,
-                httpResponseContentSizeInBytes, socketConnectToDownloadStartDurationInMilliSecs,
-                retrievalDurationInMilliSecs, checkingDurationInMilliSecs, sourceIp, httpResponseHeaders,
-                redirectionPath, retrievingState, processingState, stats, log, imageMetaInfo, audioMetaInfo, videoMetaInfo, textMetaInfo);
+    public DoneProcessing withProcessingInfo(final ProcessingJobSubTaskStats newSubTaskState,
+                                             final ImageMetaInfo newImageMetaInfo,
+                                             final AudioMetaInfo newAudioMetaInfo, final VideoMetaInfo newVideoMetaInfo,
+                                             final TextMetaInfo newTextMetaInfo) {
+        return new DoneProcessing(taskID, url, referenceId, jobId,
+                taskType, httpResponseCode,
+                httpResponseContentType, httpResponseContentSizeInBytes,
+                socketConnectToDownloadStartDurationInMilliSecs,
+                retrievalDurationInMilliSecs, checkingDurationInMilliSecs,
+                sourceIp, httpResponseHeaders,
+                redirectionPath,
+                newSubTaskState, log,
+                newImageMetaInfo, newAudioMetaInfo,
+                newVideoMetaInfo, newTextMetaInfo);
     }
 }

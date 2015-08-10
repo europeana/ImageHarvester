@@ -88,7 +88,7 @@ public class PublisherEuropeanaDao {
                 final BasicDBObject subTaskStatsTemp = (BasicDBObject) item.get("processingJobSubTaskStats");
 
                 final ProcessingJobSubTaskStats subTaskStats = new ProcessingJobSubTaskStats(
-                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("retrieveState")),
+                      ProcessingJobRetrieveSubTaskState.valueOf(subTaskStatsTemp.getString("retrieveState")),
                       ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("colorExtractionState")),
                       ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("metaExtractionState")),
                       ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("thumbnailGenerationState")),

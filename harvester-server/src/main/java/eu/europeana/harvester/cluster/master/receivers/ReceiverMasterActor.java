@@ -11,6 +11,7 @@ import eu.europeana.harvester.cluster.domain.messages.inner.MarkJobAsDone;
 import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.*;
+import eu.europeana.harvester.domain.ProcessingJobRetrieveSubTaskState;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskStats;
 import eu.europeana.harvester.logging.LoggingComponent;
@@ -123,14 +124,6 @@ public class ReceiverMasterActor extends UntypedActor {
 
             return;
         }
-        if(message instanceof DownloadConfirmation) {
-            final DownloadConfirmation downloadConfirmation = (DownloadConfirmation) message;
-            accountantActor.tell(new ModifyState(downloadConfirmation.getTaskID(),"", "",null, TaskState.PROCESSING), getSelf());
-            MasterMetrics.Master.doneDownloadStateCounters.get(downloadConfirmation.getState()).inc();
-            MasterMetrics.Master.doneDownloadTotalCounter.inc();
-
-            return;
-        }
         if(message instanceof DoneProcessing) {
             final Address address = getSender().path().address();
             final DoneProcessing doneProcessing = (DoneProcessing) message;
@@ -142,12 +135,12 @@ public class ReceiverMasterActor extends UntypedActor {
             MasterMetrics.Master.doneProcessingStateCounters.get(doneProcessing.getProcessingState()).inc();
             MasterMetrics.Master.doneProcessingTotalCounter.inc();
 
-            final ProcessingJobSubTaskStats subTaskStats = doneProcessing.getProcessingStats();
+            final ProcessingJobSubTaskStats subTaskStats = doneProcessing.getStats();
             if (subTaskStats != null) {
 
                 if (subTaskStats.getRetrieveState() != null) {
                     MasterMetrics.Master.doneProcessingRetrieveStateCounters.get(subTaskStats.getRetrieveState()).inc();
-                    if (subTaskStats.getRetrieveState() != ProcessingJobSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingRetrieveTotalCounter.inc();
+                    if (subTaskStats.getRetrieveState() != ProcessingJobRetrieveSubTaskState.NEVER_EXECUTED) MasterMetrics.Master.doneProcessingRetrieveTotalCounter.inc();
                 }
 
                 if (subTaskStats.getColorExtractionState() != null) {

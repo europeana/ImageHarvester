@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class ProcessingJobSubTaskStats implements Serializable {
 
     private final String retrieveLog;
-    private final ProcessingJobSubTaskState retrieveState;
+    private final ProcessingJobRetrieveSubTaskState retrieveState;
     private final String colorExtractionLog;
     private final ProcessingJobSubTaskState colorExtractionState;
     private final String metaExtractionLog;
@@ -17,7 +17,7 @@ public class ProcessingJobSubTaskStats implements Serializable {
 
     public ProcessingJobSubTaskStats() {
         retrieveLog = null;
-        retrieveState = ProcessingJobSubTaskState.NEVER_EXECUTED;
+        retrieveState = ProcessingJobRetrieveSubTaskState.NEVER_EXECUTED;
         colorExtractionLog = null;
         colorExtractionState = ProcessingJobSubTaskState.NEVER_EXECUTED;
         metaExtractionLog = null;
@@ -28,7 +28,7 @@ public class ProcessingJobSubTaskStats implements Serializable {
         thumbnailStorageState = ProcessingJobSubTaskState.NEVER_EXECUTED;
     }
 
-    public ProcessingJobSubTaskStats(ProcessingJobSubTaskState retrieveState,
+    public ProcessingJobSubTaskStats(ProcessingJobRetrieveSubTaskState retrieveState,
                                      ProcessingJobSubTaskState colorExtractionState,
                                      ProcessingJobSubTaskState metaExtractionState,
                                      ProcessingJobSubTaskState thumbnailGenerationState,
@@ -46,7 +46,7 @@ public class ProcessingJobSubTaskStats implements Serializable {
         this.thumbnailStorageState = thumbnailStorageState;
     }
 
-    public ProcessingJobSubTaskStats(String retrieveLog, ProcessingJobSubTaskState retrieveState, String colorExtractionLog, ProcessingJobSubTaskState colorExtractionState, String metaExtractionLog, ProcessingJobSubTaskState metaExtractionState, String thumbnailGenerationLog, ProcessingJobSubTaskState thumbnailGenerationState, String thumbnailStorageLog, ProcessingJobSubTaskState thumbnailStorageState) {
+    public ProcessingJobSubTaskStats(String retrieveLog, ProcessingJobRetrieveSubTaskState retrieveState, String colorExtractionLog, ProcessingJobSubTaskState colorExtractionState, String metaExtractionLog, ProcessingJobSubTaskState metaExtractionState, String thumbnailGenerationLog, ProcessingJobSubTaskState thumbnailGenerationState, String thumbnailStorageLog, ProcessingJobSubTaskState thumbnailStorageState) {
         this.retrieveLog = retrieveLog;
         this.retrieveState = retrieveState;
         this.colorExtractionLog = colorExtractionLog;
@@ -59,7 +59,7 @@ public class ProcessingJobSubTaskStats implements Serializable {
         this.thumbnailStorageState = thumbnailStorageState;
     }
 
-    public ProcessingJobSubTaskState getRetrieveState() {
+    public ProcessingJobRetrieveSubTaskState getRetrieveState() {
         return retrieveState;
     }
 
@@ -99,11 +99,11 @@ public class ProcessingJobSubTaskStats implements Serializable {
         return thumbnailStorageLog;
     }
 
-    public ProcessingJobSubTaskStats withRetrieveState(final ProcessingJobSubTaskState newRetrieveState) {
+    public ProcessingJobSubTaskStats withRetrieveState(final ProcessingJobRetrieveSubTaskState newRetrieveState) {
         return withRetrieveState(newRetrieveState, null);
     }
 
-    public ProcessingJobSubTaskStats withRetrieveState(final ProcessingJobSubTaskState newRetrieveState, final Throwable t) {
+    public ProcessingJobSubTaskStats withRetrieveState(final ProcessingJobRetrieveSubTaskState newRetrieveState, final Throwable t) {
         return new ProcessingJobSubTaskStats((t != null) ? t.getMessage() : null,
                 newRetrieveState,
                 colorExtractionLog,
@@ -205,28 +205,27 @@ public class ProcessingJobSubTaskStats implements Serializable {
     }
 
     public ProcessingJobSubTaskState getOverallState() {
-        if (retrieveState == ProcessingJobSubTaskState.ERROR ||
+        if (retrieveState == ProcessingJobRetrieveSubTaskState.ERROR ||
                 colorExtractionState == ProcessingJobSubTaskState.ERROR ||
                 metaExtractionState == ProcessingJobSubTaskState.ERROR ||
                 thumbnailGenerationState == ProcessingJobSubTaskState.ERROR ||
                 thumbnailStorageState == ProcessingJobSubTaskState.ERROR) return ProcessingJobSubTaskState.ERROR;
 
-        if (retrieveState == ProcessingJobSubTaskState.FAILED ||
+        if (retrieveState == ProcessingJobRetrieveSubTaskState.FAILED ||
+                retrieveState == ProcessingJobRetrieveSubTaskState.FINISHED_RATE_LIMIT ||
+                retrieveState == ProcessingJobRetrieveSubTaskState.FINISHED_SIZE_LIMIT ||
+                retrieveState == ProcessingJobRetrieveSubTaskState.FINISHED_TIME_LIMIT ||
                 colorExtractionState == ProcessingJobSubTaskState.FAILED ||
                 metaExtractionState == ProcessingJobSubTaskState.FAILED ||
                 thumbnailGenerationState == ProcessingJobSubTaskState.FAILED ||
                 thumbnailStorageState == ProcessingJobSubTaskState.FAILED) return ProcessingJobSubTaskState.FAILED;
 
-        if (retrieveState == ProcessingJobSubTaskState.NEVER_EXECUTED &&
+        if (retrieveState == ProcessingJobRetrieveSubTaskState.NEVER_EXECUTED &&
                 colorExtractionState == ProcessingJobSubTaskState.NEVER_EXECUTED &&
                 metaExtractionState == ProcessingJobSubTaskState.NEVER_EXECUTED &&
                 thumbnailGenerationState == ProcessingJobSubTaskState.NEVER_EXECUTED &&
                 thumbnailStorageState == ProcessingJobSubTaskState.NEVER_EXECUTED) return ProcessingJobSubTaskState.NEVER_EXECUTED;
 
         return ProcessingJobSubTaskState.SUCCESS;
-    }
-
-    public static ProcessingJobSubTaskStats withRetrievelSuccess() {
-        return new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS, null);
     }
 }

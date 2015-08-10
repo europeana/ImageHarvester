@@ -68,7 +68,7 @@ public class SOLRWriterTest {
             final ReferenceOwner referenceOwner = new ReferenceOwner(UUID.randomUUID().toString(),
                     UUID.randomUUID().toString(), UUID.randomUUID().toString());
 
-            ProcessingJobSubTaskStats subTaskStats = ProcessingJobSubTaskStats.withRetrievelSuccess()
+            ProcessingJobSubTaskStats subTaskStats = new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobRetrieveSubTaskState.SUCCESS)
                                                                               .withColorExtractionState(ProcessingJobSubTaskState.SUCCESS)
                                                                               .withMetaExtractionState(ProcessingJobSubTaskState.SUCCESS)
                                                                               .withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS)
@@ -271,7 +271,7 @@ public class SOLRWriterTest {
             final ReferenceOwner referenceOwner = new ReferenceOwner(UUID.randomUUID().toString(),
                     UUID.randomUUID().toString(), UUID.randomUUID().toString());
 
-            ProcessingJobSubTaskStats subTaskStats = ProcessingJobSubTaskStats.withRetrievelSuccess()
+            ProcessingJobSubTaskStats subTaskStats = new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobRetrieveSubTaskState.SUCCESS)
                                                                               .withColorExtractionState(ProcessingJobSubTaskState.SUCCESS)
                                                                               .withMetaExtractionState(ProcessingJobSubTaskState.SUCCESS)
                                                                               .withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS)

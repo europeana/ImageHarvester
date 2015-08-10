@@ -21,7 +21,13 @@ public enum ProcessingState {
      */
     SUCCESS,
     /**
+     * Error task.
+     */
+    ERROR,
+    /**
      * Failed task.
      */
-    ERROR
+    FAILED
+
 }
+

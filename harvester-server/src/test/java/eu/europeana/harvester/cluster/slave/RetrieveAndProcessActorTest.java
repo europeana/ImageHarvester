@@ -3,9 +3,7 @@ package eu.europeana.harvester.cluster.slave;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.testkit.JavaTestKit;
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Lists;
-import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrlWithProcessingConfig;
@@ -17,7 +15,6 @@ import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import eu.europeana.harvester.httpclient.response.RetrievingState;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -34,13 +31,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 public class RetrieveAndProcessActorTest {
     @Rule
@@ -112,11 +108,6 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-            assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
-            assertEquals(msg1.getRetrieveState(), RetrievingState.COMPLETED);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
             assertEquals(msg2.getImageMetaInfo().getWidth().intValue(),2500);
@@ -156,19 +147,14 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-            assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.CHECK_LINK);
-            assertEquals(msg1.getRetrieveState(), RetrievingState.COMPLETED);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
             assertEquals (200, msg2.getHttpResponseCode().intValue());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
         }};
     }
 
@@ -192,18 +178,13 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-            assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.CHECK_LINK);
-            assertNotEquals(msg1.getRetrieveState(), RetrievingState.COMPLETED);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
-            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.ERROR, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
         }};
     }
 
@@ -239,11 +220,6 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-            assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD);
-            assertEquals(msg1.getRetrieveState(), RetrievingState.COMPLETED);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
             assertEquals(msg2.getImageMetaInfo().getWidth().intValue(),2500);
@@ -256,11 +232,11 @@ public class RetrieveAndProcessActorTest {
             final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
 
             assertEquals (200, msg2.getHttpResponseCode().intValue());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
 
             // TODO : Re-enable checking for the original
             // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
@@ -302,17 +278,14 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
 
-            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.ERROR, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
 
         }};
     }
@@ -368,18 +341,16 @@ public class RetrieveAndProcessActorTest {
 
             subject.tell(taskWithConfig, getRef());
 
-            while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
 
             while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
 
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
         }};
     }
 
@@ -437,17 +408,14 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
 
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
         }};
     }
 
@@ -482,10 +450,6 @@ public class RetrieveAndProcessActorTest {
 
             subject.tell(taskWithConfig, getRef());
 
-            while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-            assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
-            assertEquals(msg1.getRetrieveState(), RetrievingState.COMPLETED);
 
             while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
@@ -500,11 +464,11 @@ public class RetrieveAndProcessActorTest {
             final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
 
             assertEquals (200, msg2.getHttpResponseCode().intValue());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
 
             // TODO : Re-enable checking for the original
             // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
@@ -544,11 +508,6 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-            assertEquals(msg1.getDocumentReferenceTask().getTaskType(),DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD);
-            assertEquals(msg1.getRetrieveState(), RetrievingState.COMPLETED);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
             assertEquals(msg2.getImageMetaInfo().getColorPalette().length,6);
@@ -561,11 +520,11 @@ public class RetrieveAndProcessActorTest {
             final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
 
             assertEquals (200, msg2.getHttpResponseCode().intValue());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
 
             // TODO : Re-enable checking for the original
             // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
@@ -609,17 +568,14 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
 
-            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.ERROR, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
 
         }};
     }
@@ -676,17 +632,14 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
 
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.FAILED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
         }};
     }
 
@@ -744,17 +697,14 @@ public class RetrieveAndProcessActorTest {
             subject.tell(taskWithConfig, getRef());
 
             while (!msgAvailable()) Thread.sleep(100);
-            DoneDownload msg1 = expectMsgAnyClassOf(DoneDownload.class);
-
-            while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
 
 
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getProcessingStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getProcessingStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getProcessingStats().getThumbnailStorageState());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.ERROR, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
         }};
     }
 

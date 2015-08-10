@@ -63,7 +63,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                 Integer nr = 0;
                 for (final Map.Entry<String, Pair<RetrieveUrl, TaskState>> entry : allTasks.entrySet()) {
                     final TaskState current = entry.getValue().getValue();
-                    if (current.equals(TaskState.READY) || current.equals(TaskState.DOWNLOADING))
+                    if (current.equals(TaskState.READY) || current.equals(TaskState.PROCESSING))
                         nr++;
 
                 }
@@ -179,7 +179,7 @@ public class AccountantAllTasksActor extends UntypedActor {
                     final TaskState state = ((ModifyState) message).getState();
                     final RetrieveUrl retrieveUrl = allTasks.get(taskID).getKey();
                     allTasks.put(taskID, new Pair<>(retrieveUrl, state));
-                    if (state == TaskState.DOWNLOADING || state == TaskState.PROCESSING)
+                    if (state == TaskState.PROCESSING)
                         allTasksTimer.put(taskID, new Long(System.currentTimeMillis()));
 
                     if (state == TaskState.DONE) {
@@ -310,7 +310,7 @@ public class AccountantAllTasksActor extends UntypedActor {
 
                     if (state == TaskState.READY) {
                         retrieveUrl = allTasks.get(taskID).getKey();
-                        allTasks.put(taskID, new Pair<>(retrieveUrl, TaskState.DOWNLOADING));
+                        allTasks.put(taskID, new Pair<>(retrieveUrl, TaskState.PROCESSING));
                     }
 
 

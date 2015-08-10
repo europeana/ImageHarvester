@@ -152,10 +152,6 @@ public class NodeMasterActor extends UntypedActor {
             return;
         }
 
-        if(message instanceof DoneDownload) {
-            onDoneDownloadReceived((DoneDownload) message);
-            return;
-        }
         if(message instanceof DoneProcessing) {
             onDoneProcessingReceived(message);
             return;
@@ -282,33 +278,6 @@ public class NodeMasterActor extends UntypedActor {
                 }
 
         }
-    }
-
-    private void onDoneDownloadReceived(DoneDownload message) {
-        final DoneDownload doneDownload = message;
-        final String jobId = doneDownload.getJobId();
-
-        if(!jobsToStop.contains(jobId)) {
-
-            masterReceiver.tell(new DownloadConfirmation(doneDownload.getTaskID(),
-                                                         doneDownload.getIpAddress(),
-                                                         doneDownload.getHttpRetrieveResponse().getState()),
-                                                         getSelf()
-                               );
-
-            if(DocumentReferenceTaskType.CHECK_LINK.equals(doneDownload.getDocumentReferenceTask().getTaskType()) ||
-               !(RetrievingState.COMPLETED).equals(doneDownload.getRetrieveState())) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                          "Slave sending DoneProcessing message for job {} and task {}",
-                          doneDownload.getJobId(), doneDownload.getTaskID());
-
-                masterReceiver.tell(new DoneProcessing(doneDownload), getSelf());
-                deleteFile(doneDownload.getReferenceId());
-
-            }
-        }
-        SlaveMetrics.Worker.Master.doneDownloadStateCounters.get(message.getHttpRetrieveResponse().getState()).inc();
-        SlaveMetrics.Worker.Master.doneDownloadTotalCounter.inc();
     }
 
     private void onDoneProcessingReceived(Object message) {

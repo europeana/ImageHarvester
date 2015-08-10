@@ -21,6 +21,10 @@ public enum JobState {
      */
     FINISHED,
     /**
+     * Finished job.
+     */
+    FAILED,
+    /**
      * Job with error
      */
     ERROR,

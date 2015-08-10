@@ -3,7 +3,6 @@ package eu.europeana.harvester.cluster.slave;
 import akka.actor.*;
 import akka.pattern.CircuitBreaker;
 import com.codahale.metrics.Timer;
-import eu.europeana.harvester.cluster.domain.messages.DoneDownload;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrlWithProcessingConfig;
@@ -38,10 +37,34 @@ import java.util.concurrent.TimeUnit;
  */
 public class RetrieveAndProcessActor extends UntypedActor {
 
+    public static final ProcessingJobRetrieveSubTaskState convertRetrieveStateToProcessingJobRetrieveSubTaskState(RetrievingState retrievingState) {
+        switch (retrievingState) {
+            case ERROR:
+                return ProcessingJobRetrieveSubTaskState.ERROR;
+            case COMPLETED:
+                return ProcessingJobRetrieveSubTaskState.SUCCESS;
+            case PREPARING:
+                return ProcessingJobRetrieveSubTaskState.NEVER_EXECUTED;
+            case PROCESSING:
+                return ProcessingJobRetrieveSubTaskState.NEVER_EXECUTED;
+            case FINISHED_RATE_LIMIT:
+                return ProcessingJobRetrieveSubTaskState.FAILED;
+
+            case FINISHED_TIME_LIMIT:
+                return ProcessingJobRetrieveSubTaskState.FAILED;
+
+            case FINISHED_SIZE_LIMIT:
+                return ProcessingJobRetrieveSubTaskState.FAILED;
+            default:
+                return ProcessingJobRetrieveSubTaskState.ERROR;
+        }
+    }
+
+
     public static final ActorRef createActor(final ActorSystem system,
-                                                  final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
-                                                  final MediaStorageClient mediaStorageClient,
-                                                  final String colorMapPath
+                                             final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
+                                             final MediaStorageClient mediaStorageClient,
+                                             final String colorMapPath
     ) {
         return system.actorOf(Props.create(RetrieveAndProcessActor.class,
                 httpRetrieveResponseFactory, colorMapPath, mediaStorageClient
@@ -83,8 +106,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
     private final SlaveLinkChecker slaveLinkChecker;
 
     public RetrieveAndProcessActor(final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
-                                        final String colorMapPath,
-                                        final MediaStorageClient mediaStorageClient
+                                   final String colorMapPath,
+                                   final MediaStorageClient mediaStorageClient
     ) {
 
         this.httpRetrieveResponseFactory = httpRetrieveResponseFactory;
@@ -144,113 +167,119 @@ public class RetrieveAndProcessActor extends UntypedActor {
         }
     }
 
+    private void finishProcess(final DoneProcessing doneProcessing) {
+        sender.tell(doneProcessing, getSelf());
+        // Gentle suicide!
+        getSelf().tell(PoisonPill.getInstance(), ActorRef.noSender());
+    }
+
     private void process(RetrieveUrl task) {
 
-        DoneDownload doneDownloadMessage = null;
         HttpRetrieveResponse response = null;
+        DoneProcessing doneProcessing = null;
 
-
-        // Step 1 : Execute retrieval (download OR link checking) + send confirmation when it's done
-
+        // STEP 1 : Execute retrieval
         final Timer.Context downloadTimerContext = SlaveMetrics.Worker.Slave.Retrieve.totalDuration.time();
 
         try {
             response = executeRetrieval(task);
+            doneProcessing = new DoneProcessing(
+                    task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(),
+                    task.getTaskType(),
+                    response,
+                    new ProcessingJobSubTaskStats().withRetrieveState(convertRetrieveStateToProcessingJobRetrieveSubTaskState(response.getState())),
+                    null /* image meta info */,
+                    null /* audio meta info */, null /* video meta info */,
+                    null /* text meta info */, response.getLog());
 
-            if (response != null) {
-                doneDownloadMessage = new DoneDownload(task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(),
-                                                       response.getState(),
-                        response, task.getDocumentReferenceTask(), task.getIpAddress(), new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS));
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                        "Retrieval url finished with success and the temporary file is stored on disk at {}", taskWithProcessingConfig.getDownloadPath());
-            } else {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                        "Retrieval url failed in an unexpected way. This might be a bug in harvester slave code.");
-            }
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "Retrieval url finished with success and the temporary file is stored on disk at {}", taskWithProcessingConfig.getDownloadPath());
 
         } catch (Exception e) {
-            doneDownloadMessage = new DoneDownload(task.getId(),
-                                                   task.getUrl(),
-                                                   task.getReferenceId(),
-                                                   task.getJobId(),
-                                                   RetrievingState.ERROR,
-                                                   response,
-                                                   task.getDocumentReferenceTask(),
-                                                   task.getIpAddress(),new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR,e));
+            doneProcessing = new DoneProcessing(
+                    task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(),
+                    task.getTaskType(),
+                    null,
+                    new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobRetrieveSubTaskState.ERROR, e),
+                    null /* image meta info */,
+                    null /* audio meta info */, null /* video meta info */,
+                    null /* text meta info */, e.getMessage());
+
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                    "Exception during retrieval. The http retrieve response could not be created. Probable cause : wrong configuration argument in the slave.", e);
+                    "Exception during retrieval. The http retrieve response could not be created for url {} and job {} . Probable cause : wrong configuration argument in the slave.", task.getUrl(),task.getJobId(),e);
         } finally {
             downloadTimerContext.stop();
-            sender.tell(doneDownloadMessage, getSelf());
         }
 
-        // Step 2 : Execute processing + send confirmation when it's done
-        DoneProcessing doneProcessingMessage = null;
-
-        if (response.getState() == RetrievingState.COMPLETED && task.getDocumentReferenceTask().getTaskType() != DocumentReferenceTaskType.CHECK_LINK) {
-            final Timer.Context processingTimerContext = SlaveMetrics.Worker.Slave.Processing.totalDuration.time();
-            ProcessingResultTuple processingResultTuple;
-            try {
-                processingResultTuple = executeProcessing(response, task);
-
-                if (processingResultTuple == null)
-                    throw new IllegalStateException("Unexpected processingResultTuple with value null. Probable cause : bug in slave code.");
-                if (processingResultTuple.getMediaMetaInfoTuple() == null) {
-                    doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                                                               processingResultTuple.getProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
-                                                                null, null, null, null
-                                                              );
-                    LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                              "The current job has not metainfo attached to it."
-                            );
-                }
-                else {
-                    doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                                                               processingResultTuple.getProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
-                                                               processingResultTuple.getMediaMetaInfoTuple().getImageMetaInfo(),
-                                                               processingResultTuple.getMediaMetaInfoTuple().getAudioMetaInfo(),
-                                                               processingResultTuple.getMediaMetaInfoTuple().getVideoMetaInfo(),
-                                                               processingResultTuple.getMediaMetaInfoTuple().getTextMetaInfo()
-                                                             );
-                }
-
-            }
-            catch (IOException | URISyntaxException e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                          "Exception during processing. :  " + e.getLocalizedMessage(), e);
-
-                doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                                                           new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR,e),
-                                                           null, null, null, null,
-                                                           e.getMessage());
-            } finally {
-                processingTimerContext.stop();
-            }
-        } else {
+        // (Stop case 1) Stop when this is link checking
+        if (task.getDocumentReferenceTask().getTaskType() == DocumentReferenceTaskType.CHECK_LINK) {
             // We can skip processing altogether as is this is link checking.
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                    "Processing stage skipped because retrieval involved only link checking or finished with non-complete state : " + response.getState() + " and reason " + response.getLog());
-
-            if (response.getState() != RetrievingState.COMPLETED) {
-                doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                        new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.ERROR),
-                        null, null, null, null
-                );
-            }
-            else {
-                doneProcessingMessage = new DoneProcessing(doneDownloadMessage,
-                        new ProcessingJobSubTaskStats().withRetrieveState(ProcessingJobSubTaskState.SUCCESS),
-                        null, null, null, null
-                );
-            }
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "Processing stage skipped because retrieval involved only link checking : " + response.getState());
+            finishProcess(doneProcessing);
+            return;
         }
 
-        sender.tell(doneProcessingMessage, getSelf());
+        // (Stop case 2) Stop when this retrieval failed
+        if (doneProcessing.getStats().getRetrieveState() != ProcessingJobRetrieveSubTaskState.SUCCESS) {
+            // We can skip processing altogether as the download failed.
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "Processing stage skipped because retrieval failed : " + doneProcessing.getStats().getRetrieveState());
+            finishProcess(doneProcessing);
+            return;
+        }
 
-        // Step 3 : Gentle suicide!
-        getSelf().tell(PoisonPill.getInstance(), ActorRef.noSender());
+        // (Stop case 3) Stop when this is conditional download that skipped retrieval (ie. response content size of ZERO bytes)
+        if (doneProcessing.getStats().getRetrieveState() == ProcessingJobRetrieveSubTaskState.SUCCESS && doneProcessing.getHttpResponseContentSizeInBytes() == 0l && task.getDocumentReferenceTask().getTaskType() == DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) {
+            // We can skip processing altogether as the download failed.
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "Processing stage skipped because retrieval was a conditional download that was skipped : " + doneProcessing.getStats().getRetrieveState());
+            finishProcess(doneProcessing);
+            return;
+        }
+
+        // STEP 2 : Execute processing
+        final Timer.Context processingTimerContext = SlaveMetrics.Worker.Slave.Processing.totalDuration.time();
+        ProcessingResultTuple processingResultTuple;
+        try {
+            processingResultTuple = executeProcessing(response, task);
+
+            if (processingResultTuple == null)
+                throw new IllegalStateException("Unexpected processingResultTuple with value null. Probable cause : bug in slave code.");
+
+            doneProcessing = doneProcessing.withProcessingInfo(
+                    doneProcessing.getStats().withColorExtractionState(processingResultTuple.getProcessingJobSubTaskStats().getColorExtractionState())
+                            .withMetaExtractionState(processingResultTuple.getProcessingJobSubTaskStats().getMetaExtractionState())
+                            .withThumbnailGenerationState(processingResultTuple.getProcessingJobSubTaskStats().getThumbnailGenerationState())
+                            .withThumbnailStorageState(processingResultTuple.getProcessingJobSubTaskStats().getThumbnailStorageState()),
+                    (processingResultTuple.getMediaMetaInfoTuple() != null) ? processingResultTuple.getMediaMetaInfoTuple().getImageMetaInfo() : null,
+                    (processingResultTuple.getMediaMetaInfoTuple() != null) ? processingResultTuple.getMediaMetaInfoTuple().getAudioMetaInfo() : null,
+                    (processingResultTuple.getMediaMetaInfoTuple() != null) ? processingResultTuple.getMediaMetaInfoTuple().getVideoMetaInfo() : null,
+                    (processingResultTuple.getMediaMetaInfoTuple() != null) ? processingResultTuple.getMediaMetaInfoTuple().getTextMetaInfo() : null);
+
+        } catch (Exception e) {
+            doneProcessing = doneProcessing.withProcessingInfo(doneProcessing.getStats()
+                            .withColorExtractionState(ProcessingJobSubTaskState.ERROR, e)
+                            .withMetaExtractionState(ProcessingJobSubTaskState.ERROR, e)
+                            .withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR, e)
+                            .withThumbnailStorageState(ProcessingJobSubTaskState.ERROR, e),
+                    null,
+                    null,
+                    null,
+                    null);
+
+            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+                    "This should never happen in this way -> Exception during processing. :  " + e.getLocalizedMessage(), e);
+
+        } finally {
+            processingTimerContext.stop();
+        }
+
+        finishProcess(doneProcessing);
+        return;
 
     }
+
 
     /**
      * Executes the retrieval phase.
@@ -327,15 +356,15 @@ public class RetrieveAndProcessActor extends UntypedActor {
      * @throws Exception
      */
     private final ProcessingResultTuple executeProcessing(final HttpRetrieveResponse response, final RetrieveUrl task) throws
-                                                                                                                       LocaleException,
-                                                                                                                       URISyntaxException,
-                                                                                                                       IOException {
+            LocaleException,
+            URISyntaxException,
+            IOException {
         return slaveProcessor.process(task.getDocumentReferenceTask(),
-                                      taskWithProcessingConfig.getDownloadPath(),
-                                      response.getUrl().toURI().toASCIIString(),
-                                      response.getContent(),
-                                      responseTypeFromTaskType(task.getDocumentReferenceTask().getTaskType()),
-                                      task.getReferenceOwner()
+                taskWithProcessingConfig.getDownloadPath(),
+                response.getUrl().toURI().toASCIIString(),
+                response.getContent(),
+                responseTypeFromTaskType(task.getDocumentReferenceTask().getTaskType()),
+                task.getReferenceOwner()
         );
     }
 

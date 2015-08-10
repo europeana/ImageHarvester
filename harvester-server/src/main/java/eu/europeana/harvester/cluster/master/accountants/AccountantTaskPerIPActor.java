@@ -5,7 +5,6 @@ import akka.actor.UntypedActor;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.TaskState;
-import eu.europeana.harvester.cluster.domain.messages.inner.GetListOfIPs;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
@@ -14,7 +13,10 @@ import scala.concurrent.Await;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class AccountantTaskPerIPActor extends UntypedActor {
@@ -161,7 +163,6 @@ public class AccountantTaskPerIPActor extends UntypedActor {
 
     private void monitor() {
         int ipsWithoutLoadedTasks = 0;
-        int ipsDownloading = 0;
         int ipsProcessing = 0;
 
         for (final Map.Entry<String, List<String>> task : tasksPerIP.entrySet()) {
@@ -176,9 +177,6 @@ public class AccountantTaskPerIPActor extends UntypedActor {
                 if (taskState.equals(TaskState.READY)) {
                     ready += 1;
                 }
-                if (taskState.equals(TaskState.DOWNLOADING)) {
-                    downloading += 1;
-                }
                 if (taskState.equals(TaskState.PROCESSING)) {
                     processing += 1;
                 }
@@ -186,9 +184,6 @@ public class AccountantTaskPerIPActor extends UntypedActor {
 
             if (ready == 0) {
                 ipsWithoutLoadedTasks += 1;
-            }
-            if (downloading != 0) {
-                ipsDownloading += 1;
             }
             if (processing != 0) {
                 ipsProcessing += 1;
@@ -198,7 +193,7 @@ public class AccountantTaskPerIPActor extends UntypedActor {
 
         }
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_ACCOUNTANT),
-                "IPS without loaded tasks: " + ipsWithoutLoadedTasks + " | IPS downloading tasks: " + ipsDownloading + "IPS processing tasks: " + ipsProcessing + " | Number of IPs: " + tasksPerIP.size());
+                "IPS without loaded tasks: " + ipsWithoutLoadedTasks +  "IPS processing tasks: " + ipsProcessing + " | Number of IPs: " + tasksPerIP.size());
 
     }
 
@@ -251,7 +246,7 @@ public class AccountantTaskPerIPActor extends UntypedActor {
             }
 
 //            if ((taskState!=null) && (taskState.equals(TaskState.READY)||taskState.equals(TaskState.DOWNLOADING) || taskState.equals(TaskState.PROCESSING)) ) {
-            if ((taskState != null) && (taskState.equals(TaskState.READY) || taskState.equals(TaskState.DOWNLOADING))) {
+            if ((taskState != null) && (taskState.equals(TaskState.READY) || taskState.equals(TaskState.PROCESSING))) {
                 foundActive = true;
                 break;
             }

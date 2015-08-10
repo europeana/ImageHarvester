@@ -101,7 +101,7 @@ public class ReceiverJobDumperActor extends UntypedActor {
         final String docId = msg.getReferenceId();
         //LOG.info("save statistics for document with ID: {}",docId);
 
-        final ProcessingJobSubTaskStats subTaskStats = msg.getProcessingStats();
+        final ProcessingJobSubTaskStats subTaskStats = msg.getStats();
 
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
                 new SourceDocumentProcessingStatistics(

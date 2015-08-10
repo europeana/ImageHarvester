@@ -1,6 +1,7 @@
 package eu.europeana.harvester.cluster.slave;
 
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
+import eu.europeana.harvester.domain.ProcessingJobRetrieveSubTaskState;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskStats;
 import eu.europeana.harvester.domain.ProcessingState;
@@ -13,10 +14,66 @@ public class DoneProcessingTests {
     public void canComputeStateCombiningProcessingStateAndSubTasksStates() throws Exception {
 
         assertEquals(ProcessingState.ERROR,
-                DoneProcessing.computeProcessingStateIncludingTheSubTaskState(ProcessingState.SUCCESS,
+                DoneProcessing.getSubTaskAwareProcessingState(
                         new ProcessingJobSubTaskStats(
                                 null,
-                                ProcessingJobSubTaskState.NEVER_EXECUTED /* retrieveState */,
+                                ProcessingJobRetrieveSubTaskState.NEVER_EXECUTED /* retrieveState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* colorExtractionState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* metaExtractionState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailGenerationState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailStorageState */)));
+
+        assertEquals(ProcessingState.ERROR,
+                DoneProcessing.getSubTaskAwareProcessingState(
+                        new ProcessingJobSubTaskStats(
+                                null,
+                                ProcessingJobRetrieveSubTaskState.FAILED /* retrieveState */,
+                                null,
+                                ProcessingJobSubTaskState.ERROR /* colorExtractionState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* metaExtractionState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailGenerationState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailStorageState */)));
+
+        assertEquals(ProcessingState.FAILED,
+                DoneProcessing.getSubTaskAwareProcessingState(
+                        new ProcessingJobSubTaskStats(
+                                null,
+                                ProcessingJobRetrieveSubTaskState.FINISHED_RATE_LIMIT /* retrieveState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* colorExtractionState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* metaExtractionState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailGenerationState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailStorageState */)));
+
+        assertEquals(ProcessingState.FAILED,
+                DoneProcessing.getSubTaskAwareProcessingState(
+                        new ProcessingJobSubTaskStats(
+                                null,
+                                ProcessingJobRetrieveSubTaskState.FINISHED_SIZE_LIMIT /* retrieveState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* colorExtractionState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* metaExtractionState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailGenerationState */,
+                                null,
+                                ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailStorageState */)));
+
+        assertEquals(ProcessingState.FAILED,
+                DoneProcessing.getSubTaskAwareProcessingState(
+                        new ProcessingJobSubTaskStats(
+                                null,
+                                ProcessingJobRetrieveSubTaskState.FINISHED_TIME_LIMIT /* retrieveState */,
                                 null,
                                 ProcessingJobSubTaskState.NEVER_EXECUTED /* colorExtractionState */,
                                 null,
@@ -27,10 +84,10 @@ public class DoneProcessingTests {
                                 ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailStorageState */)));
 
         assertEquals(ProcessingState.SUCCESS,
-                DoneProcessing.computeProcessingStateIncludingTheSubTaskState(ProcessingState.SUCCESS,
+                DoneProcessing.getSubTaskAwareProcessingState(
                         new ProcessingJobSubTaskStats(
                                 null,
-                                ProcessingJobSubTaskState.SUCCESS /* retrieveState */,
+                                ProcessingJobRetrieveSubTaskState.SUCCESS /* retrieveState */,
                                 null,
                                 ProcessingJobSubTaskState.NEVER_EXECUTED /* colorExtractionState */,
                                 null,
@@ -41,10 +98,10 @@ public class DoneProcessingTests {
                                 ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailStorageState */)));
 
         assertEquals(ProcessingState.ERROR,
-                DoneProcessing.computeProcessingStateIncludingTheSubTaskState(ProcessingState.SUCCESS,
+                DoneProcessing.getSubTaskAwareProcessingState(
                         new ProcessingJobSubTaskStats(
                                 null,
-                                ProcessingJobSubTaskState.SUCCESS /* retrieveState */,
+                                ProcessingJobRetrieveSubTaskState.SUCCESS /* retrieveState */,
                                 null,
                                 ProcessingJobSubTaskState.ERROR /* colorExtractionState */,
                                 null,
@@ -54,11 +111,11 @@ public class DoneProcessingTests {
                                 null,
                                 ProcessingJobSubTaskState.NEVER_EXECUTED /* thumbnailStorageState */)));
 
-        assertEquals(ProcessingState.ERROR,
-                DoneProcessing.computeProcessingStateIncludingTheSubTaskState(ProcessingState.SUCCESS,
+        assertEquals(ProcessingState.FAILED,
+                DoneProcessing.getSubTaskAwareProcessingState(
                         new ProcessingJobSubTaskStats(
                                 null,
-                                ProcessingJobSubTaskState.SUCCESS /* retrieveState */,
+                                ProcessingJobRetrieveSubTaskState.SUCCESS /* retrieveState */,
                                 null,
                                 ProcessingJobSubTaskState.SUCCESS /* colorExtractionState */,
                                 null,
@@ -69,10 +126,10 @@ public class DoneProcessingTests {
                                 ProcessingJobSubTaskState.FAILED /* thumbnailStorageState */)));
 
         assertEquals(ProcessingState.SUCCESS,
-                DoneProcessing.computeProcessingStateIncludingTheSubTaskState(ProcessingState.SUCCESS,
+                DoneProcessing.getSubTaskAwareProcessingState(
                         new ProcessingJobSubTaskStats(
                                 null,
-                                ProcessingJobSubTaskState.SUCCESS /* retrieveState */,
+                                ProcessingJobRetrieveSubTaskState.SUCCESS /* retrieveState */,
                                 null,
                                 ProcessingJobSubTaskState.SUCCESS /* colorExtractionState */,
                                 null,
@@ -82,11 +139,11 @@ public class DoneProcessingTests {
                                 null,
                                 ProcessingJobSubTaskState.SUCCESS /* thumbnailStorageState */)));
 
-        assertEquals(ProcessingState.ERROR,
-                DoneProcessing.computeProcessingStateIncludingTheSubTaskState(ProcessingState.ERROR,
+        assertEquals(ProcessingState.SUCCESS,
+                DoneProcessing.getSubTaskAwareProcessingState(
                         new ProcessingJobSubTaskStats(
                                 null,
-                                ProcessingJobSubTaskState.SUCCESS /* retrieveState */,
+                                ProcessingJobRetrieveSubTaskState.SUCCESS /* retrieveState */,
                                 null,
                                 ProcessingJobSubTaskState.SUCCESS /* colorExtractionState */,
                                 null,
