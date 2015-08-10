@@ -4,6 +4,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import eu.europeana.harvester.domain.ProcessingJobRetrieveSubTaskState;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.httpclient.response.RetrievingState;
@@ -98,10 +99,10 @@ public class MasterMetrics {
         // Sub tasks counters
 
         /* RETRIEVE SUB TASK */
-        public static final Map<ProcessingJobSubTaskState, Counter> doneProcessingRetrieveStateCounters = new HashMap();
+        public static final Map<ProcessingJobRetrieveSubTaskState, Counter> doneProcessingRetrieveStateCounters = new HashMap();
 
         static {
-            for (final ProcessingJobSubTaskState state : ProcessingJobSubTaskState.values()) {
+            for (final ProcessingJobRetrieveSubTaskState state : ProcessingJobRetrieveSubTaskState.values()) {
                 doneProcessingRetrieveStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_PROCESSING_RETRIEVE, state.name(), COUNTER)));
             }
         }
