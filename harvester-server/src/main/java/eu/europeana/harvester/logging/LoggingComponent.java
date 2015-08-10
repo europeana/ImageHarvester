@@ -17,6 +17,7 @@ public class LoggingComponent {
         public static final String TASKS_LOADER = PREFIX_MASTER+"."+"loader";
         public static final String TASKS_RECEIVER = PREFIX_MASTER+"."+"receiver";
         public static final String TASKS_SENDER = PREFIX_MASTER+"."+"senderr";
+        public static final String IP_LIMITER = PREFIX_MASTER+".ipLimiter";
 
     }
 

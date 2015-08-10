@@ -22,11 +22,7 @@ public class ProcessingJobReportRetriever {
 
         // Retrieve jobs
         for (final String jobId : jobIds) {
-            HistoricalProcessingJob processingJob = harvesterClient.retrieveHistoricalProcessingJob(jobId);
-            if (processingJob == null) {
-                ProcessingJob retrievedJob = harvesterClient.retrieveProcessingJob(jobId);
-                processingJob = (retrievedJob != null) ? new HistoricalProcessingJob(retrievedJob) : null;
-            }
+            ProcessingJob processingJob = harvesterClient.retrieveProcessingJob(jobId);
             final List<SourceDocumentReference> sourceDocumentReferenceList = new ArrayList<>();
             final Map<String, SourceDocumentProcessingStatistics> sourceDocumentReferenceIdToStatsMap = new HashMap();
             final Map<String, SourceDocumentReferenceMetaInfo> sourceDocumentReferenceIdToMetaInfoMap = new HashMap<>();

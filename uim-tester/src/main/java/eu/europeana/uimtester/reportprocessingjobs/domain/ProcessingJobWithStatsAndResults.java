@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class ProcessingJobWithStatsAndResults {
 
-    private final HistoricalProcessingJob processingJob;
+    private final ProcessingJob processingJob;
 
     private final List<SourceDocumentReference> sourceDocumentReferenceList;
 
@@ -15,14 +15,14 @@ public class ProcessingJobWithStatsAndResults {
 
     private final Map<String,SourceDocumentReferenceMetaInfo> sourceDocumentReferenceIdTometaInfoMap;
 
-    public ProcessingJobWithStatsAndResults(HistoricalProcessingJob processingJob, List<SourceDocumentReference> sourceDocumentReferenceList, Map<String, SourceDocumentProcessingStatistics> sourceDocumentReferenceIdToStatsMap, Map<String, SourceDocumentReferenceMetaInfo> sourceDocumentReferenceIdTometaInfoMap) {
+    public ProcessingJobWithStatsAndResults(ProcessingJob processingJob, List<SourceDocumentReference> sourceDocumentReferenceList, Map<String, SourceDocumentProcessingStatistics> sourceDocumentReferenceIdToStatsMap, Map<String, SourceDocumentReferenceMetaInfo> sourceDocumentReferenceIdTometaInfoMap) {
         this.processingJob = processingJob;
         this.sourceDocumentReferenceList = sourceDocumentReferenceList;
         this.sourceDocumentReferenceIdToStatsMap = sourceDocumentReferenceIdToStatsMap;
         this.sourceDocumentReferenceIdTometaInfoMap = sourceDocumentReferenceIdTometaInfoMap;
     }
 
-    public HistoricalProcessingJob getProcessingJob() {
+    public ProcessingJob getProcessingJob() {
         return processingJob;
     }
 

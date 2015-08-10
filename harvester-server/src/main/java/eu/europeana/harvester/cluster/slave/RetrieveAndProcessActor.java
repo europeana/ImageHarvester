@@ -227,7 +227,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                 processingTimerContext.stop();
             }
         } else {
-            // We can skip processing altogether.
+            // We can skip processing altogether as is this is link checking.
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                     "Processing stage skipped because retrieval involved only link checking or finished with non-complete state : " + response.getState() + " and reason " + response.getLog());
 
