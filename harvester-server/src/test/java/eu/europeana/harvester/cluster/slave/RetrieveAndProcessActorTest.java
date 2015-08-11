@@ -708,4 +708,55 @@ public class RetrieveAndProcessActorTest {
         }};
     }
 
+
+    @Test
+    public void canRetreievAndProcessTypicalJobThatFailedBefore() throws Exception {
+
+        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
+        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
+        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
+        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
+
+        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
+                colorExtractionSubTask,
+                metaInfoExtractionSubTask,
+                mediumThumbnailExtractionSubTask,
+                largeThumbnailExtractionSubTask
+        );
+
+        final RetrieveUrl task = new RetrieveUrl("http://mediaphoto.mnhn.fr/media/1397829255202urOtiO6WnHxINQKd", new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
+
+            subject.tell(taskWithConfig, getRef());
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+            assertEquals (ProcessingState.SUCCESS, msg2.getProcessingState());
+
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
+
+        }};
+    }
+
 }
+
+
+
+
