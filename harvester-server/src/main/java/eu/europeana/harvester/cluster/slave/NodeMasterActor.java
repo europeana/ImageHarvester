@@ -212,11 +212,13 @@ public class NodeMasterActor extends UntypedActor {
         messages.add(message);
 
         masterReceiver = getSender();
-
         if ( actors.size()<maxSlaves & messages.size()>maxSlaves ) {
 
             for ( int i=0;i<maxSlaves;i++){
 
+                // TODO : (1) Inject slave limit check here !!!!
+                // TODO : (2) Change messages to a map :map <messageId <-- TASK ID-ul,Pair<ReserveConnectionSlotResponse,Message>
+                // TODO : (3) Ask (tell + wait response)
                 Object msg = null;
 
                 if (!messages.isEmpty())
