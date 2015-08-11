@@ -8,7 +8,6 @@ import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.AddTask;
-import eu.europeana.harvester.cluster.domain.messages.inner.AddTasksToJob;
 import eu.europeana.harvester.cluster.domain.messages.inner.GetNumberOfTasks;
 import eu.europeana.harvester.cluster.domain.messages.inner.GetOverLoadedIPs;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
@@ -62,7 +61,7 @@ public class JobLoaderExecutorHelper {
                                                  Logger LOG) {
         final int taskSize = getAllTasks(accountantActor, LOG);
 
-        LOG.info("{} priority - Startingjob loading, tasksize = {}", jobPriority.name(), taskSize);
+        LOG.info("{} priority - Starting job loading, tasksize = {}", jobPriority.name(), taskSize);
 
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                 "{} priority - Checking IPs in database", jobPriority.name());
@@ -240,7 +239,7 @@ public class JobLoaderExecutorHelper {
         }
 
         // (Step 2) Send the tasks to accountant
-        accountantActor.tell(new AddTasksToJob(job.getId(), jobPriority, taskIds), ActorRef.noSender());
+
 
         for (final RetrieveUrl retrieveUrl : generatedTasks) {
             accountantActor.tell(new AddTask(job.getPriority(), retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender());

@@ -1,11 +1,9 @@
 package eu.europeana.harvester.cluster.master.receivers;
 
-import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import com.mongodb.WriteConcern;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
-import eu.europeana.harvester.cluster.domain.messages.inner.MarkJobAsDone;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTuple;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.domain.*;
@@ -62,8 +60,8 @@ public class ReceiverJobDumperActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
 
-        if (message instanceof MarkJobAsDone) {
-            DoneProcessing doneProcessing = ((MarkJobAsDone) message).getDoneProcessing();
+        if (message instanceof DoneProcessing) {
+            DoneProcessing doneProcessing = (DoneProcessing) message;
             markDone(doneProcessing);
 
         }

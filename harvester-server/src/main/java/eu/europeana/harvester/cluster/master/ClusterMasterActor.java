@@ -10,7 +10,6 @@ import akka.cluster.ClusterEvent.MemberEvent;
 import akka.cluster.ClusterEvent.MemberRemoved;
 import akka.cluster.ClusterEvent.MemberUp;
 import akka.cluster.ClusterEvent.UnreachableMember;
-import akka.cluster.Member;
 import akka.remote.AssociatedEvent;
 import akka.remote.DisassociatedEvent;
 import com.codahale.metrics.Gauge;
@@ -18,12 +17,11 @@ import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.*;
-import eu.europeana.harvester.cluster.master.accountants.AccountantDispatcherActor;
+import eu.europeana.harvester.cluster.master.accountants.AccountantActor;
 import eu.europeana.harvester.cluster.master.jobrestarter.JobRestarterActor;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
-import eu.europeana.harvester.cluster.master.senders.JobSenderActor;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.joda.time.DateTime;
@@ -31,7 +29,6 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -203,7 +200,7 @@ public class ClusterMasterActor extends UntypedActor {
 
         monitoringActor = getContext().system().actorOf(Props.create(ClusterMasterMonitoringActor.class), "monitoring");
 
-        accountantActor = getContext().system().actorOf(Props.create(AccountantDispatcherActor.class), "accountant");
+        accountantActor = getContext().system().actorOf(Props.create(AccountantActor.class,defaultLimits), "accountant");
 
         receiverActor = getContext().system().actorOf(Props.create(ReceiverMasterActor.class, clusterMasterConfig,
                 accountantActor, monitoringActor, processingJobDao, historicalProcessingJobDao,
@@ -226,8 +223,6 @@ public class ClusterMasterActor extends UntypedActor {
                                                           "jobRestarter"
                                                          );
 
-        jobSenderActor = getContext().system().actorOf(Props.create(JobSenderActor.class, ipExceptions, ipsWithJobs,
-        defaultLimits,cleanupInterval, jobLoaderActor,accountantActor, receiverActor), "jobSender");
 
         final Cluster cluster = Cluster.get(getContext().system());
         cluster.subscribe(getSelf(), ClusterEvent.initialStateAsEvents(),
@@ -375,7 +370,7 @@ public class ClusterMasterActor extends UntypedActor {
         super.preRestart(reason, message);
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                 "ClusterMasterActor prestart");
-        getContext().system().stop(jobSenderActor);
+        //getContext().system().stop(jobSenderActor);
         getContext().system().stop(jobLoaderActor);
         getContext().system().stop(receiverActor);
         getContext().system().stop(accountantActor);
@@ -391,23 +386,24 @@ public class ClusterMasterActor extends UntypedActor {
                 "ClusterMasterActor poststart");
 
         getSelf().tell(new LoadJobs(), ActorRef.noSender());
-        getSelf().tell(new CheckForTaskTimeout(), ActorRef.noSender());
+
         getSelf().tell(new Monitor(), ActorRef.noSender());
+
+        getSelf().tell( new Clean(), ActorRef.noSender());
     }
 
     @Override
     public void onReceive(Object message) throws Exception {
 
         if(message instanceof RequestTasks) {
-            jobSenderActor.tell(message, getSender());
+            accountantActor.tell(message, getSender());
+            jobLoaderActor.tell(new LoadJobs(), ActorRef.noSender());
             return;
         }
 
         if(message instanceof LoadJobs) {
-
-                jobLoaderActor.tell(message, ActorRef.noSender());
-                jobLoaderActor.tell(new LookInDB(), ActorRef.noSender());
-
+            jobLoaderActor.tell(message, ActorRef.noSender());
+            jobLoaderActor.tell(new LookInDB(), ActorRef.noSender());
             return;
         }
 
@@ -420,11 +416,11 @@ public class ClusterMasterActor extends UntypedActor {
             return;
         }
 
-        if(message instanceof CheckForTaskTimeout) {
-            //checkForMissedTasks();
-
+        if(message instanceof Clean) {
+            accountantActor.tell(message, ActorRef.noSender());
             return;
         }
+
 
         // cluster events
         if (message instanceof MemberUp) {
@@ -449,6 +445,7 @@ public class ClusterMasterActor extends UntypedActor {
 
             return;
         }
+
         if (message instanceof DisassociatedEvent) {
             final DisassociatedEvent disassociatedEvent = (DisassociatedEvent) message;
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
@@ -457,33 +454,20 @@ public class ClusterMasterActor extends UntypedActor {
             //recoverTasks(disassociatedEvent.remoteAddress());
             return;
         }
+
         if (message instanceof MemberRemoved) {
             final MemberRemoved mRemoved = (MemberRemoved) message;
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
                     "Member is Removed: {}", mRemoved.member());
 
-            //recoverTasks(mRemoved.member().address());
 
             return;
         }
-        if(message instanceof Restart) {
-            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(1,
-                    TimeUnit.DAYS), getSelf(), "restart for cleanup", getContext().system().dispatcher(), getSelf());
 
-            return;
-        }
-        if(message instanceof String) {
-            LOG.error((String) message);
-            throw new NotImplementedException();
-        }
-        if(message instanceof Clean) {
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
-                    "Cleaning up ClusterMasterActor and its slaves.");
+        unhandled(message);
+        return;
 
-            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(cleanupInterval,
-                    TimeUnit.HOURS), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
-            return;
-        }
+
     }
 
     /**
@@ -493,19 +477,6 @@ public class ClusterMasterActor extends UntypedActor {
 
     // TODO : Refactor this as it polutes the logstash index.
     private void monitor() {
-//        LOG.info("Active nodes: {}", tasksPerAddress.size());
-//        LOG.info("Actors per node: ");
-//        for(final Map.Entry<Address, HashSet<ActorRef>> elem : actorsPerAddress.entrySet()) {
-//            LOG.info("Address: {}", elem.getKey());
-//            for(final ActorRef actor : elem.getValue()) {
-//                LOG.info("\t{}", actor);
-//            }
-//        }
-//
-//        LOG.info("Tasks: ");
-//        for(final Map.Entry<Address, HashSet<String>> elem : tasksPerAddress.entrySet()) {
-//            LOG.info("Address: {}, nr of requests: {}", elem.getKey(), elem.getValue().size());
-//        }
         monitoringActor.tell(new Monitor(), ActorRef.noSender());
     }
 

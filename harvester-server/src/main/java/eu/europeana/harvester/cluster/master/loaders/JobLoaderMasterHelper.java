@@ -1,12 +1,12 @@
 package eu.europeana.harvester.cluster.master.loaders;
 
 import akka.actor.ActorRef;
-import akka.pattern.Patterns;
-import akka.util.Timeout;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
-import eu.europeana.harvester.cluster.domain.messages.inner.*;
+import eu.europeana.harvester.cluster.domain.messages.inner.AddTask;
+import eu.europeana.harvester.cluster.domain.messages.inner.PauseTasks;
+import eu.europeana.harvester.cluster.domain.messages.inner.ResumeTasks;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
 import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
@@ -15,14 +15,11 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
-import scala.concurrent.Await;
-import scala.concurrent.Future;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class JobLoaderMasterHelper  {
 
@@ -116,21 +113,8 @@ public class JobLoaderMasterHelper  {
             final ProcessingJob newProcessingJob = job.withState(JobState.RUNNING);
             processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
 
-            final Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS));
-            final Future<Object> future = Patterns.ask(accountantActor, new IsJobLoaded(job.getId()), timeout);
-            Boolean isLoaded = false;
-            try {
-                isLoaded = (Boolean) Await.result(future, timeout.duration());
-            } catch (Exception e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                        "Error in checkForResumedJobs->IsJobLoaded",e);
-            }
-
-            if (isLoaded) {
-                accountantActor.tell(new ResumeTasks(job.getId()), ActorRef.noSender());
-            } else {
-                addJob(job, job.getPriority(), resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingDao, accountantActor, LOG );
-            }
+            accountantActor.tell(new ResumeTasks(job.getId()), ActorRef.noSender());
+            addJob(job, job.getPriority(), resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingDao, accountantActor, LOG );
         }
     }
 
@@ -148,19 +132,10 @@ public class JobLoaderMasterHelper  {
         final ProcessingJob newProcessingJob = job.withState(JobState.RUNNING);
         processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
 
-        final List<String> taskIDs = new ArrayList<>();
         for (final ProcessingJobTaskDocumentReference task : tasks) {
             final String ID = processTask(job, task, resources, sourceDocumentProcessingStatisticsDao, accountantActor,   LOG);
-            if (ID != null) {
-                taskIDs.add(ID);
-            }
         }
 
-        if (tasks.size() > 10)
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                    "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
-
-        accountantActor.tell(new AddTasksToJob(job.getId(), jobPriority, taskIDs), ActorRef.noSender());
     }
 
     /**

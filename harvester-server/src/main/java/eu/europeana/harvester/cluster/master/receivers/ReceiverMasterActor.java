@@ -5,10 +5,7 @@ import akka.actor.Address;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
-import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.*;
-import eu.europeana.harvester.cluster.domain.messages.inner.MarkJobAsDone;
-import eu.europeana.harvester.cluster.domain.messages.inner.ModifyState;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.domain.ProcessingJobRetrieveSubTaskState;
@@ -129,7 +126,8 @@ public class ReceiverMasterActor extends UntypedActor {
             final DoneProcessing doneProcessing = (DoneProcessing) message;
 
 
-            markDone(doneProcessing);
+            accountantActor.tell(message, ActorRef.noSender());
+            receiverJobDumper.tell(message,ActorRef.noSender());
 
             removeTask(address, doneProcessing);
             MasterMetrics.Master.doneProcessingStateCounters.get(doneProcessing.getProcessingState()).inc();
@@ -169,10 +167,6 @@ public class ReceiverMasterActor extends UntypedActor {
             return;
         }
 
-            if (message instanceof MarkJobAsDone ) {
-                receiverJobDumper.tell(message,ActorRef.noSender());
-
-            }
     }
 
     /**
@@ -202,17 +196,6 @@ public class ReceiverMasterActor extends UntypedActor {
         monitoringActor.tell(new RemoveTaskFromMonitor(address,processing.getTaskID()), ActorRef.noSender());
     }
 
-
-
-    /**
-     * Marks task as done and save it's statistics in the DB.
-     * If one job has finished all his tasks then the job also will be marked as done(FINISHED).
-     * @param msg - the message from the slave actor with url, jobId and other statistics
-     */
-    private void markDone(DoneProcessing msg) {
-            accountantActor.tell(new ModifyState(msg.getTaskID(),msg.getJobId(),msg.getSourceIp(),msg, TaskState.DONE), getSelf());
-
-    }
 
 
 }

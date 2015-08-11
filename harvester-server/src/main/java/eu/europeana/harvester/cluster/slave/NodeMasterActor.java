@@ -4,16 +4,17 @@ import akka.actor.*;
 import com.codahale.metrics.Gauge;
 import eu.europeana.harvester.cluster.domain.NodeMasterConfig;
 import eu.europeana.harvester.cluster.domain.messages.*;
+import eu.europeana.harvester.cluster.domain.utils.Pair;
+import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlotRequest;
+import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlotResponse;
+import eu.europeana.harvester.cluster.master.limiter.domain.ReturnConnectionSlotRequest;
 import eu.europeana.harvester.db.MediaStorageClient;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import eu.europeana.harvester.httpclient.response.RetrievingState;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -57,6 +58,8 @@ public class NodeMasterActor extends UntypedActor {
      */
     private ActorRef masterSender;
 
+    private ActorRef masterLimits;
+
     /**
      * List of unprocessed messages.
      */
@@ -70,6 +73,9 @@ public class NodeMasterActor extends UntypedActor {
     private Boolean sentRequest;
 
     final private List<ActorRef> actors = new ArrayList<>() ;
+
+    final private HashMap<String, Pair<RetrieveUrlWithProcessingConfig,ReserveConnectionSlotResponse>> taskIDToRetrieveURL = new HashMap<>();
+
 
     Long lastRequest;
     final int maxSlaves;
@@ -143,9 +149,15 @@ public class NodeMasterActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
 
         if(message instanceof RetrieveUrlWithProcessingConfig) {
-            onRetrieveUrlWithProcessingConfigReceived(message);
+            onRetrieveUrlWithProcessingConfigReceived((RetrieveUrlWithProcessingConfig)message);
             return;
         }
+
+        if(message instanceof ReserveConnectionSlotResponse ) {
+            onReserveConnectionSlotResponseReceived((ReserveConnectionSlotResponse) message);
+            return;
+        }
+
 
         if(message instanceof RequestTasks ) {
             onRequestTasksReceived();
@@ -201,14 +213,39 @@ public class NodeMasterActor extends UntypedActor {
                         "Slave master starting new Worker Actor {} ",newActor);
                 newActor.tell(msg, getSelf());
             }
-            if ( messages.size() < nodeMasterConfig.getTaskNrLimit()) {
+            if ( taskIDToRetrieveURL.size() < nodeMasterConfig.getTaskNrLimit()) {
                 self().tell(new RequestTasks(), ActorRef.noSender());
             }
 
         }
     }
 
-    private void onRetrieveUrlWithProcessingConfigReceived(Object message) {
+    private void onRetrieveUrlWithProcessingConfigReceived ( RetrieveUrlWithProcessingConfig retrieveUrl ) {
+        taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,null));
+        masterLimits.tell(new ReserveConnectionSlotRequest(retrieveUrl.getRetrieveUrl().getIpAddress(),
+                retrieveUrl.getRetrieveUrl().getId()),getSelf());
+    }
+
+    private void onReserveConnectionSlotResponseReceived ( ReserveConnectionSlotResponse reserveConnectionSlotResponse) {
+        if (!taskIDToRetrieveURL.containsKey(reserveConnectionSlotResponse.getTaskID()))
+            return;
+
+        RetrieveUrlWithProcessingConfig retrieveUrl = taskIDToRetrieveURL.get(reserveConnectionSlotResponse.getTaskID()).getKey();
+
+        if ( !reserveConnectionSlotResponse.getGranted()) {
+
+            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(1,
+                    TimeUnit.MINUTES), getSelf(),
+                    new ReserveConnectionSlotRequest(reserveConnectionSlotResponse.getIp(),reserveConnectionSlotResponse.getTaskID()),
+                    getContext().system().dispatcher(), getSelf());
+            return;
+        }
+
+        taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,reserveConnectionSlotResponse));
+        executeRetrieveURL(retrieveUrl);
+    }
+
+    private void executeRetrieveURL(Object message) {
         messages.add(message);
 
         masterReceiver = getSender();
@@ -284,15 +321,18 @@ public class NodeMasterActor extends UntypedActor {
 
     private void onDoneProcessingReceived(Object message) {
         final DoneProcessing doneProcessing = (DoneProcessing)message;
-        final String jobId = doneProcessing.getJobId();
+
         this.actors.remove(getSender());
 
-        if(!jobsToStop.contains(jobId)) {
-            masterReceiver.tell(message, getSelf());
-
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                    "Slave sending DoneProcessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
+        if(taskIDToRetrieveURL.containsKey(doneProcessing.getTaskID())) {
+            Pair < RetrieveUrlWithProcessingConfig, ReserveConnectionSlotResponse> pair = taskIDToRetrieveURL.remove(doneProcessing.getTaskID());
+            masterLimits.tell(new ReturnConnectionSlotRequest(pair.getValue().getSlotId(), pair.getValue().getIp()), ActorRef.noSender());
         }
+
+        masterReceiver.tell(message, getSelf());
+
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
+                "Slave sending DoneProcessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
 
         SlaveMetrics.Worker.Master.doneProcessingStateCounters.get(doneProcessing.getProcessingState()).inc();
         SlaveMetrics.Worker.Master.doneProcessingTotalCounter.inc();
@@ -326,13 +366,7 @@ public class NodeMasterActor extends UntypedActor {
         }
     }
 
-    private void deleteFile(String fileName) {
-        final String path = nodeMasterConfig.getPathToSave() + "/" + fileName;
-        final File file = new File(path);
-        if(file.exists()) {
-            file.delete();
-        }
-    }
+
 
 
 

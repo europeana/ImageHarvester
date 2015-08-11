@@ -1,8 +1,5 @@
 package eu.europeana.harvester.cluster.master.limiter.domain;
 
-import org.joda.time.DateTime;
-
-import java.util.Random;
 import java.util.UUID;
 
 public class ReserveConnectionSlotResponse {
@@ -12,12 +9,18 @@ public class ReserveConnectionSlotResponse {
     }
 
     private final String slotId;
+
+
+
+    private final String taskID;
     private final String ip;
     private final Boolean granted;
 
-    public ReserveConnectionSlotResponse(final String ip,final Boolean granted) {
+
+    public ReserveConnectionSlotResponse(final String ip, final String taskID, final Boolean granted) {
         this.slotId = generateId();
         this.ip = ip;
+        this.taskID = taskID;
         this.granted = granted;
     }
 
@@ -31,5 +34,9 @@ public class ReserveConnectionSlotResponse {
 
     public Boolean getGranted() {
         return granted;
+    }
+
+    public String getTaskID() {
+        return taskID;
     }
 }

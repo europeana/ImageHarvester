@@ -1,5 +1,7 @@
 package eu.europeana.harvester.cluster.domain;
 
+import org.joda.time.Duration;
+
 import java.io.Serializable;
 
 public class DefaultLimits implements Serializable {
@@ -39,10 +41,14 @@ public class DefaultLimits implements Serializable {
      */
     private final Double minTasksPerIPPercentage;
 
+
+    private final Duration maxJobProcessingDuration;
+
     public DefaultLimits(final Integer taskBatchSize, final Long defaultBandwidthLimitReadInBytesPerSec,
                          final Long defaultMaxConcurrentConnectionsLimit,
                          Integer minDistanceInMillisBetweenTwoRequest, final Integer connectionTimeoutInMillis,
-                         final Integer maxNrOfRedirects, final Double minTasksPerIPPercentage) {
+                         final Integer maxNrOfRedirects, final Double minTasksPerIPPercentage,
+                         Duration maxJobProcessingDuration ) {
         this.taskBatchSize = taskBatchSize;
         this.defaultBandwidthLimitReadInBytesPerSec = defaultBandwidthLimitReadInBytesPerSec;
         this.defaultMaxConcurrentConnectionsLimit = defaultMaxConcurrentConnectionsLimit;
@@ -50,6 +56,7 @@ public class DefaultLimits implements Serializable {
         this.connectionTimeoutInMillis = connectionTimeoutInMillis;
         this.maxNrOfRedirects = maxNrOfRedirects;
         this.minTasksPerIPPercentage = minTasksPerIPPercentage;
+        this.maxJobProcessingDuration = maxJobProcessingDuration;
     }
 
     public Long getDefaultBandwidthLimitReadInBytesPerSec() {
@@ -79,4 +86,9 @@ public class DefaultLimits implements Serializable {
     public Double getMinTasksPerIPPercentage() {
         return minTasksPerIPPercentage;
     }
+
+    public Duration getMaxJobProcessingDuration() {
+        return maxJobProcessingDuration;
+    }
+
 }
