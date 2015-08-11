@@ -37,6 +37,7 @@ public class TestUtils {
     public static final String Video2 = "video2.mpg";
     public static final String Text1 = "text1.pdf";
     public static final String Text2 = "text2.pdf";
+    public static final String Text3 = "text3.pdf";
 
     public static final String IMAGE_MIMETYPE = "image/jpeg";
     public static final String AUDIO_MIMETYPE = "audio/mpeg";

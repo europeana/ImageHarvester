@@ -174,4 +174,5 @@ public class MediaMetaInfoTest {
         assertFalse(metaInfo.getIsSearchable());
         assertEquals ( (Integer)(-1), metaInfo.getResolution());
     }
+
 }
