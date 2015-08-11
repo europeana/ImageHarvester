@@ -402,19 +402,19 @@ public class ClusterMasterActor extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
-
+        if(message instanceof DoneProcessing) {
+            final DoneProcessing doneProcessing = (DoneProcessing) message;
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+                    "ClusterMaster DoneProcessing received for task {}", doneProcessing.getTaskID());
+            receiverActor.tell(message, getSender());
+            return ;
+        }
         if(message instanceof ReserveConnectionSlotRequest) {
-            LOG.info(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
-                    "Received ReserveConnectionSlotRequest message for task id {} .", ((ReserveConnectionSlotRequest)message).getTaskID());
-
             masterLimiter.tell(message, getSender());
             return;
         }
 
         if(message instanceof ReturnConnectionSlotRequest) {
-            LOG.info(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
-                    "Received ReturnConnectionSlotRequest message for slot id {} .", ((ReturnConnectionSlotRequest)message).getSlotId());
-
             masterLimiter.tell(message, getSender());
             return;
         }

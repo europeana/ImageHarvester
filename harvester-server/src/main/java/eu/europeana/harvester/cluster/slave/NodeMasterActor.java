@@ -48,12 +48,6 @@ public class NodeMasterActor extends UntypedActor {
     private final ActorRef nodeSupervisor;
 
     /**
-     * Reference to the receiver master actor.
-     * We need this to send him back statistics about the download, error messages or any other type of message.
-     */
-    private ActorRef masterReceiver;
-
-    /**
      * Reference to the cluster master actor.
      * We need this to send request for new tasks.
      */
@@ -249,7 +243,6 @@ public class NodeMasterActor extends UntypedActor {
     private void executeRetrieveURL(Object message) {
         messages.add(message);
 
-        masterReceiver = getSender();
         if ( actors.size()<maxSlaves & messages.size()>maxSlaves ) {
 
             for ( int i=0;i<maxSlaves;i++){
@@ -329,7 +322,7 @@ public class NodeMasterActor extends UntypedActor {
             masterSender.tell(new ReturnConnectionSlotRequest(pair.getValue().getSlotId(), pair.getValue().getIp()), ActorRef.noSender());
         }
 
-        masterReceiver.tell(message, getSelf());
+        masterSender.tell(message, getSelf());
 
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
                 "Slave sending DoneProcessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
