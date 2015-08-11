@@ -25,12 +25,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class NodeMasterActor extends UntypedActor {
 
-        public static ActorRef createActor(final ActorContext context, final ActorRef masterSender, final ActorRef nodeSupervisor,
+        public static ActorRef createActor(final ActorContext context, final ActorRef masterSender,
+                                           final ActorRef nodeSupervisor,
                                            final NodeMasterConfig nodeMasterConfig,
                                            final MediaStorageClient mediaStorageClient){
 
         return context.system().actorOf(Props.create(NodeMasterActor.class,
-                        masterSender, nodeSupervisor, nodeMasterConfig, mediaStorageClient),
+                        masterSender,nodeSupervisor, nodeMasterConfig, mediaStorageClient),
                 "nodeMaster");
     }
 
@@ -58,8 +59,6 @@ public class NodeMasterActor extends UntypedActor {
      */
     private ActorRef masterSender;
 
-    private ActorRef masterLimits;
-
     /**
      * List of unprocessed messages.
      */
@@ -85,7 +84,7 @@ public class NodeMasterActor extends UntypedActor {
     final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
     final ExecutorService service = Executors.newCachedThreadPool();
 
-    public NodeMasterActor(final ActorRef masterSender, final  ActorRef nodeSupervisor,
+    public NodeMasterActor(final ActorRef masterSender,final  ActorRef nodeSupervisor,
                            final NodeMasterConfig nodeMasterConfig,
                            final MediaStorageClient mediaStorageClient
                            ) {
@@ -158,7 +157,6 @@ public class NodeMasterActor extends UntypedActor {
             return;
         }
 
-
         if(message instanceof RequestTasks ) {
             onRequestTasksReceived();
             return;
@@ -218,11 +216,12 @@ public class NodeMasterActor extends UntypedActor {
             }
 
         }
+
     }
 
     private void onRetrieveUrlWithProcessingConfigReceived ( RetrieveUrlWithProcessingConfig retrieveUrl ) {
         taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,null));
-        masterLimits.tell(new ReserveConnectionSlotRequest(retrieveUrl.getRetrieveUrl().getIpAddress(),
+        masterSender.tell(new ReserveConnectionSlotRequest(retrieveUrl.getRetrieveUrl().getIpAddress(),
                 retrieveUrl.getRetrieveUrl().getId()),getSelf());
     }
 
@@ -233,9 +232,11 @@ public class NodeMasterActor extends UntypedActor {
         RetrieveUrlWithProcessingConfig retrieveUrl = taskIDToRetrieveURL.get(reserveConnectionSlotResponse.getTaskID()).getKey();
 
         if ( !reserveConnectionSlotResponse.getGranted()) {
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
+                    "Slave was not granted slot for {} . Retrying in 10 secs. ",reserveConnectionSlotResponse.getTaskID());
 
-            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(1,
-                    TimeUnit.MINUTES), getSelf(),
+            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+                    TimeUnit.SECONDS), masterSender,
                     new ReserveConnectionSlotRequest(reserveConnectionSlotResponse.getIp(),reserveConnectionSlotResponse.getTaskID()),
                     getContext().system().dispatcher(), getSelf());
             return;
@@ -252,10 +253,6 @@ public class NodeMasterActor extends UntypedActor {
         if ( actors.size()<maxSlaves & messages.size()>maxSlaves ) {
 
             for ( int i=0;i<maxSlaves;i++){
-
-                // TODO : (1) Inject slave limit check here !!!!
-                // TODO : (2) Change messages to a map :map <messageId <-- TASK ID-ul,Pair<ReserveConnectionSlotResponse,Message>
-                // TODO : (3) Ask (tell + wait response)
                 Object msg = null;
 
                 if (!messages.isEmpty())
@@ -325,8 +322,11 @@ public class NodeMasterActor extends UntypedActor {
         this.actors.remove(getSender());
 
         if(taskIDToRetrieveURL.containsKey(doneProcessing.getTaskID())) {
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
+                    "Slave returning collection slot. Still having {} messages to download.", taskIDToRetrieveURL.keySet().size());
+
             Pair < RetrieveUrlWithProcessingConfig, ReserveConnectionSlotResponse> pair = taskIDToRetrieveURL.remove(doneProcessing.getTaskID());
-            masterLimits.tell(new ReturnConnectionSlotRequest(pair.getValue().getSlotId(), pair.getValue().getIp()), ActorRef.noSender());
+            masterSender.tell(new ReturnConnectionSlotRequest(pair.getValue().getSlotId(), pair.getValue().getIp()), ActorRef.noSender());
         }
 
         masterReceiver.tell(message, getSelf());

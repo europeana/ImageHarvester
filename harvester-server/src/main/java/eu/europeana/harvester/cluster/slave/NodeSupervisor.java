@@ -83,7 +83,7 @@ public class NodeSupervisor extends UntypedActor {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                 "Slave supervisor pre starting.");
 
-        nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(), nodeMasterConfig, mediaStorageClient);
+        nodeMaster = NodeMasterActor.createActor(context(), masterSender,getSelf(), nodeMasterConfig, mediaStorageClient);
 
 
         context().watch(nodeMaster);

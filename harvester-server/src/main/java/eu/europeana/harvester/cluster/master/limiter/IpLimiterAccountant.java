@@ -31,7 +31,7 @@ public class IpLimiterAccountant {
 
     public final ReserveConnectionSlotResponse reserveConnectionSlotRequest(final ReserveConnectionSlotRequest reserveConnectionSlotRequest) {
         occupiedConnectionSlotsPerIpFull(reserveConnectionSlotRequest.getIp());
-        return occupiedConnectionSlotsPerIp.get(reserveConnectionSlotRequest.getIp()).requestConnectionSlotReservation();
+        return occupiedConnectionSlotsPerIp.get(reserveConnectionSlotRequest.getIp()).requestConnectionSlotReservation(reserveConnectionSlotRequest.getTaskID());
     }
 
     public final boolean returnConnectionSlotRequest(final ReturnConnectionSlotRequest returnConnectionSlotRequest) {

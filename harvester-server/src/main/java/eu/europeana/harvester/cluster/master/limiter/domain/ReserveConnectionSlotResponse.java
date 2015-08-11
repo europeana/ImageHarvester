@@ -1,8 +1,9 @@
 package eu.europeana.harvester.cluster.master.limiter.domain;
 
+import java.io.Serializable;
 import java.util.UUID;
 
-public class ReserveConnectionSlotResponse {
+public class ReserveConnectionSlotResponse implements Serializable {
 
     public static final String generateId() {
         return UUID.randomUUID().toString();

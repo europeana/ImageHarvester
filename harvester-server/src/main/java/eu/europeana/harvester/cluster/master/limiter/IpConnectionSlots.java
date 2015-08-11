@@ -19,13 +19,13 @@ public class IpConnectionSlots {
         this.slots = new HashMap<String, DateTime>(maxAvailableSlots);
     }
 
-    public final ReserveConnectionSlotResponse requestConnectionSlotReservation() {
+    public final ReserveConnectionSlotResponse requestConnectionSlotReservation(final String taskId) {
         ReserveConnectionSlotResponse response = null;
         if (slots.keySet().size() < maxAvailableSlots) {
-            response = new ReserveConnectionSlotResponse(ip, true);
+            response = new ReserveConnectionSlotResponse(ip,taskId, true);
             slots.put(response.getSlotId(), DateTime.now());
         } else {
-            response = new ReserveConnectionSlotResponse(ip, false);
+            response = new ReserveConnectionSlotResponse(ip,taskId , false);
         }
         return response;
     }

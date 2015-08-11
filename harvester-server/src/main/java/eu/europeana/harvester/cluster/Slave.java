@@ -146,7 +146,7 @@ public class Slave {
 
         final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
 
-        NodeSupervisor.createActor(system, slave, masterSender, nodeMasterConfig,
+        NodeSupervisor.createActor(system, slave, masterSender,nodeMasterConfig,
                 mediaStorageClient, SlaveMetrics.METRIC_REGISTRY);
 
         //system.actorOf(Props.create(MetricsListener.class), "metricsListener");
@@ -208,7 +208,7 @@ public class Slave {
 
         final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
 
-        NodeSupervisor.createActor(system, slave, masterSender, nodeMasterConfig,
+        NodeSupervisor.createActor(system, slave, masterSender,nodeMasterConfig,
                 mediaStorageClient, SlaveMetrics.METRIC_REGISTRY);
 
 

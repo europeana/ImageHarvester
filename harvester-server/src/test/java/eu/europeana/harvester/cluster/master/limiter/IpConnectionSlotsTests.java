@@ -8,15 +8,16 @@ import static org.junit.Assert.*;
 
 public class IpConnectionSlotsTests {
     private final String ip1 = "127.0.0.1";
+    private final String taskId = "some-task-id";
 
     @Test
     public void canEnforceConnectionSlotsLimits() {
         final IpConnectionSlots ipConnectionSlots = new IpConnectionSlots(2, ip1);
-        final ReserveConnectionSlotResponse slot1 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot1 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertTrue(slot1.getGranted());
-        final ReserveConnectionSlotResponse slot2 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot2 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertTrue(slot2.getGranted());
-        final ReserveConnectionSlotResponse slot3 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot3 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertFalse(slot3.getGranted());
 
     }
@@ -24,19 +25,19 @@ public class IpConnectionSlotsTests {
     @Test
     public void canReturnConnectionSlots() {
         final IpConnectionSlots ipConnectionSlots = new IpConnectionSlots(2, ip1);
-        final ReserveConnectionSlotResponse slot1 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot1 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertTrue(slot1.getGranted());
-        final ReserveConnectionSlotResponse slot2 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot2 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertTrue(slot2.getGranted());
-        final ReserveConnectionSlotResponse slot3 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot3 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertFalse(slot3.getGranted());
 
         ipConnectionSlots.returnConnectionSlotReservation(slot2.getSlotId());
         ipConnectionSlots.returnConnectionSlotReservation(slot3.getSlotId());
 
-        final ReserveConnectionSlotResponse slot4 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot4 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertTrue(slot4.getGranted());
-        final ReserveConnectionSlotResponse slot5 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot5 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertFalse(slot5.getGranted());
 
     }
@@ -44,9 +45,9 @@ public class IpConnectionSlotsTests {
     @Test
     public void canCleanExpiredConnectionSlots() throws InterruptedException {
         final IpConnectionSlots ipConnectionSlots = new IpConnectionSlots(2, ip1);
-        final ReserveConnectionSlotResponse slot1 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot1 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertTrue(slot1.getGranted());
-        final ReserveConnectionSlotResponse slot2 = ipConnectionSlots.requestConnectionSlotReservation();
+        final ReserveConnectionSlotResponse slot2 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
         assertTrue(slot2.getGranted());
         assertEquals(0, ipConnectionSlots.getNumberOfAvailableSlots());
         Thread.sleep(5 * 1000);

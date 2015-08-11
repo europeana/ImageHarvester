@@ -1,6 +1,8 @@
 package eu.europeana.harvester.cluster.master.limiter.domain;
 
-public class ReturnConnectionSlotRequest {
+import java.io.Serializable;
+
+public class ReturnConnectionSlotRequest implements Serializable{
 
     private final String slotId;
     private final String ip;

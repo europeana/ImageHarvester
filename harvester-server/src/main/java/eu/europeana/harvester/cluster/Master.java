@@ -105,8 +105,8 @@ class Master {
         final Integer taskBatchSize = config.getInt("default-limits.taskBatchSize");
         final Long defaultBandwidthLimitReadInBytesPerSec =
                 config.getLong("default-limits.bandwidthLimitReadInBytesPerSec");
-        final Long defaultMaxConcurrentConnectionsLimit =
-                config.getLong("default-limits.maxConcurrentConnectionsLimit");
+        final Integer defaultMaxConcurrentConnectionsLimit =
+                config.getInt("default-limits.maxConcurrentConnectionsLimit");
         final Integer connectionTimeoutInMillis =
                 config.getInt("default-limits.connectionTimeoutInMillis");
         final Integer maxNrOfRedirects =
@@ -115,10 +115,11 @@ class Master {
                 config.getInt("default-limits.minDistanceInMillisBetweenTwoRequest");
         final Double minTasksPerIPPercentage =
                 config.getDouble("default-limits.minTasksPerIPPercentage");
+        final Duration maxJobProcessingDuration = Duration.standardMinutes(10);
 
         final DefaultLimits defaultLimits = new DefaultLimits(taskBatchSize, defaultBandwidthLimitReadInBytesPerSec,
                 defaultMaxConcurrentConnectionsLimit, minDistanceInMillisBetweenTwoRequest,
-                connectionTimeoutInMillis, maxNrOfRedirects, minTasksPerIPPercentage);
+                connectionTimeoutInMillis, maxNrOfRedirects, minTasksPerIPPercentage,maxJobProcessingDuration);
 
         MongoConfig mongoConfig = null;
         try {

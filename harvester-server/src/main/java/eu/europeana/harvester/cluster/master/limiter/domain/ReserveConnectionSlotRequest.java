@@ -1,6 +1,8 @@
 package eu.europeana.harvester.cluster.master.limiter.domain;
 
-public class ReserveConnectionSlotRequest {
+import java.io.Serializable;
+
+public class ReserveConnectionSlotRequest implements Serializable {
 
     private final String ip;
 

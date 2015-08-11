@@ -19,7 +19,7 @@ public class DefaultLimits implements Serializable {
     /**
      * The default limit on concurrent number of downloads if it has not been provided.
      */
-    private final Long defaultMaxConcurrentConnectionsLimit;
+    private final Integer defaultMaxConcurrentConnectionsLimit;
 
     /**
      * The minimum interval which must elapse between two requests.
@@ -45,7 +45,7 @@ public class DefaultLimits implements Serializable {
     private final Duration maxJobProcessingDuration;
 
     public DefaultLimits(final Integer taskBatchSize, final Long defaultBandwidthLimitReadInBytesPerSec,
-                         final Long defaultMaxConcurrentConnectionsLimit,
+                         final Integer defaultMaxConcurrentConnectionsLimit,
                          Integer minDistanceInMillisBetweenTwoRequest, final Integer connectionTimeoutInMillis,
                          final Integer maxNrOfRedirects, final Double minTasksPerIPPercentage,
                          Duration maxJobProcessingDuration ) {
@@ -63,7 +63,7 @@ public class DefaultLimits implements Serializable {
         return defaultBandwidthLimitReadInBytesPerSec;
     }
 
-    public Long getDefaultMaxConcurrentConnectionsLimit() {
+    public Integer getDefaultMaxConcurrentConnectionsLimit() {
         return defaultMaxConcurrentConnectionsLimit;
     }
 

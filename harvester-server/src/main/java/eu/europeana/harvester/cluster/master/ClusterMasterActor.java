@@ -12,6 +12,7 @@ import akka.cluster.ClusterEvent.MemberUp;
 import akka.cluster.ClusterEvent.UnreachableMember;
 import akka.remote.AssociatedEvent;
 import akka.remote.DisassociatedEvent;
+import akka.routing.FromConfig;
 import com.codahale.metrics.Gauge;
 import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
@@ -19,6 +20,10 @@ import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.*;
 import eu.europeana.harvester.cluster.master.accountants.AccountantActor;
 import eu.europeana.harvester.cluster.master.jobrestarter.JobRestarterActor;
+import eu.europeana.harvester.cluster.master.limiter.IPLimiterAccountantActor;
+import eu.europeana.harvester.cluster.master.limiter.domain.IPLimiterConfig;
+import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlotRequest;
+import eu.europeana.harvester.cluster.master.limiter.domain.ReturnConnectionSlotRequest;
 import eu.europeana.harvester.cluster.master.loaders.JobLoaderMasterActor;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.cluster.master.receivers.ReceiverMasterActor;
@@ -157,6 +162,7 @@ public class ClusterMasterActor extends UntypedActor {
     private final HashMap<String, Boolean> ipsWithJobs = new HashMap<>();
     private final LastSourceDocumentProcessingStatisticsDao lastSourceDocumentProcessingStatisticsDao;
 
+    private  ActorRef masterLimiter;
 
     public ClusterMasterActor (final ClusterMasterConfig clusterMasterConfig,
                                final IPExceptions ipExceptions,
@@ -222,6 +228,8 @@ public class ClusterMasterActor extends UntypedActor {
                                                                        ),
                                                           "jobRestarter"
                                                          );
+
+        masterLimiter = IPLimiterAccountantActor.createActor(getContext().system(), new IPLimiterConfig(defaultLimits.getDefaultMaxConcurrentConnectionsLimit(), Collections.EMPTY_MAP, defaultLimits.getMaxJobProcessingDuration()),"masterLimiter");
 
 
         final Cluster cluster = Cluster.get(getContext().system());
@@ -394,6 +402,22 @@ public class ClusterMasterActor extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
+
+        if(message instanceof ReserveConnectionSlotRequest) {
+            LOG.info(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
+                    "Received ReserveConnectionSlotRequest message for task id {} .", ((ReserveConnectionSlotRequest)message).getTaskID());
+
+            masterLimiter.tell(message, getSender());
+            return;
+        }
+
+        if(message instanceof ReturnConnectionSlotRequest) {
+            LOG.info(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
+                    "Received ReturnConnectionSlotRequest message for slot id {} .", ((ReturnConnectionSlotRequest)message).getSlotId());
+
+            masterLimiter.tell(message, getSender());
+            return;
+        }
 
         if(message instanceof RequestTasks) {
             accountantActor.tell(message, getSender());

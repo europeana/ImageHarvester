@@ -17,6 +17,7 @@ public class IpLimiterAccountantTests {
 
     private final String ip1 = "192.168.1.1";
     private final String ip2 = "192.168.1.2";
+    private final String taskId = "some-task";
 
     @Test
     public void canEnforceConnectionSlotsLimitsOverridenAtIpLevel() {
@@ -24,21 +25,21 @@ public class IpLimiterAccountantTests {
         specificLimitsPerIp.put(ip2, 2);
 
         final IpLimiterAccountant ipLimiterAccountant = new IpLimiterAccountant(1, specificLimitsPerIp);
-        final ReserveConnectionSlotResponse ip1Slot1 = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip1));
+        final ReserveConnectionSlotResponse ip1Slot1 = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip1,taskId));
         assertTrue(ip1Slot1.getGranted());
-        final ReserveConnectionSlotResponse ip1Slot2 = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip1));
+        final ReserveConnectionSlotResponse ip1Slot2 = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip1,taskId));
         assertFalse(ip1Slot2.getGranted());
 
-        final ReserveConnectionSlotResponse ip2Slot1 = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2));
+        final ReserveConnectionSlotResponse ip2Slot1 = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId));
         assertTrue(ip2Slot1.getGranted());
-        final ReserveConnectionSlotResponse ip2Slot2 = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2));
+        final ReserveConnectionSlotResponse ip2Slot2 = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId));
         assertTrue(ip2Slot2.getGranted());
-        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2)).getGranted());
-        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2)).getGranted());
-        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2)).getGranted());
-        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2)).getGranted());
-        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2)).getGranted());
-        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2)).getGranted());
+        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId)).getGranted());
+        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId)).getGranted());
+        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId)).getGranted());
+        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId)).getGranted());
+        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId)).getGranted());
+        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId)).getGranted());
 
     }
 
@@ -56,7 +57,7 @@ public class IpLimiterAccountantTests {
 
         for (int requests = 0;requests<numberOfIps*numberOfRequestsPerIp;requests++) {
             final String ip = ips.get(requests % numberOfIps);
-            final ReserveConnectionSlotResponse response = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip));
+            final ReserveConnectionSlotResponse response = ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip,taskId));
             if (response.getGranted()) ipLimiterAccountant.returnConnectionSlotRequest(new ReturnConnectionSlotRequest(response.getSlotId(),ip));
         }
         System.out.println("Finished in " +new Duration(start, DateTime.now()).getStandardSeconds()+" seconds");

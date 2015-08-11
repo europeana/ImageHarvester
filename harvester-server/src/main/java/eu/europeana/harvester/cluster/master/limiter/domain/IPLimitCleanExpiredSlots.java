@@ -1,4 +1,6 @@
 package eu.europeana.harvester.cluster.master.limiter.domain;
 
-public class IPLimitCleanExpiredSlots {
+import java.io.Serializable;
+
+public class IPLimitCleanExpiredSlots implements Serializable{
 }
