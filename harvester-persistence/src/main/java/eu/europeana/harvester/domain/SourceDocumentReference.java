@@ -131,7 +131,7 @@ public class SourceDocumentReference {
 
     public SourceDocumentReference withRedirectionPath(List<String> redirectionPath) {
         return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
-                this.ipAddress, this.lastStatsId, (long)redirectionPath.size(), redirectionPath, this.active);
+                this.ipAddress, this.lastStatsId, new Long((redirectionPath != null)?redirectionPath.size():0), redirectionPath, this.active);
     }
 
     public SourceDocumentReference withIPAddress(String ipAddress) {
