@@ -124,24 +124,24 @@ public class SourceDocumentReference {
     public Boolean getActive() {return active;}
 
 
-    public SourceDocumentReference withLastStatsId(String id) {
+    public SourceDocumentReference withLastStatsId(String newLastStatsId) {
         return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
-                this.ipAddress, id, this.redirectPathDepth, this.redirectionPath, this.active);
+                this.ipAddress, newLastStatsId, this.redirectPathDepth, this.redirectionPath, this.active);
     }
 
-    public SourceDocumentReference withRedirectionPath(List<String> redirectionPath) {
+    public SourceDocumentReference withRedirectionPath(List<String> newRedirectionPath) {
         return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
-                this.ipAddress, this.lastStatsId, new Long((redirectionPath != null)?redirectionPath.size():0), redirectionPath, this.active);
+                this.ipAddress, this.lastStatsId, new Long((newRedirectionPath != null)?newRedirectionPath.size():0), newRedirectionPath, this.active);
     }
 
-    public SourceDocumentReference withIPAddress(String ipAddress) {
+    public SourceDocumentReference withIPAddress(String newIpAddress) {
         return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
-                ipAddress, this.lastStatsId, this.redirectPathDepth, this.redirectionPath, this.active);
+                newIpAddress, this.lastStatsId, this.redirectPathDepth, this.redirectionPath, this.active);
     }
 
-    public SourceDocumentReference withActive(Boolean active) {
+    public SourceDocumentReference withActive(Boolean newActive) {
         return new SourceDocumentReference(this.id, this.referenceOwner, this.url,
-                this.ipAddress, this.lastStatsId, this.redirectPathDepth, this.redirectionPath, active);
+                this.ipAddress, this.lastStatsId, this.redirectPathDepth, this.redirectionPath, newActive);
     }
 
 }

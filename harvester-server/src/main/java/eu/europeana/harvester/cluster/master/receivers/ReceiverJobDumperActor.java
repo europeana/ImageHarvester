@@ -96,9 +96,6 @@ public class ReceiverJobDumperActor extends UntypedActor {
      * @param msg - the message from the slave actor with url, jobId and other statistics
      */
     private SourceDocumentReference saveStatistics(DoneProcessing msg, ProcessingJob processingJob) {
-        final String docId = msg.getReferenceId();
-        //LOG.info("save statistics for document with ID: {}",docId);
-
         final ProcessingJobSubTaskStats subTaskStats = msg.getStats();
 
         final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics =
@@ -110,7 +107,7 @@ public class ReceiverJobDumperActor extends UntypedActor {
                         msg.getProcessingState(),
                         processingJob.getReferenceOwner(),
                         processingJob.getUrlSourceType(),
-                        docId,
+                        msg.getReferenceId(),
                         msg.getJobId(),
                         msg.getHttpResponseCode(),
                         msg.getHttpResponseContentType(),
@@ -126,7 +123,7 @@ public class ReceiverJobDumperActor extends UntypedActor {
 
         final LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatistics = new LastSourceDocumentProcessingStatistics(sourceDocumentProcessingStatistics);
 
-        SourceDocumentReference sourceDocumentReference = sourceDocumentReferenceDao.read(docId);
+        SourceDocumentReference sourceDocumentReference = sourceDocumentReferenceDao.read(msg.getReferenceId());
         if (sourceDocumentReference != null) {
             sourceDocumentReference = sourceDocumentReference.withLastStatsId(sourceDocumentProcessingStatistics.getId()).withRedirectionPath(msg.getRedirectionPath());
         }
@@ -137,7 +134,6 @@ public class ReceiverJobDumperActor extends UntypedActor {
         lastSourceDocumentProcessingStatisticsDao.createOrModify(lastSourceDocumentProcessingStatistics, clusterMasterConfig.getWriteConcern());
 
         sourceDocumentReferenceDao.createOrModify(sourceDocumentReference, clusterMasterConfig.getWriteConcern());
-
         return sourceDocumentReference;
 
     }

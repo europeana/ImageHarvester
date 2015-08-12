@@ -48,6 +48,7 @@ public class ProcessingJobBuilder {
         final List<ProcessingJobSubTask> subTasks = new ArrayList();
         subTasks.addAll(SubTaskBuilder.colourExtraction());
         subTasks.addAll(SubTaskBuilder.thumbnailGeneration());
+        subTasks.addAll(SubTaskBuilder.metaExtraction());
 
         final ProcessingJob processingJob = new ProcessingJob(priority, new Date(), owner,
                 Arrays.asList(

@@ -13,10 +13,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -103,8 +100,8 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(Collection<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
-        if (null == sourceDocumentReferences || sourceDocumentReferences.isEmpty()) {
+    public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(Collection<SourceDocumentReference> newSourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
+        if (null == newSourceDocumentReferences || newSourceDocumentReferences.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
 
@@ -112,13 +109,35 @@ public class HarvesterClientImpl implements HarvesterClient {
         final List<MachineResourceReference> machineResourceReferences = new ArrayList<>();
 
         // Prepare all the machine references
-        for (final SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
+        for (final SourceDocumentReference sourceDocumentReference : newSourceDocumentReferences) {
             machineResourceReferences.add(new MachineResourceReference(cachingUrlResolver.resolveIpOfUrl(sourceDocumentReference.getUrl())));
+        }
+
+        // Retrieve all the existing source document references as these might need to be updated
+        List<String> sourceDocumentReferenceIds = new ArrayList<String>();
+        for (final SourceDocumentReference sourceDocumentReference : newSourceDocumentReferences) {
+            sourceDocumentReferenceIds.add(sourceDocumentReference.getId());
+        }
+
+        Map<String,SourceDocumentReference> sourceDocumentReferenceIdsToDoc = new HashMap<String,SourceDocumentReference>();
+
+        for (final SourceDocumentReference existingSourceDocumentReference :  sourceDocumentReferenceDao.read(sourceDocumentReferenceIds)) {
+            sourceDocumentReferenceIdsToDoc.put(existingSourceDocumentReference.getId(),existingSourceDocumentReference);
+        }
+
+        List<SourceDocumentReference> toBePersistedSourceDocumentReferences = new ArrayList<SourceDocumentReference>();
+        for (final SourceDocumentReference newSourceDocumentReference : newSourceDocumentReferences) {
+            if (sourceDocumentReferenceIdsToDoc.containsKey(newSourceDocumentReference.getId())){
+                // We need to merge them
+                toBePersistedSourceDocumentReferences.add(newSourceDocumentReference.withLastStatsId(sourceDocumentReferenceIdsToDoc.get(newSourceDocumentReference.getId()).getLastStatsId()));
+            } else {
+                toBePersistedSourceDocumentReferences.add(newSourceDocumentReference);
+            }
         }
 
         // Persist everything.
         machineResourceReferenceDao.createOrModify(machineResourceReferences, harvesterClientConfig.getWriteConcern());
-        return sourceDocumentReferenceDao.createOrModify(sourceDocumentReferences, harvesterClientConfig.getWriteConcern());
+        return sourceDocumentReferenceDao.createOrModify(toBePersistedSourceDocumentReferences, harvesterClientConfig.getWriteConcern());
     }
 
     @Override
