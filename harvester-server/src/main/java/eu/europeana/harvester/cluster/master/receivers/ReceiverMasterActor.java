@@ -124,9 +124,6 @@ public class ReceiverMasterActor extends UntypedActor {
         if(message instanceof DoneProcessing) {
             final Address address = getSender().path().address();
             final DoneProcessing doneProcessing = (DoneProcessing) message;
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-                    "DoneProcessing received for task {}",doneProcessing.getTaskID());
-
 
             accountantActor.tell(message, ActorRef.noSender());
             receiverJobDumper.tell(message,ActorRef.noSender());

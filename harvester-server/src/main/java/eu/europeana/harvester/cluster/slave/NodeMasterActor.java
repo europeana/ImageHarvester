@@ -185,8 +185,6 @@ public class NodeMasterActor extends UntypedActor {
         ActorRef which = t.getActor();
         this.actors.remove(which);
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                "Slave master received worker termination message. Worker Actor {} terminated. Master stats : Messages {}. All ProcessorActors {}. ",t.getActor(),messages.size(),actors.size());
 
         if (actors.size()<maxSlaves){
             Object msg = null;
@@ -275,13 +273,9 @@ public class NodeMasterActor extends UntypedActor {
                 masterSender.tell(new RequestTasks(), nodeSupervisor);
                 sentRequest = true;
                 lastRequest = System.currentTimeMillis();
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                        "Slave master requesting tasks from node supervisor ");
             }
         }
         else if(!sentRequest && masterSender != null && messages.size() < nodeMasterConfig.getTaskNrLimit()) {
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                    "Slave master sent request for tasks ");
 
             masterSender.tell(new RequestTasks(), nodeSupervisor);
             sentRequest = true;
@@ -312,8 +306,6 @@ public class NodeMasterActor extends UntypedActor {
         this.actors.remove(getSender());
 
         if(taskIDToRetrieveURL.containsKey(doneProcessing.getTaskID())) {
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                    "Slave returning collection slot. Still having {} messages to download.", taskIDToRetrieveURL.keySet().size());
 
             Pair < RetrieveUrlWithProcessingConfig, ReserveConnectionSlotResponse> pair = taskIDToRetrieveURL.remove(doneProcessing.getTaskID());
             masterSender.tell(new ReturnConnectionSlotRequest(pair.getValue().getSlotId(), pair.getValue().getIp()), ActorRef.noSender());
@@ -321,8 +313,6 @@ public class NodeMasterActor extends UntypedActor {
 
         masterSender.tell(message, getSelf());
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                "Slave sending DoneProcessing message for job {} and task {}", doneProcessing.getJobId(), doneProcessing.getTaskID());
 
         SlaveMetrics.Worker.Master.doneProcessingStateCounters.get(doneProcessing.getProcessingState()).inc();
         SlaveMetrics.Worker.Master.doneProcessingTotalCounter.inc();

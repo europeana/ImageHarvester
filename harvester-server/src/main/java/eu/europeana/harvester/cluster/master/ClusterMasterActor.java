@@ -404,8 +404,6 @@ public class ClusterMasterActor extends UntypedActor {
     public void onReceive(Object message) throws Exception {
         if(message instanceof DoneProcessing) {
             final DoneProcessing doneProcessing = (DoneProcessing) message;
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-                    "ClusterMaster DoneProcessing received for task {}", doneProcessing.getTaskID());
             receiverActor.tell(message, getSender());
             return ;
         }

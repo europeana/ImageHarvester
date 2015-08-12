@@ -63,8 +63,6 @@ public class ReceiverJobDumperActor extends UntypedActor {
         if (message instanceof DoneProcessing) {
             DoneProcessing doneProcessing = (DoneProcessing) message;
             markDone(doneProcessing);
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-                    "DoneProcessing related data persisted for task {}", doneProcessing.getTaskID());
 
         }
 
