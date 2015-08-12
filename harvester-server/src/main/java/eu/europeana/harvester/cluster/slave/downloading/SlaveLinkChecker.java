@@ -85,7 +85,7 @@ public class SlaveLinkChecker {
                     /* Collect the response headers */
                 for (final Map.Entry<String, List<String>> entry : downloadResponseHeaders.getHeaders()) {
                     for (final String header : entry.getValue()) {
-                        httpRetrieveResponse.addHttpResponseHeaders(entry.getKey(), header);
+                        httpRetrieveResponse.addHeader(entry.getKey(), header);
                     }
                 }
 

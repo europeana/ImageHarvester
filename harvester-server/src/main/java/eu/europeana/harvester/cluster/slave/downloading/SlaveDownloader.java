@@ -85,9 +85,11 @@ public class SlaveDownloader {
 
                     /* Collect the response headers */
                 for (final Map.Entry<String, List<String>> entry : downloadResponseHeaders.getHeaders()) {
-                    for (final String header : entry.getValue()) {
-                        httpRetrieveResponse.addHttpResponseHeaders(entry.getKey(), header);
-                    }
+                       final String header = entry.getKey();
+                        if (!entry.getValue().isEmpty()) {
+                            final String firstValue = entry.getValue().get(0);
+                            httpRetrieveResponse.addHeader(header, firstValue);
+                        }
                 }
 
                 /** We terminate the connection in case of HTTP error only after we collect the response headers */

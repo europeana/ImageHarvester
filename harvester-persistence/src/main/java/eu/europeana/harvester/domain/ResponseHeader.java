@@ -16,14 +16,14 @@ public class ResponseHeader implements Serializable {
     /**
      * Field value.
      */
-    private final ArrayList<Byte> value;
+    private final String value;
 
     public ResponseHeader() {
         this.key = null;
         this.value = null;
     }
 
-    public ResponseHeader(final String key, final ArrayList<Byte> value) {
+    public ResponseHeader(final String key, final String value) {
         this.key = key;
         this.value = value;
     }
@@ -32,7 +32,7 @@ public class ResponseHeader implements Serializable {
         return key;
     }
 
-    public ArrayList<Byte> getValue() {
+    public String getValue() {
         return value;
     }
 }

@@ -1,5 +1,9 @@
 package eu.europeana.harvester.httpclient.response;
 
+import eu.europeana.harvester.domain.ResponseHeader;
+
+import java.util.List;
+
 /**
  * Stores the retrieved content in memory.
  */

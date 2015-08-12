@@ -189,7 +189,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
                     response,
                     new ProcessingJobSubTaskStats().withRetrieveState(convertRetrieveStateToProcessingJobRetrieveSubTaskState(response.getState())),
                     null /* image meta info */,
-                    null /* audio meta info */, null /* video meta info */,
+                    null /* audio meta info */,
+                    null /* video meta info */,
                     null /* text meta info */, response.getLog());
 
             LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),

@@ -78,11 +78,6 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     private List<String> redirectionPath = new ArrayList<String>();
 
     /**
-     * The HTTP response headers.
-     */
-    private List<ResponseHeader> httpResponseHeaders;
-
-    /**
      * Stores error messages.
      */
     private String log = "";
@@ -204,26 +199,6 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     @Override
     public void setSourceIp(String sourceIp) {
         this.sourceIp = sourceIp;
-    }
-
-    @Override
-    public List<ResponseHeader> getHttpResponseHeaders() {
-        return httpResponseHeaders;
-    }
-
-    @Override
-    public void addHttpResponseHeaders(String name, String value) {
-        if(httpResponseHeaders == null) {
-            httpResponseHeaders = new ArrayList<ResponseHeader>();
-        }
-
-        final byte[] bHeader = value.getBytes();
-        ArrayList<Byte> byteList = new ArrayList<Byte>();
-        for(Byte b : bHeader) {
-            byteList.add(b);
-        }
-
-        httpResponseHeaders.add(new ResponseHeader(name, byteList));
     }
 
     @Override

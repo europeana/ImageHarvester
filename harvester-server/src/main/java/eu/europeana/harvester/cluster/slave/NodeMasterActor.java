@@ -226,10 +226,7 @@ public class NodeMasterActor extends UntypedActor {
         RetrieveUrlWithProcessingConfig retrieveUrl = taskIDToRetrieveURL.get(reserveConnectionSlotResponse.getTaskID()).getKey();
 
         if ( !reserveConnectionSlotResponse.getGranted()) {
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                    "Slave was not granted slot for {} . Retrying in 10 secs. ",reserveConnectionSlotResponse.getTaskID());
-
-            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(30,
                     TimeUnit.SECONDS), masterSender,
                     new ReserveConnectionSlotRequest(reserveConnectionSlotResponse.getIp(),reserveConnectionSlotResponse.getTaskID()),
                     getContext().system().dispatcher(), getSelf());

@@ -207,11 +207,9 @@ public class SlaveDownloaderTest {
         assertEquals(pathOnDisk, response.getAbsolutePath());
         assertNotNull(response.getSourceIp());
         assertTrue(response.getSocketConnectToDownloadStartDurationInMilliSecs() > 5);
-        assertTrue(response.getCheckingDurationInMilliSecs() > 50);
-        assertTrue(response.getRetrievalDurationInMilliSecs() > 50);
-        assertEquals(response.getContentSizeInBytes().longValue(), 0);
+        assertTrue(response.getCheckingDurationInMilliSecs() < 5000);
+        assertTrue(response.getContentSizeInBytes().longValue() == 0);
         assertFalse(new File(pathOnDisk).exists());
-
     }
 
 
@@ -229,6 +227,7 @@ public class SlaveDownloaderTest {
         slaveDownloader.downloadAndStoreInHttpRetrieveResponse(response, task);
 
         assertEquals(RetrievingState.COMPLETED, response.getState());
+        assertFalse(response.getResponseHeaders().isEmpty());
 
         assertEquals(pathOnDisk, response.getAbsolutePath());
         assertNotNull(response.getSourceIp());

@@ -28,6 +28,11 @@ public class HttpRetrieveResponseDiskStorageTests {
         assertEquals(storage.getContentSizeInBytes().intValue(), 6);
         storage.close();
         assertEquals(storage.getContentSizeInBytes().intValue(), 6);
+        storage.addHeader("header1", "value1");
+        assertEquals(1,storage.getResponseHeaders().size());
+        assertTrue(storage.getResponseHeaders().containsKey("header1"));
+        assertEquals("value1",storage.getResponseHeaders().get("header1"));
+
     }
 
 

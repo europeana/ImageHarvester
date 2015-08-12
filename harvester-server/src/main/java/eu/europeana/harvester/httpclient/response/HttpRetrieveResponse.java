@@ -66,10 +66,6 @@ import java.util.Map;
 
      void setSourceIp(String sourceIp);
 
-     List<ResponseHeader> getHttpResponseHeaders();
-
-     void addHttpResponseHeaders(String name, String value);
-
      List<String> getRedirectionPath();
 
      void setRedirectionPath(List<String> redirectionPath);

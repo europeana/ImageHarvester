@@ -114,7 +114,7 @@ public class LastSourceDocumentProcessingStatistics {
     private final ProcessingJobSubTaskStats processingJobSubTaskStats;
 
     public LastSourceDocumentProcessingStatistics(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics) {
-        this.id = sourceDocumentProcessingStatistics.getId();
+        this.id = idOf(sourceDocumentProcessingStatistics.getSourceDocumentReferenceId(), sourceDocumentProcessingStatistics.getTaskType(), sourceDocumentProcessingStatistics.getUrlSourceType());
         this.createdAt = sourceDocumentProcessingStatistics.getCreatedAt();
         this.updatedAt = sourceDocumentProcessingStatistics.getUpdatedAt();
         this.active = sourceDocumentProcessingStatistics.getActive();
