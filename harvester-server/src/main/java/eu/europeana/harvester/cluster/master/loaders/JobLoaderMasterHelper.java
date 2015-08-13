@@ -5,18 +5,14 @@ import eu.europeana.harvester.cluster.domain.ClusterMasterConfig;
 import eu.europeana.harvester.cluster.domain.TaskState;
 import eu.europeana.harvester.cluster.domain.messages.RetrieveUrl;
 import eu.europeana.harvester.cluster.domain.messages.inner.AddTask;
-import eu.europeana.harvester.cluster.domain.messages.inner.PauseTasks;
-import eu.europeana.harvester.cluster.domain.messages.inner.ResumeTasks;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
 import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,78 +40,6 @@ public class JobLoaderMasterHelper  {
         LOG.info("Nr. of machines: {}", ipDistribution.size());
         LOG.info("End of IP distribution");
         return ipDistribution;
-    }
-
-    /**
-     * Updates the list of jobs.
-     */
-    public static void updateLists(ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao,
-                             SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
-                             SourceDocumentReferenceDao SourceDocumentReferenceDao,
-                             ActorRef accountantActor, Logger LOG) {
-        try {
-            checkForPausedJobs(clusterMasterConfig, processingJobDao, accountantActor, LOG);
-            checkForResumedJobs(clusterMasterConfig, processingJobDao, SourceDocumentReferenceDao, sourceDocumentProcessingStatisticsDao, accountantActor, LOG);
-        } catch (Exception e) {
-            LOG.error(e.getMessage());
-        }
-    }
-
-
-
-    /**
-     * Checks if any job was stopped by a client.
-     */
-    private static void checkForPausedJobs( ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao, ActorRef accountantActor,
-                                            Logger LOG  ) {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                "Looking for paused job in database to resume");
-        final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
-        final List<ProcessingJob> all = processingJobDao.getJobsWithState(JobState.PAUSE, page);
-
-        for (final ProcessingJob job : all) {
-
-            final ProcessingJob newProcessingJob = job.withState(JobState.PAUSED);
-            processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
-
-            accountantActor.tell(new PauseTasks(job.getId()), ActorRef.noSender());
-        }
-    }
-
-    /**
-     * Checks if any job was started by a client.
-     */
-    private static void checkForResumedJobs(ClusterMasterConfig clusterMasterConfig, ProcessingJobDao processingJobDao,
-                                     SourceDocumentReferenceDao SourceDocumentReferenceDao, SourceDocumentProcessingStatisticsDao sourceDocumentProcessingDao,
-                                     ActorRef accountantActor, Logger LOG) {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                "Looking for resumed job in database to resume");
-        final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
-        final List<ProcessingJob> all = processingJobDao.getJobsWithState(JobState.RESUME, page);
-
-        final List<String> resourceIds = new ArrayList<>();
-        for (final ProcessingJob job : all) {
-            for (final ProcessingJobTaskDocumentReference task : job.getTasks()) {
-                final String resourceId = task.getSourceDocumentReferenceID();
-                resourceIds.add(resourceId);
-            }
-        }
-        final Map<String, SourceDocumentReference> resources = new HashMap<>();
-        if (resourceIds.size() != 0) {
-            final List<SourceDocumentReference> sourceDocumentReferences = SourceDocumentReferenceDao.read(resourceIds);
-            for (SourceDocumentReference sourceDocumentReference : sourceDocumentReferences) {
-                resources.put(sourceDocumentReference.getId(), sourceDocumentReference);
-            }
-        }
-
-        for (final ProcessingJob job : all) {
-
-            final ProcessingJob newProcessingJob = job.withState(JobState.RUNNING);
-            processingJobDao.update(newProcessingJob, clusterMasterConfig.getWriteConcern());
-
-            accountantActor.tell(new ResumeTasks(job.getId()), ActorRef.noSender());
-            addJob(job, job.getPriority(), resources, clusterMasterConfig, processingJobDao, sourceDocumentProcessingDao, accountantActor, LOG );
-        }
     }
 
     /**

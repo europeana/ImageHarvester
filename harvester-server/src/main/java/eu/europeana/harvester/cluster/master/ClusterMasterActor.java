@@ -425,7 +425,6 @@ public class ClusterMasterActor extends UntypedActor {
 
         if(message instanceof LoadJobs) {
             jobLoaderActor.tell(message, ActorRef.noSender());
-            jobLoaderActor.tell(new LookInDB(), ActorRef.noSender());
             return;
         }
 

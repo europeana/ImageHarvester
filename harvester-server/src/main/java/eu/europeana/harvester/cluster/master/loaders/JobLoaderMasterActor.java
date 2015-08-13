@@ -8,7 +8,6 @@ import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.IPExceptions;
 import eu.europeana.harvester.cluster.domain.messages.Clean;
 import eu.europeana.harvester.cluster.domain.messages.LoadJobs;
-import eu.europeana.harvester.cluster.domain.messages.LookInDB;
 import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
@@ -145,13 +144,6 @@ public class JobLoaderMasterActor extends UntypedActor {
                         "Job loader still working");
 
             return;
-        }
-        if (message instanceof LookInDB) {
-            JobLoaderMasterHelper.updateLists(clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
-                                              SourceDocumentReferenceDao, accountantActor, LOG);
-
-            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
-                    TimeUnit.MINUTES), getSelf(), new LookInDB(), getContext().system().dispatcher(), getSelf());
         }
         if (message instanceof Clean) {
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),

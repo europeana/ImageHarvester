@@ -183,11 +183,13 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
         try {
             response = executeRetrieval(task);
+            final ProcessingJobRetrieveSubTaskState responseState = convertRetrieveStateToProcessingJobRetrieveSubTaskState(response.getState());
+
             doneProcessing = new DoneProcessing(
                     task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(),
                     task.getTaskType(),
                     response,
-                    new ProcessingJobSubTaskStats().withRetrieveState(convertRetrieveStateToProcessingJobRetrieveSubTaskState(response.getState())),
+                    new ProcessingJobSubTaskStats().withRetrieveState(responseState,response.getException()),
                     null /* image meta info */,
                     null /* audio meta info */,
                     null /* video meta info */,
