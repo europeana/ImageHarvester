@@ -102,7 +102,7 @@ public class NodeSupervisor extends UntypedActor {
             final BagOfTasks m = (BagOfTasks)message;
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.SUPERVISOR),
                     "Slave supervisor received bag of tasks with size {} .",m.getTasks().size());
-
+            SlaveMetrics.Worker.Master.jobsReceivedCounter.inc(m.getTasks().size());
             onBagOfTasksReceived((BagOfTasks) message);
             return;
         }

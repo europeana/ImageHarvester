@@ -5,6 +5,7 @@ import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import eu.europeana.harvester.cluster.master.limiter.domain.*;
+import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.logging.LoggingComponent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -53,12 +54,16 @@ public class IPLimiterAccountantActor extends UntypedActor {
         if (message instanceof ReserveConnectionSlotRequest) {
             final ReserveConnectionSlotRequest reserveConnectionSlotRequest = (ReserveConnectionSlotRequest) message;
             final ReserveConnectionSlotResponse response = ipLimiterAccountant.reserveConnectionSlotRequest(reserveConnectionSlotRequest);
+            if (response.getGranted()) MasterMetrics.Master.ipLimitGrantedSlotRequestCounter.inc();
+            else MasterMetrics.Master.ipLimitNotGrantedSlotRequestCounter.inc();
+
             getSender().tell(response, getSelf());
             return;
         }
         if (message instanceof ReturnConnectionSlotRequest) {
             final ReturnConnectionSlotRequest returnConnectionSlotRequest = (ReturnConnectionSlotRequest) message;
             ipLimiterAccountant.returnConnectionSlotRequest(returnConnectionSlotRequest);
+            MasterMetrics.Master.ipLimitReturnedGrantedSlotRequestCounter.inc();
             return;
         }
         if (message instanceof IPLimitCleanExpiredSlots) {

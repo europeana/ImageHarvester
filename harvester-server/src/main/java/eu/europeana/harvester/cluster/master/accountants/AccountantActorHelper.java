@@ -25,19 +25,21 @@ public class AccountantActorHelper {
         private final Map<String, RetrieveUrl> waitingTasks = new HashMap<>();
         private final Map<String, List<String>> tasksPerIP = new HashMap<>();
 
-        public int getSize() { return waitingTasks.size(); }
+        public int getSize() {
+            return waitingTasks.size();
+        }
 
-        public void addTask (RetrieveUrl retrieveUrl) {
-            waitingTasks.put(retrieveUrl.getId(),retrieveUrl);
+        public void addTask(RetrieveUrl retrieveUrl) {
+            waitingTasks.put(retrieveUrl.getId(), retrieveUrl);
             final String IP = retrieveUrl.getIpAddress();
             List<String> tasks = tasksPerIP.get(IP);
-            if (tasks ==null)
+            if (tasks == null)
                 tasks = new ArrayList<>();
             tasks.add(retrieveUrl.getId());
             tasksPerIP.put(IP, tasks);
         }
 
-        public ArrayList<String> getOverloadedIPs(int threshold ) {
+        public ArrayList<String> getOverloadedIPs(int threshold) {
             ArrayList<String> IPs = new ArrayList<>();
             for (final Map.Entry<String, List<String>> task : tasksPerIP.entrySet())
                 if (task.getValue().size() > threshold)
@@ -46,13 +48,13 @@ public class AccountantActorHelper {
 
         }
 
-        public List<RetrieveUrl> getListOfTasksWithRoundRobinStrategy(int maxToSend ) {
+        public List<RetrieveUrl> getListOfTasksWithRoundRobinStrategy(int maxToSend) {
 
             ArrayList<RetrieveUrl> tasksToSend = new ArrayList<>();
 
             boolean foundTasks = true;
 
-            while (foundTasks && tasksToSend.size()<maxToSend) {
+            while (foundTasks && tasksToSend.size() < maxToSend) {
 
                 List<String> ips = new ArrayList<>(tasksPerIP.keySet());
                 foundTasks = false;
@@ -68,8 +70,8 @@ public class AccountantActorHelper {
 
 
                     RetrieveUrl retrieveUrl = waitingTasks.remove(task);
-            
-                    if(retrieveUrl!=null)
+
+                    if (retrieveUrl != null)
                         tasksToSend.add(retrieveUrl);
 
                     foundTasks = true;
@@ -83,7 +85,12 @@ public class AccountantActorHelper {
 
         }
 
+        public final Set<String> uniqueIPs() {
+            return tasksPerIP.keySet();
+        }
+
     }
+
     /**
      * Maps all tasks ids
      */
@@ -103,18 +110,18 @@ public class AccountantActorHelper {
     }
 
     public Integer getNumberOfTasks() {
-        Integer nr = normalLane.getSize() +fastLane.getSize()+allStartedTasks.size();
+        Integer nr = normalLane.getSize() + fastLane.getSize() + allStartedTasks.size();
         return nr;
     }
 
 
-    public void addTask ( AddTask message ) {
+    public void addTask(AddTask message) {
         //read the message payload into local variables
         final String taskID = message.getTaskID();
         final Pair<RetrieveUrl, TaskState> taskWithState = message.getTaskWithState();
         final JobPriority prio = JobPriority.fromPriority(message.getJobPriority());
 
-        if ( prio == JobPriority.FASTLANE)
+        if (prio == JobPriority.FASTLANE)
             fastLane.addTask(taskWithState.getKey());
         else
             normalLane.addTask(taskWithState.getKey());
@@ -122,7 +129,7 @@ public class AccountantActorHelper {
         return;
     }
 
-    public void doneTask ( DoneProcessing message ) {
+    public void doneTask(DoneProcessing message) {
 
         final String taskID = message.getTaskID();
         final String jobID = message.getJobId();
@@ -133,25 +140,25 @@ public class AccountantActorHelper {
         return;
     }
 
-    public void monitor () {
+    public void monitor() {
         return;
     }
 
-    public void clean() {
+    public int clean() {
         DateTime minDateTime = DateTime.now().minus(defaultLimits.getMaxJobProcessingDuration());
         ArrayList<String> tasksToRestart = new ArrayList<>();
 
-        for ( String taskID : allStartedTaskStartTime.keySet())
+        for (String taskID : allStartedTaskStartTime.keySet())
             if (allStartedTaskStartTime.get(taskID).isBefore(minDateTime))
                 tasksToRestart.add(taskID);
 
-        for ( String taskID : tasksToRestart ) {
+        for (String taskID : tasksToRestart) {
             allStartedTaskStartTime.remove(taskID);
             RetrieveUrl retrieveUrl = allStartedTasks.remove(taskID);
             fastLane.addTask(retrieveUrl);
         }
 
-        return;
+        return tasksToRestart.size();
     }
 
 
@@ -186,11 +193,11 @@ public class AccountantActorHelper {
         // first we go through the fastlane tasks
         List<RetrieveUrl> fastLaneTasks = fastLane.getListOfTasksWithRoundRobinStrategy(maxToSend);
 
-        List<RetrieveUrl> normalLaneTasks = ( tasksToSend.size() < maxToSend ) ?
-                normalLane.getListOfTasksWithRoundRobinStrategy(maxToSend-fastLaneTasks.size()) : new ArrayList<RetrieveUrl>();
+        List<RetrieveUrl> normalLaneTasks = (tasksToSend.size() < maxToSend) ?
+                normalLane.getListOfTasksWithRoundRobinStrategy(maxToSend - fastLaneTasks.size()) : new ArrayList<RetrieveUrl>();
         tasksToSend.addAll(fastLaneTasks);
         tasksToSend.addAll(normalLaneTasks);
-        for ( RetrieveUrl task : tasksToSend ) {
+        for (RetrieveUrl task : tasksToSend) {
             allStartedTasks.put(task.getId(), task);
             allStartedTaskStartTime.put(task.getId(), DateTime.now());
         }
@@ -198,5 +205,23 @@ public class AccountantActorHelper {
         return tasksToSend;
     }
 
+    public final int countUniqueIPs() {
+        final Set<String> uniqueIps = new HashSet<String>();
+        uniqueIps.addAll(normalLane.uniqueIPs());
+        uniqueIps.addAll(fastLane.uniqueIPs());
+        return uniqueIps.size();
+    }
+
+    public final int fastLaneWaitingTaskSize() {
+        return fastLane.getSize();
+    }
+
+    public final int normalLaneWaitingTaskSize() {
+        return fastLane.getSize();
+    }
+
+    public final int allStartedTaskSize() {
+        return allStartedTasks.keySet().size();
+    }
 
 }
