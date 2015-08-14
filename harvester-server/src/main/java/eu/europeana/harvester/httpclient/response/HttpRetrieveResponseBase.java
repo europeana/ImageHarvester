@@ -41,12 +41,12 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
     /**
      * The HTTP response code.
      */
-    private Integer httpResponseCode;
+    private Integer httpResponseCode = -1;
 
     /**
      * The HTTP response content type.
      */
-    private String httpResponseContentType;
+    private String httpResponseContentType = "";
 
     /**
      * The duration in milliseconds between the socket connection and the first content bytes coming in.
@@ -54,23 +54,23 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
      * available. For example a resource coming from a CDN will have this very low and one coming from a
      * slow database will be rather large. Zero if the source is not retrieved.
      */
-    private Long socketConnectToDownloadStartDurationInMilliSecs;
+    private Long socketConnectToDownloadStartDurationInMilliSecs = 0l;
 
     /**
      * The retrieval duration in milliseconds. Zero if the source is not retrieved.
      */
-    private Long retrievalDurationInMilliSecs;
+    private Long retrievalDurationInMilliSecs = 0l;
 
     /**
      * The checking duration in milliseconds. The same as the retrieval if the source is retrieved.
      */
-    private Long checkingDurationInMilliSecs;
+    private Long checkingDurationInMilliSecs = 0l;
 
     /**
      * The IP of the source. Useful for debugging when working with DNS load balanced sources that have a pool of real
      * IP's for the same domain name.
      */
-    private String sourceIp;
+    private String sourceIp = "";
 
     /**
      * List of redirect links.
@@ -106,7 +106,7 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
     @Override
     synchronized public Map<String, String> getResponseHeaders() {
-        return responseHeaders;
+        return (responseHeaders==null ? new HashMap<String, String>() : responseHeaders);
     }
 
     @Override
@@ -153,7 +153,7 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
     @Override
     public String getHttpResponseContentType() {
-        return httpResponseContentType;
+        return (httpResponseContentType==null ? "" : httpResponseContentType);
     }
 
     @Override
@@ -203,7 +203,7 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
     @Override
     public List<String> getRedirectionPath() {
-        return redirectionPath;
+        return (redirectionPath == null ? new ArrayList<String>() : redirectionPath);
     }
 
     @Override
