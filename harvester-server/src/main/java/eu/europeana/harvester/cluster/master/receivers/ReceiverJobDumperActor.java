@@ -149,12 +149,6 @@ public class ReceiverJobDumperActor extends UntypedActor {
                     msg.getAudioMetaInfo(), msg.getVideoMetaInfo(), msg.getTextMetaInfo());
             sourceDocumentReferenceMetaInfoDao.createOrModify(Collections.singleton(newSourceDocumentReferenceMetaInfo),
                     clusterMasterConfig.getWriteConcern());
-        } else {
-            if (msg.getTaskType() != DocumentReferenceTaskType.CHECK_LINK) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-                        "ReceiverJobDumperActor : the meta info for task {} and job {} is invalid so cannot be saved.", msg.getTaskID(), msg.getJobId());
-
-            }
         }
     }
 
