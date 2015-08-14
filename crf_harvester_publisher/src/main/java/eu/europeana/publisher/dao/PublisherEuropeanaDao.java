@@ -95,7 +95,6 @@ public class PublisherEuropeanaDao {
                       ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("thumbnailStorageState"))
                 );
 
-                System.out.println(item.getString("urlSourceType"));
                 final URLSourceType urlSourceType = URLSourceType.valueOf(item.getString("urlSourceType"));
 
                 documentStatistics.put(sourceDocumentReferenceId,

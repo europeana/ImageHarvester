@@ -54,7 +54,7 @@ public class PublisherManagerTests {
                     return null;
                 }
             });
-            f.get(5, TimeUnit.SECONDS);
+            f.get(15, TimeUnit.SECONDS);
 
         } catch (InterruptedException e) {
             fail("Failed to execute: " + e.getMessage());
@@ -102,6 +102,7 @@ public class PublisherManagerTests {
         query.addField("europeana_id");
 
         try {
+            System.out.println(solrServer.query(query).getResults().toString());
             assertEquals(sourceResults.size(), solrServer.query(query).getResults().size());
         } catch (SolrServerException e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
@@ -155,6 +156,7 @@ public class PublisherManagerTests {
         query.addField("europeana_id");
 
         try {
+            System.out.println(solrServer.query(query).getResults().toString());
             assertEquals(sourceResults.size(), solrServer.query(query).getResults().size());
         } catch (SolrServerException e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
@@ -198,6 +200,7 @@ public class PublisherManagerTests {
         query.addField("europeana_id");
 
         try {
+            System.out.println(solrServer.query(query).getResults().toString());
             assertEquals(sourceResults.size(), solrServer.query(query).getResults().size());
         } catch (SolrServerException e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
@@ -297,7 +300,12 @@ public class PublisherManagerTests {
 
         try {
             final QueryResponse solrResults = solrServer.query(query);
+
+            System.out.println(solrServer.query(query).getResults().toString());
+
             assertEquals(sourceResults.size(), solrResults.getResults().size());
+
+
 
             //go through all solr elements and check to see if the fake tags where generated ok
             for (final SolrDocument document : solrResults.getResults()) {
