@@ -145,7 +145,6 @@ public class SOLRWriter {
                              newDocs.size(), retry);
                     server.commit();
                     server.close();
-                    System.out.println("Commit was a success");
                     PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToSolr.inc(numberOfDocumentsToUpdate);
                     return true;
                 } catch (Exception e) {
