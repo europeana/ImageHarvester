@@ -74,7 +74,8 @@ public class ProcessingJobBuilderTest {
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 0, 1, 2,
+        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
+                      ProcessingJobSubTaskType.META_EXTRACTION,
                       ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
 
     }
@@ -87,7 +88,8 @@ public class ProcessingJobBuilderTest {
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 0, 1, 2,
+        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 2,
+                      ProcessingJobSubTaskType.META_EXTRACTION,
                       ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
     }
 
@@ -198,7 +200,8 @@ public class ProcessingJobBuilderTest {
         validateTasks(jobs, DocumentReferenceTaskType.CHECK_LINK, 0, 0, 0);
     }
 
-    private void validateTasks (List<ProcessingJobTuple> jobs, DocumentReferenceTaskType taskType,
+    private void validateTasks (List<ProcessingJobTuple> jobs,
+                                DocumentReferenceTaskType taskType,
                                 int metaDataExtraction, int colorExtraction, int generateThumbnail,
                                 ProcessingJobSubTaskType ... tasks) {
         for (final ProcessingJobTuple job: jobs) {
