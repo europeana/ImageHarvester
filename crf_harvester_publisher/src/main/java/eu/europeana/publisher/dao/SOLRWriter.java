@@ -11,6 +11,7 @@ import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -99,6 +100,25 @@ public class SOLRWriter {
 
                     update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
 
+                    if (URLSourceType.ISSHOWNAT == CRFSolrDocument.getUrlSourceType()) {
+                        update.addField("has_landingpage", singletonMap("set", true));
+                    }
+                    else {
+                        try {
+                            if (null == hasLandingPage(CRFSolrDocument.getRecordId())) {
+                                update.addField("has_landingpage", singletonMap("set", false));
+                            }
+                        }
+                        catch (Exception e) {
+                            LOG.error (LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                                        publishingBatchId, null,
+                                                                        new ReferenceOwner(null, null, CRFSolrDocument
+                                                                                                               .getRecordId())),
+                                       "Unable to read has_landingpage for current record. The field will not be set"
+                                      );
+                        }
+                    }
+
                     if (updateEdmObjectUrl(CRFSolrDocument, publishingBatchId)) {
                         update.addField("provider_aggregation_edm_object", CRFSolrDocument.getUrl());
                     }
@@ -163,6 +183,14 @@ public class SOLRWriter {
         finally {
             context.close();
         }
+    }
+
+    private Boolean hasLandingPage (final String id) throws IOException, SolrServerException {
+        final SolrQuery query = new SolrQuery();
+        query.addField("has_landingpage");
+        query.setQuery("europeana_id:\"" + id + "\"");
+
+        return (Boolean)createServer().query(query).getResults().get(0).getFieldValue("has_landingpage");
     }
 
     private boolean updateEdmObjectUrl (CRFSolrDocument crfSolrDocument, String publishingBatchId) {
