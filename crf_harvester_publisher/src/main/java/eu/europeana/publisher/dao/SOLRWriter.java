@@ -90,19 +90,16 @@ public class SOLRWriter {
 
                     final SolrInputDocument update = new SolrInputDocument();
 
-                    update.addField("europeana_id", CRFSolrDocument.getRecordId());
+                    if (CRFSolrDocument.getRecordId().equals("2022701/urn_repo_memoriademadrid_esMH_c7303518_b2e6_4bb3_b153_a1c231c57032")) {
+                        System.out.println ("The record with the problem");
+                        System.out.println ("is_fulltest: " + CRFSolrDocument.getIsFulltext());
+                        System.out.println ("has_thumbnails: " + CRFSolrDocument.getHasThumbnails());
+                        System.out.println ("has_landingpage: " + CRFSolrDocument.getHasLandingPage());
+                        System.out.println ("Task Type: " + CRFSolrDocument.getTaskType());
+                        System.out.println ("Url source type: " + CRFSolrDocument.getUrlSourceType());
+                    }
 
-                    LOG.error(LoggingComponent
-                                      .appendAppFields(LoggingComponent.Migrator
-                                                               .PERSISTENCE_SOLR,
-                                                       publishingBatchId, null,
-                                                       new ReferenceOwner(null, null,
-                                                                          CRFSolrDocument
-                                                                                  .getRecordId())),
-                              "TaskType: " + CRFSolrDocument.getTaskType() + " " +
-                              "RecordID: " + CRFSolrDocument.getRecordId() + " " +
-                              "Has Landing Page: " + CRFSolrDocument
-                                                                     .getHasLandingPage());
+                    update.addField("europeana_id", CRFSolrDocument.getRecordId());
 
                     if (DocumentReferenceTaskType.CHECK_LINK == CRFSolrDocument.getTaskType()) {
                         update.addField("has_landingpage", singletonMap("set", CRFSolrDocument.getHasLandingPage()));

@@ -27,7 +27,6 @@ public class FakeTagExtractor {
 
         for (final HarvesterDocument document : harvesterDocuments) {
             if (DocumentReferenceTaskType.CHECK_LINK.equals(document.getTaskType())) {
-                System.out.println ("check link document generation");
                 final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(
                                                                                    document.getReferenceOwner().getRecordId(),
                                                                                    false,
@@ -51,7 +50,6 @@ public class FakeTagExtractor {
             final Integer mediaTypeCode = CommonTagExtractor.getMediaTypeCode(metaInfo);
             Integer mimeTypeCode = null;
 
-            System.out.println("Normal tag generation");
 
             if (null == metaInfo.getAudioMetaInfo() && null == metaInfo.getImageMetaInfo() &&
                     null == metaInfo.getVideoMetaInfo() && null == metaInfo.getTextMetaInfo()) {
@@ -90,13 +88,10 @@ public class FakeTagExtractor {
             List<Integer> filterTags = new ArrayList<>();
             List<Integer> facetTags = new ArrayList<>();
 
-            System.out.print(document.getSubTaskStats().getMetaExtractionState() + " ");
-            System.out.print(mimeTypeCode + " ");
 
             hasMedia = ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getMetaExtractionState()) &&
                        null != mimeTypeCode;
 
-            System.out.println(hasMedia);
 
             // Retrieves different type of properties depending on media
             // type.
