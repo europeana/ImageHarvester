@@ -33,8 +33,12 @@ public class SlaveMetrics {
     public static final String THUMBNAIL_STORAGE = "thumbnailStorage";
     public static final String ORIGINAL_CACHING = "originalCaching";
 
-    public static final String DONE_DOWNLOAD = "doneDownload";
     public static final String DONE_PROCESSING = "doneProcessing";
+
+    public static final String JOBS_RECEIVED = "jobsReceived";
+    public static final String JOBS_WAITING_FOR_SLOT_GRANT = "jobsWaitingForSlotGrant";
+    public static final String JOBS_READY_TO_BE_PROCESSED = "jobsReadyToBeProcessed";
+
 
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
 
@@ -46,17 +50,12 @@ public class SlaveMetrics {
 
             public static String NAME = Worker.NAME + "." + "Master";
 
-            public static final LazyGauge activeWorkerSlavesCounter = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + "actors" + "." + "size");
+            public static final Counter jobsReceivedCounter = METRIC_REGISTRY.counter(name(Master.NAME,JOBS_RECEIVED,COUNTER));
+            public static final LazyGauge jobsReadyToBeProcessedCounter = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,JOBS_READY_TO_BE_PROCESSED,COUNTER));
 
-            public static final Map<RetrievingState, Counter> doneDownloadStateCounters = new HashMap();
+            public static final Counter jobsWaitingForSlotGrantCounter = METRIC_REGISTRY.counter(name(Master.NAME,JOBS_WAITING_FOR_SLOT_GRANT,COUNTER));
 
-            static {
-                for (final RetrievingState state : RetrievingState.values()) {
-                    doneDownloadStateCounters.put(state, METRIC_REGISTRY.counter(name(Master.NAME, DONE_DOWNLOAD, state.name(), COUNTER)));
-                }
-            }
-
-            public static final Counter doneDownloadTotalCounter = METRIC_REGISTRY.counter(name(Master.NAME, DONE_DOWNLOAD, TOTAL, COUNTER));
+            public static final LazyGauge activeWorkerSlavesCounter = new LazyGauge(METRIC_REGISTRY, name(Master.NAME,"actors","size"));
 
             public static final Map<ProcessingState, Counter> doneProcessingStateCounters = new HashMap();
 

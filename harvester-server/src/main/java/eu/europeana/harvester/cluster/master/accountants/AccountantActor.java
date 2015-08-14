@@ -2,6 +2,7 @@ package eu.europeana.harvester.cluster.master.accountants;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
+import com.codahale.metrics.Gauge;
 import eu.europeana.harvester.cluster.domain.DefaultLimits;
 import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.RequestTasks;
@@ -21,7 +22,7 @@ public class AccountantActor extends UntypedActor {
 
     private ActorRef masterReceiver;
 
-
+    private int lastNumberOfJobsCleaned = 0;
 
     public AccountantActor(DefaultLimits defaultLimits){
         accountantActorHelper = new AccountantActorHelper(defaultLimits);
@@ -32,6 +33,42 @@ public class AccountantActor extends UntypedActor {
     public void postRestart(Throwable reason) throws Exception {
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
                 TimeUnit.MINUTES), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
+
+        MasterMetrics.Master.jobsUniqueIPsCount.registerHandler(new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return accountantActorHelper.countUniqueIPs();
+            }
+        });
+
+        MasterMetrics.Master.jobAccountantFastLaneWaitingCount.registerHandler(new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return accountantActorHelper.fastLaneWaitingTaskSize();
+            }
+        });
+
+        MasterMetrics.Master.jobAccountantNormalLaneWaitingCount.registerHandler(new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return accountantActorHelper.normalLaneWaitingTaskSize();
+            }
+        });
+
+        MasterMetrics.Master.jobAccountantAllStartedCount.registerHandler(new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return accountantActorHelper.allStartedTaskSize();
+            }
+        });
+
+        MasterMetrics.Master.jobAccountantAllReclaimedCount.registerHandler(new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return lastNumberOfJobsCleaned;
+            }
+        });
+
     }
 
     @Override
@@ -75,7 +112,7 @@ public class AccountantActor extends UntypedActor {
             } else
 
             if (message instanceof Clean) {
-                accountantActorHelper.clean();
+                lastNumberOfJobsCleaned = accountantActorHelper.clean();
                 getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
                         TimeUnit.MINUTES), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
                 return;

@@ -43,6 +43,16 @@ public class MasterMetrics {
     public static final String UNREACHABLE_NODES_IN_CLUSTER = "unreachableNodesInCluster";
     public static final String CONNECTED_NODES_IN_CLUSTER = "connectedNodesInCluster";
 
+    public static final String JOBS_UNIQUE_IPS = "jobsUniqueIPs";
+    public static final String IP_LIMIT_GRANTED_SLOT_REQUEST = "ipLimitGrantedSlotRequest";
+    public static final String IP_LIMIT_NOT_GRANTED_SLOT_REQUEST = "ipLimitNotGrantedSlotRequest";
+    public static final String IP_LIMIT_RETURNED_GRANTED_SLOT_REQUEST = "ipLimitReturnedGrantedSlotRequest";
+
+    public static final String JOBS_FAST_LANE_WAITING = "jobsFastLaneWaiting";
+    public static final String JOBS_NORMAL_LANE_WAITING = "jobsNormalLaneWaiting";
+    public static final String JOBS_ALL_STARTED_TASKS = "jobsAllStarted";
+    public static final String JOBS_ALL_RECLAIMED_TASKS = "jobsAllReclaimed";
+
     public static final MetricRegistry METRIC_REGISTRY = new MetricRegistry();
 
     public static class MasterDatabase {
@@ -69,12 +79,19 @@ public class MasterMetrics {
         public static final Timer loadFastLaneJobTasksFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_FASTLANEJOBS_TASKS_FROM_DB, COUNTER));
         public static final Timer loadFastLaneJobResourcesFromDBDuration = METRIC_REGISTRY.timer(name(Master.NAME, LOAD_FASTLANEJOBS_RESOURCES_FROM_DB, COUNTER));
 
-        public static final LazyGauge jobsPersistenceReadyCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "READY" + "." + COUNTER);
-        public static final LazyGauge jobsPersistenceFinishedWithSuccessCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_SUCCESS" + "." + COUNTER);
-        public static final LazyGauge jobsPersistenceErrorCount = new LazyGauge(METRIC_REGISTRY, Master.NAME + "." + JOBS_PERSISTENCE + "." + "FINISHED_ERROR" + "." + COUNTER);
-
         public static final LazyGauge unreachableNodesInClusterCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, UNREACHABLE_NODES_IN_CLUSTER, COUNTER));
         public static final LazyGauge connectedNodesInClusterCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, CONNECTED_NODES_IN_CLUSTER, COUNTER));
+
+        public static final LazyGauge jobsUniqueIPsCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, JOBS_UNIQUE_IPS, COUNTER));
+
+        public static final LazyGauge jobAccountantFastLaneWaitingCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, JOBS_FAST_LANE_WAITING, COUNTER));
+        public static final LazyGauge jobAccountantNormalLaneWaitingCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, JOBS_NORMAL_LANE_WAITING, COUNTER));
+        public static final LazyGauge jobAccountantAllStartedCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, JOBS_ALL_STARTED_TASKS, COUNTER));
+        public static final LazyGauge jobAccountantAllReclaimedCount = new LazyGauge(METRIC_REGISTRY, name(Master.NAME, JOBS_ALL_RECLAIMED_TASKS, COUNTER));
+
+        public static final Counter ipLimitGrantedSlotRequestCounter = METRIC_REGISTRY.counter(name(Master.NAME, IP_LIMIT_GRANTED_SLOT_REQUEST, COUNTER));
+        public static final Counter ipLimitNotGrantedSlotRequestCounter = METRIC_REGISTRY.counter(name(Master.NAME, IP_LIMIT_NOT_GRANTED_SLOT_REQUEST, COUNTER));
+        public static final Counter ipLimitReturnedGrantedSlotRequestCounter = METRIC_REGISTRY.counter(name(Master.NAME, IP_LIMIT_RETURNED_GRANTED_SLOT_REQUEST, COUNTER));
 
         public static final Map<RetrievingState, Counter> doneDownloadStateCounters = new HashMap();
 

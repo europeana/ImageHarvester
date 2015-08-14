@@ -54,9 +54,9 @@ public class NodeMasterActor extends UntypedActor {
     private ActorRef masterSender;
 
     /**
-     * List of unprocessed messages.
+     * List of unprocessed jobsReadyToBeProcessed.
      */
-    private final Queue<Object> messages = new LinkedList<>();
+    private final Queue<Object> jobsReadyToBeProcessed = new LinkedList<>();
 
     /**
      * List of jobs which was stopped by the clients.
@@ -100,6 +100,13 @@ public class NodeMasterActor extends UntypedActor {
             @Override
             public Integer getValue() {
                 return actors.size();
+            }
+        });
+
+        SlaveMetrics.Worker.Master.jobsReadyToBeProcessedCounter.registerHandler(new Gauge<Integer>() {
+            @Override
+            public Integer getValue() {
+                return jobsReadyToBeProcessed.size();
             }
         });
 
@@ -188,8 +195,8 @@ public class NodeMasterActor extends UntypedActor {
 
         if (actors.size()<maxSlaves){
             Object msg = null;
-            if (!messages.isEmpty())
-                msg = messages.poll();
+            if (!jobsReadyToBeProcessed.isEmpty())
+                msg = jobsReadyToBeProcessed.poll();
 
             if(msg != null) {
 
@@ -213,6 +220,7 @@ public class NodeMasterActor extends UntypedActor {
 
     private void onRetrieveUrlWithProcessingConfigReceived ( RetrieveUrlWithProcessingConfig retrieveUrl ) {
         taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,null));
+        SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.inc();
         masterSender.tell(new ReserveConnectionSlotRequest(retrieveUrl.getRetrieveUrl().getIpAddress(),
                 retrieveUrl.getRetrieveUrl().getId()),getSelf());
     }
@@ -232,19 +240,20 @@ public class NodeMasterActor extends UntypedActor {
         }
 
         taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,reserveConnectionSlotResponse));
+        SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.dec();
         executeRetrieveURL(retrieveUrl);
     }
 
     private void executeRetrieveURL(Object message) {
-        messages.add(message);
+        jobsReadyToBeProcessed.add(message);
 
-        if ( actors.size()<maxSlaves & messages.size()>maxSlaves ) {
+        if ( actors.size()<maxSlaves & jobsReadyToBeProcessed.size()>maxSlaves ) {
 
             for ( int i=0;i<maxSlaves;i++){
                 Object msg = null;
 
-                if (!messages.isEmpty())
-                    msg = messages.poll();
+                if (!jobsReadyToBeProcessed.isEmpty())
+                    msg = jobsReadyToBeProcessed.poll();
 
 
                 if(msg != null) {
@@ -269,13 +278,13 @@ public class NodeMasterActor extends UntypedActor {
     private void onRequestTasksReceived() {
         //allways request tasks if the message is coming from the supervisor
         if ( getSender().equals(nodeSupervisor)) {
-            if ( masterSender!= null && messages.size() < nodeMasterConfig.getTaskNrLimit() ) {
+            if ( masterSender!= null && jobsReadyToBeProcessed.size() < nodeMasterConfig.getTaskNrLimit() ) {
                 masterSender.tell(new RequestTasks(), nodeSupervisor);
                 sentRequest = true;
                 lastRequest = System.currentTimeMillis();
             }
         }
-        else if(!sentRequest && masterSender != null && messages.size() < nodeMasterConfig.getTaskNrLimit()) {
+        else if(!sentRequest && masterSender != null && jobsReadyToBeProcessed.size() < nodeMasterConfig.getTaskNrLimit()) {
 
             masterSender.tell(new RequestTasks(), nodeSupervisor);
             sentRequest = true;
@@ -284,7 +293,7 @@ public class NodeMasterActor extends UntypedActor {
         else  {
                 final Long currentTime = System.currentTimeMillis();
                 final int diff = Math.round ( ((currentTime - lastRequest)/1000) );
-                if(diff > 5 && messages.size() < nodeMasterConfig.getTaskNrLimit() ) {
+                if(diff > 5 && jobsReadyToBeProcessed.size() < nodeMasterConfig.getTaskNrLimit() ) {
                     sentRequest = true;
                     //self().tell(new RequestTasks(), ActorRef.noSender());
                     masterSender.tell(new RequestTasks(), nodeSupervisor);
@@ -293,7 +302,7 @@ public class NodeMasterActor extends UntypedActor {
                             "Slave master requesting tasks time difference ");
                 } else {
                     LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                            "No request: " + messages.size() + " " + sentRequest + " task limits: "+
+                            "No request: " + jobsReadyToBeProcessed.size() + " " + sentRequest + " task limits: "+
                                     nodeMasterConfig.getTaskNrLimit()+" time diff : " +diff);
                 }
 
