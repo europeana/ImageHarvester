@@ -156,7 +156,6 @@ public class PublisherManager {
             }
         } while (null == retrievedDocs || retrievedDocs.isEmpty());
 
-        final List<List<HarvesterDocument>> solrFilteredDocs = new ArrayList<>();
 
         LOG.error(LoggingComponent
                          .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
@@ -181,6 +180,11 @@ public class PublisherManager {
 
             final List<CRFSolrDocument> crfSolrDocument = FakeTagExtractor.extractTags(document, publishingBatchId);
 
+            LOG.error(LoggingComponent
+                              .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null,
+                                               null),
+                      "Updating solr documents for config id {}", writer.getConnectionId());
+
             final boolean updatedOk = writer.getSolrWriter().updateDocuments(crfSolrDocument, publishingBatchId);
 
             if (!updatedOk) {
@@ -190,7 +194,12 @@ public class PublisherManager {
                 System.exit(-1);
             }
 
+
             if (null != crfSolrDocument && !crfSolrDocument.isEmpty()) {
+                LOG.error(LoggingComponent
+                                  .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null,
+                                                   null),
+                          "Started updating c++ config id {}", writer.getConnectionId());
                 writer.getHarvesterDao().writeMetaInfos(document);
             }
             else {

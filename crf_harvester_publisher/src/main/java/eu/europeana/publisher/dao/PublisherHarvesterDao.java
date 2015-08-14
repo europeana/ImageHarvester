@@ -9,6 +9,7 @@ import com.mongodb.Mongo;
 import com.mongodb.WriteConcern;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.harvester.domain.URLSourceType;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
@@ -57,6 +58,9 @@ public class PublisherHarvesterDao {
             final List<WebResourceMetaInfo> webResourceMetaInfos = new ArrayList<>();
 
             for (final HarvesterDocument document : documents) {
+                if (DocumentReferenceTaskType.CHECK_LINK.equals(document.getTaskType())) {
+                    continue;
+                }
                 webResourceMetaInfos.add(new WebResourceMetaInfo(document.getSourceDocumentReferenceMetaInfo().getId(),
                                                                  document.getSourceDocumentReferenceMetaInfo()
                                                                          .getImageMetaInfo(), document.getSourceDocumentReferenceMetaInfo()

@@ -1,6 +1,7 @@
 package eu.europeana.publisher.dao;
 
 import com.codahale.metrics.Timer;
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.URLSourceType;
 import eu.europeana.publisher.domain.CRFSolrDocument;
@@ -20,6 +21,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.text.Document;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -90,37 +92,36 @@ public class SOLRWriter {
 
                     update.addField("europeana_id", CRFSolrDocument.getRecordId());
 
-                    update.addField("is_fulltext", singletonMap("set", CRFSolrDocument.getIsFulltext()));
+                    LOG.error(LoggingComponent
+                                      .appendAppFields(LoggingComponent.Migrator
+                                                               .PERSISTENCE_SOLR,
+                                                       publishingBatchId, null,
+                                                       new ReferenceOwner(null, null,
+                                                                          CRFSolrDocument
+                                                                                  .getRecordId())),
+                              "TaskType: " + CRFSolrDocument.getTaskType() + " " +
+                              "RecordID: " + CRFSolrDocument.getRecordId() + " " +
+                              "Has Landing Page: " + CRFSolrDocument
+                                                                     .getHasLandingPage());
 
-                    update.addField("has_thumbnails", singletonMap("set", CRFSolrDocument.getHasThumbnails()));
-
-                    update.addField("has_media", singletonMap("set", CRFSolrDocument.getHasMedia()));
-
-                    update.addField("filter_tags", singletonMap("set", CRFSolrDocument.getFilterTags()));
-
-                    update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
-
-                    if (URLSourceType.ISSHOWNAT == CRFSolrDocument.getUrlSourceType()) {
-                        update.addField("has_landingpage", singletonMap("set", true));
+                    if (DocumentReferenceTaskType.CHECK_LINK == CRFSolrDocument.getTaskType()) {
+                        update.addField("has_landingpage", singletonMap("set", CRFSolrDocument.getHasLandingPage()));
                     }
                     else {
-                        try {
-                            if (null == hasLandingPage(CRFSolrDocument.getRecordId())) {
-                                update.addField("has_landingpage", singletonMap("set", false));
-                            }
-                        }
-                        catch (Exception e) {
-                            LOG.error (LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                                        publishingBatchId, null,
-                                                                        new ReferenceOwner(null, null, CRFSolrDocument
-                                                                                                               .getRecordId())),
-                                       "Unable to read has_landingpage for current record. The field will not be set"
-                                      );
-                        }
-                    }
 
-                    if (updateEdmObjectUrl(CRFSolrDocument, publishingBatchId)) {
-                        update.addField("provider_aggregation_edm_object", CRFSolrDocument.getUrl());
+                        update.addField("is_fulltext", singletonMap("set", CRFSolrDocument.getIsFulltext()));
+
+                        update.addField("has_thumbnails", singletonMap("set", CRFSolrDocument.getHasThumbnails()));
+
+                        update.addField("has_media", singletonMap("set", CRFSolrDocument.getHasMedia()));
+
+                        update.addField("filter_tags", singletonMap("set", CRFSolrDocument.getFilterTags()));
+
+                        update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
+
+                        if (updateEdmObjectUrl(CRFSolrDocument, publishingBatchId)) {
+                            update.addField("provider_aggregation_edm_object", CRFSolrDocument.getUrl());
+                        }
                     }
 
                     try {
@@ -182,14 +183,6 @@ public class SOLRWriter {
         finally {
             context.close();
         }
-    }
-
-    private Boolean hasLandingPage (final String id) throws IOException, SolrServerException {
-        final SolrQuery query = new SolrQuery();
-        query.addField("has_landingpage");
-        query.setQuery("europeana_id:\"" + id + "\"");
-
-        return (Boolean)createServer().query(query).getResults().get(0).getFieldValue("has_landingpage");
     }
 
     private boolean updateEdmObjectUrl (CRFSolrDocument crfSolrDocument, String publishingBatchId) {

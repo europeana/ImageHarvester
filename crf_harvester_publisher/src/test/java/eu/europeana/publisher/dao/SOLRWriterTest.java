@@ -79,6 +79,7 @@ public class SOLRWriterTest {
                                                          new SourceDocumentReferenceMetaInfo("", null, null, null, null),
                                                          subTaskStats,
                                                          0 == i % 2 ? URLSourceType.ISSHOWNBY: URLSourceType.ISSHOWNAT,
+                                                         DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                                                          "http://www.google.com"
                                                         )
             );
@@ -282,6 +283,7 @@ public class SOLRWriterTest {
                                                          new SourceDocumentReferenceMetaInfo("", null, null, null, null),
                                                          subTaskStats,
                                                          0 == i % 2 ? URLSourceType.ISSHOWNBY: URLSourceType.ISSHOWNAT,
+                                                         DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                                                          "http://www.google.com"
                                    )
                                   );

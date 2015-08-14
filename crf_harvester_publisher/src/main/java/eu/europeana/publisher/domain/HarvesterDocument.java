@@ -1,9 +1,6 @@
 package eu.europeana.publisher.domain;
 
-import eu.europeana.harvester.domain.ProcessingJobSubTaskStats;
-import eu.europeana.harvester.domain.ReferenceOwner;
-import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
-import eu.europeana.harvester.domain.URLSourceType;
+import eu.europeana.harvester.domain.*;
 import org.joda.time.DateTime;
 
 public class HarvesterDocument {
@@ -20,11 +17,15 @@ public class HarvesterDocument {
 
     private final URLSourceType urlSourceType;
 
+    private final DocumentReferenceTaskType taskType;
+
     private final String url;
 
     public HarvesterDocument (String sourceDocumentReferenceId, DateTime updatedAt, ReferenceOwner referenceOwner,
                               SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo,
-                              ProcessingJobSubTaskStats subTaskStats, URLSourceType urlSourceType, String url) {
+                              ProcessingJobSubTaskStats subTaskStats, URLSourceType urlSourceType,
+                              DocumentReferenceTaskType taskType,
+                              String url) {
         this.sourceDocumentReferenceId = sourceDocumentReferenceId;
         this.updatedAt = updatedAt;
         this.referenceOwner = referenceOwner;
@@ -32,6 +33,7 @@ public class HarvesterDocument {
         this.subTaskStats = subTaskStats;
         this.urlSourceType = urlSourceType;
         this.url = url;
+        this.taskType = taskType;
     }
 
     public ProcessingJobSubTaskStats getSubTaskStats() {return subTaskStats;}
@@ -54,7 +56,7 @@ public class HarvesterDocument {
 
     public HarvesterDocument withSourceDocumentReferenceMetaInfo(final SourceDocumentReferenceMetaInfo newSourceDocumentReferenceMetaInfo) {
         return new HarvesterDocument(sourceDocumentReferenceId, updatedAt, referenceOwner, newSourceDocumentReferenceMetaInfo,
-                                     subTaskStats, urlSourceType, url);
+                                     subTaskStats, urlSourceType, taskType, url);
     }
 
     public URLSourceType getUrlSourceType () {
@@ -63,5 +65,9 @@ public class HarvesterDocument {
 
     public String getUrl () {
         return url;
+    }
+
+    public DocumentReferenceTaskType getTaskType () {
+        return taskType;
     }
 }

@@ -66,6 +66,12 @@ public class PublisherEuropeanaDao {
             completeHarvesterDocuments.add(incompleteHarvesterDocuments.get(id).withSourceDocumentReferenceMetaInfo(metaInfo));
         }
 
+        for (final Map.Entry<String, HarvesterDocument> entry: incompleteHarvesterDocuments.entrySet()) {
+           if (DocumentReferenceTaskType.CHECK_LINK == entry.getValue().getTaskType()) {
+               completeHarvesterDocuments.add(entry.getValue());
+           }
+        }
+
         return completeHarvesterDocuments;
     }
 
@@ -95,6 +101,8 @@ public class PublisherEuropeanaDao {
                       ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("thumbnailStorageState"))
                 );
 
+                final DocumentReferenceTaskType taskType = DocumentReferenceTaskType.valueOf(item.getString("taskType"));
+
                 final URLSourceType urlSourceType = URLSourceType.valueOf(item.getString("urlSourceType"));
 
                 documentStatistics.put(sourceDocumentReferenceId,
@@ -102,6 +110,7 @@ public class PublisherEuropeanaDao {
                                                              new ReferenceOwner(providerId, collectionId, recordId, executionId),
                                                              null, subTaskStats,
                                                              urlSourceType,
+                                                             taskType,
                                                              readUrl(sourceDocumentReferenceId)
                                                             )
                                       );
@@ -167,6 +176,7 @@ public class PublisherEuropeanaDao {
         retrievedFields.put("referenceOwner.recordId", 1);
         retrievedFields.put("processingJobSubTaskStats", 1);
         retrievedFields.put("urlSourceType", 1);
+        retrievedFields.put("taskType", 1);
         retrievedFields.put("updatedAt", 1);
         retrievedFields.put("_id", 0);
 

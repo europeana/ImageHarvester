@@ -1,5 +1,6 @@
 package eu.europeana.publisher.domain;
 
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.URLSourceType;
 
 import java.util.List;
@@ -38,10 +39,13 @@ public class CRFSolrDocument {
 
     private final URLSourceType urlSourceType;
     private final String url;
+    private final Boolean hasLandingPage;
+    private final DocumentReferenceTaskType taskType;
 
     public CRFSolrDocument (final String recordId, final Boolean isFulltext, final Boolean hasThumbnails, final
     Boolean hasMedia, final List<Integer> filterTags, final List<Integer> facetTags,
-                            URLSourceType urlSourceType, String url) {
+                            URLSourceType urlSourceType, String url, Boolean hasLandingPage,
+                            DocumentReferenceTaskType taskType) {
         this.recordId = recordId;
         this.isFulltext = isFulltext;
         this.hasThumbnails = hasThumbnails;
@@ -50,6 +54,8 @@ public class CRFSolrDocument {
         this.facetTags = facetTags;
         this.urlSourceType = urlSourceType;
         this.url = url;
+        this.hasLandingPage = hasLandingPage;
+        this.taskType = taskType;
     }
 
     public String getRecordId() {
@@ -82,5 +88,13 @@ public class CRFSolrDocument {
 
     public String getUrl () {
         return url;
+    }
+
+    public Boolean getHasLandingPage () {
+        return hasLandingPage;
+    }
+
+    public DocumentReferenceTaskType getTaskType () {
+        return taskType;
     }
 }

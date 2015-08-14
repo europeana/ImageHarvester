@@ -26,11 +26,32 @@ public class FakeTagExtractor {
         final List<CRFSolrDocument> solrDocuments = new ArrayList<>();
 
         for (final HarvesterDocument document : harvesterDocuments) {
+            if (DocumentReferenceTaskType.CHECK_LINK.equals(document.getTaskType())) {
+                System.out.println ("check link document generation");
+                final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(
+                                                                                   document.getReferenceOwner().getRecordId(),
+                                                                                   false,
+                                                                                   false,
+                                                                                   false,
+                                                                                   null,
+                                                                                   null,
+                                                                                   document.getUrlSourceType(),
+                                                                                   document.getUrl(),
+                                                                                   ProcessingJobRetrieveSubTaskState.SUCCESS.equals(document.getSubTaskStats().getRetrieveState()),
+                                                                                   document.getTaskType()
+                );
+                solrDocuments.add(CRFSolrDocument);
+                continue;
+            }
+
+
             final SourceDocumentReferenceMetaInfo metaInfo = document.getSourceDocumentReferenceMetaInfo();
 
             final String ID = metaInfo.getId();
             final Integer mediaTypeCode = CommonTagExtractor.getMediaTypeCode(metaInfo);
             Integer mimeTypeCode = null;
+
+            System.out.println("Normal tag generation");
 
             if (null == metaInfo.getAudioMetaInfo() && null == metaInfo.getImageMetaInfo() &&
                     null == metaInfo.getVideoMetaInfo() && null == metaInfo.getTextMetaInfo()) {
@@ -65,9 +86,17 @@ public class FakeTagExtractor {
             // The new properties
             Boolean isFulltext = false;
             Boolean hasThumbnails = false;
-            Boolean hasMedia = true;
+            Boolean hasMedia;
             List<Integer> filterTags = new ArrayList<>();
             List<Integer> facetTags = new ArrayList<>();
+
+            System.out.print(document.getSubTaskStats().getMetaExtractionState() + " ");
+            System.out.print(mimeTypeCode + " ");
+
+            hasMedia = ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getMetaExtractionState()) &&
+                       null != mimeTypeCode;
+
+            System.out.println(hasMedia);
 
             // Retrieves different type of properties depending on media
             // type.
@@ -82,11 +111,9 @@ public class FakeTagExtractor {
                     filterTags = ImageTagExtractor.getFilterTags(imageMetaInfo);
                     facetTags = ImageTagExtractor.getFacetTags(imageMetaInfo);
                     hasThumbnails = ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailGenerationState() &&
-                                    ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailStorageState();
-
-                    if (hasThumbnails) {
-                        hasMedia = false;
-                    }
+                                    ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailStorageState() &&
+                                    (URLSourceType.OBJECT == document.getUrlSourceType() ||
+                                     URLSourceType.ISSHOWNBY == document.getUrlSourceType());
 
                     break;
 
@@ -116,7 +143,10 @@ public class FakeTagExtractor {
                     filterTags,
                     facetTags,
                     document.getUrlSourceType(),
-                    document.getUrl());
+                    document.getUrl(),
+                    ProcessingJobRetrieveSubTaskState.SUCCESS.equals(document.getSubTaskStats().getRetrieveState()),
+                    document.getTaskType()
+            );
 
 
             if (!CRFSolrDocument.getRecordId().toLowerCase().startsWith(SkippedRecords.id)) {
