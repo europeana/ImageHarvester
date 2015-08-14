@@ -29,6 +29,8 @@ public class SlaveLinkChecker {
             throw new IllegalArgumentException("The link checker can handle only link checking downloads. Cannot handle "+task.getDocumentReferenceTask().getTaskType());
         }
 
+        httpRetrieveResponse.setState(RetrievingState.ERROR);
+
         final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(new AsyncHttpClientConfig.Builder()
                 .setMaxRedirects(task.getLimits().getRetrievalMaxNrOfRedirects())
                 .setFollowRedirect(true)
