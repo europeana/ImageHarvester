@@ -3,6 +3,7 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.google.code.morphia.query.UpdateOperations;
+import com.google.common.collect.Lists;
 import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.domain.*;
@@ -84,7 +85,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
     }
 
     @Override
-    public void modifyStateOfJobsWithIds(JobState newJobState,final List<String> jobIds) {
+    public void modifyStateOfJobsWithIds(JobState newJobState, final List<String> jobIds) {
         if (jobIds.isEmpty()) return;
         final Query<ProcessingJob> query = datastore.createQuery(ProcessingJob.class).field("_id").in(new ArrayList<>(jobIds));
         final UpdateOperations<ProcessingJob> ops = datastore.createUpdateOperations(ProcessingJob.class).set("state", newJobState);
@@ -128,13 +129,27 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
     @Override
     public List<ProcessingJob> getDiffusedJobsWithState(JobPriority jobPriority, JobState jobState, Page page, Map<String, Integer> ipDistribution) {
 
-        final Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
-        query.criteria("priority").equal(jobPriority.getPriority());
-        query.criteria("state").equal(jobState);
-        query.criteria("ipAddress").in(ipDistribution.keySet());
-        query.limit(page.getLimit());
-        final List<ProcessingJob> processingJobs = query.asList();
+        if (ipDistribution.size() <= 0) return Collections.EMPTY_LIST;
 
+        final List<ProcessingJob> processingJobs = new ArrayList<>();
+        List<List<String>> partitions = new ArrayList<List<String>>();
+        if ((ipDistribution.size() > 20)) {
+            final int partitionSize = Math.round(ipDistribution.size() / 10);
+            page = new Page (0,Math.round(page.getLimit()/10));
+            partitions = Lists.partition(new ArrayList<>(ipDistribution.keySet()), partitionSize);
+
+        } else {
+            partitions.add(new ArrayList<>(ipDistribution.keySet()));
+        }
+
+        for (final List<String> partition : partitions) {
+            final Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
+            query.criteria("priority").equal(jobPriority.getPriority());
+            query.criteria("state").equal(jobState);
+            query.criteria("ipAddress").in(partition);
+            query.limit(page.getLimit());
+            processingJobs.addAll(query.asList());
+        }
         return processingJobs;
     }
 
