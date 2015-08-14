@@ -217,8 +217,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
         // (Stop case 1) Stop when this is link checking
         if (task.getDocumentReferenceTask().getTaskType() == DocumentReferenceTaskType.CHECK_LINK) {
             // We can skip processing altogether as is this is link checking.
-            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                    "Processing stage skipped because retrieval involved only link checking : " + response.getState());
+//            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+//                    "Processing stage skipped because retrieval involved only link checking : " + response.getState());
             finishProcess(doneProcessing);
             return;
         }

@@ -143,7 +143,7 @@ abstract class HttpRetrieveResponseBase implements HttpRetrieveResponse {
 
     @Override
     public Integer getHttpResponseCode() {
-        return httpResponseCode;
+        return (httpResponseCode == null ? -1 : httpResponseCode);
     }
 
     @Override
