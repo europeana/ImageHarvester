@@ -131,6 +131,8 @@ public class AccountantActorHelper {
         else
             normalLane.addTask(taskWithState.getKey());
 
+        LOG.info("Added task {} for IP {}",taskWithState.getKey().getId(),taskWithState.getKey().getIpAddress());
+
         return;
     }
 
