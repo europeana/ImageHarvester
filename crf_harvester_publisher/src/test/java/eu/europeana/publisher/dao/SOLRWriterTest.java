@@ -89,7 +89,7 @@ public class SOLRWriterTest {
     @After
     public void tearDown() {
         DButils.cleanMongoDatabase(publisherConfig);
-    //    DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
     }
 
     @Test(expected = IllegalArgumentException.class)

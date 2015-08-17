@@ -28,7 +28,6 @@ public class PublisherEuropeanaDao {
     private DB mongoDB;
 
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
-    private final SourceDocumentReferenceDao sourceDocumentReferenceDao;
 
     public PublisherEuropeanaDao (MongoConfig mongoConfig) throws UnknownHostException {
 
@@ -40,7 +39,6 @@ public class PublisherEuropeanaDao {
 
         final Datastore dataStore = new Morphia().createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
-        sourceDocumentReferenceDao = new SourceDocumentReferenceDaoImpl(dataStore);
     }
 
     public List<HarvesterDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final int batchSize) {
@@ -132,6 +130,7 @@ public class PublisherEuropeanaDao {
     }
 
     private String readUrl (final String sourceDocumentReferenceId) {
+        System.out.println ("Read Url: " + sourceDocumentReferenceId);
         if (StringUtils.isBlank(sourceDocumentReferenceId)) return null;
         final BasicDBObject findQuery = new BasicDBObject();
         final BasicDBObject retrievedFields = new BasicDBObject();
