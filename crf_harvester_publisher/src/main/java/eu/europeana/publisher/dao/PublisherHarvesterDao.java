@@ -103,7 +103,7 @@ public class PublisherHarvesterDao {
         final BasicDBObject query = new BasicDBObject("about", about);
         final BasicDBObject update = new BasicDBObject();
 
-        update.put("$set", new BasicDBObject("edmPreiview", newUrl));
+        update.put("$set", new BasicDBObject("edmPreview", newUrl));
         return mongoDB.getCollection("EuropeanaAggregation").update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
     }
 
