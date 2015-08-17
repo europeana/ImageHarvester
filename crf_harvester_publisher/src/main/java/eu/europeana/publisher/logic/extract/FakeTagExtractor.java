@@ -37,7 +37,24 @@ public class FakeTagExtractor {
                                                                                    document.getUrlSourceType(),
                                                                                    document.getUrl(),
                                                                                    ProcessingJobRetrieveSubTaskState.SUCCESS.equals(document.getSubTaskStats().getRetrieveState()),
-                                                                                   document.getTaskType()
+                                                                                   document.getTaskType(),
+                                                                                   document.getSubTaskStats()
+                );
+                solrDocuments.add(CRFSolrDocument);
+                continue;
+            }
+            else if (!ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getMetaExtractionState())) {
+                final CRFSolrDocument CRFSolrDocument = new CRFSolrDocument(document.getReferenceOwner().getRecordId(),
+                                                                            false,
+                                                                            false,
+                                                                            false,
+                                                                            null,
+                                                                            null,
+                                                                            document.getUrlSourceType(),
+                                                                            document.getUrl(),
+                                                                            ProcessingJobRetrieveSubTaskState.SUCCESS.equals(document.getSubTaskStats().getRetrieveState()),
+                                                                            document.getTaskType(),
+                                                                            document.getSubTaskStats()
                 );
                 solrDocuments.add(CRFSolrDocument);
                 continue;
@@ -140,7 +157,8 @@ public class FakeTagExtractor {
                     document.getUrlSourceType(),
                     document.getUrl(),
                     ProcessingJobRetrieveSubTaskState.SUCCESS.equals(document.getSubTaskStats().getRetrieveState()),
-                    document.getTaskType()
+                    document.getTaskType(),
+                    document.getSubTaskStats()
             );
 
 

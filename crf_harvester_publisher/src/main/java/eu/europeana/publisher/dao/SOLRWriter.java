@@ -1,9 +1,7 @@
 package eu.europeana.publisher.dao;
 
 import com.codahale.metrics.Timer;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ReferenceOwner;
-import eu.europeana.harvester.domain.URLSourceType;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
@@ -90,15 +88,6 @@ public class SOLRWriter {
 
                     final SolrInputDocument update = new SolrInputDocument();
 
-                    if (CRFSolrDocument.getRecordId().equals("2022701/urn_repo_memoriademadrid_esMH_c7303518_b2e6_4bb3_b153_a1c231c57032")) {
-                        System.out.println ("The record with the problem");
-                        System.out.println ("is_fulltest: " + CRFSolrDocument.getIsFulltext());
-                        System.out.println ("has_thumbnails: " + CRFSolrDocument.getHasThumbnails());
-                        System.out.println ("has_landingpage: " + CRFSolrDocument.getHasLandingPage());
-                        System.out.println ("Task Type: " + CRFSolrDocument.getTaskType());
-                        System.out.println ("Url source type: " + CRFSolrDocument.getUrlSourceType());
-                    }
-
                     update.addField("europeana_id", CRFSolrDocument.getRecordId());
 
                     if (DocumentReferenceTaskType.CHECK_LINK == CRFSolrDocument.getTaskType()) {
@@ -184,12 +173,17 @@ public class SOLRWriter {
 
     private boolean updateEdmObjectUrl (CRFSolrDocument crfSolrDocument, String publishingBatchId) {
         if (null == crfSolrDocument || null == crfSolrDocument.getUrlSourceType() || null == crfSolrDocument.getUrl()) {
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                       publishingBatchId, null, null),
-                      "Document with record Id : " + crfSolrDocument.getRecordId() + "has null url and/or urlSourceType");
+            LOG.error(LoggingComponent
+                              .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null,
+                                               null), "Document with record Id : " + crfSolrDocument.getRecordId() +
+                                                                                    "has null url and/or " +
+                                                                                    "urlSourceType");
             return false;
         }
-        return URLSourceType.ISSHOWNBY == crfSolrDocument.getUrlSourceType();
+
+        return URLSourceType.ISSHOWNBY == crfSolrDocument.getUrlSourceType() &&
+               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailGenerationState()) &&
+               ProcessingJobRetrieveSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailStorageState());
     }
 
     /**

@@ -3,16 +3,10 @@ package eu.europeana.publisher.dao;
 import com.codahale.metrics.Timer;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.Mongo;
-import com.mongodb.WriteConcern;
+import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.MongoConfig;
-import eu.europeana.harvester.domain.URLSourceType;
-import eu.europeana.harvester.domain.WebResourceMetaInfo;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
@@ -58,7 +52,8 @@ public class PublisherHarvesterDao {
             final List<WebResourceMetaInfo> webResourceMetaInfos = new ArrayList<>();
 
             for (final HarvesterDocument document : documents) {
-                if (DocumentReferenceTaskType.CHECK_LINK.equals(document.getTaskType())) {
+                if (DocumentReferenceTaskType.CHECK_LINK.equals(document.getTaskType()) ||
+                    !ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getMetaExtractionState())) {
                     continue;
                 }
                 webResourceMetaInfos.add(new WebResourceMetaInfo(document.getSourceDocumentReferenceMetaInfo().getId(),
@@ -70,14 +65,13 @@ public class PublisherHarvesterDao {
                                                                                                       .getTextMetaInfo()));
 
                 if (updateEdmObjectUrl(document)) {
-                    final BasicDBObject query = new BasicDBObject(
-                          "about",
-                          "/aggregation/provider" + document.getReferenceOwner().getRecordId()
-                    );
+                    final WriteResult result = updateEdmObject("/aggregation/provider" + document.getReferenceOwner().getRecordId(),
+                                                               document.getUrl()
+                                                              );
 
-                    final BasicDBObject update = new BasicDBObject();
-                    update.put("$set", new BasicDBObject("edmObject", document.getUrl()));
-                    mongoDB.getCollection("Aggregation").update(query, update);
+                    if (0 == result.getN()) {
+                        updateEdmObject("/provider/aggregation" + document.getReferenceOwner().getRecordId(), document.getUrl());
+                    }
                 }
             }
 
@@ -89,10 +83,20 @@ public class PublisherHarvesterDao {
         }
     }
 
+    private WriteResult updateEdmObject (final String about, final String newUrl) {
+        final BasicDBObject query = new BasicDBObject("about", about);
+        final BasicDBObject update = new BasicDBObject();
+
+        update.put("$set", new BasicDBObject("edmObject", newUrl));
+        return mongoDB.getCollection("Aggregation").update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
+    }
+
     private boolean updateEdmObjectUrl (HarvesterDocument crfSolrDocument) {
         if (null == crfSolrDocument || null == crfSolrDocument.getUrlSourceType() || null == crfSolrDocument.getUrl()) {
             return false;
         }
-        return URLSourceType.ISSHOWNBY == crfSolrDocument.getUrlSourceType();
+        return URLSourceType.ISSHOWNBY == crfSolrDocument.getUrlSourceType() &&
+               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailGenerationState()) &&
+               ProcessingJobRetrieveSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailStorageState());
     }
 }

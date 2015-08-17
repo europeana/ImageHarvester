@@ -63,15 +63,10 @@ public class PublisherEuropeanaDao {
 
         for (final SourceDocumentReferenceMetaInfo metaInfo: metaInfos) {
             final String id = metaInfo.getId();
-            completeHarvesterDocuments.add(incompleteHarvesterDocuments.get(id).withSourceDocumentReferenceMetaInfo(metaInfo));
+            completeHarvesterDocuments.add(incompleteHarvesterDocuments.remove(id).withSourceDocumentReferenceMetaInfo(metaInfo));
         }
 
-        for (final Map.Entry<String, HarvesterDocument> entry: incompleteHarvesterDocuments.entrySet()) {
-           if (DocumentReferenceTaskType.CHECK_LINK == entry.getValue().getTaskType()) {
-               completeHarvesterDocuments.add(entry.getValue());
-           }
-        }
-
+        completeHarvesterDocuments.addAll(incompleteHarvesterDocuments.values());
         return completeHarvesterDocuments;
     }
 
