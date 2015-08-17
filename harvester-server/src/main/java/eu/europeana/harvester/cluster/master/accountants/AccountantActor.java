@@ -24,16 +24,24 @@ public class AccountantActor extends UntypedActor {
 
     private int lastNumberOfJobsCleaned = 0;
 
-    public AccountantActor(DefaultLimits defaultLimits){
+    public AccountantActor(DefaultLimits defaultLimits) {
         accountantActorHelper = new AccountantActorHelper(defaultLimits);
         masterReceiver = getContext().actorFor("../receiver");
+    }
+
+    @Override
+    public void preStart() {
+        registerAccountantMetrics();
     }
 
     @Override
     public void postRestart(Throwable reason) throws Exception {
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
                 TimeUnit.MINUTES), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
+        registerAccountantMetrics();
+    }
 
+    private void registerAccountantMetrics() {
         MasterMetrics.Master.jobsUniqueIPsCount.registerHandler(new Gauge<Integer>() {
             @Override
             public Integer getValue() {
@@ -74,54 +82,42 @@ public class AccountantActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
 
-            if (message instanceof GetNumberOfTasks) {
-                getSender().tell(accountantActorHelper.getNumberOfTasks(), ActorRef.noSender());
-                return;
-            } else
+        if (message instanceof GetNumberOfTasks) {
+            getSender().tell(accountantActorHelper.getNumberOfTasks(), ActorRef.noSender());
+            return;
+        } else if (message instanceof GetOverLoadedIPs) {
+            getSender().tell(accountantActorHelper.getIPsWithTooManyTasks(1000), ActorRef.noSender());
+            return;
+        } else if (message instanceof RequestTasks) {
 
-            if ( message instanceof GetOverLoadedIPs) {
-                getSender().tell(accountantActorHelper.getIPsWithTooManyTasks(1000), ActorRef.noSender());
-                return;
-            } else
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
+                    "Received request for tasks from " + getSender());
 
-            if(message instanceof RequestTasks) {
-
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
-                        "Received request for tasks from "+getSender());
-
-                MasterMetrics.Master.sendJobSetToSlaveCounter.inc();
-                final com.codahale.metrics.Timer.Context context = MasterMetrics.Master.sendJobSetToSlaveDuration.time();
-                getSender().tell(accountantActorHelper.getBagOfTasks(),masterReceiver);
-                context.stop();
-                return;
-            } else
-
-            if (message instanceof AddTask) {
-                accountantActorHelper.addTask((AddTask) message);
-                return;
-            } else
-
-            if (message instanceof DoneProcessing) {
-                accountantActorHelper.doneTask((DoneProcessing) message);
-                return;
-            } else
-
-            if (message instanceof Monitor) {
-                accountantActorHelper.monitor();
-                return;
-            } else
-
-            if (message instanceof Clean) {
-                lastNumberOfJobsCleaned = accountantActorHelper.clean();
-                getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
-                        TimeUnit.MINUTES), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
-                return;
-            } else
+            MasterMetrics.Master.sendJobSetToSlaveCounter.inc();
+            final com.codahale.metrics.Timer.Context context = MasterMetrics.Master.sendJobSetToSlaveDuration.time();
+            getSender().tell(accountantActorHelper.getBagOfTasks(), masterReceiver);
+            context.stop();
+            return;
+        } else if (message instanceof AddTask) {
+            accountantActorHelper.addTask((AddTask) message);
+            return;
+        } else if (message instanceof DoneProcessing) {
+            accountantActorHelper.doneTask((DoneProcessing) message);
+            return;
+        } else if (message instanceof Monitor) {
+            accountantActorHelper.monitor();
+            return;
+        } else if (message instanceof Clean) {
+            lastNumberOfJobsCleaned = accountantActorHelper.clean();
+            getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(10,
+                    TimeUnit.MINUTES), getSelf(), new Clean(), getContext().system().dispatcher(), getSelf());
+            return;
+        } else
 
 
-            {
-                unhandled(message);
-            }
+        {
+            unhandled(message);
+        }
     }
 
 

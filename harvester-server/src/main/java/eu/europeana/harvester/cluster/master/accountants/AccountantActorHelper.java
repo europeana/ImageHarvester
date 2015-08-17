@@ -63,7 +63,6 @@ public class AccountantActorHelper {
                     List<String> tasks = tasksPerIP.get(ip);
 
                     String task = tasks.remove(0);
-                    LOG.info ("found task {} for IP {}",task,ip);
 
                     if (tasks.size() == 0)
                         tasksPerIP.remove(ip);
@@ -72,8 +71,6 @@ public class AccountantActorHelper {
 
 
                     RetrieveUrl retrieveUrl = waitingTasks.remove(task);
-
-                    LOG.info ("Added RetrieveURL to list for IP: "+(retrieveUrl!=null ? retrieveUrl.getIpAddress() : "0"));
 
 
                     if (retrieveUrl != null)
@@ -131,8 +128,6 @@ public class AccountantActorHelper {
         else
             normalLane.addTask(taskWithState.getKey());
 
-        LOG.info("Added task {} for IP {}",taskWithState.getKey().getId(),taskWithState.getKey().getIpAddress());
-
         return;
     }
 
@@ -179,7 +174,6 @@ public class AccountantActorHelper {
     public BagOfTasks getBagOfTasks() {
 
         List<RetrieveUrl> tasksToSend = startTasks();
-        LOG.info ("taskstosend size: "+tasksToSend.size());
         final BagOfTasks bagOfTasks = new BagOfTasks(tasksToSend);
         return bagOfTasks;
 
@@ -197,12 +191,9 @@ public class AccountantActorHelper {
 
         // first we go through the fastlane tasks
         List<RetrieveUrl> fastLaneTasks = fastLane.getListOfTasksWithRoundRobinStrategy(maxToSend);
-        LOG.info ("taskstosend size after fastlane: "+fastLaneTasks.size());
 
         List<RetrieveUrl> normalLaneTasks = (tasksToSend.size() < maxToSend) ?
                 normalLane.getListOfTasksWithRoundRobinStrategy(maxToSend - fastLaneTasks.size()) : new ArrayList<RetrieveUrl>();
-
-        LOG.info ("taskstosend size after normalLane: "+normalLaneTasks.size());
 
         tasksToSend.addAll(fastLaneTasks);
         tasksToSend.addAll(normalLaneTasks);

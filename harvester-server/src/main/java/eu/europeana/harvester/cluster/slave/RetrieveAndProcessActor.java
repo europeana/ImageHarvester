@@ -44,9 +44,9 @@ public class RetrieveAndProcessActor extends UntypedActor {
             case COMPLETED:
                 return ProcessingJobRetrieveSubTaskState.SUCCESS;
             case PREPARING:
-                return ProcessingJobRetrieveSubTaskState.NEVER_EXECUTED;
+                return ProcessingJobRetrieveSubTaskState.ERROR;
             case PROCESSING:
-                return ProcessingJobRetrieveSubTaskState.NEVER_EXECUTED;
+                return ProcessingJobRetrieveSubTaskState.ERROR;
             case FINISHED_RATE_LIMIT:
                 return ProcessingJobRetrieveSubTaskState.FAILED;
 
@@ -226,7 +226,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
         // (Stop case 2) Stop when this retrieval failed
         if (doneProcessing.getStats().getRetrieveState() != ProcessingJobRetrieveSubTaskState.SUCCESS) {
             // We can skip processing altogether as the download failed.
-            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+
+                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                     "Processing stage skipped because retrieval failed : " + doneProcessing.getStats().getRetrieveState());
             finishProcess(doneProcessing);
             return;
@@ -302,7 +303,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
                     response = httpRetrieveResponseFactory.create(ResponseType.NO_STORAGE, taskWithProcessingConfig.getDownloadPath());
                     response.setLoggingAppFields(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()));
                     slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
-                } finally {
+                }
+                finally {
                     downloadLinkCheckingTimerContext.stop();
                 }
                 break;

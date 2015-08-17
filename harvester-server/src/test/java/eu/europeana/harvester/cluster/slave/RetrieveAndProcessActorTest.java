@@ -179,7 +179,6 @@ public class RetrieveAndProcessActorTest {
 
             while (!msgAvailable()) Thread.sleep(100);
             DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
-
             assertEquals (ProcessingJobRetrieveSubTaskState.ERROR, msg2.getStats().getRetrieveState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getColorExtractionState());
             assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getMetaExtractionState());

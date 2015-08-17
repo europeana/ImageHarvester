@@ -133,9 +133,9 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
         final List<ProcessingJob> processingJobs = new ArrayList<>();
         List<List<String>> partitions = new ArrayList<List<String>>();
-        if ((ipDistribution.size() > 20)) {
-            final int partitionSize = Math.round(ipDistribution.size() / 10);
-            page = new Page (0,Math.round(page.getLimit()/10));
+        if ((ipDistribution.size() > 200)) {
+            final int partitionSize = Math.round(ipDistribution.size() / 100);
+            page = new Page (0,Math.round(page.getLimit()/100));
             partitions = Lists.partition(new ArrayList<>(ipDistribution.keySet()), partitionSize);
 
         } else {

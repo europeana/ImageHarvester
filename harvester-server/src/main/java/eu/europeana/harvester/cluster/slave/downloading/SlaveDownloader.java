@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.List;
@@ -34,6 +35,16 @@ public class SlaveDownloader {
                     "Retrieval url failed because the downloader cannot retrieve null or 'empty string' url.");
             httpRetrieveResponse.setState(RetrievingState.ERROR);
             httpRetrieveResponse.setLog("Retrieval url failed because the downloader cannot retrieve null or 'empty string' url.");
+            return httpRetrieveResponse;
+        }
+
+        // CHeck for malformed url's
+        try {
+            new URL(task.getUrl());
+        } catch (Exception e) {
+            httpRetrieveResponse.setState(RetrievingState.ERROR);
+            httpRetrieveResponse.setLog(e.getMessage());
+            httpRetrieveResponse.setException(e);
             return httpRetrieveResponse;
         }
 
@@ -85,11 +96,11 @@ public class SlaveDownloader {
 
                     /* Collect the response headers */
                 for (final Map.Entry<String, List<String>> entry : downloadResponseHeaders.getHeaders()) {
-                       final String header = entry.getKey();
-                        if (!entry.getValue().isEmpty()) {
-                            final String firstValue = entry.getValue().get(0);
-                            httpRetrieveResponse.addHeader(header, firstValue);
-                        }
+                    final String header = entry.getKey();
+                    if (!entry.getValue().isEmpty()) {
+                        final String firstValue = entry.getValue().get(0);
+                        httpRetrieveResponse.addHeader(header, firstValue);
+                    }
                 }
 
                 /** We terminate the connection in case of HTTP error only after we collect the response headers */
@@ -105,7 +116,7 @@ public class SlaveDownloader {
                     final String downloadContentLength = downloadResponseHeaders.getHeaders().getFirstValue("Content-Length"); //case insensitive map
 
                     if (existingContentLength != null && downloadContentLength != null &&
-                        existingContentLength.trim().equalsIgnoreCase(downloadContentLength.trim())) {
+                            existingContentLength.trim().equalsIgnoreCase(downloadContentLength.trim())) {
                         // Same content length response headers => abort
                         httpRetrieveResponse.setState(RetrievingState.COMPLETED);
                         httpRetrieveResponse.setLog("Conditional download aborted as existing Content-Length == " + existingContentLength + " and download Content-Length == " + downloadContentLength);
@@ -187,10 +198,10 @@ public class SlaveDownloader {
                 // Check if it was aborted because of conditional download with with same headers.
                 if (httpRetrieveResponse.getState() == RetrievingState.COMPLETED && task.getDocumentReferenceTask().getTaskType() == DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) {
                     // We don't set any exception as the download was aborted for a legitimate reason.
-                    cleanup(httpRetrieveResponse,task, asyncHttpClient, httpRetrieveResponse.getException());
+                    cleanup(httpRetrieveResponse, task, asyncHttpClient, httpRetrieveResponse.getException());
                 } else {
                     // We set the exception as the download was aborted because of a problem.
-                    cleanup(httpRetrieveResponse,task, asyncHttpClient, e);
+                    cleanup(httpRetrieveResponse, task, asyncHttpClient, e);
                 }
             }
         });
@@ -201,17 +212,17 @@ public class SlaveDownloader {
                     "Download finished with status {}", r);
 
         } catch (Exception e) {
-            cleanup(httpRetrieveResponse,task, asyncHttpClient, e);
+            cleanup(httpRetrieveResponse, task, asyncHttpClient, e);
 
         } finally {
-            cleanup(httpRetrieveResponse,task, asyncHttpClient, httpRetrieveResponse.getException());
+            cleanup(httpRetrieveResponse, task, asyncHttpClient, httpRetrieveResponse.getException());
             asyncHttpClient.close();
             return httpRetrieveResponse;
         }
     }
 
-    private String fetchContentLengthHeader (Map<String, String> headers) {
-        for (final Map.Entry<String, String> entry: headers.entrySet()) {
+    private String fetchContentLengthHeader(Map<String, String> headers) {
+        for (final Map.Entry<String, String> entry : headers.entrySet()) {
             if ("Content-Length".equalsIgnoreCase(entry.getKey())) {
                 return entry.getValue();
             }
@@ -219,7 +230,7 @@ public class SlaveDownloader {
         return null;
     }
 
-    private void cleanup(final HttpRetrieveResponse httpRetrieveResponse,final RetrieveUrl task, final AsyncHttpClient asyncHttpClient, final Throwable e) {
+    private void cleanup(final HttpRetrieveResponse httpRetrieveResponse, final RetrieveUrl task, final AsyncHttpClient asyncHttpClient, final Throwable e) {
         try {
             if (httpRetrieveResponse != null) {
                 httpRetrieveResponse.setException(e);
