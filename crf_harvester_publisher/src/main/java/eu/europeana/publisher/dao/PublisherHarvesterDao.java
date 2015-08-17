@@ -65,12 +65,20 @@ public class PublisherHarvesterDao {
                                                                                                       .getTextMetaInfo()));
 
                 if (updateEdmObjectUrl(document)) {
-                    final WriteResult result = updateEdmObject("/aggregation/provider" + document.getReferenceOwner().getRecordId(),
+                    final WriteResult resultEdmObject = updateEdmObject("/aggregation/provider" + document.getReferenceOwner().getRecordId(),
                                                                document.getUrl()
                                                               );
 
-                    if (0 == result.getN()) {
+                    if (0 == resultEdmObject.getN()) {
                         updateEdmObject("/provider/aggregation" + document.getReferenceOwner().getRecordId(), document.getUrl());
+                    }
+
+                    final WriteResult resultEdmPreview = updateEdmPreview("/aggregation/europeana" + document.getReferenceOwner().getRecordId(),
+                                                               document.getUrl()
+                                                              );
+
+                    if (0 == resultEdmPreview.getN()) {
+                        updateEdmPreview("/europeana/aggregation" + document.getReferenceOwner().getRecordId(), document.getUrl());
                     }
                 }
             }
@@ -89,6 +97,14 @@ public class PublisherHarvesterDao {
 
         update.put("$set", new BasicDBObject("edmObject", newUrl));
         return mongoDB.getCollection("Aggregation").update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
+    }
+
+    private WriteResult updateEdmPreview (final String about, final String newUrl) {
+        final BasicDBObject query = new BasicDBObject("about", about);
+        final BasicDBObject update = new BasicDBObject();
+
+        update.put("$set", new BasicDBObject("edmPreiview", newUrl));
+        return mongoDB.getCollection("EuropeanaAggregation").update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
     }
 
     private boolean updateEdmObjectUrl (HarvesterDocument crfSolrDocument) {
