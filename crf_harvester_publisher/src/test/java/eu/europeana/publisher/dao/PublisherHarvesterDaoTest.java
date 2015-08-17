@@ -142,15 +142,18 @@ public class PublisherHarvesterDaoTest {
 
     @Test
     public void test_Write_AllElements () {
+        System.out.println(harvesterDocuments.size());
         harvesterDao.writeMetaInfos(harvesterDocuments);
         final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
 
         int idx = 0;
         for (final HarvesterDocument document: harvesterDocuments) {
+            System.out.println(document.getSourceDocumentReferenceMetaInfo().getId());
             final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
 
-            final WebResourceMetaInfo correctMetaInfo =correctMetaInfos.get(idx++);
+            final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
 
+            System.out.println(writtenMetaInfo);
             ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
 
             if (document.getUrlSourceType() == URLSourceType.ISSHOWNBY) {

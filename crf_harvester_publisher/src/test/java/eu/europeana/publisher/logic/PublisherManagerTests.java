@@ -200,8 +200,7 @@ public class PublisherManagerTests {
         query.addField("europeana_id");
 
         try {
-            System.out.println(solrServer.query(query).getResults().toString());
-            assertEquals(sourceResults.size(), solrServer.query(query).getResults().size());
+            assertEquals(6, solrServer.query(query).getResults().size());
         } catch (SolrServerException e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
         }

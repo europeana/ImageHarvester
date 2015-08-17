@@ -95,8 +95,8 @@ public class PublisherHarvesterDao {
         if (null == crfSolrDocument || null == crfSolrDocument.getUrlSourceType() || null == crfSolrDocument.getUrl()) {
             return false;
         }
-        return URLSourceType.ISSHOWNBY == crfSolrDocument.getUrlSourceType() &&
+        return URLSourceType.ISSHOWNBY.equals(crfSolrDocument.getUrlSourceType()) &&
                ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailGenerationState()) &&
-               ProcessingJobRetrieveSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailStorageState());
+               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailStorageState());
     }
 }

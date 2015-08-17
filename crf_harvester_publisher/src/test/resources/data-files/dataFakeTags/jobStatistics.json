@@ -37,7 +37,7 @@
     "processingJobSubTaskStats" : {
       "retrieveState" : "SUCCESS",
       "colorExtractionState" : "SUCCESS",
-      "metaExtractionState" : "NEVER_EXECUTED",
+      "metaExtractionState" : "SUCCESS",
       "thumbnailGenerationState" : "SUCCESS",
       "thumbnailStorageState" : "SUCCESS"
     },
@@ -83,7 +83,7 @@
     "processingJobSubTaskStats" : {
       "retrieveState" : "SUCCESS",
       "colorExtractionState" : "SUCCESS",
-      "metaExtractionState" : "NEVER_EXECUTED",
+      "metaExtractionState" : "SUCCESS",
       "thumbnailGenerationState" : "SUCCESS",
       "thumbnailStorageState" : "SUCCESS"
     },
@@ -126,7 +126,7 @@
     "processingJobSubTaskStats" : {
       "retrieveState" : "SUCCESS",
       "colorExtractionState" : "SUCCESS",
-      "metaExtractionState" : "NEVER_EXECUTED",
+      "metaExtractionState" : "SUCCESS",
       "thumbnailGenerationState" : "SUCCESS",
       "thumbnailStorageState" : "SUCCESS"
     },
