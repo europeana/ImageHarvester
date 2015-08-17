@@ -28,7 +28,7 @@ public class JobLoaderExecutorActor extends UntypedActor {
                                              final Map<String, Integer> ipDistribution
     ) {
         return system.actorOf(Props.create(JobLoaderExecutorActor.class,
-                clusterMasterConfig, accountantActor, processingJobDao, sourceDocumentProcessingStatisticsDao,
+                clusterMasterConfig, accountantActor,limiterActor, processingJobDao, sourceDocumentProcessingStatisticsDao,
                                            SourceDocumentReferenceDao, machineResourceReferenceDao, ipsWithJobs, ipExceptions, ipDistribution ));
 
     }
