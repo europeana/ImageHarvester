@@ -132,21 +132,12 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
         if (ipDistribution.size() <= 0) return Collections.EMPTY_LIST;
 
         final List<ProcessingJob> processingJobs = new ArrayList<>();
-        List<List<String>> partitions = new ArrayList<List<String>>();
-        if ((ipDistribution.size() > 200)) {
-            final int partitionSize = Math.round(ipDistribution.size() / 100);
-            page = new Page (0,Math.round(page.getLimit()/100));
-            partitions = Lists.partition(new ArrayList<>(ipDistribution.keySet()), partitionSize);
 
-        } else {
-            partitions.add(new ArrayList<>(ipDistribution.keySet()));
-        }
-
-        for (final List<String> partition : partitions) {
+        for (final String ip : ipDistribution.keySet()) {
             final Query<ProcessingJob> query = datastore.find(ProcessingJob.class);
             query.criteria("priority").equal(jobPriority.getPriority());
             query.criteria("state").equal(jobState);
-            query.criteria("ipAddress").in(partition);
+            query.criteria("ipAddress").equal(ip);
             query.limit(page.getLimit());
             processingJobs.addAll(query.asList());
         }

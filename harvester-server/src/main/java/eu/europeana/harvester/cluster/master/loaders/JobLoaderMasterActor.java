@@ -87,9 +87,10 @@ public class JobLoaderMasterActor extends UntypedActor {
 
     private boolean haveLoader = false;
 
+    private final ActorRef limiterActor;
 
     public JobLoaderMasterActor(final ActorRef receiverActor, final ClusterMasterConfig clusterMasterConfig,
-                                final ActorRef accountantActor, final ProcessingJobDao processingJobDao,
+                                final ActorRef accountantActor, final ActorRef limiterActor, final ProcessingJobDao processingJobDao,
                                 final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                 final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
@@ -101,7 +102,7 @@ public class JobLoaderMasterActor extends UntypedActor {
         this.receiverActor = receiverActor;
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;
-
+        this.limiterActor = limiterActor;
         this.processingJobDao = processingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.SourceDocumentReferenceDao = SourceDocumentReferenceDao;
@@ -125,7 +126,7 @@ public class JobLoaderMasterActor extends UntypedActor {
                 try {
 
                     ActorRef loaderActor = JobLoaderExecutorActor.createActor(getContext().system(),
-                            clusterMasterConfig, accountantActor, processingJobDao, sourceDocumentProcessingStatisticsDao,
+                            clusterMasterConfig, accountantActor,limiterActor, processingJobDao, sourceDocumentProcessingStatisticsDao,
 
                                                                               SourceDocumentReferenceDao, machineResourceReferenceDao, ipsWithJobs, ipExceptions, ipDistribution
                     );

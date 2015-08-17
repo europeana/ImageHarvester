@@ -70,7 +70,17 @@ public class IPLimiterAccountantActor extends UntypedActor {
             cleanExpiredSlots();
             getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(IPLimiterConfig.getMaxSlotUsageLife().getStandardSeconds(),
                     TimeUnit.SECONDS), getSelf(), new IPLimitCleanExpiredSlots(), getContext().system().dispatcher(), getSelf());
+            return ;
         }
+
+        if (message instanceof  ChangeMaxAvailableSlotsRequest) {
+            final ChangeMaxAvailableSlotsRequest changeMaxAvailableSlotsRequest = (ChangeMaxAvailableSlotsRequest) message;
+            ipLimiterAccountant.setSpecificLimitPerIp(changeMaxAvailableSlotsRequest.getIp(),changeMaxAvailableSlotsRequest.getMaxAvailableSlots());
+            return ;
+        }
+
+        unhandled(message);
+
     }
 
     private final void cleanExpiredSlots() {

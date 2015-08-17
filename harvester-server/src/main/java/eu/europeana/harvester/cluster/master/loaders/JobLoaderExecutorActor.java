@@ -20,7 +20,7 @@ import java.util.Map;
 public class JobLoaderExecutorActor extends UntypedActor {
 
     public static final ActorRef createActor(final ActorSystem system, final ClusterMasterConfig clusterMasterConfig,
-                                             final ActorRef accountantActor, final ProcessingJobDao processingJobDao,
+                                             final ActorRef accountantActor,final ActorRef limiterActor, final ProcessingJobDao processingJobDao,
                                              final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                              final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                              final MachineResourceReferenceDao machineResourceReferenceDao,
@@ -85,10 +85,10 @@ public class JobLoaderExecutorActor extends UntypedActor {
      */
     private final IPExceptions ipExceptions;
 
-
+    private final ActorRef limiterActor;
 
     public JobLoaderExecutorActor(final ClusterMasterConfig clusterMasterConfig,
-                                  final ActorRef accountantActor, final ProcessingJobDao processingJobDao,
+                                  final ActorRef accountantActor,final ActorRef limiterActor, final ProcessingJobDao processingJobDao,
                                   final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                   final SourceDocumentReferenceDao SourceDocumentReferenceDao,
                                   final MachineResourceReferenceDao machineResourceReferenceDao,
@@ -99,6 +99,7 @@ public class JobLoaderExecutorActor extends UntypedActor {
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;
+        this.limiterActor = limiterActor;
         this.processingJobDao = processingJobDao;
         this.sourceDocumentProcessingStatisticsDao = sourceDocumentProcessingStatisticsDao;
         this.SourceDocumentReferenceDao = SourceDocumentReferenceDao;
@@ -118,11 +119,11 @@ public class JobLoaderExecutorActor extends UntypedActor {
             final Timer.Context context = MasterMetrics.Master.loadJobFromDBDuration.time();
             try {
 
-                JobLoaderExecutorHelper.checkForNewFastLaneJobs(clusterMasterConfig, ipDistribution, ipsWithJobs, accountantActor, processingJobDao,
+                JobLoaderExecutorHelper.checkForNewFastLaneJobs(clusterMasterConfig, ipDistribution, ipsWithJobs, accountantActor,limiterActor, processingJobDao,
                                                                 SourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
 
                 JobLoaderExecutorHelper.checkForNewJobs(clusterMasterConfig, ipDistribution, ipsWithJobs,
-                                                        accountantActor, processingJobDao,
+                                                        accountantActor,limiterActor, processingJobDao,
                                                         SourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
 
             } catch (Exception e) {
