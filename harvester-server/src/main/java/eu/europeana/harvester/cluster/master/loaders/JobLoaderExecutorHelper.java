@@ -77,8 +77,6 @@ public class JobLoaderExecutorHelper {
         // Set all the limits found in the machine resource reference table (unless null)
         for (final MachineResourceReference reference : ips) {
             if (reference.getMaxConcurrentConnectionsLimit() != null) {
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                        "{} priority - Setting IP {} with max slot limit {}", jobPriority.name(),reference.getIp() , reference.getMaxConcurrentConnectionsLimit());
                 limiterActor.tell(new ChangeMaxAvailableSlotsRequest(reference.getIp(),reference.getMaxConcurrentConnectionsLimit()),ActorRef.noSender());
             }
         }
