@@ -130,7 +130,6 @@ public class PublisherEuropeanaDao {
     }
 
     private String readUrl (final String sourceDocumentReferenceId) {
-        System.out.println ("Read Url: " + sourceDocumentReferenceId);
         if (StringUtils.isBlank(sourceDocumentReferenceId)) return null;
         final BasicDBObject findQuery = new BasicDBObject();
         final BasicDBObject retrievedFields = new BasicDBObject();

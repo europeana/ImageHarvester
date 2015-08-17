@@ -56,12 +56,9 @@ public class PublisherManagerTests {
             });
             f.get(15, TimeUnit.SECONDS);
 
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException e) {
             fail("Failed to execute: " + e.getMessage());
         } catch (TimeoutException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
         }
     }
 
