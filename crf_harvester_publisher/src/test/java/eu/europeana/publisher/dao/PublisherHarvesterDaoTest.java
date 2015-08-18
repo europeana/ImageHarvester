@@ -142,7 +142,6 @@ public class PublisherHarvesterDaoTest {
 
     @Test
     public void test_Write_AllElements () {
-        System.out.println(harvesterDocuments.size());
         harvesterDao.writeMetaInfos(harvesterDocuments);
         final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
 
@@ -162,5 +161,10 @@ public class PublisherHarvesterDaoTest {
                 assertEquals(document.getUrl(), edmObject);
             }
         }
+    }
+
+    @Test
+    public void test_Write_UpdateEdmObjectCorrectly() {
+
     }
 }

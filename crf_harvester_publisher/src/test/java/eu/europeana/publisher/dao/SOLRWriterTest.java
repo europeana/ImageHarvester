@@ -132,12 +132,12 @@ public class SOLRWriterTest {
 
     @Test
     public void test_UpdateDocuments_NullList() throws IOException, SolrServerException {
-        assertFalse(solrWriter.updateDocuments(null, testBatchId));
+        assertTrue(solrWriter.updateDocuments(null, testBatchId));
     }
 
     @Test
     public void test_UpdateDocuments_EmptyList() throws IOException, SolrServerException {
-        assertFalse(solrWriter.updateDocuments(Collections.EMPTY_LIST, testBatchId));
+        assertTrue(solrWriter.updateDocuments(Collections.EMPTY_LIST, testBatchId));
     }
 
     @Test
@@ -186,6 +186,16 @@ public class SOLRWriterTest {
         } catch (SolrServerException e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
         }
+    }
+
+    @Test
+    public void test_updateCorrectly_HasLandingPage() {
+
+    }
+
+    @Test
+    public void test_updateCorrectly_ProviderAggregationEdmObject() {
+
     }
 
     @Test

@@ -64,7 +64,7 @@ public class PublisherManager {
 
         int count = 0;
         for (final DBTargetConfig targetConfig: config.getTargetDBConfig()) {
-           writers[count] = new PublisherWriter(targetConfig);
+           writers[count++] = new PublisherWriter(targetConfig);
         }
 
         publisherEuropeanaDao = new PublisherEuropeanaDao(config.getSourceMongoConfig());
@@ -72,12 +72,12 @@ public class PublisherManager {
         currentTimestamp = config.getStartTimestamp();
 
 
-        Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.METRIC_REGISTRY)
-                                              .outputTo(LOG)
-                                              .convertRatesTo(TimeUnit.SECONDS)
-                                              .convertDurationsTo(TimeUnit.MILLISECONDS).build();
-
-        reporter.start(20, TimeUnit.SECONDS);
+//        Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.METRIC_REGISTRY)
+//                                              .outputTo(LOG)
+//                                              .convertRatesTo(TimeUnit.SECONDS)
+//                                              .convertDurationsTo(TimeUnit.MILLISECONDS).build();
+//
+//        reporter.start(20, TimeUnit.SECONDS);
 
         if (StringUtils.isEmpty(config.getGraphiteConfig().getServer())) {
             return ;

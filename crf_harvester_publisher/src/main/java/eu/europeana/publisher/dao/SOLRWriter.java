@@ -10,6 +10,7 @@ import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -36,7 +37,7 @@ public class SOLRWriter {
      * The maximum number of ID's that can be present in a SOLR search query.
      * Important because of the limitations of the HTTP URL length.
      */
-    private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 10;
+    private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 1000;
 
     private static final int MAX_RETRIES = 5;
     private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
@@ -72,8 +73,12 @@ public class SOLRWriter {
         final Timer.Context context = PublisherMetrics.Publisher.Write.Solr.solrUpdateDocumentsDuration.time(connectionId);
         try {
             if (null == newDocs || newDocs.isEmpty()) {
-                return false;
-            }
+
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                           publishingBatchId, null, null),
+                          "Received for updating and empty/null list. Ignoring");
+                return true;
+        }
 
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                        publishingBatchId, null, null),
@@ -227,7 +232,8 @@ public class SOLRWriter {
                     try {
                         final SolrClient server = createServer();
 
-                        final QueryResponse response = server.query(query);
+
+                        final QueryResponse response = server.query(query, SolrRequest.METHOD.POST);
                         // Mark in the result the documents id's that have been found
                         if (response != null) {
                             final SolrDocumentList solrResults = response.getResults();
@@ -246,16 +252,17 @@ public class SOLRWriter {
                 }
             }
 
-            final Iterator<HarvesterDocument> documentIterator = documents.iterator();
 
-            while (documentIterator.hasNext()) {
-                final HarvesterDocument document = documentIterator.next();
-
-                if (!acceptedRecordIds.contains(document.getReferenceOwner().getRecordId())) {
-                    documentIterator.remove();
-                }
+            final List<HarvesterDocument> filteredDocuments = new ArrayList<>();
+            for (final HarvesterDocument document: documents) {
+               if (acceptedRecordIds.contains(document.getReferenceOwner().getRecordId())) {
+                   filteredDocuments.add(document);
+               }
             }
+
             PublisherMetrics.Publisher.Read.Solr.totalNumberOfDocumentsThatExistInSolr.inc(documents.size());
+
+            return filteredDocuments;
         }
         finally {
             context.close();
@@ -263,9 +270,6 @@ public class SOLRWriter {
                                                        publishingBatchId, null, null),
                       "Documents that remained after checking: " + (null == documents ? 0 : documents.size()));
         }
-
-        return documents;
-
     }
 
     public String getConnectionId () {

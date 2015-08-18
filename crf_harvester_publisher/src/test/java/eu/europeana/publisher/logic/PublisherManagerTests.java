@@ -255,6 +255,11 @@ public class PublisherManagerTests {
         }
     }
 
+    @Test
+    public void test_publishToMultipleDBs() {
+
+    }
+
 
     @Test
     public void testFakeTags() throws IOException {
