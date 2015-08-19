@@ -260,15 +260,12 @@ public class SOLRWriter {
                }
             }
 
-            PublisherMetrics.Publisher.Read.Solr.totalNumberOfDocumentsThatExistInSolr.inc(documents.size());
+            PublisherMetrics.Publisher.Read.Solr.totalNumberOfDocumentsThatExistInSolr.inc(filteredDocuments.size());
 
             return filteredDocuments;
         }
         finally {
             context.close();
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                       publishingBatchId, null, null),
-                      "Documents that remained after checking: " + (null == documents ? 0 : documents.size()));
         }
     }
 

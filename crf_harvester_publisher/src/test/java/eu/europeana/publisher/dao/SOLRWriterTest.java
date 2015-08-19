@@ -124,7 +124,7 @@ public class SOLRWriterTest {
 
     @Test
     public void test_FilterDocuments_AllInvalid() throws SolrServerException {
-        final List<HarvesterDocument> invalidDocuments = harvesterDocuments.subList(6, harvesterDocuments.size());
+        final List<HarvesterDocument> invalidDocuments = harvesterDocuments.subList(10, harvesterDocuments.size());
         assertTrue(solrWriter.filterDocumentIds(invalidDocuments, testBatchId).isEmpty());
     }
 
@@ -143,6 +143,7 @@ public class SOLRWriterTest {
     public void test_UpdateDocuments() throws IOException, SolrServerException {
         final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
+        final SolrQuery queryHasLandingPage = new SolrQuery();
 
 
         solrWriter.updateDocuments(FakeTagExtractor.extractTags(validDocuments, testBatchId), testBatchId);
@@ -152,8 +153,14 @@ public class SOLRWriterTest {
         query.setQuery("is_fulltext:*");
         query.addField("europeana_id");
 
+        queryHasLandingPage.clear();
+        queryHasLandingPage.setQuery("has_landingpage:*");
+        queryHasLandingPage.addField("europeana_id");
         try {
-            assertEquals(validDocuments.size(), solrServer.query(query).getResults().size());
+            assertEquals(validDocuments.size(),
+                         solrServer.query(query).getResults().size() +
+                         solrServer.query(queryHasLandingPage).getResults().size()
+                        );
         } catch (SolrServerException e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
         }
@@ -176,7 +183,10 @@ public class SOLRWriterTest {
 
             for (final HarvesterDocument document: validDocuments) {
                 query.setQuery("europeana_id:\"" + document.getReferenceOwner().getRecordId() + "\"");
-                if (URLSourceType.ISSHOWNBY == document.getUrlSourceType()) {
+                if (URLSourceType.ISSHOWNBY == document.getUrlSourceType() &&
+                    ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getThumbnailGenerationState()) &&
+                    ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getThumbnailStorageState())
+                        ) {
                     assertEquals(Arrays.asList(document.getUrl()).toString(),
                                  solrServer.query(query).getResults().get(0).get("provider_aggregation_edm_object").toString());
                 }

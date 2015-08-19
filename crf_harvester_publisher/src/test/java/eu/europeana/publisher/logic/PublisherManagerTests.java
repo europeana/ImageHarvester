@@ -5,6 +5,7 @@ import com.mongodb.*;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.crf_faketags.extractor.MediaTypeEncoding;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.junit.Ignore;
 import utilities.inverseLogic.CommonPropertyExtractor;
 import utilities.inverseLogic.ImagePropertyExtractor;
 import utilities.inverseLogic.SoundPropertyExtractor;
@@ -256,6 +257,7 @@ public class PublisherManagerTests {
     }
 
     @Test
+    @Ignore
     public void test_publishToMultipleDBs() {
 
     }
