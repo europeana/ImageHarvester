@@ -1,5 +1,7 @@
 #!/bin/sh
 
+
+
 mvn -Dmaven.test.skip=true -Dmaven.repo.local=$1 clean install package -DskipTests
 cd ./harvester-persistence/
 mvn -Dmaven.test.skip=true -Dmaven.repo.local=$1 clean install package -DskipTests                     
