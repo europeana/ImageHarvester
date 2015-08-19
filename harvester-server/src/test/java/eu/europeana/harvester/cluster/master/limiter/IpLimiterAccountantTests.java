@@ -43,6 +43,22 @@ public class IpLimiterAccountantTests {
 
     }
 
+    @Test
+    public void canEnforceConnectionSlotsLimitsOverridenAtIpLevelAndChangeThem() {
+        final Map<String, Integer> specificLimitsPerIp = new HashMap<>();
+        specificLimitsPerIp.put(ip2, 2);
+        final IpLimiterAccountant ipLimiterAccountant = new IpLimiterAccountant(1, specificLimitsPerIp);
+
+        assertTrue(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId)).getGranted());
+        assertTrue(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2,taskId)).getGranted());
+        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2, taskId)).getGranted());
+        ipLimiterAccountant.setSpecificLimitPerIp(ip2, 3);
+        assertTrue(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2, taskId)).getGranted());
+        assertFalse(ipLimiterAccountant.reserveConnectionSlotRequest(new ReserveConnectionSlotRequest(ip2, taskId)).getGranted());
+
+    }
+
+
     @Test(timeout=10000)
     public void canHandle1MillionRequestsInUnder5Seconds() {
         final DateTime start = DateTime.now();

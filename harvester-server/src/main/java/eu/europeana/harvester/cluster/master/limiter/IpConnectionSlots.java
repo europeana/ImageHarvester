@@ -9,7 +9,7 @@ import java.util.List;
 
 public class IpConnectionSlots {
 
-    private final Integer maxAvailableSlots;
+    private Integer maxAvailableSlots;
     private final String ip;
     private final HashMap<String /* Slot token */, DateTime /* The time when it was granted */> slots;
 
@@ -53,5 +53,9 @@ public class IpConnectionSlots {
 
     public final int getNumberOfAvailableSlots() {
         return maxAvailableSlots-slots.keySet().size();
+    }
+
+    public void setMaxAvailableSlots(Integer maxAvailableSlots) {
+        this.maxAvailableSlots = maxAvailableSlots;
     }
 }

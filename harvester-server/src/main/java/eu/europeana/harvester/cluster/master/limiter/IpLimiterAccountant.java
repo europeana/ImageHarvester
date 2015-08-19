@@ -11,13 +11,14 @@ import java.util.Map;
 public class IpLimiterAccountant {
 
     private final Integer defaultLimitsPerIp;
-    private final Map<String,Integer> specificLimitsPerIp;
-    private final Map<String /* IP */, IpConnectionSlots> occupiedConnectionSlotsPerIp;
+    private final Map<String, Integer> specificLimitsPerIp = new HashMap<>();
+    private final Map<String /* IP */, IpConnectionSlots> occupiedConnectionSlotsPerIp = new HashMap<>();
 
-    public IpLimiterAccountant(Integer defaultLimitsPerIp,Map<String,Integer> specificLimitsPerIp) {
+    public IpLimiterAccountant(Integer defaultLimitsPerIp, Map<String, Integer> newSpecificLimitsPerIp) {
         this.defaultLimitsPerIp = defaultLimitsPerIp;
-        this.specificLimitsPerIp = specificLimitsPerIp;
-        this.occupiedConnectionSlotsPerIp = new HashMap<>();
+        for (final String ip : newSpecificLimitsPerIp.keySet()) {
+            setSpecificLimitPerIp(ip,newSpecificLimitsPerIp.get(ip));
+        }
     }
 
     private final Integer computeLimitPerIp(final String ip) {
@@ -26,7 +27,8 @@ public class IpLimiterAccountant {
     }
 
     private void occupiedConnectionSlotsPerIpFull(final String ip) {
-        if (!occupiedConnectionSlotsPerIp.containsKey(ip)) occupiedConnectionSlotsPerIp.put(ip,new IpConnectionSlots(computeLimitPerIp(ip),ip));
+        if (!occupiedConnectionSlotsPerIp.containsKey(ip))
+            occupiedConnectionSlotsPerIp.put(ip, new IpConnectionSlots(computeLimitPerIp(ip), ip));
     }
 
     public final ReserveConnectionSlotResponse reserveConnectionSlotRequest(final ReserveConnectionSlotRequest reserveConnectionSlotRequest) {
@@ -47,4 +49,9 @@ public class IpLimiterAccountant {
         return reclaimedSlots;
     }
 
+    public final void setSpecificLimitPerIp(final String ip,final Integer limit) {
+        occupiedConnectionSlotsPerIpFull(ip);
+        specificLimitsPerIp.put(ip,limit);
+        occupiedConnectionSlotsPerIp.get(ip).setMaxAvailableSlots(limit);
     }
+}

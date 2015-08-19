@@ -56,5 +56,20 @@ public class IpConnectionSlotsTests {
 
     }
 
+    @Test
+    public void canChangeTheMaxAvailableSlotsUpAndDown() {
+        final IpConnectionSlots ipConnectionSlots = new IpConnectionSlots(1, ip1);
+        final ReserveConnectionSlotResponse slot1 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
+        assertTrue(slot1.getGranted());
+        final ReserveConnectionSlotResponse slot2 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
+        assertFalse(slot2.getGranted());
+        ipConnectionSlots.setMaxAvailableSlots(3);
+        final ReserveConnectionSlotResponse slot3 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
+        assertTrue(slot3.getGranted());
+        ipConnectionSlots.setMaxAvailableSlots(2);
+        final ReserveConnectionSlotResponse slot4 = ipConnectionSlots.requestConnectionSlotReservation(taskId);
+        assertFalse(slot4.getGranted());
+
+    }
 
 }

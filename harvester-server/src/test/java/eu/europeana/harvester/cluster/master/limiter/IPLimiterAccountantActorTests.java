@@ -3,10 +3,7 @@ package eu.europeana.harvester.cluster.master.limiter;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.testkit.JavaTestKit;
-import eu.europeana.harvester.cluster.master.limiter.domain.IPLimiterConfig;
-import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlotRequest;
-import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlotResponse;
-import eu.europeana.harvester.cluster.master.limiter.domain.ReturnConnectionSlotRequest;
+import eu.europeana.harvester.cluster.master.limiter.domain.*;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.Test;
@@ -103,6 +100,44 @@ public class IPLimiterAccountantActorTests {
 
         }};
     }
+
+    @Test
+    public void canHandleIPLimiterAccountantActorWhileLimitsChangeTests() throws InterruptedException {
+        ActorSystem system = ActorSystem.create();
+
+        new JavaTestKit(system) {{
+
+            final Map<String, Integer> specificLimitsPerIp = new HashMap<>();
+            specificLimitsPerIp.put(ip2, 2);
+
+            final ActorRef subject = IPLimiterAccountantActor.createActor(getSystem(), new IPLimiterConfig(1,specificLimitsPerIp,Duration.standardMinutes(10)));
+
+            // (1) Requests all available slots
+            subject.tell(new ReserveConnectionSlotRequest(ip2,taskId), getRef());
+            while (!msgAvailable()) Thread.sleep(100);
+            assertTrue(expectMsgAnyClassOf(ReserveConnectionSlotResponse.class).getGranted());
+
+            subject.tell(new ReserveConnectionSlotRequest(ip2,taskId), getRef());
+            while (!msgAvailable()) Thread.sleep(100);
+            assertTrue(expectMsgAnyClassOf(ReserveConnectionSlotResponse.class).getGranted());
+
+            subject.tell(new ReserveConnectionSlotRequest(ip2,taskId), getRef());
+            while (!msgAvailable()) Thread.sleep(100);
+            assertFalse(expectMsgAnyClassOf(ReserveConnectionSlotResponse.class).getGranted());
+
+            // (2) Increase available slots
+            subject.tell(new ChangeMaxAvailableSlotsRequest(ip2,3), getRef());
+            Thread.sleep(100);
+
+            // (3) Request more slots
+            subject.tell(new ReserveConnectionSlotRequest(ip2,taskId), getRef());
+            while (!msgAvailable()) Thread.sleep(100);
+            assertTrue(expectMsgAnyClassOf(ReserveConnectionSlotResponse.class).getGranted());
+
+        }};
+    }
+
+
 
     @Test(timeout = 10000)
     public void canHandle500kRequestsInUnder10Seconds() throws InterruptedException {

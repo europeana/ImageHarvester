@@ -11,6 +11,7 @@ import eu.europeana.harvester.cluster.domain.messages.inner.AddTask;
 import eu.europeana.harvester.cluster.domain.messages.inner.GetNumberOfTasks;
 import eu.europeana.harvester.cluster.domain.messages.inner.GetOverLoadedIPs;
 import eu.europeana.harvester.cluster.domain.utils.Pair;
+import eu.europeana.harvester.cluster.master.limiter.domain.ChangeMaxAvailableSlotsRequest;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
 import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
@@ -31,31 +32,31 @@ public class JobLoaderExecutorHelper {
      * Checks if there were added any new jobs in the db
      */
     public static void checkForNewJobs(ClusterMasterConfig clusterMasterConfig, Map<String, Integer> ipDistribution,
-                                       HashMap<String, Boolean> ipsWithJobs, ActorRef accountantActor, ProcessingJobDao processingJobDao,
+                                       HashMap<String, Boolean> ipsWithJobs, ActorRef accountantActor,ActorRef limiterActor, ProcessingJobDao processingJobDao,
                                        SourceDocumentReferenceDao SourceDocumentReferenceDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                        final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                        Logger LOG) {
 
         checkForNewJobsByPriority(JobPriority.NORMAL, clusterMasterConfig, ipDistribution, ipsWithJobs,
-                accountantActor, processingJobDao,
+                accountantActor, limiterActor, processingJobDao,
                 SourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
 
     }
 
     public static void checkForNewFastLaneJobs(ClusterMasterConfig clusterMasterConfig, Map<String, Integer> ipDistribution,
-                                               HashMap<String, Boolean> ipsWithJobs, ActorRef accountantActor, ProcessingJobDao processingJobDao,
+                                               HashMap<String, Boolean> ipsWithJobs, ActorRef accountantActor,ActorRef limiterActor, ProcessingJobDao processingJobDao,
                                                SourceDocumentReferenceDao SourceDocumentReferenceDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                                final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                                Logger LOG) {
 
         checkForNewJobsByPriority(JobPriority.FASTLANE, clusterMasterConfig, ipDistribution, ipsWithJobs,
-                accountantActor, processingJobDao,
+                accountantActor, limiterActor, processingJobDao,
                 SourceDocumentReferenceDao, machineResourceReferenceDao, sourceDocumentProcessingStatisticsDao, LOG);
 
     }
 
     public static void checkForNewJobsByPriority(JobPriority jobPriority, ClusterMasterConfig clusterMasterConfig, Map<String, Integer> ipDistribution,
-                                                 HashMap<String, Boolean> ipsWithJobs, ActorRef accountantActor, ProcessingJobDao processingJobDao,
+                                                 HashMap<String, Boolean> ipsWithJobs, ActorRef accountantActor,ActorRef limiterActor, ProcessingJobDao processingJobDao,
                                                  SourceDocumentReferenceDao SourceDocumentReferenceDao, MachineResourceReferenceDao machineResourceReferenceDao,
                                                  final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao,
                                                  Logger LOG) {
@@ -70,6 +71,13 @@ public class JobLoaderExecutorHelper {
         for (MachineResourceReference machine : ips) {
             if (!ipDistribution.containsKey(machine.getIp())) {
                 ipDistribution.put(machine.getIp(), 0);
+            }
+        }
+
+        // Set all the limits found in the machine resource reference table (unless null)
+        for (final MachineResourceReference reference : ips) {
+            if (reference.getMaxConcurrentConnectionsLimit() != null) {
+                limiterActor.tell(new ChangeMaxAvailableSlotsRequest(reference.getIp(),reference.getMaxConcurrentConnectionsLimit()),ActorRef.noSender());
             }
         }
 
@@ -89,7 +97,7 @@ public class JobLoaderExecutorHelper {
                     "{} priority - #IPs with tasks: ip temp size {}, ip all size : {}", jobPriority.name(), tempDistribution.size(), ipDistribution.size());
 
             final Timer.Context loadJobTasksFromDBDuration = MasterMetrics.Master.loadJobTasksFromDBDuration.time();
-            final Page page = new Page(0, clusterMasterConfig.getJobsPerIP() * tempDistribution.size());
+            final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
             final List<ProcessingJob> all =
                     processingJobDao.getDiffusedJobsWithState(jobPriority, JobState.READY, page, tempDistribution);
             loadJobTasksFromDBDuration.stop();

@@ -214,9 +214,10 @@ public class ClusterMasterActor extends UntypedActor {
                 lastSourceDocumentProcessingStatisticsDao,
                 sourceDocumentReferenceDao, sourceDocumentReferenceMetaInfoDao
         ), "receiver");
+        masterLimiter = IPLimiterAccountantActor.createActor(getContext().system(), new IPLimiterConfig(defaultLimits.getDefaultMaxConcurrentConnectionsLimit(), Collections.EMPTY_MAP, defaultLimits.getMaxJobProcessingDuration()), "masterLimiter");
 
         jobLoaderActor = getContext().system().actorOf(Props.create(JobLoaderMasterActor.class, receiverActor,
-                clusterMasterConfig, accountantActor, processingJobDao,
+                clusterMasterConfig, accountantActor,masterLimiter, processingJobDao,
                 sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceDao, machineResourceReferenceDao,
                 defaultLimits, ipsWithJobs, ipExceptions), "jobLoader");
 
@@ -229,7 +230,6 @@ public class ClusterMasterActor extends UntypedActor {
                                                           "jobRestarter"
                                                          );
 
-        masterLimiter = IPLimiterAccountantActor.createActor(getContext().system(), new IPLimiterConfig(defaultLimits.getDefaultMaxConcurrentConnectionsLimit(), Collections.EMPTY_MAP, defaultLimits.getMaxJobProcessingDuration()),"masterLimiter");
 
 
         final Cluster cluster = Cluster.get(getContext().system());
