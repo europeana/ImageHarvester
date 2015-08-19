@@ -52,8 +52,7 @@ public class SOLRWriterTest {
         DButils.loadSOLRData(DATA_PATH_PREFIX + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json",
                       "SourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json",
-                "SourceDocumentReferenceMetaInfo");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
         loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
@@ -78,7 +77,7 @@ public class SOLRWriterTest {
                                                          referenceOwner,
                                                          new SourceDocumentReferenceMetaInfo("", null, null, null, null),
                                                          subTaskStats,
-                                                         0 == i % 2 ? URLSourceType.ISSHOWNBY: URLSourceType.ISSHOWNAT,
+                                                         0 == (i % 2) ? URLSourceType.ISSHOWNBY: URLSourceType.ISSHOWNAT,
                                                          DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                                                          "http://www.google.com"
                                                         )
@@ -89,7 +88,7 @@ public class SOLRWriterTest {
     @After
     public void tearDown() {
         DButils.cleanMongoDatabase(publisherConfig);
-        DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+      //  DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -188,14 +187,33 @@ public class SOLRWriterTest {
         }
     }
 
-    @Test
-    public void test_updateCorrectly_HasLandingPage() {
-
-    }
 
     @Test
-    public void test_updateCorrectly_ProviderAggregationEdmObject() {
+    public void test_UpdateDocuments_HasLandingPage() throws IOException {
+        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        final SolrQuery query = new SolrQuery();
 
+
+        solrWriter.updateDocuments(FakeTagExtractor.extractTags(validDocuments, testBatchId), testBatchId);
+
+
+        query.clear();
+        query.addField("has_landingpage");
+        query.addField("europeana_id");
+
+        try {
+
+            for (final HarvesterDocument document: validDocuments) {
+                query.setQuery("europeana_id:\"" + document.getReferenceOwner().getRecordId() + "\"");
+                if (URLSourceType.ISSHOWNAT == document.getUrlSourceType()) {
+                    assertEquals(ProcessingJobRetrieveSubTaskState.SUCCESS.equals(document.getSubTaskStats().getRetrieveState()),
+                                 solrServer.query(query).getResults().get(0).get("has_landingpage"));
+                }
+            }
+
+        } catch (SolrServerException e) {
+            fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
+        }
     }
 
     @Test
