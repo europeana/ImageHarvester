@@ -18,6 +18,3 @@ mvn -Dmaven.test.skip=true -Dmaven.repo.local=$1 clean install package -DskipTes
 cd ../harvester-client/
 mvn -Dmaven.test.skip=true -Dmaven.repo.local=$1 clean install package -DskipTests
 
-cd ..
-
-mv ./harvester-server/target/harvester-server-0.1-SNAPSHOT-allinone.jar ./harvester.jar
