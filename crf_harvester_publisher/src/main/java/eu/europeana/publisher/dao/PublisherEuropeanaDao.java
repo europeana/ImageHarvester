@@ -5,6 +5,7 @@ import com.google.code.morphia.Morphia;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceDaoImpl;
@@ -136,7 +137,14 @@ public class PublisherEuropeanaDao {
 
         findQuery.put("_id", sourceDocumentReferenceId);
         retrievedFields.put("url", 1);
-        return (String)mongoDB.getCollection("SourceDocumentReference").findOne(findQuery).get("url");
+
+        final DBObject object = mongoDB.getCollection("SourceDocumentReference").findOne(findQuery);
+
+        if (null == object) {
+            System.out.println ("There is no url for sourceDocumentReferenceId: " + sourceDocumentReferenceId);
+            return "";
+        }
+        return (String)object.get("url");
     }
 
     /**
