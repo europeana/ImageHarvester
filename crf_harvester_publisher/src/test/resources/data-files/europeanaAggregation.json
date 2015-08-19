@@ -8,7 +8,8 @@
       ]
     },
     "edmIsShownAt" : "http://www.bildindex.de/dokumente/html/obj99158369",
-    "edmObject" : "http://www.bildindex.de/bilder/it00383b14b.jpg",
+    "edmPreview": "ana are mere",
+    "edmObject" : "ana are mere",
     "edmProvider" : {
       "def" : [
         "Athena"
@@ -29,7 +30,7 @@
         "$id" : "5143b4372cdc789350cadbbf"
       }
     ],
-    "about" : "/aggregation/provider/2021601/media_139792",
+    "about" : "/aggregation/europeana/2021601/media_139792",
     "timestampUpdated" : "2014-07-20T00:14:07.019Z"
   },
   {
@@ -41,6 +42,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000085058",
+    "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -64,7 +66,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/09403/deposit_d_nb_de_cgi_bin_dokserv_id_3624021_prov_M_dok_var_1_dok_ext_htm",
+    "about" : "/aggregation/europeana/09403/deposit_d_nb_de_cgi_bin_dokserv_id_3624021_prov_M_dok_var_1_dok_ext_htm",
     "timestampUpdated" : "2014-07-21T00:14:07.019Z"
   },
   {
@@ -76,6 +78,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000028217",
+     "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -99,7 +102,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/92004/BibliographicResource_2000059214900",
+    "about" : "/aggregation/europeana/92004/BibliographicResource_2000059214900",
     "timestampUpdated" : "2014-06-25T00:28:54.245Z"
   },
   {
@@ -111,6 +114,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000061304",
+     "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -134,7 +138,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/2023601/oai_eu_dismarc_PRE_71728191126911959",
+    "about" : "/aggregation/europeana/2023601/oai_eu_dismarc_PRE_71728191126911959",
     "timestampUpdated" : "2014-06-23T00:30:42.156Z"
   },
   {
@@ -146,6 +150,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000197349",
+     "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -169,7 +174,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/92004/BibliographicResource_2000059204353",
+    "about" : "/aggregation/europeana/92004/BibliographicResource_2000059204353",
     "timestampUpdated" : "2014-08-30T01:31:10.001Z"
   },
   {
@@ -181,6 +186,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000054842",
+     "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -204,7 +210,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/2023831/kng_item_item_jsf_id_105436",
+    "about" : "/aggregation/europeana/2023831/kng_item_item_jsf_id_105436",
     "timestampUpdated" : "2014-08-29T01:52:45.394Z"
   },
   {
@@ -216,6 +222,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000134622",
+     "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -239,7 +246,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/04202/BibliographicResource_2000068309772",
+    "about" : "/aggregation/europeana/04202/BibliographicResource_2000068309772",
     "timestampUpdated" : "2014-09-11T01:58:01.147Z"
   },
   {
@@ -251,6 +258,7 @@
       ]
     },
     "edmIsShownAt" : "http://www.bildindex.de/dokumente/html/obj99158369",
+     "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "def" : [
@@ -272,7 +280,7 @@
         "$id" : "5143b4372cdc789350cadbec"
       }
     ],
-    "about" : "/aggregation/provider/08501/F9792608BEF01F930F6CA5D9272B948C5CBA5DF7",
+    "about" : "/aggregation/europeana/08501/F9792608BEF01F930F6CA5D9272B948C5CBA5DF7",
     "timestampUpdated" : "2014-09-22T01:58:01.147Z"
   },
   {
@@ -284,6 +292,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000181096",
+     "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -307,7 +316,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/04202/BibliographicResource_2000068281758",
+    "about" : "/aggregation/europeana/04202/BibliographicResource_2000068281758",
     "timestampUpdated" : "2014-12-31T00:13:39.694Z"
   },
   {
@@ -319,6 +328,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000153563",
+     "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -342,10 +352,9 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/04202/BibliographicResource_2000068281514",
+    "about" : "/aggregation/europeana/04202/BibliographicResource_2000068281514",
     "timestampUpdated" : "2014-12-31T00:13:45.547Z"
-  }
-  ,
+  },
   {
     "_id" : "63cc5f32e4b01950d8b5f277",
     "className" : "eu.europeana.corelib.solr.entity.AggregationImpl",
@@ -355,6 +364,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000061304",
+    "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -378,7 +388,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/2023601/oar_eu_dismarc_PRE_71728191126911959",
+    "about" : "/aggregation/europeana/2023601/oar_eu_dismarc_PRE_71728191126911959",
     "timestampUpdated" : "2014-06-23T00:30:42.156Z"
   },
   {
@@ -390,7 +400,9 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000061304",
+    "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
+
     "edmProvider" : {
       "en" : [
         "The European Library"
@@ -413,7 +425,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/2023601/oaf_eu_dismarc_PRE_71728191126911959",
+    "about" : "/aggregation/europeana/2023601/oaf_eu_dismarc_PRE_71728191126911959",
     "timestampUpdated" : "2014-06-23T00:30:42.156Z"
   },
   {
@@ -425,6 +437,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000061304",
+    "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -448,7 +461,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/2023601/oad_eu_dismarc_PRE_71728191126911959",
+    "about" : "/aggregation/europeana/2023601/oad_eu_dismarc_PRE_71728191126911959",
     "timestampUpdated" : "2014-06-23T00:30:42.156Z"
   },
   {
@@ -460,6 +473,7 @@
       ]
     },
     "edmIsShownAt" : "http://search.ugent.be/meercat/x/bkt01?q=900000061304",
+    "edmPreview": "ana are mere",
     "edmObject" : "ana are mere",
     "edmProvider" : {
       "en" : [
@@ -483,7 +497,7 @@
       }
     ],
     "edmPreviewNoDistribute" : false,
-    "about" : "/aggregation/provider/2023601/oac_eu_dismarc_PRE_71728191126911959",
+    "about" : "/aggregation/europeana/2023601/oac_eu_dismarc_PRE_71728191126911959",
     "timestampUpdated" : "2014-06-23T00:30:42.156Z"
   }
 ]

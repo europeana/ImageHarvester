@@ -6,8 +6,7 @@ import com.mongodb.DB;
 import com.mongodb.DBCursor;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
-import eu.europeana.harvester.domain.URLSourceType;
-import eu.europeana.harvester.domain.WebResourceMetaInfo;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import org.junit.After;
@@ -22,6 +21,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 
 import static org.junit.Assert.assertEquals;
 import static utilities.DButils.loadMongoData;
@@ -50,6 +50,7 @@ public class PublisherHarvesterDaoTest {
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
         loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "europeanaAggregation.json", "EuropeanaAggregation");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
@@ -59,7 +60,20 @@ public class PublisherHarvesterDaoTest {
         harvesterDocuments = new ArrayList<>();
         harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
 
+        final ListIterator<HarvesterDocument> documentIterator = harvesterDocuments.listIterator();
+
+        while (documentIterator.hasNext()) {
+            final HarvesterDocument document = documentIterator.next();
+
+            if (document.getTaskType() == DocumentReferenceTaskType.CHECK_LINK ||
+                ProcessingJobSubTaskState.SUCCESS != document.getSubTaskStats().getMetaExtractionState()
+               ) {
+               documentIterator.remove();
+            }
+        }
+
         for (final HarvesterDocument document: harvesterDocuments) {
+            if (null == document.getSourceDocumentReferenceMetaInfo()) continue;
             final WebResourceMetaInfo webResourceMetaInfo = new WebResourceMetaInfo(
               document.getSourceDocumentReferenceMetaInfo().getId(),
               document.getSourceDocumentReferenceMetaInfo().getImageMetaInfo(),
@@ -147,26 +161,30 @@ public class PublisherHarvesterDaoTest {
 
         int idx = 0;
         for (final HarvesterDocument document: harvesterDocuments) {
-            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
+            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo()
+                                                                                            .getId());
 
             final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
 
             ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
 
-            if (document.getUrlSourceType() == URLSourceType.ISSHOWNBY) {
-                final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
+            final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
+
+
+            final String edmPreview = (String)db.getCollection("EuropeanaAggregation").findOne(new BasicDBObject("about", "/aggregation/europeana" + document.getReferenceOwner().getRecordId())).get("edmPreview");
+
+            if (URLSourceType.ISSHOWNBY == document.getUrlSourceType() &&
+                ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailGenerationState() &&
+                ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailStorageState()) {
                 assertEquals(document.getUrl(), edmObject);
+                assertEquals(document.getUrl(), edmPreview);
+            }
+            else {
+                assertEquals ("ana are mere", edmObject);
+                assertEquals ("ana are mere", edmPreview);
             }
         }
     }
 
-    @Test
-    public void test_Write_UpdateEdmObject_Correctly() {
 
-    }
-
-    @Test
-    public void test_Write_UpdateEdmPreview_Correctly() {
-
-    }
 }

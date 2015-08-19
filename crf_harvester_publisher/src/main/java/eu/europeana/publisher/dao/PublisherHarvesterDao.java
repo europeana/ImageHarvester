@@ -56,13 +56,14 @@ public class PublisherHarvesterDao {
                     !ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getMetaExtractionState())) {
                     continue;
                 }
-                webResourceMetaInfos.add(new WebResourceMetaInfo(document.getSourceDocumentReferenceMetaInfo().getId(),
-                                                                 document.getSourceDocumentReferenceMetaInfo()
-                                                                         .getImageMetaInfo(), document.getSourceDocumentReferenceMetaInfo()
-                                                                                                      .getAudioMetaInfo(),
-                                                                 document.getSourceDocumentReferenceMetaInfo()
-                                                                         .getVideoMetaInfo(), document.getSourceDocumentReferenceMetaInfo()
-                                                                                                      .getTextMetaInfo()));
+                webResourceMetaInfos.add(
+                    new WebResourceMetaInfo(document.getSourceDocumentReferenceMetaInfo().getId(),
+                                            document.getSourceDocumentReferenceMetaInfo().getImageMetaInfo(),
+                                            document.getSourceDocumentReferenceMetaInfo().getAudioMetaInfo(),
+                                            document.getSourceDocumentReferenceMetaInfo().getVideoMetaInfo(),
+                                            document.getSourceDocumentReferenceMetaInfo().getTextMetaInfo()
+                                           )
+                );
 
                 if (updateEdmObjectUrl(document)) {
                     final WriteResult resultEdmObject = updateEdmObject("/aggregation/provider" + document.getReferenceOwner().getRecordId(),

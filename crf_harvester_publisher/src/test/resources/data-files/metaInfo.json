@@ -90,5 +90,61 @@
       "resolution" : "352x288",
       "bitRate" : 1.152e+06
     }
+  },
+  {
+    "_id" : "664fff8f4654274f9cff28280d7e0008",
+    "className" : "eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo",
+    "audioMetaInfo" : {
+      "sampleRate" : 44100,
+      "bitRate" : 320000,
+      "duration" : 29048,
+      "mimeType" : "audio/mpeg",
+      "fileFormat" : "mp3",
+      "fileSize" : 1162970,
+      "channels" : 2,
+      "bitDepth" : 16
+    }
+  },
+  {
+    "_id" : "564fff8f4654274f9cff28280d7e0008",
+    "className" : "eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo",
+    "audioMetaInfo" : {
+      "sampleRate" : 44100,
+      "bitRate" : 320000,
+      "duration" : 29048,
+      "mimeType" : "audio/mpeg",
+      "fileFormat" : "mp3",
+      "fileSize" : 1162970,
+      "channels" : 2,
+      "bitDepth" : 16
+    }
+  },
+  {
+    "_id" : "464fff8f4654274f9cff28280d7e0008",
+    "className" : "eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo",
+    "audioMetaInfo" : {
+      "sampleRate" : 44100,
+      "bitRate" : 320000,
+      "duration" : 29048,
+      "mimeType" : "audio/mpeg",
+      "fileFormat" : "mp3",
+      "fileSize" : 1162970,
+      "channels" : 2,
+      "bitDepth" : 16
+    }
+  },
+  {
+    "_id" : "364fff8f4654274f9cff28280d7e0008",
+    "className" : "eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo",
+    "audioMetaInfo" : {
+      "sampleRate" : 44100,
+      "bitRate" : 320000,
+      "duration" : 29048,
+      "mimeType" : "audio/mpeg",
+      "fileFormat" : "mp3",
+      "fileSize" : 1162970,
+      "channels" : 2,
+      "bitDepth" : 16
+    }
   }
 ]

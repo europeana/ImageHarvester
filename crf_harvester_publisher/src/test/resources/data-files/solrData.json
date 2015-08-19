@@ -30,5 +30,21 @@
   {
     "europeana_id": "/2021601/media_139792",
     "TYPE": ["IMAGE"]
+  },
+  {
+    "europeana_id": "/2023601/oar_eu_dismarc_PRE_71728191126911959",
+    "TYPE": ["AUDIO"]
+  },
+  {
+    "europeana_id": "/2023601/oaf_eu_dismarc_PRE_71728191126911959",
+    "TYPE": ["AUDIO"]
+  },
+  {
+    "europeana_id": "/2023601/oad_eu_dismarc_PRE_71728191126911959",
+    "TYPE": ["AUDIO"]
+  },
+  {
+    "europeana_id": "/2023601/oac_eu_dismarc_PRE_71728191126911959",
+    "TYPE": ["AUDIO"]
   }
 ]
