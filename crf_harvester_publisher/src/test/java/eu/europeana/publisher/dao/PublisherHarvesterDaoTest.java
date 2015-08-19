@@ -147,16 +147,13 @@ public class PublisherHarvesterDaoTest {
 
         int idx = 0;
         for (final HarvesterDocument document: harvesterDocuments) {
-            System.out.println(document.getSourceDocumentReferenceMetaInfo().getId());
             final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
 
             final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
 
-            System.out.println(writtenMetaInfo);
             ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
 
             if (document.getUrlSourceType() == URLSourceType.ISSHOWNBY) {
-                System.out.println(document.getReferenceOwner().getRecordId());
                 final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
                 assertEquals(document.getUrl(), edmObject);
             }
@@ -164,7 +161,12 @@ public class PublisherHarvesterDaoTest {
     }
 
     @Test
-    public void test_Write_UpdateEdmObjectCorrectly() {
+    public void test_Write_UpdateEdmObject_Correctly() {
+
+    }
+
+    @Test
+    public void test_Write_UpdateEdmPreview_Correctly() {
 
     }
 }
