@@ -27,6 +27,9 @@ import static org.junit.Assert.assertEquals;
  * Created by salexandru on 02.06.2015.
  */
 public class MigratorHarvesterDaoTest {
+
+
+
     private MigratorConfig migratorConfig;
 
     private MigratorHarvesterDao harvesterDao;
