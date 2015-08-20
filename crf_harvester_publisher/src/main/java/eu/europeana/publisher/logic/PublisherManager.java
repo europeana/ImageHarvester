@@ -2,17 +2,13 @@ package eu.europeana.publisher.logic;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricFilter;
-import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.MongoException;
 import eu.europeana.publisher.dao.PublisherEuropeanaDao;
-import eu.europeana.publisher.dao.PublisherHarvesterDao;
 import eu.europeana.publisher.dao.PublisherWriter;
-import eu.europeana.publisher.dao.SOLRWriter;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
@@ -20,7 +16,6 @@ import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.extract.FakeTagExtractor;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.maven.plugin.surefire.runorder.ThreadedExecutionScheduler;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
@@ -30,9 +25,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -55,7 +48,6 @@ public class PublisherManager {
     private PublisherEuropeanaDao publisherEuropeanaDao;
 
     private DateTime currentTimestamp;
-    private DBCursor cursor;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
@@ -74,7 +66,7 @@ public class PublisherManager {
 
         currentTimestamp = config.getStartTimestamp();
 
-
+//  Enable if you want statistics in logs
 //        Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.METRIC_REGISTRY)
 //                                              .outputTo(LOG)
 //                                              .convertRatesTo(TimeUnit.SECONDS)
@@ -103,8 +95,6 @@ public class PublisherManager {
     public void start() throws IOException, SolrServerException, InterruptedException {
        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                  "Starting publishing process. The minimal timestamp is {}", config.getStartTimestamp());
-
-        cursor =  publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
 
         final AtomicLong numberOfDocumentToProcess = new AtomicLong();
         final String publishingBatchId = "publishing-batch-"+DateTime.now().getMillis()+"-"+Math.random();
@@ -143,6 +133,8 @@ public class PublisherManager {
     private void batchProcessing() throws InterruptedException, IOException {
         final String publishingBatchId = "publishing-batch-"+DateTime.now().getMillis()+"-"+Math.random();
 
+        DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(config.getBatch(), currentTimestamp);
+
         LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                  "Executing publishing CRF retrieval query {}", cursor.getQuery());
 
@@ -151,11 +143,9 @@ public class PublisherManager {
 
         do  {
             try {
-                retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor, config.getBatch());
+                retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor);
             }
             catch (MongoException e) {
-                cursor =  publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
-
                 ++retryCursorRebuild;
                 if (retryCursorRebuild > MAX_RETRIES_CURSOR_REBUILD) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
@@ -172,10 +162,12 @@ public class PublisherManager {
             if (null == retrievedDocs || retrievedDocs.isEmpty()) {
                 LOG.error("received null or empty documents from source mongo. Sleeping " + config.getSleepSecondsAfterEmptyBatch());
                 TimeUnit.SECONDS.sleep(config.getSleepSecondsAfterEmptyBatch());
-                cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
+                cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(config.getBatch(), currentTimestamp);
             }
 
         } while (null == retrievedDocs || retrievedDocs.isEmpty());
+
+        cursor.close();
 
 
         LOG.error(LoggingComponent

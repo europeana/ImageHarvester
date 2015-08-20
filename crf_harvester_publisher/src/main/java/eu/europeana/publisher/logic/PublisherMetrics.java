@@ -2,11 +2,6 @@ package eu.europeana.publisher.logic;
 
 import com.codahale.metrics.*;
 import eu.europeana.harvester.monitoring.LazyGauge;
-import scala.io.BytePickle;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.codahale.metrics.MetricRegistry.name;
 

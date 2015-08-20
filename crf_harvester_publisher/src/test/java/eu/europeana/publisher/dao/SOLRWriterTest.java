@@ -2,7 +2,6 @@ package eu.europeana.publisher.dao;
 
 import com.mongodb.DBCursor;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.domain.PublisherConfig;
@@ -59,7 +58,7 @@ public class SOLRWriterTest {
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
 
-        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
+        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor);
         validDocuments = new ArrayList<>(harvesterDocuments);
 
         int size = harvesterDocuments.size();
@@ -88,7 +87,7 @@ public class SOLRWriterTest {
     @After
     public void tearDown() {
         DButils.cleanMongoDatabase(publisherConfig);
-      //  DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -226,6 +225,9 @@ public class SOLRWriterTest {
         }
     }
 
+    //TODO enable this when the problem with loosing solr data when atomic updates are preformed is solved.
+    //     the problem is related to how the solr schema currently defined
+
     @Test
     @Ignore
     public void test_UpdateDocuments_PreserveFields_SimpleData() throws IOException, SolrServerException {
@@ -258,7 +260,7 @@ public class SOLRWriterTest {
 
     @Test
     @Ignore
-    public void test_UpdateDocuments_PreserveFields_ProblamaticData() throws IOException, SolrServerException {
+    public void test_UpdateDocuments_PreserveFields_ProblematicData() throws IOException, SolrServerException {
         tearDown();
         setUpSolrSpecialCase();
 
@@ -302,7 +304,7 @@ public class SOLRWriterTest {
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
 
-        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
+        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor);
         validDocuments = new ArrayList<>(harvesterDocuments);
 
         int size = harvesterDocuments.size();

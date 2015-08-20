@@ -3,6 +3,7 @@ package eu.europeana.publisher.domain;
 import eu.europeana.harvester.domain.MongoConfig;
 import org.joda.time.DateTime;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PublisherConfig {
@@ -45,7 +46,7 @@ public class PublisherConfig {
     public MongoConfig getSourceMongoConfig() {return sourceMongoConfig;}
 
     public List<DBTargetConfig> getTargetDBConfig () {
-        return targetMongoConfigs;
+        return new ArrayList<>(targetMongoConfigs);
     }
 
     public GraphiteReporterConfig getGraphiteConfig () {

@@ -2,6 +2,7 @@ package eu.europeana.publisher.logic;
 
 import categories.IntegrationTest;
 import com.mongodb.*;
+import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.crf_faketags.extractor.MediaTypeEncoding;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -12,8 +13,6 @@ import utilities.inverseLogic.SoundPropertyExtractor;
 import utilities.inverseLogic.VideoPropertyExtractor;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -21,7 +20,6 @@ import org.junit.experimental.categories.Category;
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -62,7 +60,7 @@ public class PublisherManagerTests {
     }
 
     @Test
-    public void testPublishAllData() throws  IOException {
+    public void test_PublishAllData() throws  IOException {
         final String pathToData =  "src/test/resources/data-files/validData/";
         publisherConfig = createPublisherConfig("src/test/resources/config-files/validData/publisher.conf");
 
@@ -78,8 +76,8 @@ public class PublisherManagerTests {
                 .getCollection("SourceDocumentReferenceMetaInfo");
 
 
-        final DBCollection targetMetaInfoDB = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB
-                                                                                                                  ()
+        final DBCollection targetMetaInfoDB = publisherConfig.getTargetDBConfig()
+                                                             .get(0).getMongoConfig().connectToDB()
                                                              .getCollection("WebResourceMetaInfo");
 
 
@@ -105,17 +103,15 @@ public class PublisherManagerTests {
     }
 
     @Test
-    public void testPublishAllDataAfterDate() throws IOException {
+    public void test_PublishAllData_AfterDate() throws IOException {
         final String pathToData =  "src/test/resources/data-files/filterDataByDate/";
-        publisherConfig = createPublisherConfig("src/test/resources/config-files/filterDataByDate" +
-                                                        "/publisher.conf");
+        publisherConfig = createPublisherConfig("src/test/resources/config-files/filterDataByDate/publisher.conf");
 
+        loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
-        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(),
-                      DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
+        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
         runPublisher(publisherConfig);
         final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
@@ -126,7 +122,8 @@ public class PublisherManagerTests {
                 .getCollection("WebResourceMetaInfo");
 
         final BasicDBObject findQuery = new BasicDBObject();
-        final String[] validIds = new String[]{"902b31943b4e66f5578539bfa60f2b82",
+        final String[] validIds = new String[] {
+                "902b31943b4e66f5578539bfa60f2b82",
                 "75a47a2953516381bd9d4d1220bdcfc3",
                 "46787456ff68f404835064723a4d1cd9",
                 "cc6103bee8aa27bfa11b851a2377a015",
@@ -159,7 +156,7 @@ public class PublisherManagerTests {
     }
 
     @Test
-    public void testPublishAllDataWithMetaData() throws IOException {
+    public void test_PublishAllData_WithMetaData() throws IOException {
         final String pathToData =  "src/test/resources/data-files/dataWithMissingMetaInfo/";
         publisherConfig = createPublisherConfig("src/test/resources/config-files/dataWithMissingMetaInfo/publisher.conf");
 
@@ -202,7 +199,7 @@ public class PublisherManagerTests {
     }
 
     @Test
-    public void testPublishAllDataWithSolrDocEquivelent() throws IOException {
+    public void test_PublishAllData_WithSolrEquivalent() throws IOException {
         final String pathToData =  "src/test/resources/data-files/dataWithMissingSolrDoc/";
         publisherConfig = createPublisherConfig("src/test/resources/config-files/dataWithMissingSolrDoc" +
                                                         "/publisher.conf");
@@ -253,98 +250,23 @@ public class PublisherManagerTests {
         }
     }
 
-    @Test
+    @Test //we test to see if identical db's will have the same values published
     @Ignore
-    public void test_publishToMultipleDBs() {
-
-    }
-
-
-    @Test
-    public void testFakeTags() throws IOException {
-        final String pathToData =  "src/test/resources/data-files/dataFakeTags/";
-        publisherConfig = createPublisherConfig("src/test/resources/config-files/dataFakeTags/publisher.conf");
-
+    public void test_publishToMultipleDBs() throws IOException {
+        final String pathToData =  "src/test/resources/data-files/multipleDBRun/";
+        publisherConfig = createPublisherConfig("src/test/resources/config-files/multipleDBRun/publisher.conf");
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
-        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(),
-                      DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
-        runPublisher(publisherConfig);
-
-        final DBCollection sourceMetaInfoDB = publisherConfig.getSourceMongoConfig().connectToDB()
-                                                          .getCollection("SourceDocumentReferenceMetaInfo");
-
-
-        final DBCollection targetMetaInfoDB = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB()
-                                                          .getCollection("WebResourceMetaInfo");
-
-        final BasicDBObject keys = new BasicDBObject();
-        keys.put("className", 0);
-        keys.put("recordId", 0);
-
-        final DBCursor sourceResults = sourceMetaInfoDB.find(new BasicDBObject(), keys).sort(new BasicDBObject("_id", 1));
-        final DBCursor targetResults = targetMetaInfoDB.find(new BasicDBObject()).sort(new BasicDBObject("_id", 1));
-
-        assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
-
-        final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
-        final SolrQuery query = new SolrQuery();
-        query.setQuery("is_fulltext:*");
-        query.addField("europeana_id");
-        query.addField("facet_tags");
-        query.addField("filter_tags");
-
-        try {
-            final QueryResponse solrResults = solrServer.query(query);
-
-            System.out.println(solrServer.query(query).getResults().toString());
-
-            assertEquals(sourceResults.size(), solrResults.getResults().size());
-
-
-
-            //go through all solr elements and check to see if the fake tags where generated ok
-            for (final SolrDocument document : solrResults.getResults()) {
-                final String recordId = (String) document.getFieldValue("europeana_id");
-                final Collection<Object> facetTags = document.getFieldValues("facet_tags");
-
-                if (null == facetTags) {
-                    fail("Facet tags filed cannot be null for this test!");
-                    return;
-                }
-
-                for (final Object facetTag : facetTags) {
-                    final Map.Entry<String, Object> queryParam = getFacetTagValue((Integer)facetTag);
-
-                    if (null != queryParam) {
-                        final BasicDBObject findQuery = new BasicDBObject("recordId", recordId);
-                        if (queryParam.getKey().equals("imageMetaInfo.fileSize")) {
-                            findQuery.put(queryParam.getKey(), new BasicDBObject("$lt", queryParam.getValue()));
-                        }
-                        else if (queryParam.getKey().equals("audioMetaInfo.duration")) {
-                            findQuery.put(queryParam.getKey(), new BasicDBObject("$lt", queryParam.getValue()));
-                        }
-                        else if (queryParam.getKey().equals("videoMetaInfo.duration")) {
-                            findQuery.put(queryParam.getKey(), new BasicDBObject("$lt", queryParam.getValue()));
-                        }
-                        else {
-                            findQuery.put(queryParam.getKey(), queryParam.getValue());
-                        }
-
-                        assertTrue("Unkown facet tag: " + facetTag + " for recordId " + recordId,
-                                    sourceMetaInfoDB.find(findQuery).size() == 1
-                                  );
-                    }
-                }
-            }
-        } catch (Exception e) {
-            fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
+        for (final DBTargetConfig config: publisherConfig.getTargetDBConfig()) {
+            loadMongoData(config.getMongoConfig(), DATA_PATH_PREFIX + "aggregation-" + config.getName()  + ".json", "Aggregation");
+            loadSOLRData(pathToData + "solrData-" + config.getName() + ".json", config.getSolrUrl());
         }
+        runPublisher(publisherConfig);
     }
+
 
     private Map.Entry<String, Object> getFacetTagValue(final Integer facetTag) {
         final String mimeTye = CommonPropertyExtractor.getMimeType(facetTag);

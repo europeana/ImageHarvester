@@ -58,7 +58,7 @@ public class PublisherHarvesterDaoTest {
 
         correctMetaInfos = new ArrayList<>();
         harvesterDocuments = new ArrayList<>();
-        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, cursor.count());
+        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor);
 
         final ListIterator<HarvesterDocument> documentIterator = harvesterDocuments.listIterator();
 

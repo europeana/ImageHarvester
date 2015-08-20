@@ -62,14 +62,14 @@ public class PublisherEuropeanaDaoTest {
 
     @Test
     public void test_buildCursor_withoutDataFilter() {
-        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
+        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
 
         assertEquals (new BasicDBObject(), cursor.getQuery());
     }
 
     @Test
     public void test_buildCursor_withDataFilter() {
-        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(publisherConfig.getStartTimestamp());
+        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, publisherConfig.getStartTimestamp());
         final BasicDBObject query = new BasicDBObject();
 
         query.put ("updatedAt", new BasicDBObject("$gt", publisherConfig.getStartTimestamp().toDate()));
@@ -79,31 +79,31 @@ public class PublisherEuropeanaDaoTest {
 
     @Test (expected = IllegalArgumentException.class)
     public void test_extractDocuments_NullCursor () {
-        europeanaDao.retrieveDocumentsWithMetaInfo(null, 10);
+        europeanaDao.retrieveDocumentsWithMetaInfo(null);
     }
 
     @Test (expected =  IllegalArgumentException.class)
     public void test_extractDocuments_NegativeBatchSize() {
-        europeanaDao.retrieveDocumentsWithMetaInfo(null, -1);
+        europeanaDao.retrieveDocumentsWithMetaInfo(null);
     }
 
     @Test
     public void test_extractDocuments_batchSizeOne () {
-        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
+        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(1, null);
 
         checkDocuments(cursor, 1, null);
     }
 
     @Test
     public void test_extractDocuments_batchSizeTwo () {
-        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
+        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(2, null);
 
         checkDocuments(cursor, 2, null);
     }
 
     @Test
     public void test_extractDocument_withDataFilter_batchSizeTwo() {
-        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(publisherConfig.getStartTimestamp());
+        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(2, publisherConfig.getStartTimestamp());
 
         checkDocuments(cursor, 2, publisherConfig.getStartTimestamp());
     }
@@ -119,7 +119,7 @@ public class PublisherEuropeanaDaoTest {
     }
 
     @Test
-    public void test_extracMetaInfo() {
+    public void test_extractMetaInfo() {
         final Datastore datastore = new Morphia().createDatastore(publisherConfig.getSourceMongoConfig().connectToMongo(),
                                                                   publisherConfig.getSourceMongoConfig().getDbName()
                                                                  );
@@ -144,11 +144,11 @@ public class PublisherEuropeanaDaoTest {
     }
 
 
-    private void checkDocuments (final DBCursor cursor, final int batchSize, final DateTime filter) {
+    private void checkDocuments (final DBCursor cursor, int batchSize, final DateTime filter) {
         final DBCollection jobStatistics = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentProcessingStatistics");
         final DBCollection metaInfos = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentReferenceMetaInfo");
         while (cursor.hasNext()) {
-            final List<HarvesterDocument> documents = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, batchSize);
+            final List<HarvesterDocument> documents = europeanaDao.retrieveDocumentsWithMetaInfo(cursor);
 
             assertEquals(batchSize, documents.size());
 
@@ -161,8 +161,7 @@ public class PublisherEuropeanaDaoTest {
                     final BasicDBObject queryFindDocument = new BasicDBObject();
 
 
-                    queryFindDocument.put("sourceDocumentReferenceId",
-                                          document.getSourceDocumentReferenceId());
+                    queryFindDocument.put("sourceDocumentReferenceId", document.getSourceDocumentReferenceId());
                     queryFindDocument.put("updatedAt", document.getUpdatedAt().toDate());
                     queryFindDocument.put("referenceOwner.recordId", document.getReferenceOwner().getRecordId());
 
