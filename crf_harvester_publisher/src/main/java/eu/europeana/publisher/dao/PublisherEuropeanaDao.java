@@ -2,10 +2,7 @@ package eu.europeana.publisher.dao;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
+import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceDaoImpl;
@@ -181,6 +178,8 @@ public class PublisherEuropeanaDao {
         retrievedFields.put("updatedAt", 1);
         retrievedFields.put("_id", 0);
 
-        return mongoDB.getCollection("SourceDocumentProcessingStatistics").find(findQuery, retrievedFields);
+        final DBCursor cursor = mongoDB.getCollection("SourceDocumentProcessingStatistics").find(findQuery, retrievedFields);
+        cursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+        return cursor;
     }
 }

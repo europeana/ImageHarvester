@@ -8,6 +8,7 @@ import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
+import com.mongodb.MongoException;
 import eu.europeana.publisher.dao.PublisherEuropeanaDao;
 import eu.europeana.publisher.dao.PublisherHarvesterDao;
 import eu.europeana.publisher.dao.PublisherWriter;
@@ -43,6 +44,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * publisher module.
  */
 public class PublisherManager {
+    private static final int MAX_RETRIES_CURSOR_REBUILD = 5;
+
     private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final PublisherConfig config;
@@ -143,9 +146,25 @@ public class PublisherManager {
         LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                  "Executing publishing CRF retrieval query {}", cursor.getQuery());
 
-        List<HarvesterDocument> retrievedDocs;
+        List<HarvesterDocument> retrievedDocs = null;
+        int retryCursorRebuild = 0;
+
         do  {
-            retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor, config.getBatch());
+            try {
+                retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor, config.getBatch());
+            }
+            catch (MongoException e) {
+                cursor =  publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
+
+                ++retryCursorRebuild;
+                if (retryCursorRebuild > MAX_RETRIES_CURSOR_REBUILD) {
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
+                              "Maximum number of retries for rebuilding cursor has been reached. Exiting publisher");
+                    System.exit(-1);
+                }
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
+                          "Error during retrieval. Rebuilding cursor and retrying. Retry number #{}", retryCursorRebuild);
+            }
 
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                      "Retrieved CRF documents with meta info {}", retrievedDocs.size());
@@ -155,6 +174,7 @@ public class PublisherManager {
                 TimeUnit.SECONDS.sleep(config.getSleepSecondsAfterEmptyBatch());
                 cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(currentTimestamp);
             }
+
         } while (null == retrievedDocs || retrievedDocs.isEmpty());
 
 

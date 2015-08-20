@@ -29,8 +29,8 @@ public class PublisherMetrics  {
             public static class Mongo {
                 public static final String NAME =Read.NAME + ".Mongo";
 
-                public static final Timer mongoGetDocStatisticsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "getDocStatistics", DURATION));
-                public static final Timer mongoGetMetaInfoDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "getMetaInfo", DURATION));
+                public static final Timer mongoGetDocStatisticsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveDocStatisticsWithoutMetaInfo", DURATION));
+                public static final Timer mongoGetMetaInfoDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveMetaInfo", DURATION));
 
                 public static final Counter totalNumberOfDocumentsStatistics = METRIC_REGISTRY.counter(name(Mongo.NAME,
                                                                                                       "numberOfDocumentsStatistics",

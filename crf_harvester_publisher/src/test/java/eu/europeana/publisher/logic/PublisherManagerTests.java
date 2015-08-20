@@ -42,8 +42,6 @@ public class PublisherManagerTests {
       cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
     }
 
-
-
     private void runPublisher(final PublisherConfig publisherConfig) {
         try {
             final ExecutorService service = Executors.newSingleThreadExecutor();
@@ -55,8 +53,8 @@ public class PublisherManagerTests {
                     return null;
                 }
             });
-            f.get(15, TimeUnit.SECONDS);
-
+            Thread.sleep((long)(Math.random() * 5000));
+            f.get(10, TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException e) {
             fail("Failed to execute: " + e.getMessage());
         } catch (TimeoutException e) {
@@ -100,7 +98,6 @@ public class PublisherManagerTests {
         query.addField("europeana_id");
 
         try {
-            System.out.println(solrServer.query(query).getResults().toString());
             assertEquals(sourceResults.size(), solrServer.query(query).getResults().size());
         } catch (SolrServerException e) {
             fail("Solr Query Failed: " + e.getMessage() + "\n" + Arrays.deepToString(e.getStackTrace()));
