@@ -252,19 +252,44 @@ public class PublisherManagerTests {
 
     @Test //we test to see if identical db's will have the same values published
     @Ignore
-    public void test_publishToMultipleDBs() throws IOException {
+    public void test_publishToMultipleDBs() throws IOException, SolrServerException {
         final String pathToData =  "src/test/resources/data-files/multipleDBRun/";
         publisherConfig = createPublisherConfig("src/test/resources/config-files/multipleDBRun/publisher.conf");
 
-        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json",
+                      "SourceDocumentProcessingStatistics");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json",
+                      "SourceDocumentReferenceMetaInfo");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json",
+                      "SourceDocumentReference");
 
         for (final DBTargetConfig config: publisherConfig.getTargetDBConfig()) {
-            loadMongoData(config.getMongoConfig(), DATA_PATH_PREFIX + "aggregation-" + config.getName()  + ".json", "Aggregation");
-            loadSOLRData(pathToData + "solrData-" + config.getName() + ".json", config.getSolrUrl());
+            loadMongoData(config.getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
+            loadMongoData(config.getMongoConfig(), DATA_PATH_PREFIX + "europeanaAggregation.json", "EuropeanaAggregation");
+            loadSOLRData(pathToData + "solrData.json", config.getSolrUrl());
         }
         runPublisher(publisherConfig);
+
+        final DB firstMongoDB = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
+        final HttpSolrClient  firstSolr  = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        final SolrQuery solrQuery = new SolrQuery();
+        final BasicDBObject sortOrder = new BasicDBObject("_id", 1);
+        final String[] collectionNames = new String[] {"EuropeanaAggregation", "Aggregation", "WebResourceMetaInfo"};
+
+        solrQuery.setQuery("europeana_id:*");
+        solrQuery.setSort("europeana_id", SolrQuery.ORDER.asc);
+
+        for (final DBTargetConfig config: publisherConfig.getTargetDBConfig().subList(1, publisherConfig.getTargetDBConfig().size())) {
+           for (final String collectionName: collectionNames) {
+               final String collectionOne = firstMongoDB.getCollection(collectionName).find().sort(sortOrder).toArray().toString();
+               final String collectionTwo = config.getMongoConfig().connectToDB().getCollection(collectionName).find().sort(sortOrder).toArray().toString();
+
+               assertEquals (collectionOne, collectionTwo);
+           }
+           final String firstSolrDocs = firstSolr.query(solrQuery).getResults().toString();
+           final String secondSolrDocs = new HttpSolrClient(config.getSolrUrl()).query(solrQuery).getResults().toString();
+            assertEquals(firstSolrDocs, secondSolrDocs);
+        }
     }
 
 

@@ -79,12 +79,12 @@ public class PublisherEuropeanaDaoTest {
 
     @Test (expected = IllegalArgumentException.class)
     public void test_extractDocuments_NullCursor () {
-        europeanaDao.retrieveDocumentsWithMetaInfo(null);
+        europeanaDao.retrieveDocumentsWithMetaInfo(null, "");
     }
 
     @Test (expected =  IllegalArgumentException.class)
     public void test_extractDocuments_NegativeBatchSize() {
-        europeanaDao.retrieveDocumentsWithMetaInfo(null);
+        europeanaDao.retrieveDocumentsWithMetaInfo(null, "");
     }
 
     @Test
@@ -148,7 +148,7 @@ public class PublisherEuropeanaDaoTest {
         final DBCollection jobStatistics = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentProcessingStatistics");
         final DBCollection metaInfos = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentReferenceMetaInfo");
         while (cursor.hasNext()) {
-            final List<HarvesterDocument> documents = europeanaDao.retrieveDocumentsWithMetaInfo(cursor);
+            final List<HarvesterDocument> documents = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, "");
 
             assertEquals(batchSize, documents.size());
 

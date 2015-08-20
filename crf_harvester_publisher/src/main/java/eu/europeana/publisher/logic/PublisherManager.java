@@ -143,21 +143,21 @@ public class PublisherManager {
 
         do  {
             try {
-                retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor);
+                retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor, publishingBatchId);
             }
             catch (MongoException e) {
                 ++retryCursorRebuild;
                 if (retryCursorRebuild > MAX_RETRIES_CURSOR_REBUILD) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
-                              "Maximum number of retries for rebuilding cursor has been reached. Exiting publisher");
+                              "Maximum number of retries for rebuilding cursor has been reached. Exiting publisher", e);
                     System.exit(-1);
                 }
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
-                          "Error during retrieval. Rebuilding cursor and retrying. Retry number #{}", retryCursorRebuild);
+                          "Error during retrieval. Rebuilding cursor and retrying. Retry number #{}", retryCursorRebuild, e);
             }
 
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
-                     "Retrieved CRF documents with meta info {}", retrievedDocs.size());
+                     "Retrieved CRF documents with meta info {}", (null == retrievedDocs ? 0 : retrievedDocs.size()));
 
             if (null == retrievedDocs || retrievedDocs.isEmpty()) {
                 LOG.error("received null or empty documents from source mongo. Sleeping " + config.getSleepSecondsAfterEmptyBatch());

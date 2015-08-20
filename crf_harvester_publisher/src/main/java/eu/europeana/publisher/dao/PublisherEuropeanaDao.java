@@ -7,6 +7,7 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -15,12 +16,14 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 import com.codahale.metrics.Timer.Context;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by salexandru on 03.06.2015.
  */
 public class PublisherEuropeanaDao {
     private DB mongoDB;
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
@@ -36,15 +39,30 @@ public class PublisherEuropeanaDao {
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
     }
 
-    public List<HarvesterDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor) {
+    public List<HarvesterDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final String publishingBatchId) {
         if (null == cursor) {
             throw new IllegalArgumentException ("cursor is null");
         }
 
         final List<HarvesterDocument> completeHarvesterDocuments = new ArrayList<>();
 
+        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
+                                                   publishingBatchId, null, null),
+                  "Retrieving SourceDocumentProcessingStatistics fields"
+                 );
         final Map<String, HarvesterDocument> incompleteHarvesterDocuments = retrieveHarvesterDocumentsWithoutMetaInfo(cursor);
+
+        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
+                                                   publishingBatchId, null, null),
+                  "Done retrieving SourceDocumentProcessingStatistics fields. Getting the metainfos now"
+                 );
+
         final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(incompleteHarvesterDocuments.keySet());
+
+        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
+                                                   publishingBatchId, null, null),
+                  "Metainfos retrieved"
+                 );
 
         PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsStatistics.inc(incompleteHarvesterDocuments.size());
         PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsMetaInfo.inc(metaInfos.size());
@@ -56,6 +74,11 @@ public class PublisherEuropeanaDao {
         }
 
         completeHarvesterDocuments.addAll(incompleteHarvesterDocuments.values());
+
+        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId,
+                                                   null, null),
+                  "Done with the extra processing"
+                 );
         return completeHarvesterDocuments;
     }
 
@@ -92,7 +115,8 @@ public class PublisherEuropeanaDao {
                 documentStatistics.put(sourceDocumentReferenceId,
                                        new HarvesterDocument(sourceDocumentReferenceId, updatedAt,
                                                              new ReferenceOwner(providerId, collectionId, recordId, executionId),
-                                                             null, subTaskStats,
+                                                             null,
+                                                             subTaskStats,
                                                              urlSourceType,
                                                              taskType,
                                                              readUrl(sourceDocumentReferenceId)
@@ -131,7 +155,7 @@ public class PublisherEuropeanaDao {
         final DBObject object = mongoDB.getCollection("SourceDocumentReference").findOne(findQuery);
 
         if (null == object) {
-            System.out.println ("There is no url for sourceDocumentReferenceId: " + sourceDocumentReferenceId);
+            System.out.println("There is no url for sourceDocumentReferenceId: " + sourceDocumentReferenceId);
             return "";
         }
         return (String)object.get("url");
@@ -163,6 +187,17 @@ public class PublisherEuropeanaDao {
             findQuery.put("updatedAt", new BasicDBObject("$gt", dateFilter.toDate()));
         }
 
+        final BasicDBList orList = new BasicDBList();
+
+        orList.add(new BasicDBObject("state", ProcessingState.ERROR.name()));
+        orList.add(new BasicDBObject("state", ProcessingState.FAILED.name()));
+        orList.add(new BasicDBObject("state", ProcessingState.SUCCESS.name()));
+
+        findQuery.put("$or", orList);
+
+        System.out.println("executed query is: " + findQuery.toString());
+
+
         retrievedFields.put("sourceDocumentReferenceId", 1);
         retrievedFields.put("referenceOwner.recordId", 1);
         retrievedFields.put("processingJobSubTaskStats", 1);
@@ -173,6 +208,7 @@ public class PublisherEuropeanaDao {
 
         final DBCursor cursor = mongoDB.getCollection("SourceDocumentProcessingStatistics")
                                        .find(findQuery, retrievedFields)
+                                       .hint("updatedAt_1")
                                        .sort(new BasicDBObject("updatedAt", 1))
                                        .limit(batchSize);
 

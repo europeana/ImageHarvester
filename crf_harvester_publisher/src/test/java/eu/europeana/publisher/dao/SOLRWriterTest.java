@@ -58,7 +58,7 @@ public class SOLRWriterTest {
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
 
-        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor);
+        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, "");
         validDocuments = new ArrayList<>(harvesterDocuments);
 
         int size = harvesterDocuments.size();
@@ -304,7 +304,7 @@ public class SOLRWriterTest {
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
 
-        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor);
+        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, "");
         validDocuments = new ArrayList<>(harvesterDocuments);
 
         int size = harvesterDocuments.size();
