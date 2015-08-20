@@ -56,7 +56,7 @@ public class SOLRWriterTest {
         loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
-        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
+        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
 
         harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor);
         validDocuments = new ArrayList<>(harvesterDocuments);
@@ -302,7 +302,7 @@ public class SOLRWriterTest {
                 "SourceDocumentReferenceMetaInfo");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
-        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
+        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
 
         harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor);
         validDocuments = new ArrayList<>(harvesterDocuments);
