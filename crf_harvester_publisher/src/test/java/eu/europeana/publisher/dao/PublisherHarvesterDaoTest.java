@@ -54,7 +54,7 @@ public class PublisherHarvesterDaoTest {
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
-        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(null);
+        final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
 
         correctMetaInfos = new ArrayList<>();
         harvesterDocuments = new ArrayList<>();
