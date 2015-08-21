@@ -86,15 +86,20 @@ public class PublisherHarvesterDao {
             }
 
             int i = 0;
-            while (true) {
-                try {
-                    webResourceMetaInfoDao.createOrModify(webResourceMetaInfos, WriteConcern.ACKNOWLEDGED);
-                    break;
+            final Timer.Context context_metainfo = PublisherMetrics.Publisher.Write.Mongo.mongoWriteMetaInfoDuration.time(connectionId);
+            try {
+                while (true) {
+                    try {
+                        webResourceMetaInfoDao.createOrModify(webResourceMetaInfos, WriteConcern.ACKNOWLEDGED);
+                        break;
+                    } catch (Exception e) {
+                        ++i;
+                        if (i == MAX_NUMBER_OF_RETRIES) throw e;
+                    }
                 }
-                catch (Exception e) {
-                    ++i;
-                    if (i == MAX_NUMBER_OF_RETRIES) throw e;
-                }
+            }
+            finally {
+               context_metainfo.close();
             }
 
             PublisherMetrics.Publisher.Write.Mongo.totalNumberOfDocumentsWritten.inc(webResourceMetaInfos.size());
@@ -108,37 +113,48 @@ public class PublisherHarvesterDao {
     }
 
     private WriteResult updateEdmObject (final String about, final String newUrl) {
-        int i = 0;
-        while (true) {
-            try {
-                final BasicDBObject query = new BasicDBObject("about", about);
-                final BasicDBObject update = new BasicDBObject();
+        final Timer.Context context = PublisherMetrics.Publisher.Write.Mongo.writeEdmObject.time(connectionId);
+        try {
+            int i = 0;
+            while (true) {
+                try {
+                    final BasicDBObject query = new BasicDBObject("about", about);
+                    final BasicDBObject update = new BasicDBObject();
 
-                update.put("$set", new BasicDBObject("edmObject", newUrl));
-                return mongoDB.getCollection("Aggregation")
-                              .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
-            } catch (Exception e) {
-                ++i;
-                if (i == MAX_NUMBER_OF_RETRIES) throw e;
+                    update.put("$set", new BasicDBObject("edmObject", newUrl));
+                    return mongoDB.getCollection("Aggregation")
+                                  .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
+                } catch (Exception e) {
+                    ++i;
+                    if (i == MAX_NUMBER_OF_RETRIES) throw e;
+                }
             }
+        }
+        finally {
+           context.close();
         }
     }
 
     private WriteResult updateEdmPreview (final String about, final String newUrl) {
-        int i = 0;
-        while (true) {
-            try {
-                final BasicDBObject query = new BasicDBObject("about", about);
-                final BasicDBObject update = new BasicDBObject();
+        final Timer.Context context = PublisherMetrics.Publisher.Write.Mongo.writeEdmPreview.time(connectionId);
+        try {
+            int i = 0;
+            while (true) {
+                try {
+                    final BasicDBObject query = new BasicDBObject("about", about);
+                    final BasicDBObject update = new BasicDBObject();
 
-                update.put("$set", new BasicDBObject("edmPreview", newUrl));
-                return mongoDB.getCollection("EuropeanaAggregation")
-                              .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
+                    update.put("$set", new BasicDBObject("edmPreview", newUrl));
+                    return mongoDB.getCollection("EuropeanaAggregation")
+                                  .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
+                } catch (Exception e) {
+                    ++i;
+                    if (i == MAX_NUMBER_OF_RETRIES) throw e;
+                }
             }
-            catch (Exception e) {
-                ++i;
-                if (i == MAX_NUMBER_OF_RETRIES) throw e;
-            }
+        }
+        finally {
+           context.close();
         }
     }
 

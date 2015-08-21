@@ -56,6 +56,12 @@ public class PublisherMetrics  {
                 public static final Counter  totalNumberOfDocumentsWritten = METRIC_REGISTRY.counter(name(Mongo.NAME, TOTAL, "numberOfDocumentsWrittenMongo", COUNTER));
 
                 public static final CounterMap totalNumberOfDocumentsWrittenToOneConnection = new CounterMap(name (Mongo.NAME, TOTAL, "numberOfDocumentsWrittenToMongo"));
+
+
+                public static TimerMap writeEdmObject = new TimerMap(name(Mongo.NAME, "writeEdmObject", DURATION));
+                public static TimerMap writeEdmPreview = new TimerMap(name(Mongo.NAME, "writeEdmPreview", DURATION));
+
+                public static TimerMap mongoWriteMetaInfoDuration = new TimerMap(name(Mongo.NAME, "writeMetaInfo", DURATION));
             }
 
             public static class Solr {
@@ -70,6 +76,8 @@ public class PublisherMetrics  {
 
         public static class Batch {
             public static final String NAME = Publisher.NAME + ".Batch";
+
+            public static final TimerMap fakeTagExtraction = new TimerMap(name(Batch.NAME, "fakeTagGeneration", DURATION));
 
             public static final Timer loopBatchDuration = METRIC_REGISTRY.timer(name(Batch.NAME, "loopBatch", DURATION));
             public static final Counter totalNumberOfInvalidMimetypes = METRIC_REGISTRY.counter(name(Batch.NAME, TOTAL,

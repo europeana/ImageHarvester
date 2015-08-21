@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -188,7 +189,15 @@ public class PublisherManager {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                       "Starting extracting tags for current pair of solr/mongo write config id {}", writer.getConnectionId());
 
-            final List<CRFSolrDocument> crfSolrDocument = FakeTagExtractor.extractTags(document, newPublishingBatchId);
+            List<CRFSolrDocument> crfSolrDocument = new ArrayList<>();
+
+            final Timer.Context context = PublisherMetrics.Publisher.Batch.fakeTagExtraction.time(writer.getConnectionId());
+            try {
+                FakeTagExtractor.extractTags(document, newPublishingBatchId);
+            }
+            finally {
+               context.stop();
+            }
 
             if (null != crfSolrDocument && !crfSolrDocument.isEmpty()) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
