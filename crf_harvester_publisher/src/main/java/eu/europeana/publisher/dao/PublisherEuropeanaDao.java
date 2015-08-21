@@ -27,6 +27,8 @@ public class PublisherEuropeanaDao {
 
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
 
+
+
     public PublisherEuropeanaDao (MongoConfig mongoConfig) throws UnknownHostException {
 
         if (null == mongoConfig) {
@@ -208,7 +210,7 @@ public class PublisherEuropeanaDao {
 
         final DBCursor cursor = mongoDB.getCollection("SourceDocumentProcessingStatistics")
                                        .find(findQuery, retrievedFields)
-                                       .hint("updatedAt_1")
+                                     //  .hint("updatedAt_1")
                                        .sort(new BasicDBObject("updatedAt", 1))
                                        .limit(batchSize);
 

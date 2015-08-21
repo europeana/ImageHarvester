@@ -2,11 +2,13 @@ package eu.europeana.publisher.dao;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
+import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
@@ -39,6 +41,16 @@ public class PublisherEuropeanaDaoTest {
 
     private PublisherEuropeanaDao europeanaDao;
 
+    private static final BasicDBObject orQuery = new BasicDBObject();
+
+    static {
+        final BasicDBList orList = new BasicDBList();
+        orList.add(new BasicDBObject("state", ProcessingState.ERROR.name()));
+        orList.add(new BasicDBObject("state", ProcessingState.FAILED.name()));
+        orList.add(new BasicDBObject("state", ProcessingState.SUCCESS.name()));
+        orQuery.put("$or", orList);
+    }
+
 
     @Before
     public void setUp() throws IOException {
@@ -64,7 +76,7 @@ public class PublisherEuropeanaDaoTest {
     public void test_buildCursor_withoutDataFilter() {
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
 
-        assertEquals (new BasicDBObject(), cursor.getQuery());
+        assertEquals (orQuery, cursor.getQuery());
     }
 
     @Test
@@ -73,6 +85,7 @@ public class PublisherEuropeanaDaoTest {
         final BasicDBObject query = new BasicDBObject();
 
         query.put ("updatedAt", new BasicDBObject("$gt", publisherConfig.getStartTimestamp().toDate()));
+        query.put ("$or", orQuery.get("$or"));
 
         assertEquals(query, cursor.getQuery());
     }
