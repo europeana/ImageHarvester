@@ -145,7 +145,7 @@ public class PublisherManager {
             try {
                 retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor, publishingBatchId);
             }
-            catch (MongoException e) {
+            catch (Exception e) {
                 ++retryCursorRebuild;
                 if (retryCursorRebuild > MAX_RETRIES_CURSOR_REBUILD) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
