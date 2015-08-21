@@ -193,7 +193,7 @@ public class PublisherManager {
 
             final Timer.Context context = PublisherMetrics.Publisher.Batch.fakeTagExtraction.time(writer.getConnectionId());
             try {
-                FakeTagExtractor.extractTags(document, newPublishingBatchId);
+                crfSolrDocument = FakeTagExtractor.extractTags(document, newPublishingBatchId);
             }
             finally {
                context.stop();
