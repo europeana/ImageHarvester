@@ -138,6 +138,8 @@ public class SOLRWriter {
                     server.commit();
                     server.close();
                     PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToSolr.inc(numberOfDocumentsToUpdate);
+                    PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToOneConnection.inc(connectionId,
+                                                                                                           numberOfDocumentsToUpdate);
                     return true;
                 } catch (Exception e) {
                     LOG.error(LoggingComponent
@@ -261,6 +263,7 @@ public class SOLRWriter {
             }
 
             PublisherMetrics.Publisher.Read.Solr.totalNumberOfDocumentsThatExistInSolr.inc(filteredDocuments.size());
+            PublisherMetrics.Publisher.Read.Solr.totalNumberOfDocumentsThatExistInOneSolr.inc(connectionId, filteredDocuments.size());
 
             return filteredDocuments;
         }

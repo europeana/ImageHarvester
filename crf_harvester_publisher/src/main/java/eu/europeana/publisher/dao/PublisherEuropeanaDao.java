@@ -197,9 +197,6 @@ public class PublisherEuropeanaDao {
 
         findQuery.put("$or", orList);
 
-        System.out.println("executed query is: " + findQuery.toString());
-
-
         retrievedFields.put("sourceDocumentReferenceId", 1);
         retrievedFields.put("referenceOwner.recordId", 1);
         retrievedFields.put("processingJobSubTaskStats", 1);

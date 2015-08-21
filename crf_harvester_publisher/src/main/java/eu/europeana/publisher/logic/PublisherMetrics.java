@@ -42,6 +42,7 @@ public class PublisherMetrics  {
 
                 public static final Counter totalNumberOfDocumentsThatExistInSolr = METRIC_REGISTRY.counter(name(Solr.NAME, TOTAL, "numberOfDocumentsThatExistInSolr", COUNTER));
 
+                public static final CounterMap totalNumberOfDocumentsThatExistInOneSolr= new CounterMap(name(Solr.NAME, TOTAL, "numberOfDocumentsThatExistInSolr"));
             }
         }
 
@@ -53,6 +54,8 @@ public class PublisherMetrics  {
 
                 public static final TimerMap mongoWriteDocumentsDuration = new TimerMap(name(Mongo.NAME, "writeDocuments"));
                 public static final Counter  totalNumberOfDocumentsWritten = METRIC_REGISTRY.counter(name(Mongo.NAME, TOTAL, "numberOfDocumentsWrittenMongo", COUNTER));
+
+                public static final CounterMap totalNumberOfDocumentsWrittenToOneConnection = new CounterMap(name (Mongo.NAME, TOTAL, "numberOfDocumentsWrittenToMongo"));
             }
 
             public static class Solr {
@@ -61,7 +64,7 @@ public class PublisherMetrics  {
                 public static final TimerMap solrUpdateDocumentsDuration = new TimerMap(name(Solr.NAME, "updateDocuments"));
                 public static final Counter totalNumberOfDocumentsWrittenToSolr = METRIC_REGISTRY.counter(name(Solr.NAME, TOTAL, "numberOfDocumentsWrittenToSolr", COUNTER));
 
-
+                public static final CounterMap totalNumberOfDocumentsWrittenToOneConnection = new CounterMap(name (Solr.NAME, TOTAL, "numberOfDocumentsWrittenToSolr"));
             }
         }
 

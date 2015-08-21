@@ -22,6 +22,7 @@ import java.util.List;
  * Created by salexandru on 03.06.2015.
  */
 public class PublisherHarvesterDao {
+    private static final int MAX_NUMBER_OF_RETRIES = 5;
     private final WebResourceMetaInfoDao webResourceMetaInfoDao;
     private final String connectionId;
 
@@ -84,8 +85,22 @@ public class PublisherHarvesterDao {
                 }
             }
 
+            int i = 0;
+            while (true) {
+                try {
+                    webResourceMetaInfoDao.createOrModify(webResourceMetaInfos, WriteConcern.ACKNOWLEDGED);
+                    break;
+                }
+                catch (Exception e) {
+                    ++i;
+                    if (i == MAX_NUMBER_OF_RETRIES) throw e;
+                }
+            }
+
             PublisherMetrics.Publisher.Write.Mongo.totalNumberOfDocumentsWritten.inc(webResourceMetaInfos.size());
-            webResourceMetaInfoDao.createOrModify(webResourceMetaInfos, WriteConcern.ACKNOWLEDGED);
+            PublisherMetrics.Publisher.Write.Mongo.totalNumberOfDocumentsWrittenToOneConnection.inc(connectionId,
+                                                                                                    webResourceMetaInfos.size()
+                                                                                                   );
         }
         finally {
             context.close();
@@ -93,19 +108,38 @@ public class PublisherHarvesterDao {
     }
 
     private WriteResult updateEdmObject (final String about, final String newUrl) {
-        final BasicDBObject query = new BasicDBObject("about", about);
-        final BasicDBObject update = new BasicDBObject();
+        int i = 0;
+        while (true) {
+            try {
+                final BasicDBObject query = new BasicDBObject("about", about);
+                final BasicDBObject update = new BasicDBObject();
 
-        update.put("$set", new BasicDBObject("edmObject", newUrl));
-        return mongoDB.getCollection("Aggregation").update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
+                update.put("$set", new BasicDBObject("edmObject", newUrl));
+                return mongoDB.getCollection("Aggregation")
+                              .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
+            } catch (Exception e) {
+                ++i;
+                if (i == MAX_NUMBER_OF_RETRIES) throw e;
+            }
+        }
     }
 
     private WriteResult updateEdmPreview (final String about, final String newUrl) {
-        final BasicDBObject query = new BasicDBObject("about", about);
-        final BasicDBObject update = new BasicDBObject();
+        int i = 0;
+        while (true) {
+            try {
+                final BasicDBObject query = new BasicDBObject("about", about);
+                final BasicDBObject update = new BasicDBObject();
 
-        update.put("$set", new BasicDBObject("edmPreview", newUrl));
-        return mongoDB.getCollection("EuropeanaAggregation").update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
+                update.put("$set", new BasicDBObject("edmPreview", newUrl));
+                return mongoDB.getCollection("EuropeanaAggregation")
+                              .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
+            }
+            catch (Exception e) {
+                ++i;
+                if (i == MAX_NUMBER_OF_RETRIES) throw e;
+            }
+        }
     }
 
     private boolean updateEdmObjectUrl (HarvesterDocument crfSolrDocument) {
