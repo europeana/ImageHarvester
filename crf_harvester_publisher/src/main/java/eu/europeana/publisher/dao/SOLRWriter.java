@@ -8,11 +8,17 @@ import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
+import org.apache.solr.client.solrj.impl.BinaryResponseParser;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
@@ -56,10 +62,26 @@ public class SOLRWriter {
         this.solrUrl = solrConfig.getSolrUrl();
     }
 
-    private SolrClient createServer () {
-        final HttpSolrClient server = new HttpSolrClient(solrUrl);
-        server.setRequestWriter(new BinaryRequestWriter());
-        return server;
+    private SolrClient createServer (String publishingBatchId) {
+        int retry = 0;
+        while (true) {
+            try {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                           publishingBatchId, null, null),
+                          "Trying to connect to the solr server: " + solrUrl + ". Retry #" + retry);
+                final RequestConfig.Builder requestBuilder = RequestConfig.custom().setConnectTimeout(3000)
+                                                                          .setConnectionRequestTimeout(3000);
+                final HttpClientBuilder clientBuilder = HttpClientBuilder.create()
+                                                                         .setDefaultRequestConfig(requestBuilder
+                                                                                                          .build());
+                final HttpSolrClient server = new HttpSolrClient(solrUrl, clientBuilder.build(), new BinaryResponseParser());
+                return server;
+            }
+            catch (Exception e) {
+                ++retry;
+                if (retry > MAX_RETRIES) throw e;
+            }
+        }
     }
 
     public String getSolrUrl() {return solrUrl;}
@@ -85,7 +107,7 @@ public class SOLRWriter {
                                                        "Number of Documents trying to update: " + newDocs.size());
             int retry = 0;
             while (retry <= MAX_RETRIES) {
-                final SolrClient server = createServer();
+                final SolrClient server = createServer(publishingBatchId);
 
                 int numberOfDocumentsToUpdate = 0;
                 // Adding individual documents in server
@@ -232,7 +254,7 @@ public class SOLRWriter {
                     query.setQuery("europeana_id:" + queryString);
 
                     try {
-                        final SolrClient server = createServer();
+                        final SolrClient server = createServer(publishingBatchId);
 
 
                         final QueryResponse response = server.query(query, SolrRequest.METHOD.POST);
