@@ -7,6 +7,7 @@ import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.crf_faketags.extractor.MediaTypeEncoding;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.junit.Ignore;
+import org.unitils.reflectionassert.ReflectionAssert;
 import utilities.inverseLogic.CommonPropertyExtractor;
 import utilities.inverseLogic.ImagePropertyExtractor;
 import utilities.inverseLogic.SoundPropertyExtractor;
@@ -37,7 +38,9 @@ public class PublisherManagerTests {
     @After
     public void tearDown() {
       cleanMongoDatabase(publisherConfig);
-      cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+      for (final DBTargetConfig config: publisherConfig.getTargetDBConfig()) {
+          cleanSolrDatabase(config.getSolrUrl());
+      }
     }
 
     private void runPublisher(final PublisherConfig publisherConfig) {
@@ -224,6 +227,7 @@ public class PublisherManagerTests {
         final BasicDBObject keys = new BasicDBObject();
         keys.put("className", 0);
         keys.put("recordId", 0);
+        keys.put("_version_", 0);
 
         final BasicDBObject filterQuery = new BasicDBObject();
         final String[] validIds = new String[]{"902b31943b4e66f5578539bfa60f2b82",
@@ -235,6 +239,7 @@ public class PublisherManagerTests {
 
         final DBCursor sourceResults = sourceMetaInfoDB.find(filterQuery, keys).sort(new BasicDBObject("_id", 1));
         final DBCursor targetResults = targetMetaInfoDB.find(new BasicDBObject()).sort(new BasicDBObject("_id", 1));
+
 
         assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
 
@@ -251,7 +256,6 @@ public class PublisherManagerTests {
     }
 
     @Test //we test to see if identical db's will have the same values published
-    @Ignore
     public void test_publishToMultipleDBs() throws IOException, SolrServerException {
         final String pathToData =  "src/test/resources/data-files/multipleDBRun/";
         publisherConfig = createPublisherConfig("src/test/resources/config-files/multipleDBRun/publisher.conf");
@@ -277,6 +281,15 @@ public class PublisherManagerTests {
         final String[] collectionNames = new String[] {"EuropeanaAggregation", "Aggregation", "WebResourceMetaInfo"};
 
         solrQuery.setQuery("europeana_id:*");
+        solrQuery.addField("europeana_id");
+        solrQuery.addField("has_landingpage");
+        solrQuery.addField("has_media");
+        solrQuery.addField("has_thumbnails");
+        solrQuery.addField("id2hash");
+        solrQuery.addField("id3hash");
+        solrQuery.addField("facet_tags");
+        solrQuery.addField("filter_tags");
+
         solrQuery.setSort("europeana_id", SolrQuery.ORDER.asc);
 
         for (final DBTargetConfig config: publisherConfig.getTargetDBConfig().subList(1, publisherConfig.getTargetDBConfig().size())) {

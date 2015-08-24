@@ -45,6 +45,11 @@ public class SOLRWriter {
      */
     private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 1000;
 
+    /*
+     *  Connection timeout for solr queries. Time unit is milliseconds
+     */
+    private static final int CONNECTION_TIMEOUT = 5000;
+
     private static final int MAX_RETRIES = 5;
     private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
     private final String solrUrl;
@@ -69,12 +74,16 @@ public class SOLRWriter {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                            publishingBatchId, null, null),
                           "Trying to connect to the solr server: " + solrUrl + ". Retry #" + retry);
-                final RequestConfig.Builder requestBuilder = RequestConfig.custom().setConnectTimeout(3000)
-                                                                          .setConnectionRequestTimeout(3000);
+                final RequestConfig.Builder requestBuilder = RequestConfig.custom()
+                                                                          .setConnectTimeout(CONNECTION_TIMEOUT)
+                                                                          .setConnectionRequestTimeout(CONNECTION_TIMEOUT);
                 final HttpClientBuilder clientBuilder = HttpClientBuilder.create()
                                                                          .setDefaultRequestConfig(requestBuilder
                                                                                                           .build());
                 final HttpSolrClient server = new HttpSolrClient(solrUrl, clientBuilder.build(), new BinaryResponseParser());
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                           publishingBatchId, null, null),
+                          "Connected successfully to solr: " + solrUrl + ". Retry #" + retry);
                 return server;
             }
             catch (Exception e) {
@@ -163,7 +172,8 @@ public class SOLRWriter {
                     PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToOneConnection.inc(connectionId,
                                                                                                            numberOfDocumentsToUpdate);
                     return true;
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     LOG.error(LoggingComponent
                                       .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId,
                                                        null, null),
@@ -270,8 +280,13 @@ public class SOLRWriter {
 
                         LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                                    publishingBatchId, null, null),
-                                  "Failed when executing existence query for {} documents. Will mark the documents as non-existent. The query string is {}",
+                                  "Failed when executing existence query for {} documents. Will mark the documents as non-existent. The query is {}",
                                   MAX_NUMBER_OF_IDS_IN_SOLR_QUERY, queryString);
+                        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                                   publishingBatchId, null, null),
+                                  "The exception is",
+                                  MAX_NUMBER_OF_IDS_IN_SOLR_QUERY, e
+                                 );
                     }
                 }
             }
