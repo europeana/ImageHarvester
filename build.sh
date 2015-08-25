@@ -7,6 +7,8 @@ cd ../media-storage-client/
 mvn -Dmaven.test.skip=true clean install package -DskipTests
 cd ../harvester-job-creator/
 mvn -Dmaven.test.skip=true clean install package -DskipTests
+cd ../harvester-client/
+mvn -Dmaven.test.skip=true clean install package -DskipTests
 cd ../harvester-server/
 mvn -Dmaven.test.skip=true clean install package -DskipTests
 

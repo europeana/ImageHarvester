@@ -62,10 +62,10 @@ public class JobLoaderExecutorHelper {
                                                  Logger LOG) {
         final int taskSize = getAllTasks(accountantActor, LOG);
 
-        LOG.info("{} priority - Starting job loading, tasksize = {}", jobPriority.name(), taskSize);
+        //LOG.info("{} priority - Starting job loading, tasksize = {}", jobPriority.name(), taskSize);
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                "{} priority - Checking IPs in database", jobPriority.name());
+//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                "{} priority - Checking IPs in database", jobPriority.name());
 
         List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0, 10000));
         for (MachineResourceReference machine : ips) {
@@ -93,8 +93,8 @@ public class JobLoaderExecutorHelper {
                 }
             }
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                    "{} priority - #IPs with tasks: ip temp size {}, ip all size : {}", jobPriority.name(), tempDistribution.size(), ipDistribution.size());
+//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                    "{} priority - #IPs with tasks: ip temp size {}, ip all size : {}", jobPriority.name(), tempDistribution.size(), ipDistribution.size());
 
             final Timer.Context loadJobTasksFromDBDuration = MasterMetrics.Master.loadJobTasksFromDBDuration.time();
             final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
@@ -105,8 +105,8 @@ public class JobLoaderExecutorHelper {
             // Update the IP with jobs distributed state
             for (ProcessingJob job : all) ipsWithJobs.put(job.getIpAddress(),true);
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                    "{} priority - Done with loading {} priority jobs. Creating tasks from them.", jobPriority.name(), all.size());
+//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                    "{} priority - Done with loading {} priority jobs. Creating tasks from them.", jobPriority.name(), all.size());
 
             final Timer.Context loadJobResourcesFromDBDuration = MasterMetrics.Master.loadJobResourcesFromDBDuration.time();
 
@@ -114,20 +114,20 @@ public class JobLoaderExecutorHelper {
             final Map<String, SourceDocumentProcessingStatistics> referenceIdTolastJobProcessingStatisticsMap = getSourceDocumentProcessingStatisticsMap(sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceIdToDoc.values());
             loadJobResourcesFromDBDuration.stop();
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                    "{} priority -  Done with loading {} resources.", jobPriority.name(), sourceDocumentReferenceIdToDoc.size());
+//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                    "{} priority -  Done with loading {} resources.", jobPriority.name(), sourceDocumentReferenceIdToDoc.size());
 
             List<String> processingJobIdsThatAreRunningInHarvester = new ArrayList<>();
             int i = 0;
             for (final ProcessingJob job : all) {
                 try {
-
-                    i++;
-                    if (i >= 500) {
-                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                                "{} priority -  Done with another 500 jobs out of {}", jobPriority.name(), all.size());
-                        i = 0;
-                    }
+//
+//                    i++;
+//                    if (i >= 500) {
+//                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                                "{} priority -  Done with another 500 jobs out of {}", jobPriority.name(), all.size());
+//                        i = 0;
+//                    }
                     addJob(job, jobPriority.getPriority(), sourceDocumentReferenceIdToDoc, referenceIdTolastJobProcessingStatisticsMap, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
                             accountantActor, LOG);
 
@@ -138,13 +138,10 @@ public class JobLoaderExecutorHelper {
                 }
             }
 
-            if (processingJobIdsThatAreRunningInHarvester.isEmpty()) {
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                        "{} priority -   JobLoaderMasterActor, no new jobs loaded as there where none matching.", jobPriority.name());
-            } else {
+            if (!processingJobIdsThatAreRunningInHarvester.isEmpty()) {
                 processingJobDao.modifyStateOfJobsWithIds(JobState.RUNNING, processingJobIdsThatAreRunningInHarvester);
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                        "{} priority -   JobLoaderMasterActor, {} new jobs loaded & their state in DB is RUNNING.", jobPriority.name(), processingJobIdsThatAreRunningInHarvester.size());
+//                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                        "{} priority -   JobLoaderMasterActor, {} new jobs loaded & their state in DB is RUNNING.", jobPriority.name(), processingJobIdsThatAreRunningInHarvester.size());
             }
         }
     }
@@ -237,9 +234,9 @@ public class JobLoaderExecutorHelper {
             }
         }
 
-        if (tasks.size() > 10)
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                    "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
+//        if (tasks.size() > 10)
+//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                    "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
         final List<String> taskIds = new ArrayList<>();
         for (final RetrieveUrl retrieveUrl : generatedTasks) {

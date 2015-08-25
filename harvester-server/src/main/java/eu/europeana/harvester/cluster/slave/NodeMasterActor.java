@@ -10,7 +10,6 @@ import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlo
 import eu.europeana.harvester.cluster.master.limiter.domain.ReturnConnectionSlotRequest;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
-import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -82,8 +81,6 @@ public class NodeMasterActor extends UntypedActor {
                            final NodeMasterConfig nodeMasterConfig,
                            final MediaStorageClient mediaStorageClient
                            ) {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                "Slave master constructed.");
 
         this.masterSender = masterSender;
         this.nodeSupervisor = nodeSupervisor;
@@ -114,7 +111,6 @@ public class NodeMasterActor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER), "Slave master preStart.");
 
         lastRequest = 0l;
         sentRequest = false;
@@ -130,14 +126,11 @@ public class NodeMasterActor extends UntypedActor {
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER), "Slave master preStart.");
     }
 
     @Override
     public void postRestart(Throwable reason) throws Exception {
         super.postRestart(reason);
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                "Slave master postStart.");
 
         sentRequest = false;
         lastRequest = 0l;
@@ -206,8 +199,7 @@ public class NodeMasterActor extends UntypedActor {
                         );
                 this.actors.add(newActor);
                 context().watch(newActor);
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                        "Slave master starting new Worker Actor {} ",newActor);
+
                 newActor.tell(msg, getSelf());
             }
             if ( taskIDToRetrieveURL.size() < nodeMasterConfig.getTaskNrLimit()) {
@@ -258,8 +250,8 @@ public class NodeMasterActor extends UntypedActor {
 
                 if(msg != null) {
                     RetrieveUrlWithProcessingConfig tst = (RetrieveUrlWithProcessingConfig) msg;
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                            "Slave master starting new Worker Actor for url {} ",tst.getRetrieveUrl().getUrl());
+//                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
+//                            "Slave master starting new Worker Actor for url {} ",tst.getRetrieveUrl().getUrl());
 
                     ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
                             httpRetrieveResponseFactory, mediaStorageClient, nodeMasterConfig.getColorMapPath()
@@ -298,12 +290,7 @@ public class NodeMasterActor extends UntypedActor {
                     //self().tell(new RequestTasks(), ActorRef.noSender());
                     masterSender.tell(new RequestTasks(), nodeSupervisor);
                     lastRequest = System.currentTimeMillis();
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                            "Slave master requesting tasks time difference ");
-                } else {
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                            "No request: " + jobsReadyToBeProcessed.size() + " " + sentRequest + " task limits: "+
-                                    nodeMasterConfig.getTaskNrLimit()+" time diff : " +diff);
+
                 }
 
         }
@@ -328,8 +315,7 @@ public class NodeMasterActor extends UntypedActor {
     }
 
     private void onCleanReceived() {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                "Cleaning up slave");
+
 
         context().system().stop(getSelf());
     }
@@ -340,8 +326,7 @@ public class NodeMasterActor extends UntypedActor {
 
     private void onChangeJobStateReceived(ChangeJobState message) {
         final ChangeJobState changeJobState = message;
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-                "Changing job state to: {}", changeJobState.getNewState());
+
 
         switch (changeJobState.getNewState()) {
             case PAUSE:

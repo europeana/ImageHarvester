@@ -8,7 +8,6 @@ import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.domain.messages.RequestTasks;
 import eu.europeana.harvester.cluster.domain.messages.inner.*;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
-import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,8 +89,8 @@ public class AccountantActor extends UntypedActor {
             return;
         } else if (message instanceof RequestTasks) {
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
-                    "Received request for tasks from " + getSender());
+//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_SENDER),
+//                    "Received request for tasks from " + getSender());
 
             MasterMetrics.Master.sendJobSetToSlaveCounter.inc();
             final com.codahale.metrics.Timer.Context context = MasterMetrics.Master.sendJobSetToSlaveDuration.time();

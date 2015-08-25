@@ -52,15 +52,15 @@ class MetricsListener extends UntypedActor {
   void logHeap(NodeMetrics nodeMetrics) {
     HeapMemory heap = StandardMetrics.extractHeapMemory(nodeMetrics);
     if (heap != null) {
-      log.info("Used heap: {} MB", ((double) heap.used()) / 1024 / 1024);
+      //log.info("Used heap: {} MB", ((double) heap.used()) / 1024 / 1024);
     }
   }
 
   void logCpu(NodeMetrics nodeMetrics) {
     Cpu cpu = StandardMetrics.extractCpu(nodeMetrics);
     if (cpu != null && cpu.systemLoadAverage().isDefined()) {
-      log.info("Load: {} ({} processors)", cpu.systemLoadAverage().get(), 
-        cpu.processors());
+//      log.info("Load: {} ({} processors)", cpu.systemLoadAverage().get(),
+//        cpu.processors());
     }
   }
 
