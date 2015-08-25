@@ -55,9 +55,13 @@ public class PublisherHarvesterDao {
 
             for (final HarvesterRecord record : records) {
                 for (final SourceDocumentReferenceMetaInfo metaInfo : record.getUniqueMetainfos()) {
-                    webResourceMetaInfos.add(new WebResourceMetaInfo(metaInfo.getId(), metaInfo.getImageMetaInfo(),
-                                                                     metaInfo.getAudioMetaInfo(), metaInfo.getVideoMetaInfo(),
-                                                                     metaInfo.getTextMetaInfo()));
+                    webResourceMetaInfos.add(new WebResourceMetaInfo(metaInfo.getId(),
+                                                                     metaInfo.getImageMetaInfo(),
+                                                                     metaInfo.getAudioMetaInfo(),
+                                                                     metaInfo.getVideoMetaInfo(),
+                                                                     metaInfo.getTextMetaInfo()
+                                                                    )
+                                            );
                 }
 
                 if (record.updateEdmObject()) {
