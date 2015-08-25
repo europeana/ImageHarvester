@@ -10,6 +10,7 @@ import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
 
@@ -42,45 +43,39 @@ public class PublisherHarvesterDao {
     }
 
 
-    public void writeMetaInfos (Collection<HarvesterDocument> documents) {
+    public void writeMetaInfos (Collection<HarvesterRecord> records) {
         final Timer.Context context = PublisherMetrics.Publisher.Write.Mongo.mongoWriteDocumentsDuration.time(connectionId);
 
         try {
-            if (null == documents || documents.isEmpty()) {
+            if (null == records || records.isEmpty()) {
                 return;
             }
 
             final List<WebResourceMetaInfo> webResourceMetaInfos = new ArrayList<>();
 
-            for (final HarvesterDocument document : documents) {
-                if (DocumentReferenceTaskType.CHECK_LINK.equals(document.getTaskType()) ||
-                    !ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getMetaExtractionState())) {
-                    continue;
+            for (final HarvesterRecord record : records) {
+                for (final SourceDocumentReferenceMetaInfo metaInfo : record.getUniqueMetainfos()) {
+                    webResourceMetaInfos.add(new WebResourceMetaInfo(metaInfo.getId(), metaInfo.getImageMetaInfo(),
+                                                                     metaInfo.getAudioMetaInfo(), metaInfo.getVideoMetaInfo(),
+                                                                     metaInfo.getTextMetaInfo()));
                 }
-                webResourceMetaInfos.add(
-                    new WebResourceMetaInfo(document.getSourceDocumentReferenceMetaInfo().getId(),
-                                            document.getSourceDocumentReferenceMetaInfo().getImageMetaInfo(),
-                                            document.getSourceDocumentReferenceMetaInfo().getAudioMetaInfo(),
-                                            document.getSourceDocumentReferenceMetaInfo().getVideoMetaInfo(),
-                                            document.getSourceDocumentReferenceMetaInfo().getTextMetaInfo()
-                                           )
-                );
 
-                if (updateEdmObjectUrl(document)) {
-                    final WriteResult resultEdmObject = updateEdmObject("/aggregation/provider" + document.getReferenceOwner().getRecordId(),
-                                                               document.getUrl()
-                                                              );
+                if (record.updateEdmObject()) {
+                    final String newUrl = record.newEdmObjectUrl();
+                    final WriteResult resultEdmObject = updateEdmObject("/aggregation/provider" + record.getReferenceOwner()
+                                                                                                        .getRecordId(),
+                                                                        newUrl);
 
                     if (0 == resultEdmObject.getN()) {
-                        updateEdmObject("/provider/aggregation" + document.getReferenceOwner().getRecordId(), document.getUrl());
+                        updateEdmObject("/provider/aggregation" + record.getReferenceOwner().getRecordId(), newUrl);
                     }
 
-                    final WriteResult resultEdmPreview = updateEdmPreview("/aggregation/europeana" + document.getReferenceOwner().getRecordId(),
-                                                               document.getUrl()
-                                                              );
+                    final WriteResult resultEdmPreview = updateEdmPreview("/aggregation/europeana" + record.getReferenceOwner()
+                                                                                                           .getRecordId(),
+                                                                          newUrl);
 
                     if (0 == resultEdmPreview.getN()) {
-                        updateEdmPreview("/europeana/aggregation" + document.getReferenceOwner().getRecordId(), document.getUrl());
+                        updateEdmPreview("/europeana/aggregation" + record.getReferenceOwner().getRecordId(), newUrl);
                     }
                 }
             }
@@ -156,14 +151,5 @@ public class PublisherHarvesterDao {
         finally {
            context.close();
         }
-    }
-
-    private boolean updateEdmObjectUrl (HarvesterDocument crfSolrDocument) {
-        if (null == crfSolrDocument || null == crfSolrDocument.getUrlSourceType() || null == crfSolrDocument.getUrl()) {
-            return false;
-        }
-        return URLSourceType.ISSHOWNBY.equals(crfSolrDocument.getUrlSourceType()) &&
-               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailGenerationState()) &&
-               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailStorageState());
     }
 }

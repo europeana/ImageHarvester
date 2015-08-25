@@ -6,13 +6,9 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.mongodb.DBCursor;
-import com.mongodb.MongoException;
 import eu.europeana.publisher.dao.PublisherEuropeanaDao;
 import eu.europeana.publisher.dao.PublisherWriter;
-import eu.europeana.publisher.domain.CRFSolrDocument;
-import eu.europeana.publisher.domain.DBTargetConfig;
-import eu.europeana.publisher.domain.HarvesterDocument;
-import eu.europeana.publisher.domain.PublisherConfig;
+import eu.europeana.publisher.domain.*;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.extract.FakeTagExtractor;
 import org.apache.commons.lang3.StringUtils;
@@ -139,12 +135,12 @@ public class PublisherManager {
         LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                  "Executing publishing CRF retrieval query {}", cursor.getQuery());
 
-        List<HarvesterDocument> retrievedDocs = null;
+        List<HarvesterRecord> retrievedDocs = null;
         int retryCursorRebuild = 0;
 
         do  {
             try {
-                retrievedDocs = publisherEuropeanaDao.retrieveDocumentsWithMetaInfo(cursor, publishingBatchId);
+                retrievedDocs = publisherEuropeanaDao.retrieveDocuments(cursor, publishingBatchId);
             }
             catch (Exception e) {
                 ++retryCursorRebuild;
@@ -181,7 +177,7 @@ public class PublisherManager {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                       "Starting filtering current pair of solr/mongo write config id {}", writer.getConnectionId());
 
-            final List<HarvesterDocument> document = writer.getSolrWriter().filterDocumentIds(retrievedDocs, publishingBatchId);
+            final List<HarvesterRecord> document = writer.getSolrWriter().filterDocumentIds(retrievedDocs, publishingBatchId);
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                       "Retrieved CRF documents after SOLR filtering {} for config id {}", document.size(),
                       writer.getConnectionId());
@@ -237,15 +233,18 @@ public class PublisherManager {
                  "Updating timestamp after batch finished to " + currentTimestamp);
     }
 
-    private DateTime updateTimestamp(final DateTime currentTime, final Collection<HarvesterDocument> documents) throws
+    private DateTime updateTimestamp(final DateTime currentTime, final Collection<HarvesterRecord> records) throws
             IOException {
         DateTime time = currentTime;
 
-        for (final HarvesterDocument document : documents) {
-            if (null == time) {
-                time = document.getUpdatedAt();
-            } else if (time.isBefore(document.getUpdatedAt())) {
-                time = document.getUpdatedAt();
+        for (final HarvesterRecord record : records) {
+            for (final HarvesterDocument document: record.getAllDocuments()) {
+                if (null == time) {
+                    time = document.getUpdatedAt();
+                }
+                else if (time.isBefore(document.getUpdatedAt())) {
+                    time = document.getUpdatedAt();
+                }
             }
         }
 

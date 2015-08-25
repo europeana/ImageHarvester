@@ -67,8 +67,9 @@ public class PublisherManagerTests {
         final String pathToData =  "src/test/resources/data-files/validData/";
         publisherConfig = createPublisherConfig("src/test/resources/config-files/validData/publisher.conf");
 
-        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
         loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
         loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
@@ -91,7 +92,16 @@ public class PublisherManagerTests {
         final DBCursor sourceResults = sourceMetaInfoDB.find(new BasicDBObject(), keys).sort(new BasicDBObject("_id", 1));
         final DBCursor targetResults = targetMetaInfoDB.find(new BasicDBObject()).sort(new BasicDBObject("_id", 1));
 
-        assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
+        assertEquals (sourceResults.count(), targetResults.count());
+
+        for (int i = 0; i < sourceResults.count(); ++i) {
+            final DBObject sourceObject = sourceResults.toArray().get(i);
+            final DBObject targetObject = targetResults.toArray().get(i);
+
+            for (final String key: sourceObject.keySet()) {
+                ReflectionAssert.assertReflectionEquals(sourceObject.get(key), targetObject.get(key));
+            }
+        }
 
         final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
@@ -111,6 +121,7 @@ public class PublisherManagerTests {
         publisherConfig = createPublisherConfig("src/test/resources/config-files/filterDataByDate/publisher.conf");
 
         loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
@@ -143,7 +154,18 @@ public class PublisherManagerTests {
         final DBCursor sourceResults = sourceMetaInfoDB.find(findQuery, keys).sort(new BasicDBObject("_id", 1));
         System.out.println(sourceResults.getQuery().toString());
         final DBCursor targetResults = targetMetaInfoDB.find(new BasicDBObject()).sort(new BasicDBObject("_id", 1));
-        assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
+
+
+        assertEquals (sourceResults.count(), targetResults.count());
+
+        for (int i = 0; i < sourceResults.count(); ++i) {
+            final DBObject sourceObject = sourceResults.toArray().get(i);
+            final DBObject targetObject = targetResults.toArray().get(i);
+
+            for (final String key: sourceObject.keySet()) {
+                ReflectionAssert.assertReflectionEquals(sourceObject.get(key), targetObject.get(key));
+            }
+        }
 
         final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
@@ -164,6 +186,7 @@ public class PublisherManagerTests {
         publisherConfig = createPublisherConfig("src/test/resources/config-files/dataWithMissingMetaInfo/publisher.conf");
 
 
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
         loadSOLRData(pathToData + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
@@ -187,7 +210,16 @@ public class PublisherManagerTests {
         final DBCursor sourceResults = sourceMetaInfoDB.find(new BasicDBObject(), keys).sort(new BasicDBObject("_id", 1));
         final DBCursor targetResults = targetMetaInfoDB.find(new BasicDBObject()).sort(new BasicDBObject("_id", 1));
 
-        assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
+        assertEquals (sourceResults.count(), targetResults.count());
+
+        for (int i = 0; i < sourceResults.count(); ++i) {
+            final DBObject sourceObject = sourceResults.toArray().get(i);
+            final DBObject targetObject = targetResults.toArray().get(i);
+
+            for (final String key: sourceObject.keySet()) {
+                ReflectionAssert.assertReflectionEquals(sourceObject.get(key), targetObject.get(key));
+            }
+        }
 
         final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
@@ -207,6 +239,7 @@ public class PublisherManagerTests {
         publisherConfig = createPublisherConfig("src/test/resources/config-files/dataWithMissingSolrDoc" +
                                                         "/publisher.conf");
 
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "SourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json",
                       "SourceDocumentReferenceMetaInfo");
@@ -241,7 +274,16 @@ public class PublisherManagerTests {
         final DBCursor targetResults = targetMetaInfoDB.find(new BasicDBObject()).sort(new BasicDBObject("_id", 1));
 
 
-        assertArrayEquals(sourceResults.toArray().toArray(), targetResults.toArray().toArray());
+        assertEquals (sourceResults.count(), targetResults.count());
+
+        for (int i = 0; i < sourceResults.count(); ++i) {
+            final DBObject sourceObject = sourceResults.toArray().get(i);
+            final DBObject targetObject = targetResults.toArray().get(i);
+
+            for (final String key: sourceObject.keySet()) {
+                ReflectionAssert.assertReflectionEquals(sourceObject.get(key), targetObject.get(key));
+            }
+        }
 
         final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
@@ -256,12 +298,12 @@ public class PublisherManagerTests {
     }
 
     @Test //we test to see if identical db's will have the same values published
+    @Ignore
     public void test_publishToMultipleDBs() throws IOException, SolrServerException {
         final String pathToData =  "src/test/resources/data-files/multipleDBRun/";
         publisherConfig = createPublisherConfig("src/test/resources/config-files/multipleDBRun/publisher.conf");
 
-        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json",
-                      "SourceDocumentProcessingStatistics");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), pathToData + "metaInfo.json",
                       "SourceDocumentReferenceMetaInfo");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json",

@@ -10,11 +10,13 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
-import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.domain.HarvesterRecord;
+import eu.europeana.publisher.domain.PublisherConfig;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import utilities.ConfigUtils;
 import utilities.DButils;
@@ -58,6 +60,7 @@ public class PublisherEuropeanaDaoTest {
         europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
 
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
         loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
     }
@@ -92,12 +95,12 @@ public class PublisherEuropeanaDaoTest {
 
     @Test (expected = IllegalArgumentException.class)
     public void test_extractDocuments_NullCursor () {
-        europeanaDao.retrieveDocumentsWithMetaInfo(null, "");
+        europeanaDao.retrieveDocuments(null, "");
     }
 
     @Test (expected =  IllegalArgumentException.class)
     public void test_extractDocuments_NegativeBatchSize() {
-        europeanaDao.retrieveDocumentsWithMetaInfo(null, "");
+        europeanaDao.retrieveDocuments(null, "");
     }
 
     @Test
@@ -139,9 +142,13 @@ public class PublisherEuropeanaDaoTest {
 
         final SourceDocumentReferenceMetaInfoDao metaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(datastore);
 
-        final List<String> ids = Arrays.asList("902b31943b4e66f5578539bfa60f2b82", "75a47a2953516381bd9d4d1220bdcfc3",
-                                               "46787456ff68f404835064723a4d1cd9", "cc6103bee8aa27bfa11b851a2377a015",
-                                               "764fff8f4654274f9cff28280d7e0008", "2d74ba5b07344f9587b5c67693fcb3a5");
+        final List<String> ids = Arrays.asList("902b31943b4e66f5578539bfa60f2b82",
+                                               "75a47a2953516381bd9d4d1220bdcfc3",
+                                               "46787456ff68f404835064723a4d1cd9",
+                                               "cc6103bee8aa27bfa11b851a2377a015",
+                                               "764fff8f4654274f9cff28280d7e0008",
+                                               "2d74ba5b07344f9587b5c67693fcb3a5"
+                                              );
 
         final List<SourceDocumentReferenceMetaInfo> metaInfos = europeanaDao.retrieveMetaInfo(ids);
 
@@ -156,37 +163,38 @@ public class PublisherEuropeanaDaoTest {
 
     }
 
-
     private void checkDocuments (final DBCursor cursor, int batchSize, final DateTime filter) {
         final DBCollection jobStatistics = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentProcessingStatistics");
         final DBCollection metaInfos = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentReferenceMetaInfo");
         while (cursor.hasNext()) {
-            final List<HarvesterDocument> documents = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, "");
+            final List<HarvesterRecord> records = europeanaDao.retrieveDocuments(cursor, "");
 
-            assertEquals(batchSize, documents.size());
+            assertEquals(batchSize, records.size());
 
-            for (final HarvesterDocument document : documents) {
-                if (null != filter) {
-                    assertTrue (filter.isBefore(document.getUpdatedAt()));
-                }
+            for (final HarvesterRecord record: records) {
+                for (final HarvesterDocument document : record.getAllDocuments()) {
+                    if (null != filter) {
+                        assertTrue(filter.isBefore(document.getUpdatedAt()));
+                    }
 
-                {
-                    final BasicDBObject queryFindDocument = new BasicDBObject();
+                    {
+                        final BasicDBObject queryFindDocument = new BasicDBObject();
 
 
-                    queryFindDocument.put("sourceDocumentReferenceId", document.getSourceDocumentReferenceId());
-                    queryFindDocument.put("updatedAt", document.getUpdatedAt().toDate());
-                    queryFindDocument.put("referenceOwner.recordId", document.getReferenceOwner().getRecordId());
+                        queryFindDocument.put("sourceDocumentReferenceId", document.getSourceDocumentReferenceId());
+                        queryFindDocument.put("updatedAt", document.getUpdatedAt().toDate());
+                        queryFindDocument.put("referenceOwner.recordId", document.getReferenceOwner().getRecordId());
 
-                    assertEquals(1L, jobStatistics.count(queryFindDocument));
-                }
+                        assertEquals(1L, jobStatistics.count(queryFindDocument));
+                    }
 
-                {
-                    final BasicDBObject queryFindMetaInfo = new BasicDBObject();
+                    {
+                        final BasicDBObject queryFindMetaInfo = new BasicDBObject();
 
-                    queryFindMetaInfo.put ("_id", document.getSourceDocumentReferenceId());
+                        queryFindMetaInfo.put("_id", document.getSourceDocumentReferenceId());
 
-                    assertEquals(1L, metaInfos.count(queryFindMetaInfo));
+                        assertEquals(1L, metaInfos.count(queryFindMetaInfo));
+                    }
                 }
             }
         }

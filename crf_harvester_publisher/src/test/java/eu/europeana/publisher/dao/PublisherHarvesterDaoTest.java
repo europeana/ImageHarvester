@@ -7,10 +7,12 @@ import com.mongodb.DBCursor;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.unitils.reflectionassert.ReflectionAssert;
 import utilities.ConfigUtils;
@@ -38,7 +40,7 @@ public class PublisherHarvesterDaoTest {
 
     private PublisherHarvesterDao harvesterDao;
     private List<WebResourceMetaInfo> correctMetaInfos;
-    private List<HarvesterDocument> harvesterDocuments;
+    private List<HarvesterRecord> harvesterDocuments;
 
     private WebResourceMetaInfoDao webResourceMetaInfoDao;
 
@@ -58,31 +60,20 @@ public class PublisherHarvesterDaoTest {
 
         correctMetaInfos = new ArrayList<>();
         harvesterDocuments = new ArrayList<>();
-        harvesterDocuments = europeanaDao.retrieveDocumentsWithMetaInfo(cursor, "");
+        harvesterDocuments = europeanaDao.retrieveDocuments(cursor, "");
 
-        final ListIterator<HarvesterDocument> documentIterator = harvesterDocuments.listIterator();
+        for (final HarvesterRecord record: harvesterDocuments) {
+            for (final SourceDocumentReferenceMetaInfo metaInfo: record.getUniqueMetainfos()) {
+                final WebResourceMetaInfo webResourceMetaInfo = new WebResourceMetaInfo(
+                    metaInfo.getId(),
+                    metaInfo.getImageMetaInfo(),
+                    metaInfo.getAudioMetaInfo(),
+                    metaInfo.getVideoMetaInfo(),
+                    metaInfo.getTextMetaInfo()
+                );
 
-        while (documentIterator.hasNext()) {
-            final HarvesterDocument document = documentIterator.next();
-
-            if (document.getTaskType() == DocumentReferenceTaskType.CHECK_LINK ||
-                ProcessingJobSubTaskState.SUCCESS != document.getSubTaskStats().getMetaExtractionState()
-               ) {
-               documentIterator.remove();
+                correctMetaInfos.add (webResourceMetaInfo);
             }
-        }
-
-        for (final HarvesterDocument document: harvesterDocuments) {
-            if (null == document.getSourceDocumentReferenceMetaInfo()) continue;
-            final WebResourceMetaInfo webResourceMetaInfo = new WebResourceMetaInfo(
-              document.getSourceDocumentReferenceMetaInfo().getId(),
-              document.getSourceDocumentReferenceMetaInfo().getImageMetaInfo(),
-              document.getSourceDocumentReferenceMetaInfo().getAudioMetaInfo(),
-              document.getSourceDocumentReferenceMetaInfo().getVideoMetaInfo(),
-              document.getSourceDocumentReferenceMetaInfo().getTextMetaInfo()
-            );
-
-            correctMetaInfos.add (webResourceMetaInfo);
         }
 
         webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(
@@ -120,16 +111,22 @@ public class PublisherHarvesterDaoTest {
         final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
 
         int idx = 0;
-        for (final HarvesterDocument document: harvesterDocuments.subList(0, 1)) {
-            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
+        for (final HarvesterRecord record: harvesterDocuments.subList(0, 1)) {
+            for (final SourceDocumentReferenceMetaInfo metaInfo : record.getUniqueMetainfos()) {
+                final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(metaInfo.getId());
 
-            final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
+                final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
 
-            ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
+                ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
+            }
 
-            if (document.getUrlSourceType() == URLSourceType.ISSHOWNBY) {
-               final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
-               assertEquals(document.getUrl(), edmObject);
+            final HarvesterDocument document = record.getEdmIsShownByDocument();
+
+            if (null != document) {
+                final String edmObject = (String) db.getCollection("Aggregation").findOne(
+                      new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId()))
+                                       .get("edmObject");
+                assertEquals(document.getUrl(), edmObject);
             }
         }
     }
@@ -140,15 +137,21 @@ public class PublisherHarvesterDaoTest {
         final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
 
         int idx = 0;
-        for (final HarvesterDocument document: harvesterDocuments.subList(0, 2)) {
-            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo().getId());
+        for (final HarvesterRecord record: harvesterDocuments.subList(0, 1)) {
+            for (final SourceDocumentReferenceMetaInfo metaInfo : record.getUniqueMetainfos()) {
+                final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(metaInfo.getId());
 
-            final WebResourceMetaInfo correctMetaInfo =correctMetaInfos.get(idx++);
+                final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
 
-            ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
+                ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
+            }
 
-            if (document.getUrlSourceType() == URLSourceType.ISSHOWNBY) {
-                final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
+            final HarvesterDocument document = record.getEdmIsShownByDocument();
+
+            if (null != document) {
+                final String edmObject = (String) db.getCollection("Aggregation").findOne(
+                                                                                                 new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId()))
+                                                    .get("edmObject");
                 assertEquals(document.getUrl(), edmObject);
             }
         }
@@ -160,31 +163,32 @@ public class PublisherHarvesterDaoTest {
         final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
 
         int idx = 0;
-        for (final HarvesterDocument document: harvesterDocuments) {
-            final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(document.getSourceDocumentReferenceMetaInfo()
-                                                                                            .getId());
+        for (final HarvesterRecord record: harvesterDocuments.subList(0, 1)) {
+            for (final SourceDocumentReferenceMetaInfo metaInfo : record.getUniqueMetainfos()) {
+                final WebResourceMetaInfo writtenMetaInfo = webResourceMetaInfoDao.read(metaInfo.getId());
 
-            final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
+                final WebResourceMetaInfo correctMetaInfo = correctMetaInfos.get(idx++);
 
-            ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
+                ReflectionAssert.assertReflectionEquals(correctMetaInfo, writtenMetaInfo);
+            }
 
+            final HarvesterDocument document = record.getEdmIsShownByDocument();
+            System.out.println(document.getReferenceOwner().getRecordId());
             final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
-
-
             final String edmPreview = (String)db.getCollection("EuropeanaAggregation").findOne(new BasicDBObject("about", "/aggregation/europeana" + document.getReferenceOwner().getRecordId())).get("edmPreview");
 
-            if (URLSourceType.ISSHOWNBY == document.getUrlSourceType() &&
-                ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailGenerationState() &&
-                ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailStorageState()) {
+
+            if (null != document &&
+                 ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailGenerationState() &&
+                 ProcessingJobSubTaskState.SUCCESS == document.getSubTaskStats().getThumbnailStorageState()) {
+
                 assertEquals(document.getUrl(), edmObject);
                 assertEquals(document.getUrl(), edmPreview);
             }
             else {
-                assertEquals ("ana are mere", edmObject);
-                assertEquals ("ana are mere", edmPreview);
+                assertEquals("ana are mere", edmObject);
+                assertEquals("ana are mere", edmPreview);
             }
         }
     }
-
-
 }

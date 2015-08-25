@@ -4,31 +4,23 @@ import com.codahale.metrics.Timer;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
-import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
 import org.apache.solr.client.solrj.impl.BinaryResponseParser;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.params.CommonParams;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.text.Document;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -120,30 +112,26 @@ public class SOLRWriter {
 
                 int numberOfDocumentsToUpdate = 0;
                 // Adding individual documents in server
-                for (final CRFSolrDocument CRFSolrDocument : newDocs) {
+                for (final CRFSolrDocument crfSolrDocument : newDocs) {
 
                     final SolrInputDocument update = new SolrInputDocument();
 
-                    update.addField("europeana_id", CRFSolrDocument.getRecordId());
+                    update.addField("europeana_id", crfSolrDocument.getRecordId());
 
-                    if (DocumentReferenceTaskType.CHECK_LINK == CRFSolrDocument.getTaskType()) {
-                        update.addField("has_landingpage", singletonMap("set", CRFSolrDocument.getHasLandingPage()));
-                    }
-                    else {
+                    update.addField("has_landingpage", singletonMap("set", crfSolrDocument.getHasLandingPage()));
 
-                        update.addField("is_fulltext", singletonMap("set", CRFSolrDocument.getIsFulltext()));
+                    update.addField("is_fulltext", singletonMap("set", crfSolrDocument.getIsFullText()));
 
-                        update.addField("has_thumbnails", singletonMap("set", CRFSolrDocument.getHasThumbnails()));
+                    update.addField("has_thumbnails", singletonMap("set", crfSolrDocument.getHasThumbnails()));
 
-                        update.addField("has_media", singletonMap("set", CRFSolrDocument.getHasMedia()));
+                    update.addField("has_media", singletonMap("set", crfSolrDocument.getHasMedia()));
 
-                        update.addField("filter_tags", singletonMap("set", CRFSolrDocument.getFilterTags()));
+                    update.addField("filter_tags", singletonMap("set", crfSolrDocument.getFilterTags()));
 
-                        update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
+                    update.addField("facet_tags", singletonMap("set", crfSolrDocument.getFacetTags()));
 
-                        if (updateEdmObjectUrl(CRFSolrDocument, publishingBatchId)) {
-                            update.addField("provider_aggregation_edm_object", CRFSolrDocument.getUrl());
-                        }
+                    if (null != crfSolrDocument) {
+                        update.addField("provider_aggregation_edm_object", crfSolrDocument.getProviderEdmObject());
                     }
 
                     try {
@@ -152,7 +140,7 @@ public class SOLRWriter {
                     } catch (Exception e) {
                         LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                                    publishingBatchId, null,
-                                                                   new ReferenceOwner(null, null, CRFSolrDocument
+                                                                   new ReferenceOwner(null, null, crfSolrDocument
                                                                                                           .getRecordId())),
                                   "Exception when adding specific document " + update.toString() + " => document " +
                                           "skipped",
@@ -210,20 +198,6 @@ public class SOLRWriter {
         }
     }
 
-    private boolean updateEdmObjectUrl (CRFSolrDocument crfSolrDocument, String publishingBatchId) {
-        if (null == crfSolrDocument || null == crfSolrDocument.getUrlSourceType() || null == crfSolrDocument.getUrl()) {
-            LOG.error(LoggingComponent
-                              .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null,
-                                               null), "Document with record Id : " + crfSolrDocument.getRecordId() +
-                                                                                    "has null url and/or " +
-                                                                                    "urlSourceType");
-            return false;
-        }
-
-        return URLSourceType.ISSHOWNBY.equals(crfSolrDocument.getUrlSourceType()) &&
-               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailGenerationState()) &&
-               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailStorageState());
-    }
 
     /**
      * Checks existence of documents in the SOLR index.
@@ -231,19 +205,18 @@ public class SOLRWriter {
      * @param documents the document that need to be checked
      * @return the map that indicates for each document id (map key) whether exists : true or false
      */
-    public List<HarvesterDocument> filterDocumentIds (final List<HarvesterDocument> documents,final String publishingBatchId) {
+    public List<HarvesterRecord> filterDocumentIds (final List<HarvesterRecord> documents,final String publishingBatchId) {
         final Timer.Context context = PublisherMetrics.Publisher.Read.Solr.solrCheckIdsDurationDuration.time(connectionId);
         try {
             if (null == documents || documents.isEmpty()) {
                 return Collections.EMPTY_LIST;
             }
 
-
             final Set<String> acceptedRecordIds = new HashSet<>();
             final List<String> documentIds = new ArrayList<>();
 
-            for (final HarvesterDocument document : documents) {
-                documentIds.add(document.getReferenceOwner().getRecordId());
+            for (final HarvesterRecord document : documents) {
+                documentIds.add(document.getRecordId());
             }
 
             // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
@@ -291,10 +264,9 @@ public class SOLRWriter {
                 }
             }
 
-
-            final List<HarvesterDocument> filteredDocuments = new ArrayList<>();
-            for (final HarvesterDocument document: documents) {
-               if (acceptedRecordIds.contains(document.getReferenceOwner().getRecordId())) {
+            final List<HarvesterRecord> filteredDocuments = new ArrayList<>();
+            for (final HarvesterRecord document: documents) {
+               if (acceptedRecordIds.contains(document.getRecordId())) {
                    filteredDocuments.add(document);
                }
             }

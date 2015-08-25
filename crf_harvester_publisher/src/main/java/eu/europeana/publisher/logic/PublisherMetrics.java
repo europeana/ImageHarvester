@@ -26,13 +26,11 @@ public class PublisherMetrics  {
 
                 public static final Timer mongoGetDocStatisticsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveDocStatisticsWithoutMetaInfo", DURATION));
                 public static final Timer mongoGetMetaInfoDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveMetaInfo", DURATION));
+                public static final Timer mongoGetLastDocStatisticsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveLastDocStatistics", DURATION));
+                public static final Timer mongoGetUrlsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveUrls", DURATION));
 
-                public static final Counter totalNumberOfDocumentsStatistics = METRIC_REGISTRY.counter(name(Mongo.NAME,
-                                                                                                      "numberOfDocumentsStatistics",
-                                                                                                      TOTAL, COUNTER));
-                public static final Counter totalNumberOfDocumentsMetaInfo = METRIC_REGISTRY.counter(name(Mongo.NAME,
-                                                                                                      "numberOfDocumentsMetaInfo",
-                                                                                                      TOTAL, COUNTER));
+                public static final Counter totalNumberOfDocumentsStatistics = METRIC_REGISTRY.counter(name(Mongo.NAME, "numberOfDocumentsStatistics", TOTAL, COUNTER));
+                public static final Counter totalNumberOfDocumentsMetaInfo = METRIC_REGISTRY.counter(name(Mongo.NAME, "numberOfDocumentsMetaInfo", TOTAL, COUNTER));
             }
 
             public static class Solr {
