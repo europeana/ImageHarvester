@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class JobLoaderMasterActor extends UntypedActor {
 
@@ -96,8 +95,8 @@ public class JobLoaderMasterActor extends UntypedActor {
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
                                 final DefaultLimits defaultLimits,
                                 final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions) {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                "The loader master is constructed");
+//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+//                "The loader master is constructed");
 
         this.receiverActor = receiverActor;
         this.clusterMasterConfig = clusterMasterConfig;
@@ -133,22 +132,17 @@ public class JobLoaderMasterActor extends UntypedActor {
                     context().watch(loaderActor);
                     loaderActor.tell(message, ActorRef.noSender());
                     haveLoader = true;
-                    LOG.info("Created loader actor "+loaderActor);
+                    //LOG.info("Created loader actor "+loaderActor);
 
                 } catch (Exception e) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
                             "Exception while loading jobs", e);
                 }
 
-            } else
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                        "Job loader still working");
-
+            }
             return;
         }
         if (message instanceof Clean) {
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                    "Clean JobLoaderMasterActor");
 
             JobLoaderMasterHelper.checkForAbandonedJobs(processingJobDao, clusterMasterConfig, LOG);
             this.ipDistribution = JobLoaderMasterHelper.getIPDistribution(machineResourceReferenceDao, LOG);
@@ -159,10 +153,8 @@ public class JobLoaderMasterActor extends UntypedActor {
 
         if (message instanceof Terminated) {
             if (((Terminated) message).getActor()==loaderActor) {
-                LOG.info("Got terminated for "+((Terminated) message).getActor()+", marking the loader as expired");
+                //LOG.info("Got terminated for "+((Terminated) message).getActor()+", marking the loader as expired");
                 haveLoader = false;
-            } else {
-                LOG.info("Got terminated for "+((Terminated) message).getActor());
             }
             haveLoader = false;
 

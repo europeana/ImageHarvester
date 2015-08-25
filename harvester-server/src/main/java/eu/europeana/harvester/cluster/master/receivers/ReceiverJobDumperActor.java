@@ -7,7 +7,6 @@ import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTuple;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +44,8 @@ public class ReceiverJobDumperActor extends UntypedActor {
                                   final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                   final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao
     ) {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-                "ReceiverJobDumperActor constructor");
+//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+//                "ReceiverJobDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.processingJobDao = processingJobDao;

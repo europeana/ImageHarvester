@@ -109,11 +109,11 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                LOG.info("Using swift as media-storage ");
+                //LOG.info("Using swift as media-storage ");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else {
-                LOG.info("Using dummy as media-storage ");
+                //LOG.info("Using dummy as media-storage ");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }
@@ -188,11 +188,11 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                LOG.info("Using swift as media-storage ");
+                //LOG.info("Using swift as media-storage ");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else {
-                LOG.info("Using dummy as media-storage ");
+                //LOG.info("Using dummy as media-storage ");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }
@@ -217,7 +217,7 @@ public class Slave {
 
 
     public void restart() {
-        LOG.info("Shutting down the actor system.");
+        //LOG.info("Shutting down the actor system.");
         SlaveMetrics.Worker.Slave.restartCounter.inc();
         system.shutdown();
         system.awaitTermination();
@@ -228,7 +228,7 @@ public class Slave {
             LOG.error(e.getMessage());
         }
 
-        LOG.info("trying to restart the actor system.");
+        //LOG.info("trying to restart the actor system.");
 
         try {
             this.reinit(this);
@@ -245,7 +245,7 @@ public class Slave {
 
     public static void allRequirementsAreMetOrThrowException() throws Exception {
         new ImageMagicValidator("ImageMagick 6.9.0").doNothingOrThrowException();
-        LOG.info("ImageMagic version 6.9.0 installed in the system. External dependency OK. Continuing");
+        //LOG.info("ImageMagic version 6.9.0 installed in the system. External dependency OK. Continuing");
     }
 
     public static void main(String[] args) throws Exception {

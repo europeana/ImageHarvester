@@ -10,7 +10,6 @@ import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
@@ -21,8 +20,6 @@ public class JobLoaderMasterHelper  {
 
 
     public static Map<String, Integer> getIPDistribution( MachineResourceReferenceDao machineResourceReferenceDao, Logger LOG ) {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                "Trying to load the IP distribution...");
 
         Page pg = new Page(0, 100000);
         List<MachineResourceReference> machines = machineResourceReferenceDao.getAllMachineResourceReferences(pg);
@@ -31,14 +28,14 @@ public class JobLoaderMasterHelper  {
         for (MachineResourceReference machine : machines)
             ipDistribution.put(machine.getIp(), 0);
 
-        LOG.info("IP distribution: ");
-        for (Map.Entry<String, Integer> ip : ipDistribution.entrySet()) {
-            LOG.info("{}: {}", ip.getKey(), ip.getValue());
-            //machineResourceReferenceDao.createOrModify(new MachineResourceReference(ip.getKey()), WriteConcern.NORMAL);
-        }
+//        LOG.info("IP distribution: ");
+//        for (Map.Entry<String, Integer> ip : ipDistribution.entrySet()) {
+//            LOG.info("{}: {}", ip.getKey(), ip.getValue());
+//            //machineResourceReferenceDao.createOrModify(new MachineResourceReference(ip.getKey()), WriteConcern.NORMAL);
+//        }
 
-        LOG.info("Nr. of machines: {}", ipDistribution.size());
-        LOG.info("End of IP distribution");
+//        LOG.info("Nr. of machines: {}", ipDistribution.size());
+//        LOG.info("End of IP distribution");
         return ipDistribution;
     }
 
@@ -127,11 +124,9 @@ public class JobLoaderMasterHelper  {
      */
     public static void checkForAbandonedJobs(ProcessingJobDao processingJobDao, ClusterMasterConfig clusterMasterConfig,
                                              Logger LOG ) {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                "Checking for abandoned jobs in database");
+
         processingJobDao.modifyStateOfJobs(JobState.RUNNING,JobState.READY);
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                "Done with checking for abandoned jobs in database");
+
     }
 
 }

@@ -29,7 +29,7 @@ public class FileUtils {
             fileOutputStream.write(fileContent);
             fileOutputStream.close();
         } catch (IOException e) {
-            LOG.info("In ProcesserSlaveActor: error at creating a file");
+            LOG.error("In ProcesserSlaveActor: error at creating a file");
         } finally {
             if (fileOutputStream != null) {
                 try {

@@ -7,7 +7,6 @@ import eu.europeana.harvester.cluster.domain.messages.AddAddressToMonitor;
 import eu.europeana.harvester.cluster.domain.messages.AddTaskToMonitor;
 import eu.europeana.harvester.cluster.domain.messages.Monitor;
 import eu.europeana.harvester.cluster.domain.messages.RemoveTaskFromMonitor;
-import eu.europeana.harvester.logging.LoggingComponent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +42,8 @@ public class ClusterMasterMonitoringActor extends UntypedActor {
 
 
     public ClusterMasterMonitoringActor() {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
-                "ClusterMasterMonitoringActor constructor");
+//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
+//                "ClusterMasterMonitoringActor constructor");
 
 
         this.actorsPerAddress = new HashMap<>();
