@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -77,7 +76,7 @@ public class FakeTagExtractor {
             }
 
             if (null == mimeTypeCode) {
-                PublisherMetrics.Publisher.Batch.totalNumberOfInvalidMimetypes.inc();
+                PublisherMetrics.Publisher.Batch.totalNumberOfInvalidMimeTypes.inc();
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR,
                                                            publishingBatchId, null, owner),
                           "Mime-Type is missing (is null) for CRF entry with meta-info ID {} . No Mime-Type tags " +
@@ -85,7 +84,7 @@ public class FakeTagExtractor {
                           ID);
             }
             else if (mimeTypeCode == CommonTagExtractor.getMimeTypeCode("text/html")) {
-                PublisherMetrics.Publisher.Batch.totalNumberOfInvalidMimetypes.inc();
+                PublisherMetrics.Publisher.Batch.totalNumberOfInvalidMimeTypes.inc();
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR,
                                                            publishingBatchId, null, owner),
                           "Mime-Type is text/html for CRF entry with meta-info ID {}. The entire CRF entry will " +

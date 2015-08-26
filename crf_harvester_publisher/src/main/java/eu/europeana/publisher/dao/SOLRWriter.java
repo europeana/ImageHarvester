@@ -36,7 +36,7 @@ public class SOLRWriter {
      * The maximum number of ID's that can be present in a SOLR search query.
      * Important because of the limitations of the HTTP URL length.
      */
-    private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 10000;
+    private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 1000;
 
     /*
      *  Connection timeout for solr queries. Time unit is milliseconds
@@ -98,13 +98,13 @@ public class SOLRWriter {
         try {
             if (null == newDocs || newDocs.isEmpty()) {
 
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                            publishingBatchId, null, null),
                           "Received for updating and empty/null list. Ignoring");
                 return true;
         }
 
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                        publishingBatchId, null, null),
                                                        "Number of Documents trying to update: " + newDocs.size());
             int retry = 0;
@@ -143,16 +143,14 @@ public class SOLRWriter {
                                                                    publishingBatchId, null,
                                                                    new ReferenceOwner(null, null, crfSolrDocument
                                                                                                           .getRecordId())),
-                                  "Exception when adding specific document " + update.toString() + " => document " +
+                                  "Exception when adding specific record " + update.toString() + " => document " +
                                           "skipped",
                                   e);
                     }
                 }
 
                 try {
-                    LOG.info(LoggingComponent
-                                     .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId,
-                                                      null, null),
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
                              "Trying to update {} SOLR documents with commit retry policy. Current retry count is {}",
                              newDocs.size(), retry);
                     server.commit();
@@ -221,9 +219,8 @@ public class SOLRWriter {
             }
 
             // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
-            LOG.error(LoggingComponent
-                              .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null,
-                                               null), "Checking documents: " + documents.size());
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
+                     "Checking records: " + documents.size());
             for (int documentIdsStartChunkIndex = 0; documentIdsStartChunkIndex <= documentIds.size();
                  documentIdsStartChunkIndex += MAX_NUMBER_OF_IDS_IN_SOLR_QUERY) {
                 final int endOfArray = Math.min(documentIds.size(), documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY);

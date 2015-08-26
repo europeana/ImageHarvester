@@ -61,6 +61,12 @@ public class PublisherHarvesterDao {
                                                       null, null),
                      "Getting metainfos. Updating edmObject/edmPreview"
                     );
+
+            boolean aggregationHasToUpdate = false;
+            boolean europeanaAggregationHasToUpdate = false;
+            final BulkWriteOperation bulkWriteAggregation = mongoDB.getCollection("Aggregation").initializeUnorderedBulkOperation();
+            final BulkWriteOperation bulkWriteEuropeanaAggregation = mongoDB.getCollection("EuropeanaAggregation").initializeUnorderedBulkOperation();
+
             for (final HarvesterRecord record : records) {
                 for (final SourceDocumentReferenceMetaInfo metaInfo : record.getUniqueMetainfos()) {
                     webResourceMetaInfos.put(metaInfo.getId(),
@@ -72,22 +78,30 @@ public class PublisherHarvesterDao {
 
                 if (record.updateEdmObject()) {
                     final String newUrl = record.newEdmObjectUrl();
-                    final WriteResult resultEdmObject = updateEdmObject("/aggregation/provider" + record.getReferenceOwner()
-                                                                                                        .getRecordId(),
-                                                                        newUrl);
+                    final String[] aggregationIds = new String[]{"/aggregation/provider" + record.getRecordId(), "/provider/aggregation" + record.getRecordId()};
 
-                    if (0 == resultEdmObject.getN()) {
-                        updateEdmObject("/provider/aggregation" + record.getReferenceOwner().getRecordId(), newUrl);
+                    final String[] europeanaAggregationIds = new String[]{"/aggregation/europeana" + record.getRecordId(), "/europeana/aggregation" + record.getRecordId()};
+
+                    for (final String id : aggregationIds) {
+                        bulkWriteAggregation.find(new BasicDBObject("about:", id))
+                                            .update(new BasicDBObject("$set", new BasicDBObject("edmObject", newUrl)));
+                        aggregationHasToUpdate = true;
                     }
 
-                    final WriteResult resultEdmPreview = updateEdmPreview("/aggregation/europeana" + record.getReferenceOwner()
-                                                                                                           .getRecordId(),
-                                                                          newUrl);
-
-                    if (0 == resultEdmPreview.getN()) {
-                        updateEdmPreview("/europeana/aggregation" + record.getReferenceOwner().getRecordId(), newUrl);
+                    for (final String id : europeanaAggregationIds) {
+                        bulkWriteEuropeanaAggregation.find(new BasicDBObject("about:", id))
+                                                     .update(new BasicDBObject("$set",
+                                                             new BasicDBObject("edmPreview", newUrl)));
+                        europeanaAggregationHasToUpdate = true;
                     }
                 }
+            }
+
+            if (aggregationHasToUpdate) {
+                bulkWriteAggregation.execute(WriteConcern.ACKNOWLEDGED);
+            }
+            if (europeanaAggregationHasToUpdate) {
+                bulkWriteEuropeanaAggregation.execute(WriteConcern.ACKNOWLEDGED);
             }
 
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId,
@@ -127,52 +141,6 @@ public class PublisherHarvesterDao {
         }
         finally {
             context.close();
-        }
-    }
-
-    private WriteResult updateEdmObject (final String about, final String newUrl) {
-        final Timer.Context context = PublisherMetrics.Publisher.Write.Mongo.writeEdmObject.time(connectionId);
-        try {
-            int i = 0;
-            while (true) {
-                try {
-                    final BasicDBObject query = new BasicDBObject("about", about);
-                    final BasicDBObject update = new BasicDBObject();
-
-                    update.put("$set", new BasicDBObject("edmObject", newUrl));
-                    return mongoDB.getCollection("Aggregation")
-                                  .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
-                } catch (Exception e) {
-                    ++i;
-                    if (i == MAX_NUMBER_OF_RETRIES) throw e;
-                }
-            }
-        }
-        finally {
-           context.close();
-        }
-    }
-
-    private WriteResult updateEdmPreview (final String about, final String newUrl) {
-        final Timer.Context context = PublisherMetrics.Publisher.Write.Mongo.writeEdmPreview.time(connectionId);
-        try {
-            int i = 0;
-            while (true) {
-                try {
-                    final BasicDBObject query = new BasicDBObject("about", about);
-                    final BasicDBObject update = new BasicDBObject();
-
-                    update.put("$set", new BasicDBObject("edmPreview", newUrl));
-                    return mongoDB.getCollection("EuropeanaAggregation")
-                                  .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
-                } catch (Exception e) {
-                    ++i;
-                    if (i == MAX_NUMBER_OF_RETRIES) throw e;
-                }
-            }
-        }
-        finally {
-           context.close();
         }
     }
 }

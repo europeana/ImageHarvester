@@ -25,6 +25,10 @@ public class LoggingComponent {
         return appendAppFields(appComponent, null, null, null);
     }
 
+    public static final net.logstash.logback.marker.MapEntriesAppendingMarker appendAppFields(final String appComponent, final String publishingBatchId) {
+        return appendAppFields(appComponent, publishingBatchId, null, null);
+    }
+
     public static final net.logstash.logback.marker.MapEntriesAppendingMarker appendAppFields(final String appComponent, final String publishingBatchId, final String url, final ReferenceOwner referenceOwner) {
 
         final Map<String, String> map = new HashMap<String, String>();
