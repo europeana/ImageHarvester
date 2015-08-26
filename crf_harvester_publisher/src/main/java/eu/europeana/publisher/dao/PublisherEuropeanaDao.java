@@ -143,7 +143,6 @@ public class PublisherEuropeanaDao {
         retrievedFields.put("processingJobSubTaskStats", 1);
         retrievedFields.put("urlSourceType", 1);
         retrievedFields.put("taskType", 1);
-        retrievedFields.put("updatedAt", 1);
         retrievedFields.put("_id", 0);
 
         return mongoDB.getCollection("LastSourceDocumentProcessingStatistics")
