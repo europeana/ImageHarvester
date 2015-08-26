@@ -99,7 +99,7 @@ public class PublisherManager {
             @Override
             public void run () {
                numberOfDocumentToProcess.set(publisherEuropeanaDao.countNumberOfDocumentUpdatedBefore(currentTimestamp));
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                           "Number of Remaining documents to process is: " + numberOfDocumentToProcess.toString());
             }
         };
@@ -132,7 +132,7 @@ public class PublisherManager {
 
         DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(config.getBatch(), currentTimestamp);
 
-        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                  "Executing publishing CRF retrieval query {}", cursor.getQuery());
 
         List<HarvesterRecord> retrievedDocs = null;
@@ -145,7 +145,7 @@ public class PublisherManager {
             catch (Exception e) {
                 ++retryCursorRebuild;
                 if (retryCursorRebuild > MAX_RETRIES_CURSOR_REBUILD) {
-                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING,publishingBatchId,null,null),
                               "Maximum number of retries for rebuilding cursor has been reached. Exiting publisher", e);
                     System.exit(-1);
                 }
@@ -199,7 +199,7 @@ public class PublisherManager {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                           "Started updating metainfos for config id {}", writer.getConnectionId());
 
-                writer.getHarvesterDao().writeMetaInfos(document);
+                writer.getHarvesterDao().writeMetaInfos(document, publishingBatchId);
 
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                           "Updating solr documents for config id {}", writer.getConnectionId());

@@ -13,11 +13,10 @@ import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
+import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by salexandru on 03.06.2015.
@@ -28,6 +27,7 @@ public class PublisherHarvesterDao {
     private final String connectionId;
 
     private final DB mongoDB;
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     public PublisherHarvesterDao (DBTargetConfig config) throws UnknownHostException {
 
@@ -42,8 +42,12 @@ public class PublisherHarvesterDao {
         webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(dataStore);
     }
 
-
     public void writeMetaInfos (Collection<HarvesterRecord> records) {
+        writeMetaInfos(records, "publisher-writeMetainfos-"+ Double.doubleToLongBits(Math.random() * 5000));
+    }
+
+
+    public void writeMetaInfos (Collection<HarvesterRecord> records, final String publishingBatchId) {
         final Timer.Context context = PublisherMetrics.Publisher.Write.Mongo.mongoWriteDocumentsDuration.time(connectionId);
 
         try {
@@ -51,17 +55,19 @@ public class PublisherHarvesterDao {
                 return;
             }
 
-            final List<WebResourceMetaInfo> webResourceMetaInfos = new ArrayList<>();
+            final Map<String, WebResourceMetaInfo> webResourceMetaInfos = new HashMap<>();
 
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId,
+                                                      null, null),
+                     "Getting metainfos. Updating edmObject/edmPreview"
+                    );
             for (final HarvesterRecord record : records) {
                 for (final SourceDocumentReferenceMetaInfo metaInfo : record.getUniqueMetainfos()) {
-                    webResourceMetaInfos.add(new WebResourceMetaInfo(metaInfo.getId(),
-                                                                     metaInfo.getImageMetaInfo(),
+                    webResourceMetaInfos.put(metaInfo.getId(),
+                                             new WebResourceMetaInfo(metaInfo.getId(), metaInfo.getImageMetaInfo(),
                                                                      metaInfo.getAudioMetaInfo(),
                                                                      metaInfo.getVideoMetaInfo(),
-                                                                     metaInfo.getTextMetaInfo()
-                                                                    )
-                                            );
+                                                                     metaInfo.getTextMetaInfo()));
                 }
 
                 if (record.updateEdmObject()) {
@@ -84,16 +90,29 @@ public class PublisherHarvesterDao {
                 }
             }
 
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId,
+                                                      null, null),
+                     "Updating finished. Started writing metainfo. #{} " + webResourceMetaInfos.size()
+                    );
+
             int i = 0;
             final Timer.Context context_metainfo = PublisherMetrics.Publisher.Write.Mongo.mongoWriteMetaInfoDuration.time(connectionId);
             try {
                 while (true) {
                     try {
-                        webResourceMetaInfoDao.createOrModify(webResourceMetaInfos, WriteConcern.ACKNOWLEDGED);
+                        webResourceMetaInfoDao.createOrModify(webResourceMetaInfos.values(), WriteConcern.ACKNOWLEDGED);
+                        LOG.info(LoggingComponent
+                                         .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
+                                                          publishingBatchId, null, null),
+                                 "Done updating in retry #" + i);
                         break;
                     } catch (Exception e) {
                         ++i;
                         if (i == MAX_NUMBER_OF_RETRIES) throw e;
+                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId,
+                                                                  null, null),
+                                 "Retry updating #" + i, e
+                                );
                     }
                 }
             }

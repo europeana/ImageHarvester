@@ -18,6 +18,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class SOLRWriter {
      * The maximum number of ID's that can be present in a SOLR search query.
      * Important because of the limitations of the HTTP URL length.
      */
-    private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 1000;
+    private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 10000;
 
     /*
      *  Connection timeout for solr queries. Time unit is milliseconds
@@ -220,9 +221,9 @@ public class SOLRWriter {
             }
 
             // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                       publishingBatchId, null, null),
-                      "Checking documents: " + documents.size());
+            LOG.error(LoggingComponent
+                              .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null,
+                                               null), "Checking documents: " + documents.size());
             for (int documentIdsStartChunkIndex = 0; documentIdsStartChunkIndex <= documentIds.size();
                  documentIdsStartChunkIndex += MAX_NUMBER_OF_IDS_IN_SOLR_QUERY) {
                 final int endOfArray = Math.min(documentIds.size(), documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY);

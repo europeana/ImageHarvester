@@ -173,7 +173,11 @@ public class PublisherHarvesterDaoTest {
             }
 
             final HarvesterDocument document = record.getEdmIsShownByDocument();
-            System.out.println(document.getReferenceOwner().getRecordId());
+
+            if (null == document) {
+                continue;
+            }
+
             final String edmObject = (String)db.getCollection("Aggregation").findOne(new BasicDBObject("about", "/aggregation/provider" + document.getReferenceOwner().getRecordId())).get("edmObject");
             final String edmPreview = (String)db.getCollection("EuropeanaAggregation").findOne(new BasicDBObject("about", "/aggregation/europeana" + document.getReferenceOwner().getRecordId())).get("edmPreview");
 

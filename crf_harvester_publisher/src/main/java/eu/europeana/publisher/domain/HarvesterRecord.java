@@ -93,6 +93,7 @@ public class HarvesterRecord {
             if (null != document &&
                 ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getMetaExtractionState()) &&
                 null != document.getSourceDocumentReferenceMetaInfo()) {
+                if (URLSourceType.OBJECT.equals(document.getUrlSourceType())) continue;
                 metainfos.put(document.getSourceDocumentReferenceId(), document.getSourceDocumentReferenceMetaInfo());
             }
         }

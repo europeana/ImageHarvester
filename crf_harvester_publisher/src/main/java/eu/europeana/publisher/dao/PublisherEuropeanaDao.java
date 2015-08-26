@@ -3,16 +3,13 @@ package eu.europeana.publisher.dao;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.*;
-import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
-import eu.europeana.harvester.db.mongo.LastSourceDocumentProcessingStatisticsDaoImpl;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import java.net.UnknownHostException;
