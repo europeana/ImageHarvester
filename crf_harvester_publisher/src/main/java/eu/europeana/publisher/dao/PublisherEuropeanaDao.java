@@ -50,6 +50,7 @@ public class PublisherEuropeanaDao {
 
             final DBCursor cursor = mongoDB.getCollection("SourceDocumentReference")
                                            .find(query, keys)
+                                           .batchSize(100000)
                                            .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 
             final Map<String, String> urlMap = new HashMap<>();

@@ -7,9 +7,7 @@ import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
-import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
@@ -57,9 +55,8 @@ public class PublisherHarvesterDao {
 
             final Map<String, WebResourceMetaInfo> webResourceMetaInfos = new HashMap<>();
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId,
-                                                      null, null),
-                     "Getting metainfos. Updating edmObject/edmPreview"
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                     "Getting metainfos."
                     );
 
             boolean aggregationHasToUpdate = false;
@@ -97,11 +94,15 @@ public class PublisherHarvesterDao {
                 }
             }
 
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                     "Starting the updated."
+                    );
+
             if (aggregationHasToUpdate) {
-                bulkWriteAggregation.execute(WriteConcern.ACKNOWLEDGED);
+               bulkWriteAggregation.execute(WriteConcern.ACKNOWLEDGED);
             }
             if (europeanaAggregationHasToUpdate) {
-                bulkWriteEuropeanaAggregation.execute(WriteConcern.ACKNOWLEDGED);
+               bulkWriteEuropeanaAggregation.execute(WriteConcern.ACKNOWLEDGED);
             }
 
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId,
