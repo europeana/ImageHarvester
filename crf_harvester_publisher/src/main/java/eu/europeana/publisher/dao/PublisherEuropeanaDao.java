@@ -35,7 +35,7 @@ public class PublisherEuropeanaDao {
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
     }
 
-    private Map<String, String> retrieveUrls (Set<String> sourceDocumentReferenceIds, final String publishingBatchId) {
+    private Map<String, String> retrieveUrls (Collection<String> sourceDocumentReferenceIds, final String publishingBatchId) {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                  "Retrieving url information for #" + sourceDocumentReferenceIds.size());
         final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetUrlsDuration.time();
@@ -50,10 +50,9 @@ public class PublisherEuropeanaDao {
 
             final DBCursor cursor = mongoDB.getCollection("SourceDocumentReference")
                                            .find(query, keys)
-                                           .batchSize(100000)
                                            .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 
-            final Map<String, String> urlMap = new HashMap<>();
+            final Map<String, String> urlMap = new HashMap<>(sourceDocumentReferenceIds.size());
             while (cursor.hasNext()) {
                 final BasicDBObject object = (BasicDBObject) cursor.next();
                 urlMap.put(object.getString("_id"), object.getString("url"));
@@ -70,20 +69,25 @@ public class PublisherEuropeanaDao {
         if (null == cursor) {
             throw new IllegalArgumentException();
         }
+        final String collectionName = cursor.getCollection().getName();
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
-                 "Starting retrieving and processing of Statistics documents from collection: " + cursor.getCollection()
-                                                                                                        .getName());
+                 "Starting retrieving and processing of Statistics documents from collection: " + collectionName);
         //raw documents extracted from the db
         final Map<String, HarvesterDocument> documents = new HashMap<>();
 
         //contains documents with url and metainfo
         final Map<String, HarvesterDocument> harvesterDocuments = new HashMap<>();
+        final List<String> sourceDocumentRecordIds = new LinkedList<>();
 
-        final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetDocStatisticsDuration.time();
+        final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetDocStatisticsDuration.time(collectionName);
         try {
             while (cursor.hasNext()) {
                 final HarvesterDocument harvesterDocument = toHarvesterDocument((BasicDBObject) cursor.next());
                 documents.put(harvesterDocument.getSourceDocumentReferenceId(), harvesterDocument);
+
+                if (ProcessingJobSubTaskState.SUCCESS == harvesterDocument.getSubTaskStats().getMetaExtractionState()) {
+                    sourceDocumentRecordIds.add(harvesterDocument.getSourceDocumentReferenceId());
+                }
             }
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                      "Done retrieving");
@@ -92,10 +96,10 @@ public class PublisherEuropeanaDao {
             context.stop();
         }
 
-        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsStatistics.inc(documents.size());
+        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsStatistics.inc(collectionName, documents.size());
 
-        final Map<String, String> urls = retrieveUrls(documents.keySet(), publishingBatchId);
-        final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(documents.keySet());
+        final Map<String, String> urls = retrieveUrls(sourceDocumentRecordIds, publishingBatchId);
+        final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(sourceDocumentRecordIds);
 
         for (final SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
             final String id = metaInfo.getId();
@@ -103,7 +107,7 @@ public class PublisherEuropeanaDao {
             harvesterDocuments.put(id, document.withUrl(urls.get(id)).withSourceDocumentReferenceMetaInfo(metaInfo));
         }
 
-        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsMetaInfo.inc(documents.size());
+        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsMetaInfo.inc(collectionName, documents.size());
 
         for (final Map.Entry<String, HarvesterDocument> document : documents.entrySet()) {
             harvesterDocuments.put(document.getKey(), document.getValue().withUrl(urls.get(document.getKey())));
@@ -148,8 +152,7 @@ public class PublisherEuropeanaDao {
 
         return mongoDB.getCollection("LastSourceDocumentProcessingStatistics")
                       .find(query, retrievedFields)
-                      .batchSize(100000)
-                     .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+                      .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
     }
 
     public List<HarvesterRecord> retrieveDocuments (final DBCursor cursor, final String publishingBatchId) {
@@ -252,7 +255,8 @@ public class PublisherEuropeanaDao {
 
         final DBCursor cursor = mongoDB.getCollection("SourceDocumentProcessingStatistics")
                                        .find(findQuery, retrievedFields)
-                                       .sort(new BasicDBObject("updatedAt", 1)).limit(batchSize);
+                                       .sort(new BasicDBObject("updatedAt", 1))
+                                       .limit(batchSize);
 
         return cursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
     }
