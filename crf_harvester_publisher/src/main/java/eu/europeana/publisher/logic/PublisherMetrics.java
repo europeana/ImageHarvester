@@ -24,17 +24,13 @@ public class PublisherMetrics  {
             public static class Mongo {
                 public static final String NAME =Read.NAME + ".Mongo";
 
-                public static final Timer mongoGetDocStatisticsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveDocStatisticsWithoutMetaInfo", DURATION));
-                public static final Timer mongoGetMetaInfoDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveMetaInfo", DURATION));
-                //public static final Timer mongoGetLastDocStatisticsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveLastDocStatistics", DURATION));
+                public static final TimerMap mongoGetDocStatisticsDuration = new TimerMap(name(Mongo.NAME, "retrieveDocStatisticsWithoutMetaInfo", DURATION));
+                public static final Timer mongoGetMetaInfoDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveMetaInfo"));
                 public static final Timer mongoGetUrlsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveUrls", DURATION));
 
 
-                public static final Counter totalNumberOfDocumentsStatistics = METRIC_REGISTRY.counter(name(Mongo.NAME, "numberOfDocumentsStatistics", TOTAL, COUNTER));
-                public static final Counter totalNumberOfDocumentsMetaInfo = METRIC_REGISTRY.counter(name(Mongo.NAME, "numberOfDocumentsMetaInfo", TOTAL, COUNTER));
-
-               // public static final Counter totalNumberOfLastDocumentsStatistics = METRIC_REGISTRY.counter(name(Mongo.NAME, "numberOfLastDocumentsStatistics", TOTAL, COUNTER));
-               // public static final Counter totalNumberOfLastDocumentsStatisticsWithMetaInfo = METRIC_REGISTRY.counter(name(Mongo.NAME, "numberOfLastDocumentsStatisticsWithMetaInfo", TOTAL, COUNTER));
+                public static final CounterMap totalNumberOfDocumentsStatistics = new CounterMap(name(Mongo.NAME, "numberOfDocumentsStatistics", TOTAL));
+                public static final CounterMap totalNumberOfDocumentsMetaInfo = new CounterMap(name(Mongo.NAME, "numberOfDocumentsMetaInfo", TOTAL));
             }
 
             public static class Solr {
@@ -84,6 +80,7 @@ public class PublisherMetrics  {
             public static final Counter totalNumberOfDocumentsWithoutMetaInfo = METRIC_REGISTRY.counter(name(Batch.NAME, "numberOfDocumentsWithoutMetaInfo", TOTAL, COUNTER));
             public static final Counter totalNumberOfDocumentsProcessed = METRIC_REGISTRY.counter(name(Batch.NAME, "numberOfDocumentsProcessed", TOTAL, COUNTER));
             public static final LazyGauge numberOfRemainingDocumentsToProcess = new LazyGauge(METRIC_REGISTRY, name(Batch.NAME, "numberOfRemainingDocumentsToProcess"));
+            public static final LazyGauge timestamp = new LazyGauge(METRIC_REGISTRY, name(Batch.NAME, "dateFilter"));
         }
     }
 }

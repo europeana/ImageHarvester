@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -116,6 +117,13 @@ public class PublisherManager {
             }
         });
 
+        PublisherMetrics.Publisher.Batch.timestamp.registerHandler(new Gauge<Date>() {
+            @Override
+            public Date getValue () {
+                return null == currentTimestamp ? new Date(0) : currentTimestamp.toDate();
+            }
+        });
+
         scheduler.schedule(runGauge, config.getDelayInSecondsForRemainingRecordsStatistics(), TimeUnit.MINUTES);
 
         while (true) {
@@ -164,9 +172,9 @@ public class PublisherManager {
             if (null == retrievedDocs || retrievedDocs.isEmpty()) {
                 LOG.error("received null or empty records from source mongo. Sleeping " + config.getSleepSecondsAfterEmptyBatch());
                 TimeUnit.SECONDS.sleep(config.getSleepSecondsAfterEmptyBatch());
+                cursor.close();
                 cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(config.getBatch(), currentTimestamp);
             }
-
         } while (null == retrievedDocs || retrievedDocs.isEmpty());
 
         cursor.close();
