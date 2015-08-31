@@ -62,25 +62,18 @@ public class FakeTagExtractor {
                 continue;
             }
 
-            System.out.println("It must be null: " + mimeTypeCode);
 
             if (null != metaInfo.getAudioMetaInfo() && null != metaInfo.getAudioMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getAudioMetaInfo().getMimeType());
-                System.out.println("audio");
             }
             else if (null != metaInfo.getVideoMetaInfo() && null != metaInfo.getVideoMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getVideoMetaInfo().getMimeType());
-                System.out.println("video");
             }
             else if (null != metaInfo.getImageMetaInfo() && null != metaInfo.getImageMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getImageMetaInfo().getMimeType());
-                System.out.println("img");
             }
             else if (null != metaInfo.getTextMetaInfo() && null != metaInfo.getTextMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getTextMetaInfo().getMimeType());
-                System.out.println(metaInfo.getTextMetaInfo().getMimeType());
-                System.out.println(metaInfo.getId());
-                System.out.println("text");
             }
 
             if (null == mimeTypeCode) {
@@ -101,7 +94,6 @@ public class FakeTagExtractor {
                 continue;
             }
 
-            System.out.println(mimeTypeCode);
             hasMedia = true;
 
             switch (MediaTypeEncoding.valueOf(mediaTypeCode)) {
