@@ -39,7 +39,7 @@ public class Publisher {
             startTimestamp = DateTime.parse(config.getString("criteria.startTimestamp"));
         }
         catch (ConfigException.Null e) {
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+            LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                       "Start timestamp is null. Defaulting to 1 Jan 1970..");
         }
 

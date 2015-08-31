@@ -68,6 +68,8 @@ public class PublisherMetrics  {
                 public static final Counter totalNumberOfDocumentsWrittenToSolr = METRIC_REGISTRY.counter(name(Solr.NAME, "numberOfDocumentsWrittenToSolr", TOTAL, COUNTER));
 
                 public static final CounterMap totalNumberOfDocumentsWrittenToOneConnection = new CounterMap(name (Solr.NAME, "numberOfDocumentsWrittenToSolr", TOTAL));
+
+                public static final CounterMap badSolrDocumentsCount = new CounterMap(name (Solr.NAME, "badSolrDocuments"));
             }
         }
 

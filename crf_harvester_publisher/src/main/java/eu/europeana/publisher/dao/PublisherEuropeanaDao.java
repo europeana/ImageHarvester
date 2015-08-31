@@ -65,7 +65,7 @@ public class PublisherEuropeanaDao {
         }
     }
 
-    private Map<String, HarvesterDocument> readingStatistics (final DBCursor cursor, final String publishingBatchId) {
+    private Map<String, List<HarvesterDocument>> readingStatistics (final DBCursor cursor, final String publishingBatchId) {
         if (null == cursor) {
             throw new IllegalArgumentException();
         }
@@ -73,17 +73,20 @@ public class PublisherEuropeanaDao {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                  "Starting retrieving and processing of Statistics documents from collection: " + collectionName);
         //raw documents extracted from the db
-        final Map<String, HarvesterDocument> documents = new HashMap<>();
+        final Map<String, List<HarvesterDocument>> documents = new HashMap<>();
 
         //contains documents with url and metainfo
-        final Map<String, HarvesterDocument> harvesterDocuments = new HashMap<>();
+        final Map<String, List<HarvesterDocument>> harvesterDocuments = new HashMap<>();
         final List<String> sourceDocumentRecordIds = new LinkedList<>();
 
         final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetDocStatisticsDuration.time(collectionName);
         try {
             while (cursor.hasNext()) {
                 final HarvesterDocument harvesterDocument = toHarvesterDocument((BasicDBObject) cursor.next());
-                documents.put(harvesterDocument.getSourceDocumentReferenceId(), harvesterDocument);
+                if (!documents.containsKey(harvesterDocument.getSourceDocumentReferenceId())) {
+                    documents.put(harvesterDocument.getSourceDocumentReferenceId(), new ArrayList<HarvesterDocument>());
+                }
+                documents.get(harvesterDocument.getSourceDocumentReferenceId()).add(harvesterDocument);
 
                 if (ProcessingJobSubTaskState.SUCCESS == harvesterDocument.getSubTaskStats().getMetaExtractionState()) {
                     sourceDocumentRecordIds.add(harvesterDocument.getSourceDocumentReferenceId());
@@ -103,14 +106,29 @@ public class PublisherEuropeanaDao {
 
         for (final SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
             final String id = metaInfo.getId();
-            final HarvesterDocument document = documents.remove(id);
-            harvesterDocuments.put(id, document.withUrl(urls.get(id)).withSourceDocumentReferenceMetaInfo(metaInfo));
+            final List<HarvesterDocument> document = documents.remove(id);
+
+            if (!harvesterDocuments.containsKey(id)) {
+                harvesterDocuments.put(id, new ArrayList<HarvesterDocument>());
+            }
+            for (final HarvesterDocument harvesterDocument: document) {
+                harvesterDocuments.get(id)
+                                  .add(harvesterDocument.withUrl(urls.get(id))
+                                                        .withSourceDocumentReferenceMetaInfo(metaInfo)
+                                      );
+            }
         }
 
         PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsMetaInfo.inc(collectionName, documents.size());
 
-        for (final Map.Entry<String, HarvesterDocument> document : documents.entrySet()) {
-            harvesterDocuments.put(document.getKey(), document.getValue().withUrl(urls.get(document.getKey())));
+        for (final Map.Entry<String, List<HarvesterDocument>> document : documents.entrySet()) {
+            final String id = document.getKey();
+            if (!harvesterDocuments.containsKey(id)) {
+                harvesterDocuments.put(id, new ArrayList<HarvesterDocument>());
+            }
+            for (final HarvesterDocument harvesterDocument: document.getValue()) {
+                harvesterDocuments.get(document.getKey()).add(harvesterDocument.withUrl(urls.get(document.getKey())));
+            }
         }
 
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
@@ -118,13 +136,15 @@ public class PublisherEuropeanaDao {
         return harvesterDocuments;
     }
 
-    private DBCursor buildCursorLastStats (final Map<String, HarvesterDocument> harvesterDocuments) {
+    private DBCursor buildCursorLastStats (final Map<String, List<HarvesterDocument>> harvesterDocuments) {
         // build LastSourceDocumentProcessingStatistics query
         final Set<String> recordIds = new HashSet<>(harvesterDocuments.size());
         final Set<String> sourceDocumentReferenceIds = harvesterDocuments.keySet();
 
-        for (final HarvesterDocument document : harvesterDocuments.values()) {
-            recordIds.add(document.getReferenceOwner().getRecordId());
+        for (final  List<HarvesterDocument> documents : harvesterDocuments.values()) {
+            for (final HarvesterDocument document: documents) {
+                recordIds.add(document.getReferenceOwner().getRecordId());
+            }
         }
 
         final BasicDBObject query = new BasicDBObject();
@@ -143,11 +163,6 @@ public class PublisherEuropeanaDao {
 
         query.put("$or", orList);
 
-        retrievedFields.put("sourceDocumentReferenceId", 1);
-        retrievedFields.put("referenceOwner", 1);
-        retrievedFields.put("processingJobSubTaskStats", 1);
-        retrievedFields.put("urlSourceType", 1);
-        retrievedFields.put("taskType", 1);
         retrievedFields.put("updatedAt", 0);
         retrievedFields.put("_id", 0);
 
@@ -160,18 +175,32 @@ public class PublisherEuropeanaDao {
         if (null == cursor) {
             throw new IllegalArgumentException("cursor cannot be null");
         }
-        final Map <String, HarvesterDocument> harvesterDocuments = readingStatistics(cursor, publishingBatchId);
+        final Map <String, List<HarvesterDocument>> harvesterDocuments = readingStatistics(cursor, publishingBatchId);
 
-        harvesterDocuments.putAll(readingStatistics(buildCursorLastStats(harvesterDocuments), publishingBatchId));
+        final Map <String, List<HarvesterDocument>> lastStatsDocuments = readingStatistics(buildCursorLastStats
+                                                                                                   (harvesterDocuments),
+                                                                                           publishingBatchId);
+
+
+        for (final Map.Entry<String, List<HarvesterDocument>> documents: lastStatsDocuments.entrySet()) {
+            if (!harvesterDocuments.containsKey(documents.getKey())) {
+                harvesterDocuments.put(documents.getKey(), new ArrayList<HarvesterDocument>());
+            }
+            for (final HarvesterDocument document: documents.getValue()) {
+                harvesterDocuments.get(documents.getKey()).add(document.withUpdatedAt(null));
+            }
+        }
 
         final Map<String, List<HarvesterDocument>> groupByRecordId = new HashMap<>();
 
-        for (final HarvesterDocument document: harvesterDocuments.values()) {
-            final String recordId = document.getReferenceOwner().getRecordId();
-            if (!groupByRecordId.containsKey(recordId)) {
-                groupByRecordId.put(recordId, new ArrayList<HarvesterDocument>());
+        for (final List<HarvesterDocument> documents: harvesterDocuments.values()) {
+            for (final HarvesterDocument document: documents) {
+                final String recordId = document.getReferenceOwner().getRecordId();
+                if (!groupByRecordId.containsKey(recordId)) {
+                    groupByRecordId.put(recordId, new ArrayList<HarvesterDocument>());
+                }
+                groupByRecordId.get(recordId).add(document);
             }
-            groupByRecordId.get(recordId).add(document);
         }
 
         final List<HarvesterRecord> records = new ArrayList<>();

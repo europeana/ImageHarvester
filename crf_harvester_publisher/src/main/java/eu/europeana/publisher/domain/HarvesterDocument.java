@@ -97,4 +97,16 @@ public class HarvesterDocument {
                                      url
         );
     }
+
+    public HarvesterDocument withUpdatedAt(final DateTime updatedAt) {
+        return new HarvesterDocument(sourceDocumentReferenceId,
+                                     updatedAt,
+                                     referenceOwner,
+                                     sourceDocumentReferenceMetaInfo,
+                                     subTaskStats,
+                                     urlSourceType,
+                                     taskType,
+                                     url
+        );
+    }
 }

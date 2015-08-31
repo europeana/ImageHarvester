@@ -17,6 +17,7 @@ import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
@@ -258,6 +259,7 @@ public class PublisherManager {
 
         for (final HarvesterRecord record : records) {
             for (final HarvesterDocument document: record.getAllDocuments()) {
+                if (null == document.getUpdatedAt()) continue;
                 if (null == time) {
                     time = document.getUpdatedAt();
                 }

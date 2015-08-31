@@ -62,17 +62,25 @@ public class FakeTagExtractor {
                 continue;
             }
 
+            System.out.println("It must be null: " + mimeTypeCode);
+
             if (null != metaInfo.getAudioMetaInfo() && null != metaInfo.getAudioMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getAudioMetaInfo().getMimeType());
+                System.out.println("audio");
             }
             else if (null != metaInfo.getVideoMetaInfo() && null != metaInfo.getVideoMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getVideoMetaInfo().getMimeType());
+                System.out.println("video");
             }
             else if (null != metaInfo.getImageMetaInfo() && null != metaInfo.getImageMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getImageMetaInfo().getMimeType());
+                System.out.println("img");
             }
             else if (null != metaInfo.getTextMetaInfo() && null != metaInfo.getTextMetaInfo().getMimeType()) {
                 mimeTypeCode = CommonTagExtractor.getMimeTypeCode(metaInfo.getTextMetaInfo().getMimeType());
+                System.out.println(metaInfo.getTextMetaInfo().getMimeType());
+                System.out.println(metaInfo.getId());
+                System.out.println("text");
             }
 
             if (null == mimeTypeCode) {
@@ -93,6 +101,7 @@ public class FakeTagExtractor {
                 continue;
             }
 
+            System.out.println(mimeTypeCode);
             hasMedia = true;
 
             switch (MediaTypeEncoding.valueOf(mediaTypeCode)) {
@@ -112,8 +121,9 @@ public class FakeTagExtractor {
                     break;
 
                 case TEXT:
-                    hasFullText = hasFullText ||
-                                  metaInfo.getTextMetaInfo().getIsSearchable();
+                    hasFullText = hasFullText || metaInfo.getTextMetaInfo().getIsSearchable();
+                    facetTags.add(MediaTypeEncoding.TEXT.getEncodedValue() |  (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos()));
+                    filterTags.add(MediaTypeEncoding.TEXT.getEncodedValue() |  (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos()));
                     break;
 
                 default:
@@ -133,6 +143,7 @@ public class FakeTagExtractor {
         final List<CRFSolrDocument> solrDocuments = new ArrayList<>();
 
         for (final HarvesterRecord record : harvesterRecords) {
+
             if (record.getRecordId().startsWith(SkippedRecords.id)) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR,
                                                            publishingBatchId, null, record.getReferenceOwner()),

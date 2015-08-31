@@ -132,6 +132,7 @@ public class SOLRWriter {
             }
 
             int numberOfDocumentsToUpdate = 0;
+            int badDocuments = 0;
             final SolrClient server = createServer(publishingBatchId);
             try {
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
@@ -150,12 +151,14 @@ public class SOLRWriter {
                         server.add(document);
                         ++numberOfDocumentsToUpdate;
                     } catch (Exception e1) {
+                        ++badDocuments;
                         LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                                    publishingBatchId),
                                   "Problems adding document with europeana_id (recordId): {}", document.getField("europeana_id"), e);
                     }
                 }
             }
+            PublisherMetrics.Publisher.Write.Solr.badSolrDocumentsCount.inc(connectionId, badDocuments);
 
             for (int retry = 0; retry <= MAX_RETRIES; ++retry) {
                 try {
