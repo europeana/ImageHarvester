@@ -1,7 +1,7 @@
 {
   "id": 1,
-  "title": "OS Metrics - Individual machine",
-  "originalTitle": "OS Metrics - Individual machine",
+  "title": "Cluster metrics",
+  "originalTitle": "Cluster metrics",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
@@ -12,12 +12,10 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "300px",
+      "height": "250px",
       "panels": [
         {
-          "aliasColors": {
-            "prod10_crf_europeana_eu.load.load.shortterm": "#BF1B00"
-          },
+          "aliasColors": {},
           "bars": false,
           "datasource": null,
           "editable": true,
@@ -54,24 +52,26 @@
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "seriesOverrides": [],
+          "seriesOverrides": [
+            {}
+          ],
           "span": 12,
           "stack": false,
           "steppedLine": false,
           "targets": [
             {
-              "target": "$machine.load.load.shortterm"
+              "target": "sumSeries(*.load.load.longterm)"
             },
             {
-              "target": "$machine.load.load.midterm"
+              "target": "sumSeries(*.load.load.midterm)"
             },
             {
-              "target": "$machine.load.load.longterm"
+              "target": "sumSeries(*.load.load.shortterm)"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "CPU Load $machine",
+          "title": "CPU core load",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -90,7 +90,152 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "300px",
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 2,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "prod1.crf.europeana.eu.MasterMetrics.Master.doneProcessing.total.counter.count"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "DoneProcessing",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "height": "750",
+          "id": 3,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": true,
+          "steppedLine": true,
+          "targets": [
+            {
+              "target": "*.*.*.eu.SlaveMetrics.Worker.Master.actors.size"
+            },
+            {
+              "target": "prod41.crf.europeana.eu.SlaveMetrics.Worker.Master.actors.size"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Slave actors size",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "transparent": true,
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
       "panels": [
         {
           "aliasColors": {},
@@ -114,10 +259,10 @@
           "id": 4,
           "legend": {
             "alignAsTable": true,
-            "avg": true,
+            "avg": false,
             "current": true,
-            "max": true,
-            "min": true,
+            "max": false,
+            "min": false,
             "show": true,
             "total": false,
             "values": true
@@ -136,15 +281,15 @@
           "steppedLine": false,
           "targets": [
             {
-              "target": "$machine.swap.swap-free"
+              "target": "prod1.crf.europeana.eu.MasterMetrics.Master.ipLimitGrantedSlotRequest.counter.count"
             },
             {
-              "target": "$machine.swap.swap-used"
+              "target": "prod1.crf.europeana.eu.MasterMetrics.Master.ipLimitNotGrantedSlotRequest.counter.count"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "SWAP usage $machine",
+          "title": "IP Limiter granted/not granted",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -163,164 +308,7 @@
     {
       "collapse": false,
       "editable": true,
-      "height": "300px",
-      "panels": [
-        {
-          "aliasColors": {
-            "prod10_crf_europeana_eu.memory.memory-used": "#BF1B00"
-          },
-          "bars": false,
-          "datasource": null,
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": null,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 2,
-          "legend": {
-            "alignAsTable": true,
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": true,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 12,
-          "stack": true,
-          "steppedLine": false,
-          "targets": [
-            {
-              "target": "$machine.memory.memory-free"
-            },
-            {
-              "target": "$machine.memory.memory-used"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "RAM usage $machine",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ]
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "300px",
-      "panels": [
-        {
-          "aliasColors": {
-            "prod10_crf_europeana_eu.interface-eth0.if_errors.rx": "#890F02",
-            "prod10_crf_europeana_eu.interface-eth0.if_errors.tx": "#BF1B00"
-          },
-          "bars": false,
-          "datasource": null,
-          "editable": true,
-          "error": false,
-          "fill": 1,
-          "grid": {
-            "leftLogBase": 1,
-            "leftMax": null,
-            "leftMin": null,
-            "rightLogBase": 1,
-            "rightMax": null,
-            "rightMin": null,
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 3,
-          "legend": {
-            "alignAsTable": true,
-            "avg": true,
-            "current": true,
-            "max": true,
-            "min": true,
-            "show": true,
-            "total": false,
-            "values": true
-          },
-          "lines": true,
-          "linewidth": 2,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 12,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "target": "$machine.interface-eth0.if_octets.rx"
-            },
-            {
-              "target": "$machine.interface-eth0.if_octets.tx"
-            },
-            {
-              "target": "$machine.interface-eth0.if_errors.rx"
-            },
-            {
-              "target": "$machine.interface-eth0.if_errors.tx"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "ETH0 traffic $machine",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ]
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "300px",
+      "height": "250px",
       "panels": [
         {
           "aliasColors": {},
@@ -347,7 +335,7 @@
             "avg": true,
             "current": true,
             "max": true,
-            "min": true,
+            "min": false,
             "show": true,
             "total": false,
             "values": true
@@ -361,20 +349,23 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 12,
+          "span": 6,
           "stack": false,
           "steppedLine": false,
           "targets": [
             {
-              "target": "$machine.swap.swap_io-in"
+              "target": "mongo2_crf_europeana_eu.load.load.longterm"
             },
             {
-              "target": "$machine.swap.swap_io-out"
+              "target": "mongo2_crf_europeana_eu.load.load.midterm"
+            },
+            {
+              "target": "mongo2_crf_europeana_eu.load.load.shortterm"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "SWAP IN / OUT $machine",
+          "title": "MongoDB CPU load",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -386,15 +377,7 @@
             "short",
             "short"
           ]
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "300px",
-      "panels": [
+        },
         {
           "aliasColors": {},
           "bars": false,
@@ -420,6 +403,155 @@
             "avg": true,
             "current": true,
             "max": true,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "target": "mongo2_crf_europeana_eu.interface-eth0.if_octets.rx"
+            },
+            {
+              "target": "mongo2_crf_europeana_eu.interface-eth0.if_octets.tx"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "MongoDB Network traffic rx/tx",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "450px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 7,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": true,
+          "steppedLine": true,
+          "targets": [
+            {
+              "target": "perSecond(*.crf.europeana.eu.MasterMetrics.Master.doneProcessing.ERROR.counter.count)"
+            },
+            {
+              "target": "perSecond(*.crf.europeana.eu.MasterMetrics.Master.doneProcessing.FAILED.counter.count)"
+            },
+            {
+              "target": "perSecond(*.crf.europeana.eu.MasterMetrics.Master.doneProcessing.SUCCESS.counter.count)"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Processing rates",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 8,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
             "min": true,
             "show": true,
             "total": false,
@@ -436,24 +568,15 @@
           "seriesOverrides": [],
           "span": 12,
           "stack": false,
-          "steppedLine": false,
+          "steppedLine": true,
           "targets": [
             {
-              "target": "$machine.processes.fork_rate"
-            },
-            {
-              "target": "$machine.processes.ps_state-running"
-            },
-            {
-              "target": "$machine.processes.ps_state-sleeping"
-            },
-            {
-              "target": "$machine.processes.ps_state-blocked"
+              "target": "prod1.crf.europeana.eu.MasterMetrics.Master.jobsUniqueIPs.counter"
             }
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Processes $machine",
+          "title": "Unique IP's remaining",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -508,67 +631,12 @@
     "to": "now"
   },
   "templating": {
-    "list": [
-      {
-        "allFormat": "glob",
-        "current": {
-          "text": "prod3_crf_europeana_eu",
-          "value": "prod3_crf_europeana_eu"
-        },
-        "datasource": null,
-        "includeAll": false,
-        "name": "machine",
-        "options": [
-          {
-            "text": "prod10_crf_europeana_eu",
-            "value": "prod10_crf_europeana_eu"
-          },
-          {
-            "text": "prod1_crf_europeana_eu",
-            "value": "prod1_crf_europeana_eu"
-          },
-          {
-            "text": "prod2_crf_europeana_eu",
-            "value": "prod2_crf_europeana_eu"
-          },
-          {
-            "text": "prod3_crf_europeana_eu",
-            "value": "prod3_crf_europeana_eu"
-          },
-          {
-            "text": "prod4_crf_europeana_eu",
-            "value": "prod4_crf_europeana_eu"
-          },
-          {
-            "text": "prod5_crf_europeana_eu",
-            "value": "prod5_crf_europeana_eu"
-          },
-          {
-            "text": "prod6_crf_europeana_eu",
-            "value": "prod6_crf_europeana_eu"
-          },
-          {
-            "text": "prod7_crf_europeana_eu",
-            "value": "prod7_crf_europeana_eu"
-          },
-          {
-            "text": "prod8_crf_europeana_eu",
-            "value": "prod8_crf_europeana_eu"
-          },
-          {
-            "text": "prod9_crf_europeana_eu",
-            "value": "prod9_crf_europeana_eu"
-          }
-        ],
-        "query": "*_europeana_eu",
-        "refresh_on_load": false,
-        "type": "query"
-      }
-    ]
+    "list": []
   },
   "annotations": {
     "list": []
   },
   "schemaVersion": 6,
-  "version": 9
+  "version": 6,
+  "links": []
 }
