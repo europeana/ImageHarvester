@@ -1,7 +1,5 @@
 package eu.europeana.publisher.logic;
 
-import com.codahale.metrics.Counter;
-
 import static com.codahale.metrics.MetricRegistry.name;
 
 /**
@@ -15,13 +13,13 @@ public class CounterMap {
    }
 
    public void inc(final String name, final long value) {
-      final String counterName = name(this.id, id, PublisherMetrics.COUNTER);
+      final String counterName = name(this.id, name, PublisherMetrics.COUNTER);
 
       PublisherMetrics.METRIC_REGISTRY.counter(counterName).inc(value);
    }
 
    public void dec(final String name, final long value) {
-      final String counterName = name(this.id, id, PublisherMetrics.COUNTER);
+      final String counterName = name(this.id, name, PublisherMetrics.COUNTER);
 
       PublisherMetrics.METRIC_REGISTRY.counter(counterName).dec(value);
    }

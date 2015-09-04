@@ -1,9 +1,5 @@
 package eu.europeana.publisher.domain;
 
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.ProcessingJobSubTaskStats;
-import eu.europeana.harvester.domain.URLSourceType;
-
 import java.util.List;
 
 public class CRFSolrDocument {
@@ -16,17 +12,21 @@ public class CRFSolrDocument {
     /**
      * True if it is a text document.
      */
-    private final Boolean isFulltext;
+    private final boolean isFullText;
 
     /**
      * True if it has thumbnails
      */
-    private final Boolean hasThumbnails;
+    private final boolean hasThumbnails;
 
     /**
      * True if it is image, sound or video
      */
-    private final Boolean hasMedia;
+    private final boolean hasMedia;
+
+    private final boolean hasLandingPage;
+
+    private final String provider_edm_object;
 
     /**
      * The list of all “fake tags” combinations for a particular CHO
@@ -38,37 +38,43 @@ public class CRFSolrDocument {
      */
     private final List<Integer> facetTags;
 
-    private final URLSourceType urlSourceType;
-    private final String url;
-    private final Boolean hasLandingPage;
-    private final DocumentReferenceTaskType taskType;
-    private final ProcessingJobSubTaskStats subTaskStats;
+    public CRFSolrDocument (final String recordId) {
+        this.recordId = recordId;
 
-    public CRFSolrDocument (final String recordId, final Boolean isFulltext, final Boolean hasThumbnails, final
-    Boolean hasMedia, final List<Integer> filterTags, final List<Integer> facetTags,
-                            URLSourceType urlSourceType, String url, Boolean hasLandingPage,
-                            DocumentReferenceTaskType taskType,
-                            ProcessingJobSubTaskStats stats
+        facetTags = null;
+        filterTags = null;
+        provider_edm_object = null;
+        hasMedia = false;
+        hasThumbnails = false;
+        hasLandingPage = false;
+        isFullText = false;
+    }
+
+    public CRFSolrDocument (final String recordId,
+                            final boolean isFullText,
+                            final boolean hasThumbnails,
+                            final boolean hasMedia,
+                            final boolean hasLandingPage,
+                            final List<Integer> filterTags,
+                            final List<Integer> facetTags,
+                            final String provider_edm_object
                            ) {
         this.recordId = recordId;
-        this.isFulltext = isFulltext;
+        this.isFullText = isFullText;
         this.hasThumbnails = hasThumbnails;
         this.hasMedia = hasMedia;
         this.filterTags = filterTags;
         this.facetTags = facetTags;
-        this.urlSourceType = urlSourceType;
-        this.url = url;
         this.hasLandingPage = hasLandingPage;
-        this.taskType = taskType;
-        this.subTaskStats = stats;
+        this.provider_edm_object = provider_edm_object;
     }
 
     public String getRecordId() {
         return recordId;
     }
 
-    public Boolean getIsFulltext() {
-        return isFulltext;
+    public Boolean getIsFullText () {
+        return isFullText;
     }
 
     public Boolean getHasThumbnails() {
@@ -87,23 +93,93 @@ public class CRFSolrDocument {
         return facetTags;
     }
 
-    public URLSourceType getUrlSourceType () {
-        return urlSourceType;
-    }
-
-    public String getUrl () {
-        return url;
-    }
-
     public Boolean getHasLandingPage () {
         return hasLandingPage;
     }
 
-    public DocumentReferenceTaskType getTaskType () {
-        return taskType;
+    public String getProviderEdmObject() {return provider_edm_object;}
+
+    public CRFSolrDocument withIsFullText(boolean isFullText) {
+        return new CRFSolrDocument(recordId,
+                                   isFullText,
+                                   hasThumbnails,
+                                   hasMedia,
+                                   hasLandingPage,
+                                   filterTags,
+                                   facetTags,
+                                   provider_edm_object
+                                   );
     }
 
-    public ProcessingJobSubTaskStats getSubTaskStats () {
-        return subTaskStats;
+    public CRFSolrDocument withHasThumbnails (boolean hasThumbnails) {
+        return new CRFSolrDocument(recordId,
+                                   isFullText,
+                                   hasThumbnails,
+                                   hasMedia,
+                                   hasLandingPage,
+                                   filterTags,
+                                   facetTags,
+                                   provider_edm_object
+        );
+    }
+
+    public CRFSolrDocument withHasMedia (boolean hasMedia) {
+        return new CRFSolrDocument(recordId,
+                                   isFullText,
+                                   hasThumbnails,
+                                   hasMedia,
+                                   hasLandingPage,
+                                   filterTags,
+                                   facetTags,
+                                   provider_edm_object
+        );
+    }
+
+    public CRFSolrDocument withHasLandingpage (boolean hasLandingPage) {
+        return new CRFSolrDocument(recordId,
+                                   isFullText,
+                                   hasThumbnails,
+                                   hasMedia,
+                                   hasLandingPage,
+                                   filterTags,
+                                   facetTags,
+                                   provider_edm_object
+        );
+    }
+
+    public CRFSolrDocument withFilterTags (final List<Integer> filterTags) {
+        return new CRFSolrDocument(recordId,
+                                   isFullText,
+                                   hasThumbnails,
+                                   hasMedia,
+                                   hasLandingPage,
+                                   filterTags,
+                                   facetTags,
+                                   provider_edm_object
+        );
+    }
+
+    public CRFSolrDocument withFacetTags (final List<Integer> facetTags) {
+        return new CRFSolrDocument(recordId,
+                                   isFullText,
+                                   hasThumbnails,
+                                   hasMedia,
+                                   hasLandingPage,
+                                   filterTags,
+                                   facetTags,
+                                   provider_edm_object
+        );
+    }
+
+    public CRFSolrDocument withProviderEdmObject (final String provider_edm_object) {
+        return new CRFSolrDocument(recordId,
+                                   isFullText,
+                                   hasThumbnails,
+                                   hasMedia,
+                                   hasLandingPage,
+                                   filterTags,
+                                   facetTags,
+                                   provider_edm_object
+        );
     }
 }

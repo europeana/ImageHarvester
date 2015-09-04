@@ -7,16 +7,14 @@ import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.*;
-import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
-import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
+import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by salexandru on 03.06.2015.
@@ -27,6 +25,7 @@ public class PublisherHarvesterDao {
     private final String connectionId;
 
     private final DB mongoDB;
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     public PublisherHarvesterDao (DBTargetConfig config) throws UnknownHostException {
 
@@ -41,60 +40,130 @@ public class PublisherHarvesterDao {
         webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(dataStore);
     }
 
+    public void writeMetaInfos (Collection<HarvesterRecord> records) {
+        writeMetaInfos(records, "publisher-writeMetainfos-"+ Double.doubleToLongBits(Math.random() * 5000));
+    }
 
-    public void writeMetaInfos (Collection<HarvesterDocument> documents) {
+
+    public void writeMetaInfos (Collection<HarvesterRecord> records, final String publishingBatchId) {
         final Timer.Context context = PublisherMetrics.Publisher.Write.Mongo.mongoWriteDocumentsDuration.time(connectionId);
 
         try {
-            if (null == documents || documents.isEmpty()) {
+            if (null == records || records.isEmpty()) {
                 return;
             }
 
-            final List<WebResourceMetaInfo> webResourceMetaInfos = new ArrayList<>();
+            final Map<String, WebResourceMetaInfo> webResourceMetaInfos = new HashMap<>();
 
-            for (final HarvesterDocument document : documents) {
-                if (DocumentReferenceTaskType.CHECK_LINK.equals(document.getTaskType()) ||
-                    !ProcessingJobSubTaskState.SUCCESS.equals(document.getSubTaskStats().getMetaExtractionState())) {
-                    continue;
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                     "Getting metainfos."
+                    );
+
+            boolean aggregationHasToUpdate = false;
+            boolean europeanaAggregationHasToUpdate = false;
+
+            final BulkWriteOperation bulkWriteAggregation = mongoDB.getCollection("Aggregation").initializeUnorderedBulkOperation();
+            final BulkWriteOperation bulkWriteEuropeanaAggregation = mongoDB.getCollection("EuropeanaAggregation").initializeUnorderedBulkOperation();
+
+            for (final HarvesterRecord record : records) {
+                for (final SourceDocumentReferenceMetaInfo metaInfo : record.getUniqueMetainfos()) {
+                    webResourceMetaInfos.put(metaInfo.getId(),
+                                             new WebResourceMetaInfo(metaInfo.getId(), metaInfo.getImageMetaInfo(),
+                                                                     metaInfo.getAudioMetaInfo(),
+                                                                     metaInfo.getVideoMetaInfo(),
+                                                                     metaInfo.getTextMetaInfo())
+                                            );
                 }
-                webResourceMetaInfos.add(
-                    new WebResourceMetaInfo(document.getSourceDocumentReferenceMetaInfo().getId(),
-                                            document.getSourceDocumentReferenceMetaInfo().getImageMetaInfo(),
-                                            document.getSourceDocumentReferenceMetaInfo().getAudioMetaInfo(),
-                                            document.getSourceDocumentReferenceMetaInfo().getVideoMetaInfo(),
-                                            document.getSourceDocumentReferenceMetaInfo().getTextMetaInfo()
-                                           )
-                );
 
-                if (updateEdmObjectUrl(document)) {
-                    final WriteResult resultEdmObject = updateEdmObject("/aggregation/provider" + document.getReferenceOwner().getRecordId(),
-                                                               document.getUrl()
-                                                              );
+                if (record.updateEdmObject()) {
+                    final String newUrl = record.newEdmObjectUrl();
+                    final String[] aggregationIds = new String[]{"/aggregation/provider" + record.getRecordId(), "/provider/aggregation" + record.getRecordId()};
 
-                    if (0 == resultEdmObject.getN()) {
-                        updateEdmObject("/provider/aggregation" + document.getReferenceOwner().getRecordId(), document.getUrl());
+                    final String[] europeanaAggregationIds = new String[]{"/aggregation/europeana" + record.getRecordId(), "/europeana/aggregation" + record.getRecordId()};
+
+
+                    final BasicDBList orListAggregation = new BasicDBList();
+                    final BasicDBList orListEuropeanaAggregation = new BasicDBList();
+
+                    for (final String id : aggregationIds) {
+                        orListAggregation.add(new BasicDBObject("about", id));
+                        aggregationHasToUpdate = true;
                     }
 
-                    final WriteResult resultEdmPreview = updateEdmPreview("/aggregation/europeana" + document.getReferenceOwner().getRecordId(),
-                                                               document.getUrl()
-                                                              );
+                    bulkWriteAggregation.find(new BasicDBObject("$or", orListAggregation))
+                                        .updateOne(new BasicDBObject("$set", new BasicDBObject("edmObject", newUrl)));
 
-                    if (0 == resultEdmPreview.getN()) {
-                        updateEdmPreview("/europeana/aggregation" + document.getReferenceOwner().getRecordId(), document.getUrl());
+                    for (final String id : europeanaAggregationIds) {
+                        orListEuropeanaAggregation.add(new BasicDBObject("about", id));
+
+                        europeanaAggregationHasToUpdate = true;
                     }
+
+                    bulkWriteEuropeanaAggregation.find(new BasicDBObject("$or", orListEuropeanaAggregation))
+                                                 .updateOne(new BasicDBObject("$set",
+                                                                              new BasicDBObject("edmPreview", newUrl)));
                 }
             }
+
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                     "Starting the updates."
+                    );
+
+            if (aggregationHasToUpdate) {
+                final Timer.Context writeEdmObjectContext = PublisherMetrics.Publisher.Write.Mongo.writeEdmObject.time(connectionId);
+                try {
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                             "Updating edmObject");
+                    BulkWriteResult result = bulkWriteAggregation.execute(WriteConcern.ACKNOWLEDGED);
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
+                                                              publishingBatchId), "Updated edmObject. Results: " + result.toString());
+                }
+                catch (Exception e) {
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                              "Updated edmObject failed. Cannot retry.", e);
+                }
+                finally {
+                   writeEdmObjectContext.close();
+                }
+            }
+            if (europeanaAggregationHasToUpdate) {
+                final Timer.Context writeEdmPreviewContext = PublisherMetrics.Publisher.Write.Mongo.writeEdmPreview.time(connectionId);
+                try {
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                             "Updating edmPreview");
+                    BulkWriteResult result = bulkWriteEuropeanaAggregation.execute(WriteConcern.ACKNOWLEDGED);
+                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
+                                                              publishingBatchId), "Updated edmPreview. Results: " + result.toString());
+                }
+                catch (Exception e) {
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                              "Updated edmPreview failed. Cannot retry.", e);
+                }
+                finally {
+                    writeEdmPreviewContext.close();
+                }
+            }
+
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                     "Updating finished. Started writing metainfo. #{} " + webResourceMetaInfos.size()
+                    );
 
             int i = 0;
             final Timer.Context context_metainfo = PublisherMetrics.Publisher.Write.Mongo.mongoWriteMetaInfoDuration.time(connectionId);
             try {
                 while (true) {
                     try {
-                        webResourceMetaInfoDao.createOrModify(webResourceMetaInfos, WriteConcern.ACKNOWLEDGED);
+                        webResourceMetaInfoDao.createOrModify(webResourceMetaInfos.values(), WriteConcern.ACKNOWLEDGED);
+                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                                 "Done updating in retry #" + i
+                                );
                         break;
                     } catch (Exception e) {
                         ++i;
                         if (i == MAX_NUMBER_OF_RETRIES) throw e;
+                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                                 "Retry updating #" + i, e
+                                );
                     }
                 }
             }
@@ -110,60 +179,5 @@ public class PublisherHarvesterDao {
         finally {
             context.close();
         }
-    }
-
-    private WriteResult updateEdmObject (final String about, final String newUrl) {
-        final Timer.Context context = PublisherMetrics.Publisher.Write.Mongo.writeEdmObject.time(connectionId);
-        try {
-            int i = 0;
-            while (true) {
-                try {
-                    final BasicDBObject query = new BasicDBObject("about", about);
-                    final BasicDBObject update = new BasicDBObject();
-
-                    update.put("$set", new BasicDBObject("edmObject", newUrl));
-                    return mongoDB.getCollection("Aggregation")
-                                  .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
-                } catch (Exception e) {
-                    ++i;
-                    if (i == MAX_NUMBER_OF_RETRIES) throw e;
-                }
-            }
-        }
-        finally {
-           context.close();
-        }
-    }
-
-    private WriteResult updateEdmPreview (final String about, final String newUrl) {
-        final Timer.Context context = PublisherMetrics.Publisher.Write.Mongo.writeEdmPreview.time(connectionId);
-        try {
-            int i = 0;
-            while (true) {
-                try {
-                    final BasicDBObject query = new BasicDBObject("about", about);
-                    final BasicDBObject update = new BasicDBObject();
-
-                    update.put("$set", new BasicDBObject("edmPreview", newUrl));
-                    return mongoDB.getCollection("EuropeanaAggregation")
-                                  .update(query, update, false, false, WriteConcern.ACKNOWLEDGED);
-                } catch (Exception e) {
-                    ++i;
-                    if (i == MAX_NUMBER_OF_RETRIES) throw e;
-                }
-            }
-        }
-        finally {
-           context.close();
-        }
-    }
-
-    private boolean updateEdmObjectUrl (HarvesterDocument crfSolrDocument) {
-        if (null == crfSolrDocument || null == crfSolrDocument.getUrlSourceType() || null == crfSolrDocument.getUrl()) {
-            return false;
-        }
-        return URLSourceType.ISSHOWNBY.equals(crfSolrDocument.getUrlSourceType()) &&
-               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailGenerationState()) &&
-               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailStorageState());
     }
 }

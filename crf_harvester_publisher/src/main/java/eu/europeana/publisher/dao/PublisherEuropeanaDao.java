@@ -1,5 +1,6 @@
 package eu.europeana.publisher.dao;
 
+import com.codahale.metrics.Timer;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.*;
@@ -7,27 +8,20 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
 import java.util.*;
 
-import com.codahale.metrics.Timer.Context;
-import org.slf4j.LoggerFactory;
-
-/**
- * Created by salexandru on 03.06.2015.
- */
 public class PublisherEuropeanaDao {
-    private DB mongoDB;
+    private final DB mongoDB;
     private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao;
-
-
 
     public PublisherEuropeanaDao (MongoConfig mongoConfig) throws UnknownHostException {
 
@@ -41,126 +35,190 @@ public class PublisherEuropeanaDao {
         sourceDocumentReferenceMetaInfoDao = new SourceDocumentReferenceMetaInfoDaoImpl(dataStore);
     }
 
-    public List<HarvesterDocument> retrieveDocumentsWithMetaInfo (final DBCursor cursor, final String publishingBatchId) {
-        if (null == cursor) {
-            throw new IllegalArgumentException ("cursor is null");
+    private Map<String, String> retrieveUrls (Collection<String> sourceDocumentReferenceIds, final String publishingBatchId) {
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                 "Retrieving url information for #" + sourceDocumentReferenceIds.size());
+        final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetUrlsDuration.time();
+        try {
+            if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) return Collections.EMPTY_MAP;
+            final BasicDBObject query = new BasicDBObject();
+            final BasicDBObject keys = new BasicDBObject();
+
+            query.put("_id", new BasicDBObject("$in", sourceDocumentReferenceIds));
+            keys.put("_id", 1);
+            keys.put("url", 1);
+
+            final DBCursor cursor = mongoDB.getCollection("SourceDocumentReference")
+                                           .find(query, keys)
+                                           .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+
+            final Map<String, String> urlMap = new HashMap<>(sourceDocumentReferenceIds.size());
+            while (cursor.hasNext()) {
+                final BasicDBObject object = (BasicDBObject) cursor.next();
+                urlMap.put(object.getString("_id"), object.getString("url"));
+            }
+
+            return urlMap;
         }
-
-        final List<HarvesterDocument> completeHarvesterDocuments = new ArrayList<>();
-
-        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
-                                                   publishingBatchId, null, null),
-                  "Retrieving SourceDocumentProcessingStatistics fields"
-                 );
-        final Map<String, HarvesterDocument> incompleteHarvesterDocuments = retrieveHarvesterDocumentsWithoutMetaInfo(cursor);
-
-        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
-                                                   publishingBatchId, null, null),
-                  "Done retrieving SourceDocumentProcessingStatistics fields. Getting the metainfos now"
-                 );
-
-        final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(incompleteHarvesterDocuments.keySet());
-
-        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
-                                                   publishingBatchId, null, null),
-                  "Metainfos retrieved"
-                 );
-
-        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsStatistics.inc(incompleteHarvesterDocuments.size());
-        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsMetaInfo.inc(metaInfos.size());
-
-
-        for (final SourceDocumentReferenceMetaInfo metaInfo: metaInfos) {
-            final String id = metaInfo.getId();
-            completeHarvesterDocuments.add(incompleteHarvesterDocuments.remove(id).withSourceDocumentReferenceMetaInfo(metaInfo));
+        finally {
+            context.stop();
         }
-
-        completeHarvesterDocuments.addAll(incompleteHarvesterDocuments.values());
-
-        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId,
-                                                   null, null),
-                  "Done with the extra processing"
-                 );
-        return completeHarvesterDocuments;
     }
 
-    private Map<String, HarvesterDocument> retrieveHarvesterDocumentsWithoutMetaInfo (final DBCursor cursor) {
-        final Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetDocStatisticsDuration.time();
+    private Map<String, List<HarvesterDocument>> readingStatistics (final DBCursor cursor, final String publishingBatchId) {
+        if (null == cursor) {
+            throw new IllegalArgumentException();
+        }
+        final String collectionName = cursor.getCollection().getName();
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                 "Starting retrieving and processing of Statistics documents from collection: " + collectionName);
+        //raw documents extracted from the db
+        final Map<String, List<HarvesterDocument>> documents = new HashMap<>();
+
+        //contains documents with url and metainfo
+        final Map<String, List<HarvesterDocument>> harvesterDocuments = new HashMap<>();
+        final List<String> sourceDocumentRecordIds = new LinkedList<>();
+
+        final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetDocStatisticsDuration.time(collectionName);
         try {
-            final Map<String, HarvesterDocument> documentStatistics = new HashMap<>();
-
             while (cursor.hasNext()) {
-                final BasicDBObject item = (BasicDBObject) cursor.next();
-                final DateTime updatedAt = new DateTime(item.getDate("updatedAt"));
-                final String sourceDocumentReferenceId = item.getString("sourceDocumentReferenceId");
-                final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
+                final HarvesterDocument harvesterDocument = toHarvesterDocument((BasicDBObject) cursor.next());
+                if (!documents.containsKey(harvesterDocument.getSourceDocumentReferenceId())) {
+                    documents.put(harvesterDocument.getSourceDocumentReferenceId(), new ArrayList<HarvesterDocument>());
+                }
+                documents.get(harvesterDocument.getSourceDocumentReferenceId()).add(harvesterDocument);
 
-                final String providerId = referenceOwnerTemp.getString("providerId");
-                final String collectionId = referenceOwnerTemp.getString("collectionId");
-                final String recordId = referenceOwnerTemp.getString("recordId");
-                final String executionId = referenceOwnerTemp.getString("executionId");
+                if (ProcessingJobSubTaskState.SUCCESS == harvesterDocument.getSubTaskStats().getMetaExtractionState()) {
+                    sourceDocumentRecordIds.add(harvesterDocument.getSourceDocumentReferenceId());
+                }
+            }
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                     "Done retrieving");
+        }
+        finally {
+            context.stop();
+        }
 
-                final BasicDBObject subTaskStatsTemp = (BasicDBObject) item.get("processingJobSubTaskStats");
+        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsStatistics.inc(collectionName, documents.size());
 
-                final ProcessingJobSubTaskStats subTaskStats = new ProcessingJobSubTaskStats(
-                      ProcessingJobRetrieveSubTaskState.valueOf(subTaskStatsTemp.getString("retrieveState")),
-                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("colorExtractionState")),
-                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("metaExtractionState")),
-                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("thumbnailGenerationState")),
-                      ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("thumbnailStorageState"))
-                );
+        final Map<String, String> urls = retrieveUrls(sourceDocumentRecordIds, publishingBatchId);
+        final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(sourceDocumentRecordIds);
 
-                final DocumentReferenceTaskType taskType = DocumentReferenceTaskType.valueOf(item.getString("taskType"));
+        for (final SourceDocumentReferenceMetaInfo metaInfo : metaInfos) {
+            final String id = metaInfo.getId();
+            final List<HarvesterDocument> document = documents.remove(id);
 
-                final URLSourceType urlSourceType = URLSourceType.valueOf(item.getString("urlSourceType"));
-
-                documentStatistics.put(sourceDocumentReferenceId,
-                                       new HarvesterDocument(sourceDocumentReferenceId, updatedAt,
-                                                             new ReferenceOwner(providerId, collectionId, recordId, executionId),
-                                                             null,
-                                                             subTaskStats,
-                                                             urlSourceType,
-                                                             taskType,
-                                                             readUrl(sourceDocumentReferenceId)
-                                                            )
+            if (!harvesterDocuments.containsKey(id)) {
+                harvesterDocuments.put(id, new ArrayList<HarvesterDocument>());
+            }
+            for (final HarvesterDocument harvesterDocument: document) {
+                harvesterDocuments.get(id)
+                                  .add(harvesterDocument.withUrl(urls.get(id))
+                                                        .withSourceDocumentReferenceMetaInfo(metaInfo)
                                       );
             }
-
-            return documentStatistics;
         }
-        finally {
-           context.close();
-        }
-    }
 
-    public List<SourceDocumentReferenceMetaInfo> retrieveMetaInfo(final Collection<String> sourceDocumentReferenceIds) {
-        final Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetMetaInfoDuration.time();
-        try {
-            if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
-                return Collections.EMPTY_LIST;
+        PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsMetaInfo.inc(collectionName, documents.size());
+
+        for (final Map.Entry<String, List<HarvesterDocument>> document : documents.entrySet()) {
+            final String id = document.getKey();
+            if (!harvesterDocuments.containsKey(id)) {
+                harvesterDocuments.put(id, new ArrayList<HarvesterDocument>());
             }
-            return sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceIds);
+            for (final HarvesterDocument harvesterDocument: document.getValue()) {
+                harvesterDocuments.get(document.getKey()).add(harvesterDocument.withUrl(urls.get(document.getKey())));
+            }
         }
-        finally {
-            context.close();
-        }
+
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                 "Done processing");
+        return harvesterDocuments;
     }
 
-    private String readUrl (final String sourceDocumentReferenceId) {
-        if (StringUtils.isBlank(sourceDocumentReferenceId)) return null;
-        final BasicDBObject findQuery = new BasicDBObject();
+    private DBCursor buildCursorLastStats (final Map<String, List<HarvesterDocument>> harvesterDocuments) {
+        // build LastSourceDocumentProcessingStatistics query
+        final Set<String> recordIds = new HashSet<>(harvesterDocuments.size());
+        final Set<String> sourceDocumentReferenceIds = harvesterDocuments.keySet();
+
+        for (final  List<HarvesterDocument> documents : harvesterDocuments.values()) {
+            for (final HarvesterDocument document: documents) {
+                recordIds.add(document.getReferenceOwner().getRecordId());
+            }
+        }
+
+        final BasicDBObject query = new BasicDBObject();
         final BasicDBObject retrievedFields = new BasicDBObject();
 
-        findQuery.put("_id", sourceDocumentReferenceId);
-        retrievedFields.put("url", 1);
+        /*
+         * basically ignore the record we already have
+         */
+        query.put("referenceOwner.recordId", new BasicDBObject("$in", recordIds));
+        query.put("sourceDocumentReferenceId", new BasicDBObject("$nin", sourceDocumentReferenceIds));
+        final BasicDBList orList = new BasicDBList();
 
-        final DBObject object = mongoDB.getCollection("SourceDocumentReference").findOne(findQuery);
+        orList.add(new BasicDBObject("state", ProcessingState.ERROR.name()));
+        orList.add(new BasicDBObject("state", ProcessingState.FAILED.name()));
+        orList.add(new BasicDBObject("state", ProcessingState.SUCCESS.name()));
 
-        if (null == object) {
-            System.out.println("There is no url for sourceDocumentReferenceId: " + sourceDocumentReferenceId);
-            return "";
+        query.put("$or", orList);
+
+        retrievedFields.put("updatedAt", 0);
+        retrievedFields.put("_id", 0);
+
+        return mongoDB.getCollection("LastSourceDocumentProcessingStatistics")
+                      .find(query, retrievedFields)
+                      .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+    }
+
+    public List<HarvesterRecord> retrieveDocuments (final DBCursor cursor, final String publishingBatchId) {
+        if (null == cursor) {
+            throw new IllegalArgumentException("cursor cannot be null");
         }
-        return (String)object.get("url");
+        final Map <String, List<HarvesterDocument>> harvesterDocuments = readingStatistics(cursor, publishingBatchId);
+
+        final Map <String, List<HarvesterDocument>> lastStatsDocuments = readingStatistics(buildCursorLastStats
+                                                                                                   (harvesterDocuments),
+                                                                                           publishingBatchId);
+
+
+        for (final Map.Entry<String, List<HarvesterDocument>> documents: lastStatsDocuments.entrySet()) {
+            if (!harvesterDocuments.containsKey(documents.getKey())) {
+                harvesterDocuments.put(documents.getKey(), new ArrayList<HarvesterDocument>());
+            }
+            for (final HarvesterDocument document: documents.getValue()) {
+                harvesterDocuments.get(documents.getKey()).add(document.withUpdatedAt(null));
+            }
+        }
+
+        final Map<String, List<HarvesterDocument>> groupByRecordId = new HashMap<>();
+
+        for (final List<HarvesterDocument> documents: harvesterDocuments.values()) {
+            for (final HarvesterDocument document: documents) {
+                final String recordId = document.getReferenceOwner().getRecordId();
+                if (!groupByRecordId.containsKey(recordId)) {
+                    groupByRecordId.put(recordId, new ArrayList<HarvesterDocument>());
+                }
+                groupByRecordId.get(recordId).add(document);
+            }
+        }
+
+        final List<HarvesterRecord> records = new ArrayList<>();
+        for (final Map.Entry<String, List<HarvesterDocument>> entry: groupByRecordId.entrySet()) {
+            HarvesterRecord record = new HarvesterRecord();
+
+            final List<HarvesterDocument> hasViewDocuments = new ArrayList<>();
+
+            for (final HarvesterDocument document: entry.getValue()) {
+                if (URLSourceType.HASVIEW == document.getUrlSourceType())
+                    hasViewDocuments.add(document);
+                else  record = record.with(document.getUrlSourceType(), document);
+            }
+
+            records.add(record.withHasViewDocuments(hasViewDocuments));
+        }
+
+        return records;
     }
 
     /**
@@ -181,6 +239,26 @@ public class PublisherEuropeanaDao {
         return mongoDB.getCollection("SourceDocumentProcessingStatistics").count(findQuery);
     }
 
+    public List<SourceDocumentReferenceMetaInfo> retrieveMetaInfo(final Collection<String> sourceDocumentReferenceIds) {
+        if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA),
+                 "Retrieving metainfo for #" + sourceDocumentReferenceIds.size());
+        final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetMetaInfoDuration.time();
+        try {
+            if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
+                return Collections.EMPTY_LIST;
+            }
+            return sourceDocumentReferenceMetaInfoDao.read(sourceDocumentReferenceIds);
+        }
+        finally {
+            context.close();
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA),
+                     "Done retrieving");
+        }
+    }
+
     public DBCursor buildCursorForDocumentStatistics (final int batchSize, final DateTime dateFilter) {
         final BasicDBObject findQuery = new BasicDBObject();
         final BasicDBObject retrievedFields = new BasicDBObject();
@@ -198,7 +276,7 @@ public class PublisherEuropeanaDao {
         findQuery.put("$or", orList);
 
         retrievedFields.put("sourceDocumentReferenceId", 1);
-        retrievedFields.put("referenceOwner.recordId", 1);
+        retrievedFields.put("referenceOwner", 1);
         retrievedFields.put("processingJobSubTaskStats", 1);
         retrievedFields.put("urlSourceType", 1);
         retrievedFields.put("taskType", 1);
@@ -207,10 +285,44 @@ public class PublisherEuropeanaDao {
 
         final DBCursor cursor = mongoDB.getCollection("SourceDocumentProcessingStatistics")
                                        .find(findQuery, retrievedFields)
-                                     //  .hint("updatedAt_1")
                                        .sort(new BasicDBObject("updatedAt", 1))
                                        .limit(batchSize);
 
         return cursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
     }
+
+    private final HarvesterDocument toHarvesterDocument (final BasicDBObject item) {
+        final DateTime updatedAt = new DateTime(item.getDate("updatedAt"));
+        final String sourceDocumentReferenceId = item.getString("sourceDocumentReferenceId");
+        final BasicDBObject referenceOwnerTemp = (BasicDBObject) item.get("referenceOwner");
+
+        final String providerId = referenceOwnerTemp.getString("providerId");
+        final String collectionId = referenceOwnerTemp.getString("collectionId");
+        final String recordId = referenceOwnerTemp.getString("recordId");
+        final String executionId = referenceOwnerTemp.getString("executionId");
+
+        final BasicDBObject subTaskStatsTemp = (BasicDBObject) item.get("processingJobSubTaskStats");
+
+        final ProcessingJobSubTaskStats subTaskStats = new ProcessingJobSubTaskStats(
+             ProcessingJobRetrieveSubTaskState.valueOf(subTaskStatsTemp.getString("retrieveState")),
+             ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("colorExtractionState")),
+             ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("metaExtractionState")),
+             ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("thumbnailGenerationState")),
+             ProcessingJobSubTaskState.valueOf(subTaskStatsTemp.getString("thumbnailStorageState"))
+        );
+
+        final DocumentReferenceTaskType taskType = DocumentReferenceTaskType.valueOf(item.getString("taskType"));
+
+        final URLSourceType urlSourceType = URLSourceType.valueOf(item.getString("urlSourceType"));
+
+        return new HarvesterDocument(sourceDocumentReferenceId,
+                                     updatedAt,
+                                     new ReferenceOwner(providerId, collectionId, recordId, executionId),
+                                     null,
+                                     subTaskStats,
+                                     urlSourceType,
+                                     taskType
+        );
+    }
+
 }

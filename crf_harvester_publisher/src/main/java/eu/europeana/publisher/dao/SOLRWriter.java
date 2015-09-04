@@ -4,31 +4,24 @@ import com.codahale.metrics.Timer;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
-import eu.europeana.publisher.domain.HarvesterDocument;
+import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
 import org.apache.solr.client.solrj.impl.BinaryResponseParser;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.params.CommonParams;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.text.Document;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -71,9 +64,10 @@ public class SOLRWriter {
         int retry = 0;
         while (true) {
             try {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                           publishingBatchId, null, null),
-                          "Trying to connect to the solr server: " + solrUrl + ". Retry #" + retry);
+                LOG.info(LoggingComponent
+                                 .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null,
+                                                  null),
+                         "Trying to connect to the solr server: " + solrUrl + ". Retry #" + retry);
                 final RequestConfig.Builder requestBuilder = RequestConfig.custom()
                                                                           .setConnectTimeout(CONNECTION_TIMEOUT)
                                                                           .setConnectionRequestTimeout(CONNECTION_TIMEOUT);
@@ -81,7 +75,7 @@ public class SOLRWriter {
                                                                          .setDefaultRequestConfig(requestBuilder
                                                                                                           .build());
                 final HttpSolrClient server = new HttpSolrClient(solrUrl, clientBuilder.build(), new BinaryResponseParser());
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                            publishingBatchId, null, null),
                           "Connected successfully to solr: " + solrUrl + ". Retry #" + retry);
                 return server;
@@ -102,64 +96,71 @@ public class SOLRWriter {
      */
     public boolean updateDocuments (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException{
         final Timer.Context context = PublisherMetrics.Publisher.Write.Solr.solrUpdateDocumentsDuration.time(connectionId);
-        try {
+        try
+        {
             if (null == newDocs || newDocs.isEmpty()) {
 
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                           publishingBatchId, null, null),
-                          "Received for updating and empty/null list. Ignoring");
+                LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
+                         "Received for updating and empty/null list. Ignoring");
                 return true;
-        }
+            }
 
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                       publishingBatchId, null, null),
-                                                       "Number of Documents trying to update: " + newDocs.size());
-            int retry = 0;
-            while (retry <= MAX_RETRIES) {
-                final SolrClient server = createServer(publishingBatchId);
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
+                     "Number of Documents trying to update: " + newDocs.size()
+                    );
 
-                int numberOfDocumentsToUpdate = 0;
-                // Adding individual documents in server
-                for (final CRFSolrDocument CRFSolrDocument : newDocs) {
+            final List<SolrInputDocument> inputDocuments = new ArrayList<>();
 
-                    final SolrInputDocument update = new SolrInputDocument();
+            // Adding individual documents in server
+            for (final CRFSolrDocument crfSolrDocument : newDocs) {
 
-                    update.addField("europeana_id", CRFSolrDocument.getRecordId());
+                final SolrInputDocument update = new SolrInputDocument();
 
-                    if (DocumentReferenceTaskType.CHECK_LINK == CRFSolrDocument.getTaskType()) {
-                        update.addField("has_landingpage", singletonMap("set", CRFSolrDocument.getHasLandingPage()));
-                    }
-                    else {
+                update.addField("europeana_id", crfSolrDocument.getRecordId());
+                update.addField("has_landingpage", singletonMap("set", crfSolrDocument.getHasLandingPage()));
+                update.addField("is_fulltext", singletonMap("set", crfSolrDocument.getIsFullText()));
+                update.addField("has_thumbnails", singletonMap("set", crfSolrDocument.getHasThumbnails()));
+                update.addField("has_media", singletonMap("set", crfSolrDocument.getHasMedia()));
+                update.addField("filter_tags", singletonMap("set", crfSolrDocument.getFilterTags()));
+                update.addField("facet_tags", singletonMap("set", crfSolrDocument.getFacetTags()));
 
-                        update.addField("is_fulltext", singletonMap("set", CRFSolrDocument.getIsFulltext()));
-
-                        update.addField("has_thumbnails", singletonMap("set", CRFSolrDocument.getHasThumbnails()));
-
-                        update.addField("has_media", singletonMap("set", CRFSolrDocument.getHasMedia()));
-
-                        update.addField("filter_tags", singletonMap("set", CRFSolrDocument.getFilterTags()));
-
-                        update.addField("facet_tags", singletonMap("set", CRFSolrDocument.getFacetTags()));
-
-                        if (updateEdmObjectUrl(CRFSolrDocument, publishingBatchId)) {
-                            update.addField("provider_aggregation_edm_object", CRFSolrDocument.getUrl());
-                        }
-                    }
-
-                    try {
-                        server.add(update);
-                        ++numberOfDocumentsToUpdate;
-                    } catch (Exception e) {
-                        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                                   publishingBatchId, null,
-                                                                   new ReferenceOwner(null, null, CRFSolrDocument
-                                                                                                          .getRecordId())),
-                                  "Exception when adding specific document " + update.toString() + " => document " +
-                                          "skipped",
-                                  e);
-                    }
+                if (null != crfSolrDocument) {
+                    update.addField("provider_aggregation_edm_object", crfSolrDocument.getProviderEdmObject());
                 }
 
+                inputDocuments.add(update);
+            }
+
+            int numberOfDocumentsToUpdate = 0;
+            int badDocuments = 0;
+            final SolrClient server = createServer(publishingBatchId);
+            try {
+                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
+                         "Trying to do a bulk update on solr"
+                        );
+
+                server.add(inputDocuments);
+                numberOfDocumentsToUpdate = inputDocuments.size();
+            } catch (Exception e) {
+                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
+                          "There was a problem with bulk update. Adding documents one by one and skipping the troubled ones.",
+                          e);
+
+                for (final SolrInputDocument document : inputDocuments) {
+                    try {
+                        server.add(document);
+                        ++numberOfDocumentsToUpdate;
+                    } catch (Exception e1) {
+                        ++badDocuments;
+                        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                                                                   publishingBatchId),
+                                  "Problems adding document with europeana_id (recordId): {}", document.getField("europeana_id"), e);
+                    }
+                }
+            }
+            PublisherMetrics.Publisher.Write.Solr.badSolrDocumentsCount.inc(connectionId, badDocuments);
+
+            for (int retry = 0; retry <= MAX_RETRIES; ++retry) {
                 try {
                     LOG.info(LoggingComponent
                                      .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId,
@@ -169,22 +170,17 @@ public class SOLRWriter {
                     server.commit();
                     server.close();
                     PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToSolr.inc(numberOfDocumentsToUpdate);
-                    PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToOneConnection.inc(connectionId,
-                                                                                                           numberOfDocumentsToUpdate);
+                    PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToOneConnection.inc(connectionId, numberOfDocumentsToUpdate);
                     return true;
                 }
                 catch (Exception e) {
-                    LOG.error(LoggingComponent
-                                      .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId,
-                                                       null, null),
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                               "Failed to update {} SOLR documents with commit retry policy. Current retry count is {}",
                               newDocs.size(), retry);
-                    server.close();
+
                     if (retry >= MAX_RETRIES) {
-                        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                                   publishingBatchId, null, null),
-                                  "Failed to update {} SOLR documents with commit retry policy. Reached maximum retry" +
-                                          " count {}. Skipping updating all these documents.",
+                        LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
+                                  "Failed to update {} SOLR documents with commit retry policy. Reached maximum retry" + " count {}. Skipping updating all these documents.",
                                   newDocs.size(), MAX_RETRIES);
                         return false;
                     }
@@ -192,8 +188,7 @@ public class SOLRWriter {
                         try {
                             retry++;
                             final long secsToSleep = retry * 10;
-                            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                                       publishingBatchId, null, null),
+                            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                                       "Failed to update " + newDocs.size() + " SOLR documents with commit retry " +
                                               "policy. Current retry count is " + retry + " . Sleeping " + secsToSleep + " seconds before trying again.");
                             TimeUnit.SECONDS.sleep(secsToSleep);
@@ -210,20 +205,6 @@ public class SOLRWriter {
         }
     }
 
-    private boolean updateEdmObjectUrl (CRFSolrDocument crfSolrDocument, String publishingBatchId) {
-        if (null == crfSolrDocument || null == crfSolrDocument.getUrlSourceType() || null == crfSolrDocument.getUrl()) {
-            LOG.error(LoggingComponent
-                              .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null,
-                                               null), "Document with record Id : " + crfSolrDocument.getRecordId() +
-                                                                                    "has null url and/or " +
-                                                                                    "urlSourceType");
-            return false;
-        }
-
-        return URLSourceType.ISSHOWNBY.equals(crfSolrDocument.getUrlSourceType()) &&
-               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailGenerationState()) &&
-               ProcessingJobSubTaskState.SUCCESS.equals(crfSolrDocument.getSubTaskStats().getThumbnailStorageState());
-    }
 
     /**
      * Checks existence of documents in the SOLR index.
@@ -231,25 +212,23 @@ public class SOLRWriter {
      * @param documents the document that need to be checked
      * @return the map that indicates for each document id (map key) whether exists : true or false
      */
-    public List<HarvesterDocument> filterDocumentIds (final List<HarvesterDocument> documents,final String publishingBatchId) {
+    public List<HarvesterRecord> filterDocumentIds (final List<HarvesterRecord> documents,final String publishingBatchId) {
         final Timer.Context context = PublisherMetrics.Publisher.Read.Solr.solrCheckIdsDurationDuration.time(connectionId);
         try {
             if (null == documents || documents.isEmpty()) {
                 return Collections.EMPTY_LIST;
             }
 
-
             final Set<String> acceptedRecordIds = new HashSet<>();
             final List<String> documentIds = new ArrayList<>();
 
-            for (final HarvesterDocument document : documents) {
-                documentIds.add(document.getReferenceOwner().getRecordId());
+            for (final HarvesterRecord document : documents) {
+                documentIds.add(document.getRecordId());
             }
 
             // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
-            LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
-                                                       publishingBatchId, null, null),
-                      "Checking documents: " + documents.size());
+            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
+                     "Checking records: " + documents.size());
             for (int documentIdsStartChunkIndex = 0; documentIdsStartChunkIndex <= documentIds.size();
                  documentIdsStartChunkIndex += MAX_NUMBER_OF_IDS_IN_SOLR_QUERY) {
                 final int endOfArray = Math.min(documentIds.size(), documentIdsStartChunkIndex + MAX_NUMBER_OF_IDS_IN_SOLR_QUERY);
@@ -291,10 +270,9 @@ public class SOLRWriter {
                 }
             }
 
-
-            final List<HarvesterDocument> filteredDocuments = new ArrayList<>();
-            for (final HarvesterDocument document: documents) {
-               if (acceptedRecordIds.contains(document.getReferenceOwner().getRecordId())) {
+            final List<HarvesterRecord> filteredDocuments = new ArrayList<>();
+            for (final HarvesterRecord document: documents) {
+               if (acceptedRecordIds.contains(document.getRecordId())) {
                    filteredDocuments.add(document);
                }
             }

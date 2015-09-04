@@ -24,15 +24,13 @@ public class PublisherMetrics  {
             public static class Mongo {
                 public static final String NAME =Read.NAME + ".Mongo";
 
-                public static final Timer mongoGetDocStatisticsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveDocStatisticsWithoutMetaInfo", DURATION));
-                public static final Timer mongoGetMetaInfoDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveMetaInfo", DURATION));
+                public static final TimerMap mongoGetDocStatisticsDuration = new TimerMap(name(Mongo.NAME, "retrieveDocStatisticsWithoutMetaInfo", DURATION));
+                public static final Timer mongoGetMetaInfoDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveMetaInfo"));
+                public static final Timer mongoGetUrlsDuration = METRIC_REGISTRY.timer(name(Mongo.NAME, "retrieveUrls", DURATION));
 
-                public static final Counter totalNumberOfDocumentsStatistics = METRIC_REGISTRY.counter(name(Mongo.NAME,
-                                                                                                      "numberOfDocumentsStatistics",
-                                                                                                      TOTAL, COUNTER));
-                public static final Counter totalNumberOfDocumentsMetaInfo = METRIC_REGISTRY.counter(name(Mongo.NAME,
-                                                                                                      "numberOfDocumentsMetaInfo",
-                                                                                                      TOTAL, COUNTER));
+
+                public static final CounterMap totalNumberOfDocumentsStatistics = new CounterMap(name(Mongo.NAME, "numberOfDocumentsStatistics", TOTAL));
+                public static final CounterMap totalNumberOfDocumentsMetaInfo = new CounterMap(name(Mongo.NAME, "numberOfDocumentsMetaInfo", TOTAL));
             }
 
             public static class Solr {
@@ -40,9 +38,9 @@ public class PublisherMetrics  {
 
                 public static final TimerMap solrCheckIdsDurationDuration = new TimerMap(name(Solr.NAME, "solrCheckIds"));
 
-                public static final Counter totalNumberOfDocumentsThatExistInSolr = METRIC_REGISTRY.counter(name(Solr.NAME, TOTAL, "numberOfDocumentsThatExistInSolr", COUNTER));
+                public static final Counter totalNumberOfDocumentsThatExistInSolr = METRIC_REGISTRY.counter(name(Solr.NAME, "numberOfDocumentsThatExistInSolr", TOTAL, COUNTER));
 
-                public static final CounterMap totalNumberOfDocumentsThatExistInOneSolr= new CounterMap(name(Solr.NAME, TOTAL, "numberOfDocumentsThatExistInSolr"));
+                public static final CounterMap totalNumberOfDocumentsThatExistInOneSolr= new CounterMap(name(Solr.NAME, "numberOfDocumentsThatExistInSolr", TOTAL));
             }
         }
 
@@ -53,24 +51,25 @@ public class PublisherMetrics  {
                 public static final String NAME = Write.NAME + ".Mongo";
 
                 public static final TimerMap mongoWriteDocumentsDuration = new TimerMap(name(Mongo.NAME, "writeDocuments"));
-                public static final Counter  totalNumberOfDocumentsWritten = METRIC_REGISTRY.counter(name(Mongo.NAME, TOTAL, "numberOfDocumentsWrittenMongo", COUNTER));
+                public static final Counter  totalNumberOfDocumentsWritten = METRIC_REGISTRY.counter(name(Mongo.NAME, "numberOfDocumentsWrittenMongo", TOTAL, COUNTER));
 
-                public static final CounterMap totalNumberOfDocumentsWrittenToOneConnection = new CounterMap(name (Mongo.NAME, TOTAL, "numberOfDocumentsWrittenToMongo"));
+                public static final CounterMap totalNumberOfDocumentsWrittenToOneConnection = new CounterMap(name (Mongo.NAME, "numberOfDocumentsWrittenToMongo", TOTAL));
 
 
-                public static TimerMap writeEdmObject = new TimerMap(name(Mongo.NAME, "writeEdmObject", DURATION));
-                public static TimerMap writeEdmPreview = new TimerMap(name(Mongo.NAME, "writeEdmPreview", DURATION));
-
-                public static TimerMap mongoWriteMetaInfoDuration = new TimerMap(name(Mongo.NAME, "writeMetaInfo", DURATION));
+                public static TimerMap writeEdmObject = new TimerMap(name(Mongo.NAME, "writeEdmObject"));
+                public static TimerMap writeEdmPreview = new TimerMap(name(Mongo.NAME, "writeEdmPreview"));
+                public static TimerMap mongoWriteMetaInfoDuration = new TimerMap(name(Mongo.NAME, "writeMetaInfo"));
             }
 
             public static class Solr {
                 public static final String NAME = Write.NAME + ".Solr";
 
                 public static final TimerMap solrUpdateDocumentsDuration = new TimerMap(name(Solr.NAME, "updateDocuments"));
-                public static final Counter totalNumberOfDocumentsWrittenToSolr = METRIC_REGISTRY.counter(name(Solr.NAME, TOTAL, "numberOfDocumentsWrittenToSolr", COUNTER));
+                public static final Counter totalNumberOfDocumentsWrittenToSolr = METRIC_REGISTRY.counter(name(Solr.NAME, "numberOfDocumentsWrittenToSolr", TOTAL, COUNTER));
 
-                public static final CounterMap totalNumberOfDocumentsWrittenToOneConnection = new CounterMap(name (Solr.NAME, TOTAL, "numberOfDocumentsWrittenToSolr"));
+                public static final CounterMap totalNumberOfDocumentsWrittenToOneConnection = new CounterMap(name (Solr.NAME, "numberOfDocumentsWrittenToSolr", TOTAL));
+
+                public static final CounterMap badSolrDocumentsCount = new CounterMap(name (Solr.NAME, "badSolrDocuments"));
             }
         }
 
@@ -78,16 +77,12 @@ public class PublisherMetrics  {
             public static final String NAME = Publisher.NAME + ".Batch";
 
             public static final TimerMap fakeTagExtraction = new TimerMap(name(Batch.NAME, "fakeTagGeneration", DURATION));
-
             public static final Timer loopBatchDuration = METRIC_REGISTRY.timer(name(Batch.NAME, "loopBatch", DURATION));
-            public static final Counter totalNumberOfInvalidMimetypes = METRIC_REGISTRY.counter(name(Batch.NAME, TOTAL,
-                                                                                                     "numberOfInvalidMimetypes",
-                                                                                                     COUNTER));
-            public static final Counter totalNumberOfDocumentsWithoutMetaInfo = METRIC_REGISTRY.counter(name(Batch.NAME, TOTAL, "numberOfDocumentsWithoutMetaInfo", COUNTER));
-
-
-            public static final Counter totalNumberOfDocumentsProcessed = METRIC_REGISTRY.counter(name(Batch.NAME, TOTAL, "numberOfDocumentsProcessed", COUNTER));
-            public static final LazyGauge numberOfRemaningDocumentsToProcess = new LazyGauge(METRIC_REGISTRY, name(Batch.NAME, "numberOfRemaningDocumentsToProcess"));
+            public static final Counter totalNumberOfInvalidMimeTypes = METRIC_REGISTRY.counter(name(Batch.NAME, "numberOfInvalidMimeTypes", TOTAL, COUNTER));
+            public static final Counter totalNumberOfDocumentsWithoutMetaInfo = METRIC_REGISTRY.counter(name(Batch.NAME, "numberOfDocumentsWithoutMetaInfo", TOTAL, COUNTER));
+            public static final Counter totalNumberOfDocumentsProcessed = METRIC_REGISTRY.counter(name(Batch.NAME, "numberOfDocumentsProcessed", TOTAL, COUNTER));
+            public static final LazyGauge numberOfRemainingDocumentsToProcess = new LazyGauge(METRIC_REGISTRY, name(Batch.NAME, "numberOfRemainingDocumentsToProcess"));
+            public static final LazyGauge timestamp = new LazyGauge(METRIC_REGISTRY, name(Batch.NAME, "dateFilter"));
         }
     }
 }

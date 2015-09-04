@@ -3,6 +3,9 @@ package eu.europeana.harvester.domain;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
 import com.google.code.morphia.annotations.Property;
+import org.joda.time.DateTime;
+
+import java.util.Date;
 
 /**
  * An object which wraps all types of metainfo. It will have always maximum one field which is not null.

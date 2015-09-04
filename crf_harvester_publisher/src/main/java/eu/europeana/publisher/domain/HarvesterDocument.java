@@ -36,6 +36,21 @@ public class HarvesterDocument {
         this.taskType = taskType;
     }
 
+    public HarvesterDocument (String sourceDocumentReferenceId, DateTime updatedAt, ReferenceOwner referenceOwner,
+                              SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo,
+                              ProcessingJobSubTaskStats subTaskStats, URLSourceType urlSourceType,
+                              DocumentReferenceTaskType taskType
+                              ) {
+        this.sourceDocumentReferenceId = sourceDocumentReferenceId;
+        this.updatedAt = updatedAt;
+        this.referenceOwner = referenceOwner;
+        this.sourceDocumentReferenceMetaInfo = sourceDocumentReferenceMetaInfo;
+        this.subTaskStats = subTaskStats;
+        this.urlSourceType = urlSourceType;
+        this.url = null;
+        this.taskType = taskType;
+    }
+
     public ProcessingJobSubTaskStats getSubTaskStats() {return subTaskStats;}
 
     public String getSourceDocumentReferenceId() {
@@ -69,5 +84,29 @@ public class HarvesterDocument {
 
     public DocumentReferenceTaskType getTaskType () {
         return taskType;
+    }
+
+    public HarvesterDocument withUrl(final String url) {
+        return new HarvesterDocument(sourceDocumentReferenceId,
+                                     updatedAt,
+                                     referenceOwner,
+                                     sourceDocumentReferenceMetaInfo,
+                                     subTaskStats,
+                                     urlSourceType,
+                                     taskType,
+                                     url
+        );
+    }
+
+    public HarvesterDocument withUpdatedAt(final DateTime updatedAt) {
+        return new HarvesterDocument(sourceDocumentReferenceId,
+                                     updatedAt,
+                                     referenceOwner,
+                                     sourceDocumentReferenceMetaInfo,
+                                     subTaskStats,
+                                     urlSourceType,
+                                     taskType,
+                                     url
+        );
     }
 }
