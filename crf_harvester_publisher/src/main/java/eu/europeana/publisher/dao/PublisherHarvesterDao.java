@@ -121,6 +121,7 @@ public class PublisherHarvesterDao {
                 catch (Exception e) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                               "Updated edmObject failed. Cannot retry.", e);
+                    throw e;
                 }
                 finally {
                    writeEdmObjectContext.close();
@@ -138,6 +139,7 @@ public class PublisherHarvesterDao {
                 catch (Exception e) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                               "Updated edmPreview failed. Cannot retry.", e);
+                    throw e;
                 }
                 finally {
                     writeEdmPreviewContext.close();
@@ -148,24 +150,12 @@ public class PublisherHarvesterDao {
                      "Updating finished. Started writing metainfo. #{} " + webResourceMetaInfos.size()
                     );
 
-            int i = 0;
             final Timer.Context context_metainfo = PublisherMetrics.Publisher.Write.Mongo.mongoWriteMetaInfoDuration.time(connectionId);
             try {
-                while (true) {
-                    try {
                         webResourceMetaInfoDao.createOrModify(webResourceMetaInfos.values(), WriteConcern.ACKNOWLEDGED);
                         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
-                                 "Done updating in retry #" + i
+                                 "Done updating"
                                 );
-                        break;
-                    } catch (Exception e) {
-                        ++i;
-                        if (i == MAX_NUMBER_OF_RETRIES) throw e;
-                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
-                                 "Retry updating #" + i, e
-                                );
-                    }
-                }
             }
             finally {
                context_metainfo.close();
