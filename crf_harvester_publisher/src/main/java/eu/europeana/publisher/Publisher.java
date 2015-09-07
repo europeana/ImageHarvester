@@ -26,6 +26,8 @@ public class Publisher {
 
     private final Config config;
 
+    private PublisherManager publisherManager;
+
     public Publisher(final Config config) {
         if (null == config) {
             throw new IllegalArgumentException("config cannot be null");
@@ -127,11 +129,11 @@ public class Publisher {
 
 
 
-        final PublisherManager publisherManager = new PublisherManager(publisherConfig);
+        publisherManager = new PublisherManager(publisherConfig);
         publisherManager.start();
     }
 
     public void stop() throws IOException, SolrServerException {
-        System.exit(0);
+        publisherManager.stopGracefully();
     }
 }
