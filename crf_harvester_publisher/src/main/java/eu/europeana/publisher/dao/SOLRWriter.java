@@ -46,6 +46,7 @@ public class SOLRWriter {
     private static final int MAX_RETRIES = 5;
     private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
     private final String solrUrl;
+    private final Boolean solrCommitEnabled;
     private final String connectionId;
 
 
@@ -58,6 +59,7 @@ public class SOLRWriter {
 
         this.connectionId = solrConfig.getName();
         this.solrUrl = solrConfig.getSolrUrl();
+        this.solrCommitEnabled = solrConfig.getSolrCommitEnabled();
     }
 
     private SolrClient createServer (String publishingBatchId) {
@@ -167,7 +169,16 @@ public class SOLRWriter {
                                                       null, null),
                              "Trying to update {} SOLR documents with commit retry policy. Current retry count is {}",
                              newDocs.size(), retry);
-                    server.commit();
+                    if (solrCommitEnabled) {
+                        server.commit();
+                    } else {
+                        LOG.info(LoggingComponent
+                                        .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId,
+                                                null, null),
+                                "Skip committing {} SOLR documents as solrCommitEnabled == false. The SOLR server is responsible to commit by itself.",
+                                newDocs.size(), retry);
+
+                    }
                     server.close();
                     PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToSolr.inc(numberOfDocumentsToUpdate);
                     PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToOneConnection.inc(connectionId, numberOfDocumentsToUpdate);
