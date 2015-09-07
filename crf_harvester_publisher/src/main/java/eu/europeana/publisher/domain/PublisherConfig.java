@@ -17,6 +17,8 @@ public class PublisherConfig {
 
     private final String startTimestampFile;
 
+    private final String stopGracefullyFile;
+
     /**
      * Batch of documents to update.
      */
@@ -31,13 +33,14 @@ public class PublisherConfig {
     private final MongoConfig sourceMongoConfig;
 
     public PublisherConfig (MongoConfig sourceMongoConfig, List<DBTargetConfig> targetMongoConfigs,
-                            GraphiteReporterConfig graphiteConfig, DateTime startTimestamp, String startTimestampFile,
+                            GraphiteReporterConfig graphiteConfig, DateTime startTimestamp, String startTimestampFile,String stopGracefullyFile,
                             Long sleepSecondsAfterEmptyBatch, int batch, int delayInSecondsForRemainingRecordsStatistics) {
         this.sourceMongoConfig = sourceMongoConfig;
         this.targetMongoConfigs = targetMongoConfigs;
         this.graphiteConfig = graphiteConfig;
         this.startTimestamp = startTimestamp;
         this.startTimestampFile = startTimestampFile;
+        this.stopGracefullyFile = stopGracefullyFile;
         this.sleepSecondsAfterEmptyBatch = sleepSecondsAfterEmptyBatch;
         this.batch = batch;
         this.delayInSecondsForRemainingRecordsStatistics = delayInSecondsForRemainingRecordsStatistics;
@@ -59,6 +62,10 @@ public class PublisherConfig {
 
     public String getStartTimestampFile () {
         return startTimestampFile;
+    }
+
+    public String getStopGracefullyFile() {
+        return stopGracefullyFile;
     }
 
     public Integer getBatch () {

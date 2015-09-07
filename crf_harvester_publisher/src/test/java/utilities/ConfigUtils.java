@@ -74,10 +74,13 @@ public class ConfigUtils {
                 config.hasPath("delayInMinutesForRemainingRecordsStatistics") ?
                         config.getInt("delayInMinutesForRemainingRecordsStatistics") :
                         10;
+
+        final String stopGracefullyFilename = config.getString("criteria.stopGracefullyFile");
+
         return  new PublisherConfig(sourceDBConfig,
                                     targetDBConfigs,
                                     graphiteReporterConfig,
-                                    startTimestamp, startTimestampFilename,
+                                    startTimestamp, startTimestampFilename,stopGracefullyFilename,
                                     sleepSecondsAfterEmptyBatch,
                                     batch,
                                     delayInSecondsForRemainingRecordsStatistics);

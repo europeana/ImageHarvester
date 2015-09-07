@@ -130,6 +130,7 @@ public class PublisherManager {
             final Timer.Context context = PublisherMetrics.Publisher.Batch.loopBatchDuration.time();
             try {
                 batchProcessing();
+                this.shouldStopGracefully = shouldPublisherStopGraceFully();
                 if (shouldStopGracefully == true) {
                     LOG.info(LoggingComponent
                                     .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
@@ -230,6 +231,13 @@ public class PublisherManager {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                 "Updating timestamp after batch finished to " + currentTimestamp);
     }
+
+    private boolean shouldPublisherStopGraceFully() throws IOException {
+        if (!Files.exists(Paths.get(config.getStopGracefullyFile()))) return false;
+        final String fileContent = new String(Files.readAllBytes(Paths.get(config.getStopGracefullyFile())));
+        return ("true".equalsIgnoreCase(fileContent));
+    }
+
 
     private DateTime updateTimestamp(final DateTime currentTime, final Collection<HarvesterRecord> records) throws
             IOException {

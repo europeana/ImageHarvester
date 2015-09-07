@@ -45,7 +45,6 @@ public class Publisher {
                       "Start timestamp is null. Defaulting to 1 Jan 1970..");
         }
 
-
         String startTimestampFile;
         try {
             startTimestampFile = config.getString("criteria.startTimestampFile");
@@ -102,6 +101,8 @@ public class Publisher {
         catch(ConfigException.Null e) {
 
         }
+        final String stopGracefullyFilename = config.getString("criteria.stopGracefullyFile");
+
 
         Long sleepSecondsAfterEmptyBatch = null;
 
@@ -121,6 +122,7 @@ public class Publisher {
                                                                     targetDBConfigs,
                                                                     graphiteReporterConfig,
                                                                     startTimestamp, startTimestampFilename,
+                                                                    stopGracefullyFilename,
                                                                     sleepSecondsAfterEmptyBatch,
                                                                     batch,
                                                                     delayInMinutesForRemainingRecordsStatistics
