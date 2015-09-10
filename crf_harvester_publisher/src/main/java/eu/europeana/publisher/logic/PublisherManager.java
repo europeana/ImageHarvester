@@ -130,7 +130,7 @@ public class PublisherManager {
             final Timer.Context context = PublisherMetrics.Publisher.Batch.loopBatchDuration.time();
             try {
                 batchProcessing();
-                this.shouldStopGracefully = shouldPublisherStopGraceFully();
+                shouldStopGracefully = shouldPublisherStopGraceFully();
                 if (shouldStopGracefully == true) {
                     LOG.info(LoggingComponent
                                     .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
@@ -233,8 +233,18 @@ public class PublisherManager {
     }
 
     private boolean shouldPublisherStopGraceFully() throws IOException {
-        if (!Files.exists(Paths.get(config.getStopGracefullyFile()))) return false;
+        if (!Files.exists(Paths.get(config.getStopGracefullyFile()))) {
+            LOG.info(LoggingComponent
+                            .appendAppFields(LoggingComponent.Migrator.PROCESSING, "", null, null),
+                    "No stop graceful file found at  "+config.getStopGracefullyFile()+".");
+
+            return false;
+        }
         final String fileContent = new String(Files.readAllBytes(Paths.get(config.getStopGracefullyFile())));
+        LOG.info(LoggingComponent
+                        .appendAppFields(LoggingComponent.Migrator.PROCESSING, "", null, null),
+                "Stop graceful file found at  "+config.getStopGracefullyFile()+" with content "+fileContent);
+
         return ("true".equalsIgnoreCase(fileContent));
     }
 
