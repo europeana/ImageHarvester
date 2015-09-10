@@ -127,15 +127,22 @@ public class PublisherManager {
         scheduler.schedule(runGauge, config.getDelayInSecondsForRemainingRecordsStatistics(), TimeUnit.MINUTES);
 
         while (true) {
+
             final Timer.Context context = PublisherMetrics.Publisher.Batch.loopBatchDuration.time();
             try {
                 batchProcessing();
                 shouldStopGracefully = shouldPublisherStopGraceFully();
+
+                LOG.info(LoggingComponent
+                                .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+                        "ShouldStopGracefully is "+shouldStopGracefully);
+
+
                 if (shouldStopGracefully == true) {
                     LOG.info(LoggingComponent
                                     .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                             "Gracefully stopping publisher at end of batch as stop request received during batch processing. Last OK processed timestamp {}",currentTimestamp);
-                    System.exit(0);
+                    return ;
                 } else {
                     LOG.info(LoggingComponent
                                     .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
