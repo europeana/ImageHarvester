@@ -136,6 +136,10 @@ public class PublisherManager {
                                     .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                             "Gracefully stopping publisher at end of batch as stop request received during batch processing. Last OK processed timestamp {}",currentTimestamp);
                     System.exit(0);
+                } else {
+                    LOG.info(LoggingComponent
+                                    .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+                            "Continuing with next batch as shouldStopGracefully is "+shouldStopGracefully);
                 }
             } finally {
                 context.close();
@@ -245,7 +249,7 @@ public class PublisherManager {
                         .appendAppFields(LoggingComponent.Migrator.PROCESSING, "", null, null),
                 "Stop graceful file found at  "+config.getStopGracefullyFile()+" with content "+fileContent);
 
-        return ("true".equalsIgnoreCase(fileContent));
+        return ("true".equalsIgnoreCase(fileContent.trim()));
     }
 
 
