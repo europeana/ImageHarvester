@@ -127,6 +127,7 @@ public class PublisherHarvesterDao {
                    writeEdmObjectContext.close();
                 }
             }
+
             if (europeanaAggregationHasToUpdate) {
                 final Timer.Context writeEdmPreviewContext = PublisherMetrics.Publisher.Write.Mongo.writeEdmPreview.time(connectionId);
                 try {
@@ -147,14 +148,14 @@ public class PublisherHarvesterDao {
             }
 
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
-                     "Updating finished. Started writing metainfo. #{} " + webResourceMetaInfos.size()
+                     "Updating finished. Started writing meta info. #{} " + webResourceMetaInfos.size()
                     );
 
             final Timer.Context context_metainfo = PublisherMetrics.Publisher.Write.Mongo.mongoWriteMetaInfoDuration.time(connectionId);
             try {
                         webResourceMetaInfoDao.createOrModify(webResourceMetaInfos.values(), WriteConcern.ACKNOWLEDGED);
                         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
-                                 "Done updating"
+                                 "Done updating meta {} info documents",webResourceMetaInfos.values().size()
                                 );
             }
             finally {
@@ -165,6 +166,8 @@ public class PublisherHarvesterDao {
             PublisherMetrics.Publisher.Write.Mongo.totalNumberOfDocumentsWrittenToOneConnection.inc(connectionId,
                                                                                                     webResourceMetaInfos.size()
                                                                                                    );
+        } catch (Exception e){
+            throw e;
         }
         finally {
             context.close();

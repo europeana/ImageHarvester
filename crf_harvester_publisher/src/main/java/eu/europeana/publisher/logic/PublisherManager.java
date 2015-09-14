@@ -44,7 +44,7 @@ public class PublisherManager {
     private PublisherEuropeanaDao publisherEuropeanaDao;
 
     private DateTime currentTimestamp;
-    
+
     private Boolean shouldStopGracefully = false;
 
     public PublisherManager(PublisherConfig config) throws UnknownHostException {
