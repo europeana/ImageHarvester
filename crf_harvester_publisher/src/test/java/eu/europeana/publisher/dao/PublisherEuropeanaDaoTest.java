@@ -16,7 +16,6 @@ import eu.europeana.publisher.domain.PublisherConfig;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import utilities.ConfigUtils;
 import utilities.DButils;
@@ -95,12 +94,12 @@ public class PublisherEuropeanaDaoTest {
 
     @Test (expected = IllegalArgumentException.class)
     public void test_extractDocuments_NullCursor () {
-        europeanaDao.retrieveDocuments(null, "");
+        europeanaDao.retrieveRecords(null, "");
     }
 
     @Test (expected =  IllegalArgumentException.class)
     public void test_extractDocuments_NegativeBatchSize() {
-        europeanaDao.retrieveDocuments(null, "");
+        europeanaDao.retrieveRecords(null, "");
     }
 
     @Test
@@ -167,7 +166,7 @@ public class PublisherEuropeanaDaoTest {
         final DBCollection jobStatistics = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentProcessingStatistics");
         final DBCollection metaInfos = publisherConfig.getSourceMongoConfig().connectToDB().getCollection("SourceDocumentReferenceMetaInfo");
         while (cursor.hasNext()) {
-            final List<HarvesterRecord> records = europeanaDao.retrieveDocuments(cursor, "");
+            final List<HarvesterRecord> records = europeanaDao.retrieveRecords(cursor, "");
 
             assertEquals(batchSize, records.size());
 

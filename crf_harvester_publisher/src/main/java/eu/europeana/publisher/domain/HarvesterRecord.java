@@ -107,8 +107,8 @@ public class HarvesterRecord {
         }
 
         switch (type) {
-            case HASVIEW: return withHasViewDocuments(Arrays.asList(document));
-
+            case HASVIEW:
+                return withHasViewDocuments(Arrays.asList(document));
             case ISSHOWNAT:
                 assert (1 == document.length);
                 return withEdmIsShownAtDocument(document[0]);
@@ -150,11 +150,11 @@ public class HarvesterRecord {
         );
     }
 
-    public HarvesterRecord withHasViewDocuments (List<HarvesterDocument> document) {
+    public HarvesterRecord withHasViewDocuments (List<HarvesterDocument> documents) {
         return new HarvesterRecord(this.getEdmObjectDocument(),
                                    this.getEdmIsShownByDocument(),
                                    this.getEdmIsShownAtDocument(),
-                                   document
+                                   documents
                                  );
     }
 

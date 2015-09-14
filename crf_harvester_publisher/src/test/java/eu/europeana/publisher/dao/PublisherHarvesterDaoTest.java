@@ -12,7 +12,6 @@ import eu.europeana.publisher.domain.PublisherConfig;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.unitils.reflectionassert.ReflectionAssert;
 import utilities.ConfigUtils;
@@ -23,7 +22,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
 
 import static org.junit.Assert.assertEquals;
 import static utilities.DButils.loadMongoData;
@@ -60,7 +58,7 @@ public class PublisherHarvesterDaoTest {
 
         correctMetaInfos = new ArrayList<>();
         harvesterDocuments = new ArrayList<>();
-        harvesterDocuments = europeanaDao.retrieveDocuments(cursor, "");
+        harvesterDocuments = europeanaDao.retrieveRecords(cursor, "");
 
         for (final HarvesterRecord record: harvesterDocuments) {
             for (final SourceDocumentReferenceMetaInfo metaInfo: record.getUniqueMetainfos()) {

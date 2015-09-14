@@ -79,6 +79,8 @@ public class PublisherEuropeanaDao {
         final Map<String, List<HarvesterDocument>> harvesterDocuments = new HashMap<>();
         final List<String> sourceDocumentRecordIds = new LinkedList<>();
 
+        // STEP 1 : Retrieve the jobs & stats information and leave meta info null
+
         final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetDocStatisticsDuration.time(collectionName);
         try {
             while (cursor.hasNext()) {
@@ -100,6 +102,8 @@ public class PublisherEuropeanaDao {
         }
 
         PublisherMetrics.Publisher.Read.Mongo.totalNumberOfDocumentsStatistics.inc(collectionName, documents.size());
+
+        // STEP 2 : Retrieve the meta info information and complete it in the document
 
         final Map<String, String> urls = retrieveUrls(sourceDocumentRecordIds, publishingBatchId);
         final List<SourceDocumentReferenceMetaInfo> metaInfos = retrieveMetaInfo(sourceDocumentRecordIds);
@@ -171,7 +175,10 @@ public class PublisherEuropeanaDao {
                       .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
     }
 
-    public List<HarvesterRecord> retrieveDocuments (final DBCursor cursor, final String publishingBatchId) {
+    public List<HarvesterRecord> retrieveRecords(final DBCursor cursor, final String publishingBatchId) {
+
+        // STEP 1 : Retrieve documents and stats
+
         if (null == cursor) {
             throw new IllegalArgumentException("cursor cannot be null");
         }
@@ -190,6 +197,8 @@ public class PublisherEuropeanaDao {
                 harvesterDocuments.get(documents.getKey()).add(document.withUpdatedAt(null));
             }
         }
+
+        // STEP 2 : Group docs and stats by record id
 
         final Map<String, List<HarvesterDocument>> groupByRecordId = new HashMap<>();
 

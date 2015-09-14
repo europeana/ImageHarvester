@@ -32,7 +32,7 @@ public class FakeTagExtractor {
     }
 
     private static boolean hasThumbnail (HarvesterDocument edmIsShownByDocument, HarvesterDocument edmObjectDocument) {
-        return hasThumbnail(edmIsShownByDocument) || hasThumbnail(edmObjectDocument);
+        return hasThumbnail(edmIsShownByDocument);
     }
 
     private static CRFSolrDocument generateTags (final CRFSolrDocument solrDocument,

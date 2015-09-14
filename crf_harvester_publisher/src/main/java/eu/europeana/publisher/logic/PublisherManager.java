@@ -156,7 +156,7 @@ public class PublisherManager {
         List<HarvesterRecord> retrievedDocs = null;
 
         do {
-            retrievedDocs = publisherEuropeanaDao.retrieveDocuments(cursor, publishingBatchId);
+            retrievedDocs = publisherEuropeanaDao.retrieveRecords(cursor, publishingBatchId);
 
             LOG.info(LoggingComponent
                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),

@@ -54,7 +54,7 @@ public class SOLRWriterTest {
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
 
-        harvesterRecords = europeanaDao.retrieveDocuments(cursor, "");
+        harvesterRecords = europeanaDao.retrieveRecords(cursor, "");
         validRecords = new ArrayList<>(harvesterRecords);
 
         int size = harvesterRecords.size();
