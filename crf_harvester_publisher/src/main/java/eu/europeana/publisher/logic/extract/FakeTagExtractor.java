@@ -1,7 +1,10 @@
 package eu.europeana.publisher.logic.extract;
 
 import eu.europeana.crf_faketags.extractor.*;
-import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.domain.ProcessingJobRetrieveSubTaskState;
+import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
+import eu.europeana.harvester.domain.ReferenceOwner;
+import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import eu.europeana.publisher.SkippedRecords;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.HarvesterDocument;
@@ -32,7 +35,7 @@ public class FakeTagExtractor {
     }
 
     private static boolean hasThumbnail (HarvesterDocument edmIsShownByDocument, HarvesterDocument edmObjectDocument) {
-        return hasThumbnail(edmIsShownByDocument);
+        return hasThumbnail(edmIsShownByDocument) || hasThumbnail(edmObjectDocument);
     }
 
     private static CRFSolrDocument generateTags (final CRFSolrDocument solrDocument,
