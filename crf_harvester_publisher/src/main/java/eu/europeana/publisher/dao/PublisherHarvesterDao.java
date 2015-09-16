@@ -34,7 +34,7 @@ public class PublisherHarvesterDao {
         }
 
         final MongoConfig mongoConfig = config.getMongoConfig();
-        this.connectionId = config.getName();
+        this.connectionId = config.getName(); 
         this.mongoDB = mongoConfig.connectToDB();
         Morphia morphia = new Morphia();
         final Datastore dataStore = morphia.createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());

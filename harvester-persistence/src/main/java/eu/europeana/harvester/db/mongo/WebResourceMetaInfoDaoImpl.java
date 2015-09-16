@@ -3,10 +3,9 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
-import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
-
+import com.mongodb.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
