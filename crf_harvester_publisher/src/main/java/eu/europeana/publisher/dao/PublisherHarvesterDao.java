@@ -36,8 +36,9 @@ public class PublisherHarvesterDao {
         final MongoConfig mongoConfig = config.getMongoConfig();
         this.connectionId = config.getName();
         this.mongoDB = mongoConfig.connectToDB();
-        final Datastore dataStore = new Morphia().createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());
-        webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(dataStore);
+        Morphia morphia = new Morphia();
+        final Datastore dataStore = morphia.createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());
+        webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(this.mongoDB,morphia,dataStore);
     }
 
     public void writeMetaInfos (Collection<HarvesterRecord> records) {

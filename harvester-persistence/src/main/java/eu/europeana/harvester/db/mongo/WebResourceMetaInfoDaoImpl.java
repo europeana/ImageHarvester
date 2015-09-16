@@ -1,9 +1,9 @@
 package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
+import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
-import com.mongodb.WriteConcern;
-import com.mongodb.WriteResult;
+import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 
@@ -22,7 +22,12 @@ public class WebResourceMetaInfoDaoImpl implements WebResourceMetaInfoDao {
      */
     private final Datastore datastore;
 
-    public WebResourceMetaInfoDaoImpl(Datastore datastore) {
+    private final Morphia morphia;
+
+    private final DB mongoDB;
+    public WebResourceMetaInfoDaoImpl(DB mongoDB,Morphia morphia,Datastore datastore) {
+        this.mongoDB = mongoDB;
+        this.morphia = morphia;
         this.datastore = datastore;
     }
 
@@ -37,8 +42,22 @@ public class WebResourceMetaInfoDaoImpl implements WebResourceMetaInfoDao {
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<WebResourceMetaInfo>> createOrModify(Collection<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern) {
-        return datastore.save(webResourceMetaInfos, writeConcern);
+    public int createOrModify(Collection<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern) {
+        if (webResourceMetaInfos == null ) return 0;
+        if (webResourceMetaInfos.isEmpty() ) return 0;
+        final BulkWriteOperation bulk = mongoDB.getCollection(datastore.getCollection(WebResourceMetaInfo.class).getName()).initializeUnorderedBulkOperation();
+
+        for (final WebResourceMetaInfo one : webResourceMetaInfos) {
+            BulkWriteRequestBuilder bulkWriteRequestBuilder=bulk.find(new BasicDBObject("_id",one.getId()));
+            if (bulkWriteRequestBuilder != null){
+                BulkUpdateRequestBuilder updateReq = bulkWriteRequestBuilder.upsert();
+                updateReq.replaceOne(morphia.toDBObject(one));
+            } else {
+                bulk.insert(morphia.toDBObject(one));
+            }
+        }
+        final BulkWriteResult result = bulk.execute();
+        return result.getInsertedCount()+result.getModifiedCount();
     }
 
     @Override

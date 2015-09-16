@@ -74,10 +74,11 @@ public class PublisherHarvesterDaoTest {
             }
         }
 
-        webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(
-            new Morphia().createDatastore(publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToMongo(),
-                                          publisherConfig.getTargetDBConfig().get(0).getMongoConfig().getDbName()
-                                         )
+        final Morphia morphia = new Morphia();
+        webResourceMetaInfoDao = new WebResourceMetaInfoDaoImpl(europeanaDao.getMongoDB(),morphia,
+            morphia.createDatastore(publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToMongo(),
+                    publisherConfig.getTargetDBConfig().get(0).getMongoConfig().getDbName()
+            )
         );
     }
 

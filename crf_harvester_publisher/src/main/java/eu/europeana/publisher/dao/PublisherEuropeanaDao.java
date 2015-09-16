@@ -18,6 +18,10 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 public class PublisherEuropeanaDao {
+    public DB getMongoDB() {
+        return mongoDB;
+    }
+
     private final DB mongoDB;
     private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
