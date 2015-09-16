@@ -4,7 +4,6 @@ import com.codahale.metrics.Timer;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.*;
-import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.DBTargetConfig;
@@ -21,7 +20,7 @@ import java.util.*;
  */
 public class PublisherHarvesterDao {
     private static final int MAX_NUMBER_OF_RETRIES = 5;
-    private final WebResourceMetaInfoDao webResourceMetaInfoDao;
+    private final WebResourceMetaInfoDaoImpl webResourceMetaInfoDao;
     private final String connectionId;
 
     private final DB mongoDB;
@@ -34,7 +33,7 @@ public class PublisherHarvesterDao {
         }
 
         final MongoConfig mongoConfig = config.getMongoConfig();
-        this.connectionId = config.getName(); 
+        this.connectionId = config.getName();
         this.mongoDB = mongoConfig.connectToDB();
         Morphia morphia = new Morphia();
         final Datastore dataStore = morphia.createDatastore(mongoConfig.connectToMongo(), mongoConfig.getDbName());
