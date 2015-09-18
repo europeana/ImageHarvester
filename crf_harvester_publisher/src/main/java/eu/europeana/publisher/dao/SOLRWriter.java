@@ -38,6 +38,12 @@ public class SOLRWriter {
      */
     private static final int MAX_NUMBER_OF_IDS_IN_SOLR_QUERY = 1000;
 
+    /**
+     * The maximum number of docs that can be present in a SOLR update query.
+     * Important because of the limitations of the HTTP URL length.
+     */
+    private static final int MAX_NUMBER_OF_DOCS_IN_SOLR_UPDATE = 50*1000;
+
     /*
      *  Connection timeout for solr queries. Time unit is milliseconds
      */
@@ -91,12 +97,29 @@ public class SOLRWriter {
 
     public String getSolrUrl() {return solrUrl;}
 
-    /**
-     * Updates a list of documents with new fields/properties
-     *
-     * @param newDocs the list of documents and the new fields
-     */
-    public boolean updateDocuments (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException{
+
+    public boolean updateDocuments (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException {
+        LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
+                "Preparing to split SOLR update of {} docs in chunks of {}",newDocs.size(),MAX_NUMBER_OF_DOCS_IN_SOLR_UPDATE);
+
+        for (int docsStartChunkIndex = 0; docsStartChunkIndex <= newDocs.size(); docsStartChunkIndex += MAX_NUMBER_OF_DOCS_IN_SOLR_UPDATE) {
+            final int endOfArray = Math.min(newDocs.size(), docsStartChunkIndex + MAX_NUMBER_OF_DOCS_IN_SOLR_UPDATE);
+            final List<CRFSolrDocument> newDocsChunk = newDocs.subList(docsStartChunkIndex, endOfArray);
+
+            LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
+                    "Chunk SOLR update of size {}",newDocsChunk.size());
+
+            updateDocumentsChunk(newDocsChunk, publishingBatchId);
+        }
+
+        return true;
+    }
+        /**
+         * Updates a list of documents with new fields/properties
+         *
+         * @param newDocs the list of documents and the new fields
+         */
+    private boolean updateDocumentsChunk (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException{
         final Timer.Context context = PublisherMetrics.Publisher.Write.Solr.solrUpdateDocumentsDuration.time(connectionId);
         try
         {

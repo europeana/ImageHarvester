@@ -6,6 +6,8 @@ import com.google.code.morphia.query.Query;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.domain.WebResourceMetaInfo;
 import com.mongodb.*;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.List;
  * MongoDB DAO implementation for CRUD with WebResourceMetaInfo collection
  */
 public class WebResourceMetaInfoDaoImpl implements WebResourceMetaInfoDao {
+    private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * The Datastore interface provides type-safe methods for accessing and storing your java objects in MongoDB.
@@ -44,19 +47,43 @@ public class WebResourceMetaInfoDaoImpl implements WebResourceMetaInfoDao {
     public int createOrModify(Collection<WebResourceMetaInfo> webResourceMetaInfos, WriteConcern writeConcern) {
         if (webResourceMetaInfos == null ) return 0;
         if (webResourceMetaInfos.isEmpty() ) return 0;
-        final BulkWriteOperation bulk = mongoDB.getCollection(datastore.getCollection(WebResourceMetaInfo.class).getName()).initializeUnorderedBulkOperation();
+
+        // Step 1 : Find out which meta info's are already there
+        final List<String> candiateIds = new ArrayList<String>();
+        for (WebResourceMetaInfo one : webResourceMetaInfos ) {
+            candiateIds.add(one.getId());
+        }
+
+        final BasicDBObject query = new BasicDBObject();
+        final BasicDBObject retrievedFields = new BasicDBObject();
+        retrievedFields.put("_id", 1);
+        query.put("_id", new BasicDBObject("$in", candiateIds));
+        DBCursor existing = mongoDB.getCollection(datastore.getCollection(WebResourceMetaInfo.class).getName())
+                .find(query, retrievedFields);
+
+        final List<String> existingIds = new ArrayList<String>();
+        while (existing.hasNext()) {
+            final DBObject nextOne = existing.next();
+            existingIds.add(nextOne.get("_id").toString());
+        }
+
+        LOG.info("WebResourceMetaInfo {} to be created out of total of {}",existingIds.size(),webResourceMetaInfos.size());
+
+        // Step 2 : update or create
+        final BulkWriteOperation bulk = mongoDB.getCollection(datastore.getCollection(WebResourceMetaInfo.class).getName()).initializeOrderedBulkOperation();
 
         for (final WebResourceMetaInfo one : webResourceMetaInfos) {
-            BulkWriteRequestBuilder bulkWriteRequestBuilder=bulk.find(new BasicDBObject("_id",one.getId()));
-            if (bulkWriteRequestBuilder != null){
-                BulkUpdateRequestBuilder updateReq = bulkWriteRequestBuilder.upsert();
-                updateReq.replaceOne(morphia.toDBObject(one));
-            } else {
-                bulk.insert(morphia.toDBObject(one));
-            }
+           if (existingIds.contains(one.getId())) {
+               bulk.find(new BasicDBObject("_id",one.getId())).upsert().replaceOne(morphia.toDBObject(one));
+           } else {
+               bulk.insert(morphia.toDBObject(one));
+           }
         }
-        final BulkWriteResult result = bulk.execute();
-        return result.getInsertedCount()+result.getModifiedCount();
+
+        // Step 3 : execute bulk
+        final BulkWriteResult result = bulk.execute(writeConcern);
+
+        return webResourceMetaInfos.size();
     }
 
     @Override

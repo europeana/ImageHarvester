@@ -91,7 +91,7 @@ public class WebResourceMetaInfoDaoImplTest {
             );
         }
 
-        webResourceMetaInfoDao.createOrModify(metaInfos, WriteConcern.NONE);
+        webResourceMetaInfoDao.createOrModify(metaInfos, WriteConcern.ACKNOWLEDGED);
 
         for (final WebResourceMetaInfo metaInfo: metaInfos) {
             final WebResourceMetaInfo writtenInfo = webResourceMetaInfoDao.read(metaInfo.getId());
@@ -124,7 +124,7 @@ public class WebResourceMetaInfoDaoImplTest {
     public void testUpdate() throws Exception {
         final WebResourceMetaInfo sourceDocumentReferenceMetaInfo =
                 new WebResourceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", "", null, null, null), null, null, null);
-        webResourceMetaInfoDao.createOrModify(Lists.newArrayList(sourceDocumentReferenceMetaInfo), WriteConcern.NONE);
+        webResourceMetaInfoDao.createOrModify(Lists.newArrayList(sourceDocumentReferenceMetaInfo), WriteConcern.ACKNOWLEDGED);
 
         final WebResourceMetaInfo updatedSourceDocumentReferenceMetaInfo =
                 new WebResourceMetaInfo(sourceDocumentReferenceMetaInfo.getId(),
@@ -133,7 +133,7 @@ public class WebResourceMetaInfoDaoImplTest {
         assertNotEquals(updatedSourceDocumentReferenceMetaInfo.getImageMetaInfo().getHeight(),
                 webResourceMetaInfoDao.read(
                         sourceDocumentReferenceMetaInfo.getId()).getImageMetaInfo().getHeight());
-        assertTrue(webResourceMetaInfoDao.createOrModify(Lists.newArrayList(updatedSourceDocumentReferenceMetaInfo), WriteConcern.NONE) == 1);
+        assertTrue(webResourceMetaInfoDao.createOrModify(Lists.newArrayList(updatedSourceDocumentReferenceMetaInfo), WriteConcern.ACKNOWLEDGED) == 1);
         assertEquals(updatedSourceDocumentReferenceMetaInfo.getImageMetaInfo().getHeight(),
                 webResourceMetaInfoDao.read(
                         sourceDocumentReferenceMetaInfo.getId()).getImageMetaInfo().getHeight());
@@ -143,14 +143,14 @@ public class WebResourceMetaInfoDaoImplTest {
         final WebResourceMetaInfo checkUpdateSourceDocumentReferenceMetaInfo =
                 new WebResourceMetaInfo("a", new ImageMetaInfo(20, 20, "", "", "", null, null, null), null, null, null);
         assertFalse(webResourceMetaInfoDao.createOrModify(Lists.newArrayList(checkUpdateSourceDocumentReferenceMetaInfo),
-                WriteConcern.NONE) == 1);
+                WriteConcern.ACKNOWLEDGED) == 2);
     }
 
     @Test
     public void testDelete() throws Exception {
         final WebResourceMetaInfo sourceDocumentReferenceMetaInfo =
                 new WebResourceMetaInfo("a", new ImageMetaInfo(10, 10, "", "", "", null, null, null), null, null, null);
-        webResourceMetaInfoDao.createOrModify(Lists.newArrayList(sourceDocumentReferenceMetaInfo), WriteConcern.NONE);
+        webResourceMetaInfoDao.createOrModify(Lists.newArrayList(sourceDocumentReferenceMetaInfo), WriteConcern.ACKNOWLEDGED);
 
         WebResourceMetaInfo sourceDocumentReferenceMetaInfoFromRead =
                 webResourceMetaInfoDao.read(sourceDocumentReferenceMetaInfo.getId());
