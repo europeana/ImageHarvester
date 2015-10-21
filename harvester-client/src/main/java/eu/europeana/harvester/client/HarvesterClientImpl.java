@@ -164,8 +164,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
         createOrModifySourceDocumentReference(sourceDocumentReferences);
         createOrModify(processingJobs);
-        // TODO : Enable again when migration is finished
-        // createOrModifyProcessingProfiles(processingProfiles);
+        createOrModifyProcessingProfiles(processingProfiles);
     }
 
     @Override
