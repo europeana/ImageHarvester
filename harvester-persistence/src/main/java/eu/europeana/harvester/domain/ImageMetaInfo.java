@@ -7,6 +7,17 @@ import java.io.Serializable;
  */
 public class ImageMetaInfo implements Serializable {
 
+    public static final int PALLETE_ITEM_MAX_LENGHT = 7;
+
+    public final static String[] trimColorPalette(final String[] pallete) {
+        if ((pallete != null) && (pallete.length != 0)) {
+            final String[] result = new String[pallete.length];
+            for (int itemIndex = 0; itemIndex < pallete.length; itemIndex++)
+                result[itemIndex] = pallete[itemIndex].substring(0, PALLETE_ITEM_MAX_LENGHT);
+            return result;
+        } else return pallete;
+    }
+
     /**
      * The width of image in pixels.
      */

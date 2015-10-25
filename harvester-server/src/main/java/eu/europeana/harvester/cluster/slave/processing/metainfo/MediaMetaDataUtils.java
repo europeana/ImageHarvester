@@ -10,6 +10,8 @@ import gr.ntua.image.mediachecker.VideoInfo;
 import org.im4java.core.IM4JavaException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MediaMetaDataUtils {
 
@@ -63,7 +65,7 @@ public class MediaMetaDataUtils {
 
             imageMetaInfo = new ImageMetaInfo(imageInfo.getWidth(), imageInfo.getHeight(),
                     imageInfo.getMimeType(), imageInfo.getFileFormat(), imageInfo.getColorSpace(),
-                    fileSize, imageInfo.getPalette(), imageOrientation);
+                    fileSize, ImageMetaInfo.trimColorPalette(imageInfo.getPalette()), imageOrientation);
 
         return imageMetaInfo;
     }
