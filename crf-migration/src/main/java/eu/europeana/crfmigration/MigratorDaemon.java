@@ -2,8 +2,12 @@ package eu.europeana.crfmigration;
 
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
+import org.apache.commons.daemon.DaemonController;
 import org.apache.commons.daemon.DaemonInitException;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.text.ParseException;
 
 public class MigratorDaemon implements Daemon {
 
@@ -30,6 +34,27 @@ public class MigratorDaemon implements Daemon {
     @Override
     public void destroy() {
 
-
     }
+
+    public static void main(final String[] args) throws Exception {
+        final MigratorDaemon migratorDaemon = new MigratorDaemon();
+        migratorDaemon.init(new DaemonContext() {
+            @Override
+            public DaemonController getController() {
+                return null;
+            }
+
+            @Override
+            public String[] getArguments() {
+                return args;
+            }
+        });
+        try {
+            migratorDaemon.start();
+        }
+        finally {
+            migratorDaemon.destroy();
+        }
+    }
+
 }
