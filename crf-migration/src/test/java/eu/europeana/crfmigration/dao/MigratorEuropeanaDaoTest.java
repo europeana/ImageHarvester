@@ -11,6 +11,7 @@ import org.junit.Test;
 import utils.MongoDBUtils;
 
 import java.net.UnknownHostException;
+import java.text.ParseException;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -30,7 +31,7 @@ public class MigratorEuropeanaDaoTest {
     private MigratorEuropeanaDao europeanaDao;
 
     @Before
-    public void setUp() throws UnknownHostException {
+    public void setUp() throws UnknownHostException, ParseException {
         migratorConfig = createMigratorConfig("config-files/migration.conf");
         mongoDBUtils = new MongoDBUtils(migratorConfig);
         mongoDBUtils.loadMongoData(PATH_PREFIX + "data-files/aggregation.json", "Aggregation");

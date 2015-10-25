@@ -17,6 +17,7 @@ import utils.MongoDBUtils;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -40,7 +41,7 @@ public class MigratorHarvesterDaoTest {
     private final static String migrationBatchId = "migration-test-batch";
 
     @Before
-    public void setUp() throws UnknownHostException {
+    public void setUp() throws UnknownHostException, ParseException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/migration.conf");
         final MorphiaDataStore morphiaDataStore =  new MorphiaDataStore(migratorConfig.getTargetMongoConfig().getMongoServerAddressList(),
                                                                           migratorConfig.getTargetMongoConfig().getDbName()
@@ -56,7 +57,7 @@ public class MigratorHarvesterDaoTest {
     }
 
     @After
-    public void tearDown() throws UnknownHostException {
+    public void tearDown() throws UnknownHostException, ParseException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/allData/migration.conf");
         MongoDBUtils mongoDBUtils = new MongoDBUtils(migratorConfig);
         mongoDBUtils.cleanMongoDatabase();

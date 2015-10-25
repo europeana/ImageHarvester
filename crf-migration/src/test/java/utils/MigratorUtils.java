@@ -10,10 +10,13 @@ import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.MigratorConfig;
 import eu.europeana.harvester.domain.MongoConfig;
 import eu.europeana.crfmigration.logic.MigrationManager;
+import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,6 +28,7 @@ import static org.junit.Assert.fail;
  */
 public class MigratorUtils {
     public static final String PATH_PREFIX = "src/test/resources/";
+    private static final SimpleDateFormat parserSDF=new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss");
 
     public static MongoConfig readMongoConfig (final Config config) throws UnknownHostException {
         final List<ServerAddress> mongoServerAddresses = new LinkedList<>();
@@ -40,7 +44,7 @@ public class MigratorUtils {
         );
     }
 
-    public static MigratorConfig createMigratorConfig(final String pathToConfigFile) throws UnknownHostException {
+    public static MigratorConfig createMigratorConfig(final String pathToConfigFile) throws UnknownHostException, ParseException {
         final File configFile = new File(PATH_PREFIX + pathToConfigFile);
 
         if (!configFile.canRead()) {
@@ -52,11 +56,12 @@ public class MigratorUtils {
                                                                                              .setSyntax(ConfigSyntax
                                                                                                                 .CONF));
         final Integer batch = config.getInt("config.batch");
+        final DateTime dateFilter = new DateTime(parserSDF.parse(config.getString("config.dateFilter")));
 
         final MongoConfig sourceMongo = readMongoConfig(config.getConfig("sourceMongo"));
         final MongoConfig targetMongo = readMongoConfig(config.getConfig("targetMongo"));
 
-        final MigratorConfig migrationConfig = new MigratorConfig(sourceMongo, targetMongo, null, batch);
+        final MigratorConfig migrationConfig = new MigratorConfig(sourceMongo, targetMongo, null, batch,dateFilter);
 
         return migrationConfig;
     }

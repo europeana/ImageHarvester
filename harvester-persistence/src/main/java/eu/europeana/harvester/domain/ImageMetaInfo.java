@@ -7,15 +7,15 @@ import java.io.Serializable;
  */
 public class ImageMetaInfo implements Serializable {
 
-    public static final int PALLETE_ITEM_MAX_LENGHT = 7;
+    private static final int PALLETE_ITEM_MAX_LENGHT = 7;
 
-    public final static String[] trimColorPalette(final String[] pallete) {
-        if ((pallete != null) && (pallete.length != 0)) {
-            final String[] result = new String[pallete.length];
-            for (int itemIndex = 0; itemIndex < pallete.length; itemIndex++)
-                result[itemIndex] = pallete[itemIndex].substring(0, PALLETE_ITEM_MAX_LENGHT);
+    private final static String[] trimColorPalette(final String[] palette) {
+        if ((palette != null) && (palette.length != 0)) {
+            final String[] result = new String[palette.length];
+            for (int itemIndex = 0; itemIndex < palette.length; itemIndex++)
+                result[itemIndex] = palette[itemIndex].substring(0, PALLETE_ITEM_MAX_LENGHT);
             return result;
-        } else return pallete;
+        } else return palette;
     }
 
     /**
@@ -79,7 +79,7 @@ public class ImageMetaInfo implements Serializable {
         this.fileFormat = fileFormat;
         this.colorSpace = colorSpace;
         this.fileSize = fileSize;
-        this.colorPalette = colorPalette;
+        this.colorPalette = trimColorPalette(colorPalette);
         this.orientation = orientation;
     }
 
@@ -116,7 +116,7 @@ public class ImageMetaInfo implements Serializable {
     }
 
     public ImageMetaInfo withColorPalette(final String[] newColorPalette) {
-        return new ImageMetaInfo(width,height,mimeType,fileFormat,colorSpace,fileSize,newColorPalette,orientation);
+        return new ImageMetaInfo(width,height,mimeType,fileFormat,colorSpace,fileSize,trimColorPalette(newColorPalette),orientation);
     }
 
     public boolean hasOnlyColorPalette() {

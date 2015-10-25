@@ -12,6 +12,7 @@ import utils.MongoDBUtils;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.text.ParseException;
 
 import static org.junit.Assert.assertEquals;
 
@@ -28,7 +29,7 @@ public class MigrationManagerTest {
 
 
     @Test
-    public void testDBIteration_AllDatabase () throws IOException {
+    public void testDBIteration_AllDatabase () throws IOException, ParseException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/allData/migration.conf");
         mongoDBUtils = new MongoDBUtils(migratorConfig);
         mongoDBUtils.cleanMongoDatabase();
@@ -59,7 +60,7 @@ public class MigrationManagerTest {
     }
 
     @Test
-    public void testDBIteration_FilterByDate_BatchSize2_AllMinus2 () throws IOException {
+    public void testDBIteration_FilterByDate_BatchSize2_AllMinus2 () throws IOException, ParseException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/filterSomeByDate/migration.conf");
         mongoDBUtils = new MongoDBUtils(migratorConfig.withBatchSize(2));
         mongoDBUtils.cleanMongoDatabase();
@@ -85,7 +86,7 @@ public class MigrationManagerTest {
     }
 
     @Test
-    public void testDBIteration_FilterByDate_BatchSize2_All () throws IOException {
+    public void testDBIteration_FilterByDate_BatchSize2_All () throws IOException, ParseException {
         migratorConfig = MigratorUtils.createMigratorConfig("config-files/filterNoOneByDate/migration.conf");
         mongoDBUtils = new MongoDBUtils(migratorConfig.withBatchSize(2));
         mongoDBUtils.cleanMongoDatabase();

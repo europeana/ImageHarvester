@@ -65,7 +65,7 @@ public class MediaMetaDataUtils {
 
             imageMetaInfo = new ImageMetaInfo(imageInfo.getWidth(), imageInfo.getHeight(),
                     imageInfo.getMimeType(), imageInfo.getFileFormat(), imageInfo.getColorSpace(),
-                    fileSize, ImageMetaInfo.trimColorPalette(imageInfo.getPalette()), imageOrientation);
+                    fileSize, imageInfo.getPalette(), imageOrientation);
 
         return imageMetaInfo;
     }
