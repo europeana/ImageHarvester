@@ -109,7 +109,10 @@ public class SOLRWriter {
             LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                     "Chunk SOLR update of size {}",newDocsChunk.size());
 
-            updateDocumentsChunk(newDocsChunk, publishingBatchId);
+            final boolean documentUpdateSuccess = updateDocumentsChunk(newDocsChunk, publishingBatchId);
+
+            // Stop immediately if a batch failed after it's number of retries
+            if (documentUpdateSuccess != true) return false;
         }
 
         return true;

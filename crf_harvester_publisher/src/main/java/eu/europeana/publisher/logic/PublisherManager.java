@@ -124,7 +124,15 @@ public class PublisherManager {
 
             final Timer.Context context = PublisherMetrics.Publisher.Batch.loopBatchDuration.time();
             try {
-                batchProcessing();
+                final boolean batchSuccess = batchProcessing();
+
+
+                if (batchSuccess == false) {
+                    LOG.info(LoggingComponent
+                                    .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+                            "Stopping publisher as current batch ended prematurely with error. Last OK processed timestamp {}",currentTimestamp);
+                    return ;
+                }
                 shouldStopGracefully = shouldPublisherStopGraceFully();
 
                 LOG.info(LoggingComponent
@@ -148,7 +156,7 @@ public class PublisherManager {
         }
     }
 
-    private void batchProcessing() throws InterruptedException, IOException {
+    private boolean batchProcessing() throws InterruptedException, IOException {
         final String publishingBatchId = "publishing-batch-" + DateTime.now().getMillis() + "-" + Math.random();
 
         DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(config.getBatch(), currentTimestamp);
@@ -215,7 +223,14 @@ public class PublisherManager {
                         "Updating solr documents for config id {}",
                         writer.getConnectionId());
 
-                writer.getSolrWriter().updateDocuments(crfSolrDocument, publishingBatchId);
+                final boolean solrDocumentUpdateSucces = writer.getSolrWriter().updateDocuments(crfSolrDocument, publishingBatchId);
+                if (solrDocumentUpdateSucces == false) {
+                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, newPublishingBatchId, null, null),
+                            "There was a problem with writing this batch to solr for connection id {}. See log above.",
+                            writer.getConnectionId());
+                    return false;
+
+                }
             } else {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                         "There was a problem with writing this batch to solr for connection id {}. " +
@@ -235,6 +250,8 @@ public class PublisherManager {
 
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                 "Updating timestamp after batch finished to " + currentTimestamp);
+
+        return true;
     }
 
     private boolean shouldPublisherStopGraceFully() throws IOException {
