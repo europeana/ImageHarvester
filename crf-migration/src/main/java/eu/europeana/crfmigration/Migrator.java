@@ -29,44 +29,22 @@ import java.util.concurrent.TimeUnit;
 public class Migrator {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Migrator.class.getName());
     private static final SimpleDateFormat parserSDF=new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss");
+    private final MigratorConfig config;
+
+    public Migrator(final MigratorConfig config) {
+        if (null == config) {
+            throw new IllegalArgumentException("config cannot be null");
+        }
+        this.config = config;
+    }
 
 
     public void start() throws IOException, ParseException {
         LOG.info("Migrator starting ");
 
-        final String configFilePath = "./extra-files/config-files/migration.conf";
-        final File configFile = new File(configFilePath);
+        final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(config.getGraphiteReporterConfig().getGraphiteServer(), config.getGraphiteReporterConfig().getGraphiteMasterId(), config.getGraphiteReporterConfig().getGraphitePort());
 
-        if (!configFile.canRead()) {
-            throw new IOException("Cannot read file " + configFilePath);
-        }
-
-        final Config config = ConfigFactory.parseFileAnySyntax(configFile,
-                ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
-
-
-        final MongoConfig sourceMongoConfig = MongoConfig.valueOf(config.getConfig("sourceMongo"));
-        final MongoConfig targetMongoConfig = MongoConfig.valueOf(config.getConfig("targetMongo"));
-
-
-        final String graphiteMasterId = config.getString("metrics.masterID");
-        final String graphiteServer = config.getString("metrics.graphiteServer");
-        final Integer graphitePort = config.getInt("metrics.graphitePort");
-
-        final int batch = config.getInt("config.batch");
-        final DateTime dateFilter;
-        try {
-            dateFilter = new DateTime(parserSDF.parse(config.getString("config.dateFilter")));
-            LOG.info("Date filter set to "+dateFilter.toString());
-        } catch (ParseException e) {
-            LOG.error("Date specified in config.dateFilter must conform to the standard pattern" + parserSDF.toPattern());
-            throw e;
-        }
-
-
-        final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(graphiteServer, graphiteMasterId, graphitePort);
-
-        final MigratorConfig migrationConfig = new MigratorConfig(sourceMongoConfig, targetMongoConfig, graphiteReporterConfig, batch,dateFilter);
+        final MigratorConfig migrationConfig = new MigratorConfig(config.getSourceMongoConfig(), config.getTargetMongoConfig(), graphiteReporterConfig, config.getBatch(),config.getDateFilter());
 
         // Prepare the graphite reporter
         final Graphite graphite = new Graphite(new InetSocketAddress(graphiteReporterConfig.getGraphiteServer(),
@@ -98,7 +76,7 @@ public class Migrator {
         // Prepare the migrator & start it
         final MigrationManager migrationManager = new MigrationManager(migratorEuropeanaDao,
                 migratorHarvesterDao,
-                dateFilter.toDate(),
+                config.getDateFilter().toDate(),
                 migrationConfig.getBatch());
         migrationManager.migrate();
     }
@@ -109,7 +87,8 @@ public class Migrator {
     }
 
     public static void main(String[] args) throws IOException, ParseException {
-        final Migrator migrator = new Migrator();
+        final MigratorConfig migratorConfig = MigratorConfig.loadFromConfigFilePath(args[0]);
+        final Migrator migrator = new Migrator(migratorConfig);
         migrator.start();
     }
 
