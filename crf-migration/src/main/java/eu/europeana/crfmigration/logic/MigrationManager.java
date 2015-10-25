@@ -57,7 +57,7 @@ public class MigrationManager {
             final DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(maximalUpdatedTimestampInRecords, batch, null);
             Map<String, EuropeanaRecord> recordsRetrievedInBatch = null;
             int numberOfRecordsRetrievedInBatch = 0;
-            System.out.println(
+            LOG.info(
                     "[Console] Starting migration batch and minimum date in batch is "+ maximalUpdatedTimestampInRecords);
 
             try {
@@ -92,13 +92,13 @@ public class MigrationManager {
                         "Finished migration batch with error and min date was", maximalUpdatedTimestampInRecords);
 
             } finally {
-                System.out.println(
-                        "[Console] Finished migration batch of "+numberOfRecordsRetrievedInBatch+" records with success and minimum date in batch was "+ maximalUpdatedTimestampInRecords);
+                LOG.info(
+                        "[Console] Finished migration batch of " + numberOfRecordsRetrievedInBatch + " records with success and minimum date in batch was " + maximalUpdatedTimestampInRecords);
                 recordCursor.close();
                 totalTimerContext.stop();
             }
         }
-        System.out.println(
+        LOG.info(
                 "[Console] Finished migration process as there are no more records to migrate");
 
     }

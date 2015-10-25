@@ -9,11 +9,13 @@ public class MigratorConfig {
     private final MongoConfig targetMongoConfig;
     private final GraphiteReporterConfig graphiteReporterConfig;
     private final int batch;
-    public MigratorConfig(MongoConfig sourceMongoConfig, MongoConfig targetMongoConfig, GraphiteReporterConfig graphiteReporterConfig, int batch) {
+    private final DateTime dateFilter;
+    public MigratorConfig(MongoConfig sourceMongoConfig, MongoConfig targetMongoConfig, GraphiteReporterConfig graphiteReporterConfig, int batch,final DateTime dateFilter) {
         this.sourceMongoConfig = sourceMongoConfig;
         this.targetMongoConfig = targetMongoConfig;
         this.graphiteReporterConfig = graphiteReporterConfig;
         this.batch = batch;
+        this.dateFilter = dateFilter;
     }
 
     public MongoConfig getSourceMongoConfig() {
@@ -32,8 +34,12 @@ public class MigratorConfig {
         return batch;
     }
 
+    public DateTime getDateFilter() {
+        return dateFilter;
+    }
+
     public MigratorConfig withBatchSize(int newBatch) {
-        return new MigratorConfig(sourceMongoConfig,targetMongoConfig,graphiteReporterConfig,newBatch);
+        return new MigratorConfig(sourceMongoConfig,targetMongoConfig,graphiteReporterConfig,newBatch,dateFilter);
     }
 
 }

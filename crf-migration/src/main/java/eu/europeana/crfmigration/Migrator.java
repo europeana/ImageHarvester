@@ -12,37 +12,29 @@ import eu.europeana.crfmigration.dao.MigratorEuropeanaDao;
 import eu.europeana.crfmigration.dao.MigratorHarvesterDao;
 import eu.europeana.crfmigration.domain.GraphiteReporterConfig;
 import eu.europeana.crfmigration.domain.MigratorConfig;
-import eu.europeana.harvester.domain.MongoConfig;
-import eu.europeana.crfmigration.logging.LoggingComponent;
 import eu.europeana.crfmigration.logic.MigrationManager;
 import eu.europeana.crfmigration.logic.MigrationMetrics;
+import eu.europeana.harvester.domain.MongoConfig;
 import org.joda.time.DateTime;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 
 public class Migrator {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Migrator.class.getName());
-    private final Date dateFilter;
-
-    public Migrator(Date dateFilter) {
-        this.dateFilter = dateFilter;
-    }
+    private static final SimpleDateFormat parserSDF=new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss");
 
 
-    public void start() throws IOException {
+    public void start() throws IOException, ParseException {
         LOG.info("Migrator starting ");
 
-        LOG.info("Date to filter: " + dateFilter);
-
-        final String configFilePath = "migration.conf";
+        final String configFilePath = "./extra-files/config-files/migration.conf";
         final File configFile = new File(configFilePath);
 
         if (!configFile.canRead()) {
@@ -62,12 +54,19 @@ public class Migrator {
         final Integer graphitePort = config.getInt("metrics.graphitePort");
 
         final int batch = config.getInt("config.batch");
-
+        final DateTime dateFilter;
+        try {
+            dateFilter = new DateTime(parserSDF.parse(config.getString("config.dateFilter")));
+            LOG.info("Date filter set to "+dateFilter.toString());
+        } catch (ParseException e) {
+            LOG.error("Date specified in config.dateFilter must conform to the standard pattern" + parserSDF.toPattern());
+            throw e;
+        }
 
 
         final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(graphiteServer, graphiteMasterId, graphitePort);
 
-        final MigratorConfig migrationConfig = new MigratorConfig(sourceMongoConfig, targetMongoConfig, graphiteReporterConfig, batch);
+        final MigratorConfig migrationConfig = new MigratorConfig(sourceMongoConfig, targetMongoConfig, graphiteReporterConfig, batch,dateFilter);
 
         // Prepare the graphite reporter
         final Graphite graphite = new Graphite(new InetSocketAddress(graphiteReporterConfig.getGraphiteServer(),
@@ -99,7 +98,7 @@ public class Migrator {
         // Prepare the migrator & start it
         final MigrationManager migrationManager = new MigrationManager(migratorEuropeanaDao,
                 migratorHarvesterDao,
-                dateFilter,
+                dateFilter.toDate(),
                 migrationConfig.getBatch());
         migrationManager.migrate();
     }
@@ -109,27 +108,8 @@ public class Migrator {
         System.exit(0);
     }
 
-    public static void main(String[] args) throws IOException {
-         final SimpleDateFormat parserSDF=new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss");
-
-        Date dateFilter = null;
-
-        if (1 == args.length) {
-            try {
-                System.out.println("date is "+args[0]);
-                dateFilter = parserSDF.parse(args[0]);
-                System.out.println("Date filter is "+dateFilter);
-            } catch (Exception e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                        "The timestamp must respect the yyyy.mm.dd-HH:mm:ss format. defaulting to begining of time", e);
-                dateFilter = DateTime.now().minusYears(20).toDate();
-            }
-        } else if (args.length > 1) {
-            System.out.println("Too many arguments. Please provide only one !");
-            System.exit(-1);
-        }
-
-        final Migrator migrator = new Migrator(dateFilter);
+    public static void main(String[] args) throws IOException, ParseException {
+        final Migrator migrator = new Migrator();
         migrator.start();
     }
 
