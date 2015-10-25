@@ -49,7 +49,7 @@ public class SOLRWriter {
      */
     private static final int CONNECTION_TIMEOUT = 5000;
 
-    private static final int MAX_RETRIES = 5;
+    private static final int MAX_RETRIES = 1;
     private final org.slf4j.Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
     private final String solrUrl;
     private final Boolean solrCommitEnabled;
