@@ -5,7 +5,6 @@ import eu.europeana.harvester.domain.ProcessingJobRetrieveSubTaskState;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import eu.europeana.harvester.domain.ReferenceOwner;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
-import eu.europeana.publisher.SkippedRecords;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.domain.HarvesterRecord;
@@ -139,13 +138,14 @@ public class FakeTagExtractor {
 
         for (final HarvesterRecord record : harvesterRecords) {
 
-            if (record.getRecordId().startsWith(SkippedRecords.id)) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR,
-                                                           publishingBatchId, null, record.getReferenceOwner()),
-                          "Skipping record that starts with ID {}. The entire CRF entry will be skipped.",
-                          SkippedRecords.id);
-                continue;
-            }
+// TODO : Re-enable this when needed.
+//            if (record.getRecordId().startsWith(SkippedRecords.id)) {
+//                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_TAG_EXTRACTOR,
+//                                                           publishingBatchId, null, record.getReferenceOwner()),
+//                          "Skipping record that starts with ID {}. The entire CRF entry will be skipped.",
+//                          SkippedRecords.id);
+//                continue;
+//            }
 
             CRFSolrDocument solrDocument = new CRFSolrDocument(record.getRecordId());
 
