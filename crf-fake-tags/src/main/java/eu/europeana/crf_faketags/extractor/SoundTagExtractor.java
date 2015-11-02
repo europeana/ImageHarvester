@@ -13,11 +13,11 @@ import java.util.Set;
 public class SoundTagExtractor {
 
     private static Integer getQualityCode(Integer bitDepth, Integer sampleRate, String fileFormat) {
-        if(bitDepth != null && sampleRate != null && bitDepth >= 16 && sampleRate >= 44100) {
+        if (bitDepth != null && sampleRate != null && bitDepth >= 16 && sampleRate >= 44100) {
             return 1;
         }
 
-        if(fileFormat != null && (fileFormat.equalsIgnoreCase("alac") || fileFormat.equalsIgnoreCase("flac") ||
+        if (fileFormat != null && (fileFormat.equalsIgnoreCase("alac") || fileFormat.equalsIgnoreCase("flac") ||
                 fileFormat.equalsIgnoreCase("ape") || fileFormat.equalsIgnoreCase("shn") ||
                 fileFormat.equalsIgnoreCase("wav") || fileFormat.equalsIgnoreCase("wma") ||
                 fileFormat.equalsIgnoreCase("aiff") || fileFormat.equalsIgnoreCase("dsd"))) {
@@ -28,18 +28,17 @@ public class SoundTagExtractor {
     }
 
     private static Integer getDurationCode(Long duration) {
-        if(duration == null) {
+        if (duration == null) {
             return 0;
         }
-        final Double temp = duration/60000.0;
-        if(temp.compareTo(0.5) < 0) {
-
+        final Double temp = duration / 60000.0;
+        if (temp <= 0.5) {
             return 1;
         }
-        if(temp.compareTo(3.0) < 0) {
+        if (temp <= 3.0) {
             return 2;
         }
-        if(temp.compareTo(6.0) < 0) {
+        if (temp <= 6.0) {
             return 3;
         }
 
@@ -48,6 +47,7 @@ public class SoundTagExtractor {
 
     /**
      * Generates the filter/fake tags
+     *
      * @param audioMetaInfo the meta info object
      * @return the list of fake tags
      */
@@ -56,8 +56,8 @@ public class SoundTagExtractor {
         final Integer mediaTypeCode = MediaTypeEncoding.AUDIO.getEncodedValue();
 
         if (null == audioMetaInfo.getMimeType() || null == audioMetaInfo.getDuration() ||
-            null == audioMetaInfo.getBitDepth() || null == audioMetaInfo.getSampleRate() ||
-            null == audioMetaInfo.getFileFormat()) {
+                null == audioMetaInfo.getBitDepth() || null == audioMetaInfo.getSampleRate() ||
+                null == audioMetaInfo.getFileFormat()) {
             return new ArrayList<>();
         }
 
@@ -80,15 +80,12 @@ public class SoundTagExtractor {
             for (Integer quality : qualityCodes) {
                 for (Integer duration : durationCodes) {
                     final Integer result = mediaTypeCode |
-                                           (mimeType << TagEncoding.MIME_TYPE.getBitPos())  |
-                                           (quality  << TagEncoding.SOUND_QUALITY.getBitPos()) |
-                                           (duration << TagEncoding.SOUND_DURATION.getBitPos());
+                            (mimeType << TagEncoding.MIME_TYPE.getBitPos()) |
+                            (quality << TagEncoding.SOUND_QUALITY.getBitPos()) |
+                            (duration << TagEncoding.SOUND_DURATION.getBitPos());
 
                     filterTags.add(result);
 
-//                  System.out.println(result);
-//                  System.out.println(mediaTypeCode + " " + mimeType + " " + fileSize + " " + colorSpace + " " + aspectRatio + " " + color);
-//                  System.out.println(Integer.toBinaryString(result));
                 }
             }
         }
@@ -98,13 +95,14 @@ public class SoundTagExtractor {
 
     /**
      * Generates the list of facet tags.
+     *
      * @param audioMetaInfo the meta info object
      * @return the list of facet tags
      */
     public static List<Integer> getFacetTags(final AudioMetaInfo audioMetaInfo) {
         if (null == audioMetaInfo.getMimeType() || null == audioMetaInfo.getDuration() ||
-            null == audioMetaInfo.getBitDepth() || null == audioMetaInfo.getSampleRate() ||
-            null == audioMetaInfo.getFileFormat()) {
+                null == audioMetaInfo.getBitDepth() || null == audioMetaInfo.getSampleRate() ||
+                null == audioMetaInfo.getFileFormat()) {
             return new ArrayList<>();
         }
 
