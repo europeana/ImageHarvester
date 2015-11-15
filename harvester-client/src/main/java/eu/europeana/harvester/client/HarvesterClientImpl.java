@@ -2,6 +2,9 @@ package eu.europeana.harvester.client;
 
 import com.google.code.morphia.Key;
 import com.google.code.morphia.Datastore;
+import com.mongodb.DBCursor;
+import eu.europeana.harvester.client.report.SubTaskType;
+import eu.europeana.harvester.client.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
@@ -231,6 +234,11 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
+    public List<SourceDocumentReference> retrieveSourceDocumentReferencesByIds(List<String> id) {
+        return sourceDocumentReferenceDao.read(id);
+    }
+
+    @Override
     public SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url) {
         return sourceDocumentReferenceMetaInfoDao.read(SourceDocumentReferenceMetaInfo.idFromUrl(url));
     }
@@ -290,6 +298,26 @@ public class HarvesterClientImpl implements HarvesterClient {
         sourceDocumentReferenceProcessingProfileDao.deactivateDocuments(owner, harvesterClientConfig.getWriteConcern()).clear();
 
         return processingJobs;
+    }
+
+    @Override
+    public Map<JobState, Long> countProcessingJobsByState(final String collectionId) {
+        return null;
+    }
+
+    @Override
+    public Map<URLSourceType, UrlSourceTypeWithProcessingJobSubTaskStateCounts> countSubTaskStatesByUrlSourceType(final String collectionId,final URLSourceType urlSourceType,final SubTaskType subtaskType) {
+        return null;
+    }
+
+    @Override
+    public DBCursor findLastSourceDocumentProcessingStatistics(final String collectionId,final String executionId,final int batchSize,final List<ProcessingState> processingStates) {
+        return null;
+    }
+
+    @Override
+    public List<LastSourceDocumentProcessingStatistics> retrieveLastSourceDocumentProcessingStatistics(final DBCursor cursor) {
+        return null;
     }
 
     @Override

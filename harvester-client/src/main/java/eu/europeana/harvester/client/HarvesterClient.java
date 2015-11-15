@@ -1,5 +1,8 @@
 package eu.europeana.harvester.client;
 
+import com.mongodb.DBCursor;
+import eu.europeana.harvester.client.report.SubTaskType;
+import eu.europeana.harvester.client.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 
@@ -7,6 +10,7 @@ import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -21,18 +25,18 @@ public interface HarvesterClient {
      * @param sourceDocumentReferences contains basic information about a source document
      */
     Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(final
-                                                                                                                Collection<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
+                                                                                                         Collection<SourceDocumentReference> sourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
 
 
     Iterable<com.google.code.morphia.Key<SourceDocumentReferenceProcessingProfile>>
-        createOrModifyProcessingProfiles (final Collection <SourceDocumentReferenceProcessingProfile> profiles);
+    createOrModifyProcessingProfiles(final Collection<SourceDocumentReferenceProcessingProfile> profiles);
 
     void
-        createOrModifyProcessingJobTuples (final Collection<ProcessingJobTuple> jobTuples) throws InterruptedException,
-                                                                                                  MalformedURLException,
-                                                                                                  TimeoutException,
-                                                                                                  ExecutionException,
-                                                                                                  UnknownHostException;
+    createOrModifyProcessingJobTuples(final Collection<ProcessingJobTuple> jobTuples) throws InterruptedException,
+            MalformedURLException,
+            TimeoutException,
+            ExecutionException,
+            UnknownHostException;
 
 
     /**
@@ -74,7 +78,7 @@ public interface HarvesterClient {
      * @param jobId the unique id of the job
      * @return the job
      */
-     ProcessingJob retrieveProcessingJob(String jobId);
+    ProcessingJob retrieveProcessingJob(String jobId);
 
     /**
      * Retrieves a historical job.
@@ -89,26 +93,68 @@ public interface HarvesterClient {
      */
     List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) throws Exception;
 
-    SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url,String recordId);
+    SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url, String recordId);
 
     SourceDocumentReference retrieveSourceDocumentReferenceById(String id);
+
+    /**
+     * Returns all the source document reference documents with ids.
+     * @param id The ids.
+     * @return
+     */
+    List<SourceDocumentReference> retrieveSourceDocumentReferencesByIds(List<String> id);
 
     SourceDocumentReferenceMetaInfo retrieveMetaInfoByUrl(String url);
 
     void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
 
-    void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId);
+    void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId, final String processingJobId);
 
-    SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId,final String processingJobId);
+    SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId, final String processingJobId);
 
-        /**
-         * Updates specific sourceDocumentReferenceMetaInfo document.
-         *
-         * @param sourceDocumentReferenceMetaInfo
-         * @return
-         */
+    /**
+     * Updates specific sourceDocumentReferenceMetaInfo document.
+     *
+     * @param sourceDocumentReferenceMetaInfo
+     * @return
+     */
     boolean update(SourceDocumentReferenceMetaInfo sourceDocumentReferenceMetaInfo);
 
-    List<ProcessingJob> deactivateJobs (final ReferenceOwner owner);
+    List<ProcessingJob> deactivateJobs(final ReferenceOwner owner);
+
+    /**
+     * Computes the processing state count for the processing jobs.
+     *
+     * @param collectionId The owner collection id of the processing jobs.
+     * @return
+     */
+    Map<JobState, Long> countProcessingJobsByState(final String collectionId);
+
+    /**
+     * Computes the subtask state counts for the last processing stats.
+     * @param collectionId The owner collection id of the processing jobs.
+     * @param urlSourceType The url source type. If missing for all.
+     * @param subtaskType The sub task type for which to compute.
+     * @return
+     */
+    Map<URLSourceType, UrlSourceTypeWithProcessingJobSubTaskStateCounts> countSubTaskStatesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType,final SubTaskType subtaskType);
+
+    /**
+     * Computes the DB cursor to retrieve all the last job stats.
+     * @param collectionId The owner collection id of the processing jobs.
+     * @param executionId The execution id of the processing jobs. If missing for all.
+     * @param batchSize The page size of the cursor.
+     * @param processingStates The processing states for which to retrieve the stats.
+     * @return
+     */
+    DBCursor findLastSourceDocumentProcessingStatistics(final String collectionId,final String executionId,final int batchSize,List<ProcessingState> processingStates);
+
+    /**
+     * Uses an existing DB cursor to retrieve a batch of last job stats.
+     * @param cursor The DB cursor.
+     * @return the stats
+     */
+    List<LastSourceDocumentProcessingStatistics> retrieveLastSourceDocumentProcessingStatistics(final DBCursor cursor);
+
 }
 
