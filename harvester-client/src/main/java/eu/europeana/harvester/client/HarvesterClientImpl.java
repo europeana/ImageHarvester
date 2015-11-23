@@ -311,13 +311,8 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public DBCursor findLastSourceDocumentProcessingStatistics(final String collectionId,final String executionId,final int batchSize,final List<ProcessingState> processingStates) {
-        return null;
-    }
-
-    @Override
-    public List<LastSourceDocumentProcessingStatistics> retrieveLastSourceDocumentProcessingStatistics(final DBCursor cursor) {
-        return null;
+    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId,final String executionId,final int batchSize,final List<ProcessingState> processingStates) {
+        return lastSourceDocumentProcessingStatisticsDao.findLastSourceDocumentProcessingStatistics(collectionId,executionId,batchSize,processingStates);
     }
 
     @Override

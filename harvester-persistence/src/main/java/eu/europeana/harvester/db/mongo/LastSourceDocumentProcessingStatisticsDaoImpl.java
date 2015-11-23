@@ -35,7 +35,7 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 
     @Override
     public boolean create(LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatisticss, WriteConcern writeConcern) {
-        if(read(lastSourceDocumentProcessingStatisticss.getId()) == null) {
+        if (read(lastSourceDocumentProcessingStatisticss.getId()) == null) {
             datastore.save(lastSourceDocumentProcessingStatisticss);
             return true;
         } else {
@@ -50,15 +50,15 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
     }
 
     @Override
-    public LastSourceDocumentProcessingStatistics read (String sourceDocumentReferenceId,
-                                                        DocumentReferenceTaskType taskType,
-                                                        URLSourceType urlSourceType) {
+    public LastSourceDocumentProcessingStatistics read(String sourceDocumentReferenceId,
+                                                       DocumentReferenceTaskType taskType,
+                                                       URLSourceType urlSourceType) {
         return read(LastSourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId, taskType, urlSourceType));
     }
 
     @Override
     public boolean update(LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatisticss, WriteConcern writeConcern) {
-        if(read(lastSourceDocumentProcessingStatisticss.getId()) != null) {
+        if (read(lastSourceDocumentProcessingStatisticss.getId()) != null) {
             datastore.save(lastSourceDocumentProcessingStatisticss, writeConcern);
 
             return true;
@@ -73,8 +73,8 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<LastSourceDocumentProcessingStatistics>> createOrModify (Collection<LastSourceDocumentProcessingStatistics> lastSourceDocumentProcessingStatisticss,
-                                                                                                     WriteConcern writeConcern) {
+    public Iterable<com.google.code.morphia.Key<LastSourceDocumentProcessingStatistics>> createOrModify(Collection<LastSourceDocumentProcessingStatistics> lastSourceDocumentProcessingStatisticss,
+                                                                                                        WriteConcern writeConcern) {
         if (null == lastSourceDocumentProcessingStatisticss || lastSourceDocumentProcessingStatisticss.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
@@ -89,13 +89,15 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
     @Override
     public List<LastSourceDocumentProcessingStatistics> findByRecordID(String recordID) {
         final Query<LastSourceDocumentProcessingStatistics> query = datastore.find(LastSourceDocumentProcessingStatistics.class, "referenceOwner.recordId", recordID);
-        if(query == null) {return new ArrayList<>(0);}
+        if (query == null) {
+            return new ArrayList<>(0);
+        }
 
         return query.asList();
     }
 
     @Override
-    public Map<ProcessingState, Long> countNumberOfDocumentsWithState () {
+    public Map<ProcessingState, Long> countNumberOfDocumentsWithState() {
         final DBCollection collection = datastore.getCollection(LastSourceDocumentProcessingStatistics.class);
 
         final BasicDBList matchElements = new BasicDBList();
@@ -117,8 +119,8 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 
         final Map<ProcessingState, Long> results = new HashMap<>(ProcessingState.values().length, 1);
 
-        for (final DBObject object: collection.aggregate(matchQuery, groupQuery).results()) {
-            long count = ((Number)object.get("count")).longValue();
+        for (final DBObject object : collection.aggregate(matchQuery, groupQuery).results()) {
+            long count = ((Number) object.get("count")).longValue();
 
             results.put(ProcessingState.valueOf((String) object.get("_id")), count);
         }
@@ -127,7 +129,7 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
     }
 
     @Override
-    public List<LastSourceDocumentProcessingStatistics> deactivateDocuments (List<String> sourceDocumentReferenceIds, WriteConcern writeConcern) {
+    public List<LastSourceDocumentProcessingStatistics> deactivateDocuments(List<String> sourceDocumentReferenceIds, WriteConcern writeConcern) {
         if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
@@ -148,20 +150,20 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
     @Override
     public UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType) {
         final DB db = datastore.getDB();
-        final DBCollection processingJobCollection = db.getCollection("LastSourceDocumentProcessingStatistics");
+        final DBCollection processingJobCollection = datastore.getCollection(LastSourceDocumentProcessingStatistics.class);
 
         final DBObject match = new BasicDBObject();
-        match.put("referenceOwner.collectionId",collectionId);
+        match.put("referenceOwner.collectionId", collectionId);
 
         if (executionId != null) {
-            match.put("referenceOwner.executionId",executionId);
+            match.put("referenceOwner.executionId", executionId);
         }
 
-        match.put("urlSourceType",urlSourceType.name());
+        match.put("urlSourceType", urlSourceType.name());
 
         final DBObject group = new BasicDBObject();
 
-        switch(subtaskType) {
+        switch (subtaskType) {
             case COLOR_EXTRACTION:
                 group.put("_id", "$processingJobSubTaskStats.colorExtractionState");
                 break;
@@ -193,7 +195,33 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
             }
         }
 
-        return new UrlSourceTypeWithProcessingJobSubTaskStateCounts(urlSourceType,subTasksCountPerState);
+        return new UrlSourceTypeWithProcessingJobSubTaskStateCounts(urlSourceType, subTasksCountPerState);
+    }
+
+    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final int batchSize, final List<ProcessingState> processingStates) {
+        final Query<LastSourceDocumentProcessingStatistics> query = datastore.find(LastSourceDocumentProcessingStatistics.class);
+
+        query.field("referenceOwner.collectionId").equal(collectionId);
+
+        if (executionId != null) {
+            query.field("referenceOwner.executionId").equal(executionId);
+        }
+
+        // The state
+        if (!processingStates.isEmpty()) {
+            final List<String> s = new ArrayList();
+
+            for (ProcessingState state : processingStates) {
+                s.add(state.name());
+            }
+
+            query.field("state").hasAnyOf(s);
+
+        }
+
+        return query.asList();
+
+
     }
 
 }

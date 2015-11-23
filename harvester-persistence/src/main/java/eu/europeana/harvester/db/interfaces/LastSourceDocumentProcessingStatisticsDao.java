@@ -1,6 +1,7 @@
 package eu.europeana.harvester.db.interfaces;
 
 import com.google.code.morphia.Key;
+import com.mongodb.DBCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
@@ -115,12 +116,26 @@ public interface LastSourceDocumentProcessingStatisticsDao {
     @Deprecated
     List<LastSourceDocumentProcessingStatistics> deactivateDocuments(final List<String> sourceDocumentReferenceIds, final WriteConcern concern);
 
-    /** Counts the sub task state for finished jobs from a specific collection, execution id and source type.
-     * @param collectionId The owner collection id.
-     * @param executionId The execution id. If missing all.
+    /**
+     * Counts the sub task state for finished jobs from a specific collection, execution id and source type.
+     *
+     * @param collectionId  The owner collection id.
+     * @param executionId   The execution id. If missing all.
      * @param urlSourceType The url source type. If missing all.
      * @param subtaskType
      * @return
      */
     public UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
+
+    /**
+     * Builds a list for a query that filters by several criterias.
+     *
+     * @param collectionId     The owner collection id.
+     * @param executionId      The execution id. If missing all.
+     * @param batchSize        The batch size.
+     * @param processingStates The processing states that should be retrieved.
+     * @return
+     */
+    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final int batchSize, final List<ProcessingState> processingStates);
+
 }

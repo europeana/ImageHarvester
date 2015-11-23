@@ -141,21 +141,14 @@ public interface HarvesterClient {
     UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType,final SubTaskType subtaskType);
 
     /**
-     * Computes the DB cursor to retrieve all the last job stats.
+     * Retrieves all the last job stats that match specific criteria.
      * @param collectionId The owner collection id of the processing jobs.
      * @param executionId The execution id of the processing jobs. If missing for all.
      * @param batchSize The page size of the cursor.
      * @param processingStates The processing states for which to retrieve the stats.
      * @return
      */
-    DBCursor findLastSourceDocumentProcessingStatistics(final String collectionId,final String executionId,final int batchSize,List<ProcessingState> processingStates);
-
-    /**
-     * Uses an existing DB cursor to retrieve a batch of last job stats.
-     * @param cursor The DB cursor.
-     * @return the stats
-     */
-    List<LastSourceDocumentProcessingStatistics> retrieveLastSourceDocumentProcessingStatistics(final DBCursor cursor);
+    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId,final String executionId,final int batchSize,final List<ProcessingState> processingStates);
 
 }
 
