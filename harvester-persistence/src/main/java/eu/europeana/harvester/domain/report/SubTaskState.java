@@ -1,4 +1,4 @@
-package eu.europeana.harvester.client.report;
+package eu.europeana.harvester.domain.report;
 
 /**
  * An aggregation of possible subtask states. Containes both the states for retrieval and also for processing.

@@ -7,6 +7,8 @@ import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.LastSourceDocumentProcessingStatistics;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.URLSourceType;
+import eu.europeana.harvester.domain.report.SubTaskType;
+import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,22 +21,24 @@ public interface LastSourceDocumentProcessingStatisticsDao {
 
     /**
      * Counts the number of docs in the collection.
-     * @return returns the number of documents in the collection.
      *
+     * @return returns the number of documents in the collection.
      */
     public Long getCount();
 
     /**
      * Persists a SourceDocumentProcessingStatistics object
+     *
      * @param lastSourceDocumentProcessingStatistics - a new object
-     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
-     *                     operation
+     * @param writeConcern                           describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                                               operation
      * @return returns if the operation was successful
      */
     boolean create(LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
      * Reads and returns a SourceDocumentProcessingStatistics object
+     *
      * @param id the unique id of the record
      * @return - found SourceDocumentProcessingStatistics object, it can be null
      */
@@ -44,18 +48,20 @@ public interface LastSourceDocumentProcessingStatisticsDao {
 
     /**
      * Updates a SourceDocumentProcessingStatistics record
+     *
      * @param lastSourceDocumentProcessingStatistics the modified SourceDocumentProcessingStatistics object
-     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
-     *                     operation
+     * @param writeConcern                           describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                                               operation
      * @return - success or failure
      */
     boolean update(LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatistics, WriteConcern writeConcern);
 
     /**
      * If the object doesn't exists creates it otherwise updates the a SourceDocumentProcessingStatistics record
+     *
      * @param lastSourceDocumentProcessingStatistics the modified SourceDocumentProcessingStatistics object
-     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
-     *                     operation
+     * @param writeConcern                           describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                                               operation
      * @return - success or failure
      */
     com.google.code.morphia.Key<LastSourceDocumentProcessingStatistics> createOrModify(LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatistics,
@@ -64,17 +70,19 @@ public interface LastSourceDocumentProcessingStatisticsDao {
 
     /**
      * If the objects don't exists they get created; otherwise updates the a SourceDocumentProcessingStatistics record
+     *
      * @param lastSourceDocumentProcessingStatistics the modified SourceDocumentProcessingStatistics object
-     * @param writeConcern describes the guarantee that MongoDB provides when reporting on the success of a write
-     *                     operation
+     * @param writeConcern                           describes the guarantee that MongoDB provides when reporting on the success of a write
+     *                                               operation
      * @return - success or failure
      */
-    Iterable<com.google.code.morphia.Key<LastSourceDocumentProcessingStatistics>> createOrModify (Collection<LastSourceDocumentProcessingStatistics>
-                                                                                                          lastSourceDocumentProcessingStatistics,
-                                                                                              WriteConcern writeConcern);
+    Iterable<com.google.code.morphia.Key<LastSourceDocumentProcessingStatistics>> createOrModify(Collection<LastSourceDocumentProcessingStatistics>
+                                                                                                         lastSourceDocumentProcessingStatistics,
+                                                                                                 WriteConcern writeConcern);
 
     /**
      * Deletes a record from DB
+     *
      * @param id the unique id of the record
      * @return - an object which contains all information about this operation
      */
@@ -82,28 +90,37 @@ public interface LastSourceDocumentProcessingStatisticsDao {
 
     /**
      * Searches for SourceDocumentProcessingStatistics which has referenceOwner.recordId equal with the given ID.
+     *
      * @param recordID resources record ID
      * @return - a list of SourceDocumentProcessingStatistics objects
      */
     List<LastSourceDocumentProcessingStatistics> findByRecordID(String recordID);
 
     /**
-     *  @deprecated "This is a time consuming operation. Use it with great care!"
-     *
-     *  For every document that has the {@link ProcessingState} ERROR, SUCCESS or READY  count the number of documents.
-     *  @return - a mapping between the {@link ProcessingState} and the number of documents that have that state
+     * @return - a mapping between the {@link ProcessingState} and the number of documents that have that state
+     * @deprecated "This is a time consuming operation. Use it with great care!"
+     * <p/>
+     * For every document that has the {@link ProcessingState} ERROR, SUCCESS or READY  count the number of documents.
      */
     @Deprecated
     Map<ProcessingState, Long> countNumberOfDocumentsWithState();
 
     /**
-     * @deprecated "This operation is time consuming. It does an update on the entire db"
-     *
-     * Returns all the jobs from the DB for a specific owner and deactivates it.
-     *
      * @param sourceDocumentReferenceIds
      * @return - list of ProcessingJobs
+     * @deprecated "This operation is time consuming. It does an update on the entire db"
+     * <p/>
+     * Returns all the jobs from the DB for a specific owner and deactivates it.
      */
     @Deprecated
     List<LastSourceDocumentProcessingStatistics> deactivateDocuments(final List<String> sourceDocumentReferenceIds, final WriteConcern concern);
+
+    /** Counts the sub task state for finished jobs from a specific collection, execution id and source type.
+     * @param collectionId The owner collection id.
+     * @param executionId The execution id. If missing all.
+     * @param urlSourceType The url source type. If missing all.
+     * @param subtaskType
+     * @return
+     */
+    public UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
 }

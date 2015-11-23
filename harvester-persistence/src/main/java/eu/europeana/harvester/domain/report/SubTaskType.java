@@ -1,4 +1,4 @@
-package eu.europeana.harvester.client.report;
+package eu.europeana.harvester.domain.report;
 
 public enum SubTaskType {
     RETRIEVE,

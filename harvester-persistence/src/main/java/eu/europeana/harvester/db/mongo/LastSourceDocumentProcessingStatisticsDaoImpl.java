@@ -7,6 +7,9 @@ import com.google.code.morphia.query.UpdateOperations;
 import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.domain.report.SubTaskState;
+import eu.europeana.harvester.domain.report.SubTaskType;
+import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 
 import java.util.*;
 
@@ -141,4 +144,56 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 
         return query.asList();
     }
+
+    @Override
+    public UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType) {
+        final DB db = datastore.getDB();
+        final DBCollection processingJobCollection = db.getCollection("LastSourceDocumentProcessingStatistics");
+
+        final DBObject match = new BasicDBObject();
+        match.put("referenceOwner.collectionId",collectionId);
+
+        if (executionId != null) {
+            match.put("referenceOwner.executionId",executionId);
+        }
+
+        match.put("urlSourceType",urlSourceType.name());
+
+        final DBObject group = new BasicDBObject();
+
+        switch(subtaskType) {
+            case COLOR_EXTRACTION:
+                group.put("_id", "$processingJobSubTaskStats.colorExtractionState");
+                break;
+            case META_EXTRACTION:
+                group.put("_id", "$processingJobSubTaskStats.metaExtractionState");
+                break;
+            case RETRIEVE:
+                group.put("_id", "$processingJobSubTaskStats.retrieveState");
+                break;
+            case THUMBNAIL_GENERATION:
+                group.put("_id", "$processingJobSubTaskStats.thumbnailGenerationState");
+                break;
+            case THUMBNAIL_STORAGE:
+                group.put("_id", "$processingJobSubTaskStats.thumbnailStorageState");
+                break;
+        }
+
+        group.put("total", new BasicDBObject("$sum", 1));
+
+        final AggregationOutput output = processingJobCollection.aggregate(new BasicDBObject("$match", match), new BasicDBObject("$group", group));
+        final Map<SubTaskState, Long> subTasksCountPerState = new HashMap<>();
+
+        if (output != null) {
+            for (DBObject result : output.results()) {
+                final String state = (String) result.get("_id");
+                final Integer count = (Integer) result.get("total");
+                if (state != null)
+                    subTasksCountPerState.put(SubTaskState.valueOf(state), new Long(count));
+            }
+        }
+
+        return new UrlSourceTypeWithProcessingJobSubTaskStateCounts(urlSourceType,subTasksCountPerState);
+    }
+
 }

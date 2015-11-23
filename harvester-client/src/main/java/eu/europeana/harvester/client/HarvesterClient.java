@@ -1,8 +1,8 @@
 package eu.europeana.harvester.client;
 
 import com.mongodb.DBCursor;
-import eu.europeana.harvester.client.report.SubTaskType;
-import eu.europeana.harvester.client.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
+import eu.europeana.harvester.domain.report.SubTaskType;
+import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 
@@ -133,11 +133,12 @@ public interface HarvesterClient {
     /**
      * Computes the subtask state counts for the last processing stats.
      * @param collectionId The owner collection id of the processing jobs.
+     * @param executionId The execution id of the processing jobs. If missing all.
      * @param urlSourceType The url source type. If missing for all.
      * @param subtaskType The sub task type for which to compute.
      * @return
      */
-    Map<URLSourceType, UrlSourceTypeWithProcessingJobSubTaskStateCounts> countSubTaskStatesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType,final SubTaskType subtaskType);
+    UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType,final SubTaskType subtaskType);
 
     /**
      * Computes the DB cursor to retrieve all the last job stats.

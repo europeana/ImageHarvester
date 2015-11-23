@@ -3,8 +3,8 @@ package eu.europeana.harvester.client;
 import com.google.code.morphia.Key;
 import com.google.code.morphia.Datastore;
 import com.mongodb.DBCursor;
-import eu.europeana.harvester.client.report.SubTaskType;
-import eu.europeana.harvester.client.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
+import eu.europeana.harvester.domain.report.SubTaskType;
+import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
@@ -306,8 +306,8 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public Map<URLSourceType, UrlSourceTypeWithProcessingJobSubTaskStateCounts> countSubTaskStatesByUrlSourceType(final String collectionId,final URLSourceType urlSourceType,final SubTaskType subtaskType) {
-        return null;
+    public UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId,final String executionId,final URLSourceType urlSourceType,final SubTaskType subtaskType) {
+       return lastSourceDocumentProcessingStatisticsDao.countSubTaskStatesByUrlSourceType(collectionId,executionId,urlSourceType,subtaskType);
     }
 
     @Override
