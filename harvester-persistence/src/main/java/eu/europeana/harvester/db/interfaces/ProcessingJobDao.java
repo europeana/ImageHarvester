@@ -114,4 +114,12 @@ public interface ProcessingJobDao {
       */
      @Deprecated
      List<ProcessingJob> deactivateJobs (final ReferenceOwner owner, final WriteConcern writeConcern);
+
+    /**
+     * Groups & counts by state the all the  processing jobs that belong to a specific collection.
+     * @param collectionId The collection Id.
+     * @return
+     */
+    public Map<JobState, Long> countProcessingJobsByState(final String collectionId);
+
 }

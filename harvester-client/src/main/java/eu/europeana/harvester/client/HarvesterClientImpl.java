@@ -302,7 +302,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public Map<JobState, Long> countProcessingJobsByState(final String collectionId) {
-        return null;
+        return processingJobDao.countProcessingJobsByState(collectionId);
     }
 
     @Override
