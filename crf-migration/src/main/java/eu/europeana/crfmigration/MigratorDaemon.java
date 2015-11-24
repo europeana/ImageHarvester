@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class MigratorDaemon implements Daemon {
 
@@ -40,8 +42,16 @@ public class MigratorDaemon implements Daemon {
     }
 
     @Override
-    public void start() throws Exception {
-        migrator.start();
+    public void start()  {
+        try {
+            migrator.start();
+        } catch (Exception e) {
+            LOG.info(LoggingComponent
+                            .appendAppFields(LoggingComponent.Migrator.PROCESSING, null, null, null),
+                    "Stopping migrator while processing batch because of exception.",e);
+            destroy();
+            System.exit(-1);
+        }
     }
 
     @Override

@@ -20,6 +20,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.fail;
 
@@ -66,7 +68,7 @@ public class MigratorUtils {
         return migrationConfig;
     }
 
-    public static void runMigrator(final MigratorConfig migratorConfig, final Date dateFilter) throws IOException {
+    public static void runMigrator(final MigratorConfig migratorConfig, final Date dateFilter) throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
 
             final MigratorEuropeanaDao migratorEuropeanaDao = new MigratorEuropeanaDao(migratorConfig.getSourceMongoConfig());

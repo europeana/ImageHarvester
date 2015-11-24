@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
 public class Migrator {
@@ -39,7 +41,7 @@ public class Migrator {
     }
 
 
-    public void start() throws IOException, ParseException {
+    public void start() throws IOException, ParseException, InterruptedException, ExecutionException, TimeoutException {
         LOG.info("Migrator starting ");
 
         final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(config.getGraphiteReporterConfig().getGraphiteServer(), config.getGraphiteReporterConfig().getGraphiteMasterId(), config.getGraphiteReporterConfig().getGraphitePort());
@@ -86,7 +88,7 @@ public class Migrator {
         System.exit(0);
     }
 
-    public static void main(String[] args) throws IOException, ParseException {
+    public static void main(String[] args) throws IOException, ParseException, InterruptedException, ExecutionException, TimeoutException {
         final MigratorConfig migratorConfig = MigratorConfig.loadFromConfigFilePath(args[0]);
         final Migrator migrator = new Migrator(migratorConfig);
         migrator.start();
