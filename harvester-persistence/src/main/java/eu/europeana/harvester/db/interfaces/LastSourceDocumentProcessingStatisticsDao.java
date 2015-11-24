@@ -5,8 +5,8 @@ import com.mongodb.DBCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
-import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 
 import java.util.Collection;
 import java.util.List;
@@ -116,22 +116,31 @@ public interface LastSourceDocumentProcessingStatisticsDao {
     /**
      * Counts the sub task state for finished jobs from a specific collection, execution id and source type.
      *
-     * @param collectionId  The owner collection id.
-     * @param executionId   The execution id. If missing all.
+     * @param executionId   The execution id.
      * @param urlSourceType The url source type. If missing all.
      * @param subtaskType
      * @return
      */
-    public UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
+    public Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
+
 
     /**
-     * Builds a list for a query that filters by several criterias.
-     *
-     * @param collectionId     The owner collection id.
-     * @param executionId      The execution id. If missing all.
-     * @param processingStates The processing states that should be retrieved. If missing or null all states.
+     * Counts the sub task state for finished jobs from a specific collection, execution id and source type.
+     * @param executionId   The execution id.
+     * @param urlSourceType The url source type. If missing all.
+     * @param documentReferenceTaskType
      * @return
      */
+    public Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType);
+
+        /**
+         * Builds a list for a query that filters by several criterias.
+         *
+         * @param collectionId     The owner collection id.
+         * @param executionId      The execution id. If missing all.
+         * @param processingStates The processing states that should be retrieved. If missing or null all states.
+         * @return
+         */
     public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates);
 
     /**

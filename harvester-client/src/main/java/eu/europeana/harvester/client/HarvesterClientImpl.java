@@ -1,13 +1,12 @@
 package eu.europeana.harvester.client;
 
-import com.google.code.morphia.Key;
 import com.google.code.morphia.Datastore;
-import com.mongodb.DBCursor;
-import eu.europeana.harvester.domain.report.SubTaskType;
-import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
+import com.google.code.morphia.Key;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.domain.report.SubTaskState;
+import eu.europeana.harvester.domain.report.SubTaskType;
 import eu.europeana.harvester.util.CachingUrlResolver;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.logging.log4j.LogManager;
@@ -311,8 +310,14 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId,final String executionId,final URLSourceType urlSourceType,final SubTaskType subtaskType) {
-       return lastSourceDocumentProcessingStatisticsDao.countSubTaskStatesByUrlSourceType(collectionId, executionId, urlSourceType, subtaskType);
+    public Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String executionId,final URLSourceType urlSourceType,final SubTaskType subtaskType) {
+       return lastSourceDocumentProcessingStatisticsDao.countSubTaskStatesByUrlSourceType(executionId, urlSourceType, subtaskType);
+    }
+
+    @Override
+    public Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType) {
+        return lastSourceDocumentProcessingStatisticsDao.countJobStatesByUrlSourceType(executionId, urlSourceType, documentReferenceTaskType);
+
     }
 
     @Override

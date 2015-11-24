@@ -1,8 +1,8 @@
 package eu.europeana.harvester.client;
 
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
-import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.joda.time.Interval;
 
@@ -141,14 +141,24 @@ public interface HarvesterClient {
 
     /**
      * Computes the subtask state counts for the last processing stats.
+     * For example this method would be used to get the counts for the states of the METADATA_EXTRACTION subtask.
      *
-     * @param collectionId  The owner collection id of the processing jobs.
-     * @param executionId   The execution id of the processing jobs. If missing all.
+     * @param executionId   The execution id of the processing jobs.
      * @param urlSourceType The url source type. If missing for all.
      * @param subtaskType   The sub task type for which to compute.
      * @return
      */
-    UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
+    Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
+
+    /**
+     * Computes the job state counts for a specific job type.
+     * @param executionId The execution id of the job.
+     * @param urlSourceType The url source type.
+     * @param documentReferenceTaskType The task type.
+     * @return
+     */
+    Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType);
+
 
     /**
      * Retrieves all the last job stats that match specific criteria.

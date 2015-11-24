@@ -9,13 +9,9 @@ import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisti
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
-import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 
 import java.util.*;
 
-/**
- * Created by salexandru on 22.07.2015.
- */
 public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSourceDocumentProcessingStatisticsDao {
 
     /**
@@ -148,16 +144,12 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
     }
 
     @Override
-    public UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType) {
-        final DB db = datastore.getDB();
+    public Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType) {
         final DBCollection processingJobCollection = datastore.getCollection(LastSourceDocumentProcessingStatistics.class);
 
         final DBObject match = new BasicDBObject();
-        match.put("referenceOwner.collectionId", collectionId);
 
-        if (executionId != null) {
-            match.put("referenceOwner.executionId", executionId);
-        }
+        match.put("referenceOwner.executionId", executionId);
 
         match.put("urlSourceType", urlSourceType.name());
 
@@ -195,9 +187,41 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
             }
         }
 
-        return new UrlSourceTypeWithProcessingJobSubTaskStateCounts(urlSourceType, subTasksCountPerState);
+        return subTasksCountPerState;
     }
 
+    @Override
+    public Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType) {
+        final DBCollection processingJobCollection = datastore.getCollection(LastSourceDocumentProcessingStatistics.class);
+
+        final DBObject match = new BasicDBObject();
+
+        match.put("referenceOwner.executionId", executionId);
+
+        match.put("urlSourceType", urlSourceType.name());
+
+        match.put("taskType", documentReferenceTaskType.name());
+
+        final DBObject group = new BasicDBObject();
+
+        final AggregationOutput output = processingJobCollection.aggregate(new BasicDBObject("$match", match), new BasicDBObject("$group", group));
+        final Map<ProcessingState, Long> jobStateCount = new HashMap<>();
+
+        if (output != null) {
+            for (DBObject result : output.results()) {
+                final String state = (String) result.get("_id");
+                final Integer count = (Integer) result.get("total");
+                if (state != null)
+                    jobStateCount.put(ProcessingState.valueOf(state), new Long(count));
+            }
+        }
+
+        return jobStateCount;
+
+    }
+
+
+    @Override
     public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates) {
         final Query<LastSourceDocumentProcessingStatistics> query = datastore.find(LastSourceDocumentProcessingStatistics.class);
 
