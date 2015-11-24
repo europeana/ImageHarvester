@@ -7,6 +7,7 @@ import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
+import org.joda.time.Interval;
 
 import java.util.Collection;
 import java.util.List;
@@ -150,4 +151,11 @@ public interface LastSourceDocumentProcessingStatisticsDao {
      */
     public Map<JobState, Long> countProcessingJobsByState(final String executionId);
 
-}
+    /**
+     * Computes the start, end date interval for a specific executionId.
+     * @param executionId
+     * @return
+     */
+    public Interval getDateIntervalForProcessing(final String executionId);
+
+    }

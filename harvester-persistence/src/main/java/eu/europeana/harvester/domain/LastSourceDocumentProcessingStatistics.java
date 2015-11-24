@@ -295,6 +295,9 @@ public class LastSourceDocumentProcessingStatistics {
         return sourceIp;
     }
 
+    public ProcessingJobSubTaskStats getProcessingJobSubTaskStats() {
+        return processingJobSubTaskStats;
+    }
     public Map<String, String> getHttpResponseHeaders() {
         return httpResponseHeaders;
     }
@@ -302,6 +305,7 @@ public class LastSourceDocumentProcessingStatistics {
     public Long getSocketConnectToDownloadStartDurationInMilliSecs() {
         return socketConnectToDownloadStartDurationInMilliSecs;
     }
+
 
     public String getLog() {
         return log;

@@ -305,8 +305,9 @@ public class HarvesterClientImpl implements HarvesterClient {
         return lastSourceDocumentProcessingStatisticsDao.countProcessingJobsByState(executionId);
     }
 
+    @Override
     public Interval getDateIntervalForProcessing(final String executionId) {
-        return null;
+        return lastSourceDocumentProcessingStatisticsDao.getDateIntervalForProcessing(executionId);
     }
 
     @Override
