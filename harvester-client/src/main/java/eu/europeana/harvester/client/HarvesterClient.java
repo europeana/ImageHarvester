@@ -1,10 +1,10 @@
 package eu.europeana.harvester.client;
 
-import com.mongodb.DBCursor;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskType;
 import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
-import eu.europeana.harvester.domain.*;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
+import org.joda.time.Interval;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -99,6 +99,7 @@ public interface HarvesterClient {
 
     /**
      * Returns all the source document reference documents with ids.
+     *
      * @param id The ids.
      * @return
      */
@@ -125,25 +126,35 @@ public interface HarvesterClient {
     /**
      * Computes the processing state count for the processing jobs.
      *
-     * @param collectionId The owner collection id of the processing jobs.
+     * @param executionId The owner execution id of the processing jobs.
      * @return
      */
-    Map<JobState, Long> countProcessingJobsByState(final String collectionId);
+    Map<JobState, Long> countProcessingJobsByState(final String executionId);
+
+    /**
+     * Calculates the duration of a specific execution Id. This will give "in progress" results if the processing
+     * jobs of the execution id has not finished yet.
+     * @param executionId The execution id.
+     * @return
+     */
+    public Interval getDateIntervalForProcessing(final String executionId);
 
     /**
      * Computes the subtask state counts for the last processing stats.
-     * @param collectionId The owner collection id of the processing jobs.
-     * @param executionId The execution id of the processing jobs. If missing all.
+     *
+     * @param collectionId  The owner collection id of the processing jobs.
+     * @param executionId   The execution id of the processing jobs. If missing all.
      * @param urlSourceType The url source type. If missing for all.
-     * @param subtaskType The sub task type for which to compute.
+     * @param subtaskType   The sub task type for which to compute.
      * @return
      */
-    UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType,final SubTaskType subtaskType);
+    UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId, final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
 
     /**
      * Retrieves all the last job stats that match specific criteria.
-     * @param collectionId The owner collection id of the processing jobs.
-     * @param executionId The execution id of the processing jobs. If missing for all.
+     *
+     * @param collectionId     The owner collection id of the processing jobs.
+     * @param executionId      The execution id of the processing jobs. If missing for all.
      * @param processingStates The processing states for which to retrieve the stats. If empty or null will take all states.
      * @return
      */

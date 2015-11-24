@@ -224,4 +224,33 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 
     }
 
+    @Override
+    public Map<JobState, Long> countProcessingJobsByState(final String executionId) {
+        final DB db = datastore.getDB();
+        final DBCollection processingJobCollection = datastore.getCollection(LastSourceDocumentProcessingStatistics.class);
+
+        final DBObject match = new BasicDBObject();
+        match.put("referenceOwner.executionId",executionId);
+
+        final DBObject group = new BasicDBObject();
+        group.put("_id", "$state");
+        group.put("total", new BasicDBObject("$sum", 1));
+
+        final AggregationOutput output = processingJobCollection.aggregate(new BasicDBObject("$match", match), new BasicDBObject("$group", group));
+        final Map<JobState, Long> jobsPerState = new HashMap<>();
+
+        if (output != null) {
+            for (DBObject result : output.results()) {
+                final String state = (String) result.get("_id");
+                final Integer count = (Integer) result.get("total");
+                if (state != null)
+                    jobsPerState.put(JobState.valueOf(state), new Long(count));
+            }
+        }
+
+        return jobsPerState;
+
+
+    }
+
 }

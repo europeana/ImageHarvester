@@ -12,6 +12,7 @@ import eu.europeana.harvester.util.CachingUrlResolver;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.Interval;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.net.MalformedURLException;
@@ -301,13 +302,17 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public Map<JobState, Long> countProcessingJobsByState(final String collectionId) {
-        return processingJobDao.countProcessingJobsByState(collectionId);
+    public Map<JobState, Long> countProcessingJobsByState(final String executionId) {
+        return lastSourceDocumentProcessingStatisticsDao.countProcessingJobsByState(executionId);
+    }
+
+    public Interval getDateIntervalForProcessing(final String executionId) {
+        return null;
     }
 
     @Override
     public UrlSourceTypeWithProcessingJobSubTaskStateCounts countSubTaskStatesByUrlSourceType(final String collectionId,final String executionId,final URLSourceType urlSourceType,final SubTaskType subtaskType) {
-       return lastSourceDocumentProcessingStatisticsDao.countSubTaskStatesByUrlSourceType(collectionId,executionId,urlSourceType,subtaskType);
+       return lastSourceDocumentProcessingStatisticsDao.countSubTaskStatesByUrlSourceType(collectionId, executionId, urlSourceType, subtaskType);
     }
 
     @Override

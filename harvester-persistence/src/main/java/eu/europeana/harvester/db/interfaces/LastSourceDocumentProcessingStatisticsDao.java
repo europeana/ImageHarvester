@@ -4,10 +4,7 @@ import com.google.code.morphia.Key;
 import com.mongodb.DBCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.LastSourceDocumentProcessingStatistics;
-import eu.europeana.harvester.domain.ProcessingState;
-import eu.europeana.harvester.domain.URLSourceType;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskType;
 import eu.europeana.harvester.domain.report.UrlSourceTypeWithProcessingJobSubTaskStateCounts;
 
@@ -136,5 +133,12 @@ public interface LastSourceDocumentProcessingStatisticsDao {
      * @return
      */
     public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates);
+
+    /**
+     * Groups & counts by state the all the  processing jobs that belong to a specific execution id.
+     * @param executionId The execution Id.
+     * @return
+     */
+    public Map<JobState, Long> countProcessingJobsByState(final String executionId);
 
 }
