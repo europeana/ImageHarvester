@@ -144,11 +144,10 @@ public interface HarvesterClient {
      * Retrieves all the last job stats that match specific criteria.
      * @param collectionId The owner collection id of the processing jobs.
      * @param executionId The execution id of the processing jobs. If missing for all.
-     * @param batchSize The page size of the cursor.
-     * @param processingStates The processing states for which to retrieve the stats.
+     * @param processingStates The processing states for which to retrieve the stats. If empty or null will take all states.
      * @return
      */
-    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId,final String executionId,final int batchSize,final List<ProcessingState> processingStates);
+    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates);
 
 }
 

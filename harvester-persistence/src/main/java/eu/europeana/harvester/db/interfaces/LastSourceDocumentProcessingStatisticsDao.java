@@ -132,10 +132,9 @@ public interface LastSourceDocumentProcessingStatisticsDao {
      *
      * @param collectionId     The owner collection id.
      * @param executionId      The execution id. If missing all.
-     * @param batchSize        The batch size.
-     * @param processingStates The processing states that should be retrieved.
+     * @param processingStates The processing states that should be retrieved. If missing or null all states.
      * @return
      */
-    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final int batchSize, final List<ProcessingState> processingStates);
+    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates);
 
 }

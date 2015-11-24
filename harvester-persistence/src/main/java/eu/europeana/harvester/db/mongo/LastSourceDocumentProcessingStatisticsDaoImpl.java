@@ -198,7 +198,7 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
         return new UrlSourceTypeWithProcessingJobSubTaskStateCounts(urlSourceType, subTasksCountPerState);
     }
 
-    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final int batchSize, final List<ProcessingState> processingStates) {
+    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates) {
         final Query<LastSourceDocumentProcessingStatistics> query = datastore.find(LastSourceDocumentProcessingStatistics.class);
 
         query.field("referenceOwner.collectionId").equal(collectionId);
@@ -208,7 +208,7 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
         }
 
         // The state
-        if (!processingStates.isEmpty()) {
+        if (processingStates != null && !processingStates.isEmpty()) {
             final List<String> s = new ArrayList();
 
             for (ProcessingState state : processingStates) {
