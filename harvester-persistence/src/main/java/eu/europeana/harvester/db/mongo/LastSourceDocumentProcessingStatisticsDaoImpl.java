@@ -9,6 +9,7 @@ import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisti
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
+import org.joda.time.Interval;
 
 import java.util.*;
 
@@ -275,6 +276,11 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
         return jobsPerState;
 
 
+    }
+
+    @Override
+    public Interval getDateIntervalForProcessing(String executionId) {
+        return null;
     }
 
 }
