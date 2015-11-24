@@ -74,7 +74,6 @@ public class MigratorEuropeanaDao {
         sortOrder.put("timestampUpdated", 1);
 
         final DBCursor recordCursor = recordCollection.find(filterByTimestampQuery, recordFields).sort(sortOrder).limit(batchSize);
-        recordCursor.addOption(Bytes.QUERYOPTION_NOTIMEOUT);
         return recordCursor;
     }
 
