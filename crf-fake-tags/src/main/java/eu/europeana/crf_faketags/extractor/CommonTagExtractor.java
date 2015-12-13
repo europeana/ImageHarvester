@@ -835,4 +835,17 @@ public class CommonTagExtractor {
         LOG.error("Not recognized mimetype: " + type);
         return 0;
     }
+
+    public static boolean isImageMimeType(String type) {
+        return (type.toLowerCase().startsWith("image"));
+    }
+
+    public static boolean isSoundMimeType(String type) {
+        return (type.toLowerCase().startsWith("sound") || type.toLowerCase().startsWith("audio"));
+    }
+
+    public static boolean isVideoMimeType(String type) {
+        return (type.toLowerCase().startsWith("video"));
+    }
+
 }
