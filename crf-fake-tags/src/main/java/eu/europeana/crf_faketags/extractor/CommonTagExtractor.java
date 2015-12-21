@@ -1,5 +1,7 @@
 package eu.europeana.crf_faketags.extractor;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,10 +16,9 @@ public class CommonTagExtractor {
 
     private static final Logger LOG = LogManager.getLogger(CommonTagExtractor.class.getName());
 
-    private static final Map<String, Integer> mimeTypes;
+    public static final BiMap<String, Integer> mimeTypes = HashBiMap.create(776);
 
     static {
-        mimeTypes = new HashMap<>();
         mimeTypes.put("", 0);
         mimeTypes.put("application/andrew-inset",1);
         mimeTypes.put("application/applixware",2);
@@ -827,7 +828,7 @@ public class CommonTagExtractor {
      * @param type the mimetype of the resource
      * @return the integer represantation of the mimetype
      */
-    public static Integer getMimeTypeCode(String type) {
+    public static Integer getMimeTypeCode(final String type) {
         if(mimeTypes.containsKey(type.toLowerCase())) {
             return mimeTypes.get(type.toLowerCase());
         }

@@ -1,7 +1,10 @@
 package eu.europeana.crf_faketags.extractor;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import eu.europeana.harvester.domain.ImageMetaInfo;
 import eu.europeana.harvester.domain.ImageOrientation;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,8 +16,7 @@ import java.util.*;
 public class ImageTagExtractor {
 
     private static final Logger LOG = LogManager.getLogger(ImageTagExtractor.class.getName());
-
-    private final static HashMap<String, Integer> hexColors = new HashMap<>();
+    public static final BiMap<String, Integer> hexColors = HashBiMap.create(139);
 
     static {
         hexColors.put("",0);
@@ -158,37 +160,59 @@ public class ImageTagExtractor {
         hexColors.put("#9ACD32",138);
     }
 
-    private static Integer getSizeCode(Integer width, Integer height) {
-        if(width == null || height == null) {
+
+    public static Integer getSizeCode(final Integer width, final Integer height) {
+        if (width == null || height == null) {
             return 0;
         }
 
         final Long size = (long) (width * height);
-        if(size < 524288) {
+        if (size < 524288) {
             return 1;
         }
-        if(size < 1048576) {
+        if (size < 1048576) {
             return 2;
         }
-        if(size < 4194304) {
+        if (size < 4194304) {
             return 3;
         }
 
         return 4;
     }
 
-    private static Integer getColorSpaceCode(String colorSpace) {
-        if(colorSpace == null) {
+    public static Integer getSizeCode(final String imageSize) {
+        if (StringUtils.isBlank(imageSize)) {
             return 0;
         }
 
-        if(colorSpace.equalsIgnoreCase("srgb")) {
+        if (imageSize.equals("small")) {
             return 1;
         }
-        if(colorSpace.equalsIgnoreCase("Gray")) {
+        if (imageSize.equals("medium")) {
             return 2;
         }
-        if(colorSpace.equalsIgnoreCase("cmyk")) {
+        if (imageSize.equals("large")) {
+            return 3;
+        }
+        if (imageSize.equals("extra_large")) {
+            return 4;
+        }
+
+        return 0;
+    }
+
+    public static Integer getColorSpaceCode(final String colorSpace) {
+        if (colorSpace == null) {
+            return 0;
+        }
+
+        if (colorSpace.equalsIgnoreCase("srgb")) {
+            return 1;
+        }
+        if (colorSpace.equalsIgnoreCase("Gray")) {
+            return 2;
+        }
+        if (colorSpace.equalsIgnoreCase("cmyk")) {
             return 3;
         }
 
@@ -196,15 +220,30 @@ public class ImageTagExtractor {
         return 0;
     }
 
-    private static Integer getAspectRatioCode(ImageOrientation orientation) {
-        if(orientation == null) {
+    public static Integer getColorSpaceCode(final Boolean imageColor, final Boolean imageGrayScale) {
+        if (imageColor == null && imageGrayScale == null) {
             return 0;
         }
 
-        if(orientation.equals(ImageOrientation.LANDSCAPE)) {
+        if (imageGrayScale != null && imageGrayScale) {
+            return 2;
+        }
+        if (imageColor != null && imageColor) {
+            return 1;
+        } else {
+            return 3;
+        }
+    }
+
+    public static Integer getAspectRatioCode(final ImageOrientation orientation) {
+        if (orientation == null) {
+            return 0;
+        }
+
+        if (orientation == ImageOrientation.LANDSCAPE) {
             return 1;
         }
-        if(orientation.equals(ImageOrientation.PORTRAIT)) {
+        if (orientation == ImageOrientation.PORTRAIT) {
             return 2;
         }
 
@@ -212,16 +251,16 @@ public class ImageTagExtractor {
         return 0;
     }
 
-    private static Integer getColorCode(String color) {
-        if(color == null) {
+    public static Integer getColorCode(final String color) {
+        if (color == null) {
             return 0;
         }
 
-        if(hexColors.containsKey(color)) {
+        if (hexColors.containsKey(color)) {
             return hexColors.get(color);
         }
 
-        //LOG.error("Not recognized color: " + color);
+        LOG.error("Not recognized color: " + color);
         return 0;
     }
 
@@ -281,9 +320,6 @@ public class ImageTagExtractor {
 
                             filterTags.add(result);
 
-//                            System.out.println(result);
-//                            System.out.println(mediaTypeCode + " " + mimeType + " " + fileSize + " " + colorSpace + " " + aspectRatio + " " + color);
-//                            System.out.println(Integer.toBinaryString(result));
                         }
                     }
                 }

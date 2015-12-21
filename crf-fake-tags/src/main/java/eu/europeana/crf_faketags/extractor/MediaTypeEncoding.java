@@ -17,20 +17,13 @@ public enum MediaTypeEncoding {
     public int getValue()          {return value;}
     public int getEncodedValue()   {return value << TagEncoding.MEDIA_TYPE.getBitPos();}
 
-    public static MediaTypeEncoding valueOf(final Integer tag) {
-        if (1 == tag) {
-            return IMAGE;
+    public static MediaTypeEncoding valueOf(final int tag) {
+        for (MediaTypeEncoding encoding: MediaTypeEncoding.values()) {
+            if (tag == encoding.getValue()) {
+                return encoding;
+            }
         }
-        else if (2 == tag) {
-            return AUDIO;
-        }
-        else if (3 == tag) {
-            return VIDEO;
-        }
-        else if (4 == tag) {
-            return TEXT;
-        }
-
         return INVALID_VALUE;
     }
+
 }
