@@ -32,7 +32,7 @@ public interface HarvesterClient {
     createOrModifyProcessingProfiles(final Collection<SourceDocumentReferenceProcessingProfile> profiles);
 
     void
-    createOrModifyProcessingJobTuples(final Collection<ProcessingJobTuple> jobTuples) throws InterruptedException,
+    createOrModifyProcessingJobTuples(final List<ProcessingJobTuple> jobTuples) throws InterruptedException,
             MalformedURLException,
             TimeoutException,
             ExecutionException,

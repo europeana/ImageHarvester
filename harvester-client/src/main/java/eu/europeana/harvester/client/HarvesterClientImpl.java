@@ -2,6 +2,7 @@ package eu.europeana.harvester.client;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Key;
+import com.google.common.collect.Lists;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
@@ -24,6 +25,8 @@ import java.util.concurrent.TimeoutException;
  * The meeting point between the client and the application.
  */
 public class HarvesterClientImpl implements HarvesterClient {
+
+    private static final int MAX_BATCH_SIZE_PROCESSING_TUPLES = 10*1000;
 
     private static final Logger LOG = LogManager.getLogger(HarvesterClientImpl.class.getName());
 
@@ -149,27 +152,30 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public void createOrModifyProcessingJobTuples (Collection<ProcessingJobTuple> jobTuples) throws
+    public void createOrModifyProcessingJobTuples (List<ProcessingJobTuple> jobTuples) throws
                                                                                              InterruptedException,
                                                                                              MalformedURLException,
                                                                                              TimeoutException,
                                                                                              ExecutionException,
                                                                                              UnknownHostException {
-        final Collection <ProcessingJob> processingJobs = new ArrayList<>(jobTuples.size());
-        final Collection <SourceDocumentReference> sourceDocumentReferences = new ArrayList<>(jobTuples.size());
-        final Collection <SourceDocumentReferenceProcessingProfile> processingProfiles = new ArrayList<>(jobTuples.size());
 
-        for (final ProcessingJobTuple jobTuple: jobTuples) {
-            processingJobs.add(jobTuple.getProcessingJob());
-            sourceDocumentReferences.add(jobTuple.getSourceDocumentReference());
-            processingProfiles.addAll(jobTuple.getSourceDocumentReferenceProcessingProfiles());
+        for (List<ProcessingJobTuple> oneBatch : Lists.partition(jobTuples, MAX_BATCH_SIZE_PROCESSING_TUPLES)) {
+
+            final Collection<ProcessingJob> processingJobs = new ArrayList<>();
+            final Collection<SourceDocumentReference> sourceDocumentReferences = new ArrayList<>();
+            final Collection<SourceDocumentReferenceProcessingProfile> processingProfiles = new ArrayList<>();
+
+            for (final ProcessingJobTuple jobTuple : oneBatch) {
+                processingJobs.add(jobTuple.getProcessingJob());
+                sourceDocumentReferences.add(jobTuple.getSourceDocumentReference());
+                // processingProfiles.addAll(jobTuple.getSourceDocumentReferenceProcessingProfiles());
+            }
+
+            createOrModifySourceDocumentReference(sourceDocumentReferences);
+            createOrModify(processingJobs);
+            // createOrModifyProcessingProfiles(processingProfiles);
         }
-
-        createOrModifySourceDocumentReference(sourceDocumentReferences);
-        createOrModify(processingJobs);
-        createOrModifyProcessingProfiles(processingProfiles);
     }
-
     @Override
     public com.google.code.morphia.Key<ProcessingJob> createOrModify(ProcessingJob processingJob) {
         return processingJobDao.createOrModify(processingJob, harvesterClientConfig.getWriteConcern());
