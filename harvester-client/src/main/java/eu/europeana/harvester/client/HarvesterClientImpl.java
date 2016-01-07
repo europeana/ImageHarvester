@@ -116,7 +116,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
         // Prepare all the machine references
         for (final SourceDocumentReference sourceDocumentReference : newSourceDocumentReferences) {
-            machineResourceReferences.add(new MachineResourceReference(cachingUrlResolver.resolveIpOfUrl(sourceDocumentReference.getUrl())));
+            machineResourceReferences.add(new MachineResourceReference(cachingUrlResolver.resolveIpOfUrlAndReturnLoopbackOnFail(sourceDocumentReference.getUrl())));
         }
 
         // Retrieve all the existing source document references as these might need to be updated
