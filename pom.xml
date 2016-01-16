@@ -28,7 +28,7 @@
                 <checksumPolicy>fail</checksumPolicy>
             </releases>
             <snapshots>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
                 <updatePolicy>never</updatePolicy>
                 <checksumPolicy>fail</checksumPolicy>
             </snapshots>
@@ -38,6 +38,9 @@
             <layout>default</layout>
         </repository>
         <repository>
+	     <snapshots>
+		<enabled>false</enabled>
+	     </snapshots>
             <id>artifactory.eanadev.org</id>
             <name>artifactory.eanadev.org-releases</name>
             <url>http://artifactory.eanadev.org/artifactory/libs-release-local</url>

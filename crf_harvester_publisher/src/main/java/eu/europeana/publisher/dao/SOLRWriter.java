@@ -1,12 +1,14 @@
 package eu.europeana.publisher.dao;
 
 import com.codahale.metrics.Timer;
+
 import eu.europeana.harvester.domain.*;
 import eu.europeana.publisher.domain.CRFSolrDocument;
 import eu.europeana.publisher.domain.DBTargetConfig;
 import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.logging.LoggingComponent;
 import eu.europeana.publisher.logic.PublisherMetrics;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -14,7 +16,8 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.BinaryResponseParser;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.client.solrj.impl.LBHttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
@@ -54,8 +57,10 @@ public class SOLRWriter {
     private final String solrUrl;
     private final Boolean solrCommitEnabled;
     private final String connectionId;
-
-
+    private final String zookeeperURLs;
+    private final int solrBatchSize;
+    private final String collection;
+    
     public SOLRWriter (final DBTargetConfig solrConfig) {
         if (null == solrConfig || null == solrConfig.getSolrUrl() || solrConfig.getSolrUrl().trim().isEmpty()) {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR),
@@ -66,6 +71,9 @@ public class SOLRWriter {
         this.connectionId = solrConfig.getName();
         this.solrUrl = solrConfig.getSolrUrl();
         this.solrCommitEnabled = solrConfig.getSolrCommitEnabled();
+        this.zookeeperURLs = solrConfig.getZookeeperUrl();
+        this.solrBatchSize = solrConfig.getSolrBatchSize();
+        this.collection = solrConfig.getCollection();
     }
 
     private SolrClient createServer (String publishingBatchId) {
@@ -76,21 +84,21 @@ public class SOLRWriter {
                                  .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null,
                                                   null),
                          "Trying to connect to the solr server: " + solrUrl + ". Retry #" + retry);
-                final RequestConfig.Builder requestBuilder = RequestConfig.custom()
-                                                                          .setConnectTimeout(CONNECTION_TIMEOUT)
-                                                                          .setConnectionRequestTimeout(CONNECTION_TIMEOUT);
-                final HttpClientBuilder clientBuilder = HttpClientBuilder.create()
-                                                                         .setDefaultRequestConfig(requestBuilder
-                                                                                                          .build());
-                final HttpSolrClient server = new HttpSolrClient(solrUrl, clientBuilder.build(), new BinaryResponseParser());
+                
+                
+                LBHttpSolrClient clients = new LBHttpSolrClient(solrUrl.split(","));
+                CloudSolrClient solrClient = new CloudSolrClient(zookeeperURLs,clients);
+                solrClient.setDefaultCollection(collection);
+                solrClient.connect();
+                
                 LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                            publishingBatchId, null, null),
                           "Connected successfully to solr: " + solrUrl + ". Retry #" + retry);
-                return server;
+                return solrClient;
             }
             catch (Exception e) {
                 ++retry;
-                if (retry > MAX_RETRIES) throw e;
+                if (retry > MAX_RETRIES) e.printStackTrace();
             }
         }
     }
@@ -100,10 +108,10 @@ public class SOLRWriter {
 
     public boolean updateDocuments (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException {
         LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
-                "Preparing to split SOLR update of {} docs in chunks of {}",newDocs.size(),MAX_NUMBER_OF_DOCS_IN_SOLR_UPDATE);
+                "Preparing to split SOLR update of {} docs in chunks of {}",newDocs.size(),solrBatchSize);
 
-        for (int docsStartChunkIndex = 0; docsStartChunkIndex <= newDocs.size(); docsStartChunkIndex += MAX_NUMBER_OF_DOCS_IN_SOLR_UPDATE) {
-            final int endOfArray = Math.min(newDocs.size(), docsStartChunkIndex + MAX_NUMBER_OF_DOCS_IN_SOLR_UPDATE);
+        for (int docsStartChunkIndex = 0; docsStartChunkIndex <= newDocs.size(); docsStartChunkIndex += solrBatchSize) {
+            final int endOfArray = Math.min(newDocs.size(), docsStartChunkIndex + solrBatchSize);
             final List<CRFSolrDocument> newDocsChunk = newDocs.subList(docsStartChunkIndex, endOfArray);
 
             LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
