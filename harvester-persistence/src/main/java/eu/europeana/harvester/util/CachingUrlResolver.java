@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
 
 public class CachingUrlResolver {
 
+    private static final String NO_IP = "127.0.0.1";
+
     private final LoadingCache<String /* hostname */ , String /* IP */> hostnameToIpCache;
 
     public CachingUrlResolver() {
@@ -35,4 +37,16 @@ public class CachingUrlResolver {
         final String ip = hostnameToIpCache.get(hostname);
         return ip;
     }
+
+    public final String resolveIpOfUrlAndReturnLoopbackOnFail(String url) throws ExecutionException {
+
+        String ipOfUrl = NO_IP;
+        try {
+            ipOfUrl = resolveIpOfUrl(url);
+        } catch (Exception e) {
+        }
+        return ipOfUrl;
+
+    }
+
 }

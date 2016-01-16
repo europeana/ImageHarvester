@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class CachingUrlResolverTests {
@@ -23,7 +24,18 @@ public class CachingUrlResolverTests {
         final String url1 = "http://stackoverflow.com/";
         final CachingUrlResolver cache = new CachingUrlResolver();
         for (int i = 0; i< 1000*000;i++) {
-            assertNotNull(cache.resolveIpOfUrl(url1));
+            assertNotNull(cache.resolveIpOfUrlAndReturnLoopbackOnFail(url1));
+        }
+
+    }
+
+    @Test
+    public void canResolve1MillionTimesTheSameLocalIpInUnder1Second() throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+
+        final String url1 = "htasadasdasdsam/";
+        final CachingUrlResolver cache = new CachingUrlResolver();
+        for (int i = 0; i< 1000*000;i++) {
+            assertEquals(cache.resolveIpOfUrlAndReturnLoopbackOnFail(url1), "127.0.0.1");
         }
 
     }

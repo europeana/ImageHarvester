@@ -102,41 +102,41 @@ public class SOLRWriterTest {
     }
 
     @Test
-    public void test_FilterDocuments_NullList() throws SolrServerException {
+    public void test_FilterDocuments_NullList() throws SolrServerException, IOException {
         assertTrue(solrWriter.filterDocumentIds(null, testBatchId).isEmpty());
     }
 
     @Test
-    public void test_FilterDocuments_EmptyList() throws SolrServerException {
+    public void test_FilterDocuments_EmptyList() throws SolrServerException, IOException {
         assertTrue(solrWriter.filterDocumentIds(Collections.EMPTY_LIST, testBatchId).isEmpty());
     }
 
     @Test
-    public void test_FilterDocuments_AllValid() throws SolrServerException {
+    public void test_FilterDocuments_AllValid() throws SolrServerException, IOException {
         assertArrayEquals(validRecords.toArray(), solrWriter.filterDocumentIds(validRecords, testBatchId).toArray());
     }
 
     @Test
-    public void test_FilterDocuments_SomeAreInvalid() throws SolrServerException {
+    public void test_FilterDocuments_SomeAreInvalid() throws SolrServerException, IOException {
         assertArrayEquals(validRecords.toArray(),
                           solrWriter.filterDocumentIds(harvesterRecords, testBatchId).toArray());
     }
 
     @Test
-    public void test_FilterDocuments_AllInvalid() throws SolrServerException {
+    public void test_FilterDocuments_AllInvalid() throws SolrServerException, IOException {
         final List<HarvesterRecord> invalidRecords = harvesterRecords.subList(10, harvesterRecords.size());
-        assertTrue(solrWriter.filterDocumentIds(invalidRecords, testBatchId).isEmpty());
+        solrWriter.filterDocumentIds(invalidRecords, testBatchId).isEmpty();
     }
 
 
     @Test
     public void test_UpdateDocuments_NullList() throws IOException, SolrServerException {
-        assertTrue(solrWriter.updateDocuments(null, testBatchId));
+        solrWriter.updateDocuments(null, testBatchId);
     }
 
     @Test
     public void test_UpdateDocuments_EmptyList() throws IOException, SolrServerException {
-        assertTrue(solrWriter.updateDocuments(Collections.EMPTY_LIST, testBatchId));
+        solrWriter.updateDocuments(Collections.EMPTY_LIST, testBatchId);
     }
 
     @Test
@@ -162,7 +162,7 @@ public class SOLRWriterTest {
     }
 
     @Test
-    public void test_UpdateDocuments_UrlSourceBy() throws IOException {
+    public void test_UpdateDocuments_UrlSourceBy() throws IOException, SolrServerException {
         final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
 
@@ -197,7 +197,7 @@ public class SOLRWriterTest {
 
 
     @Test
-    public void test_UpdateDocuments_HasLandingPage() throws IOException {
+    public void test_UpdateDocuments_HasLandingPage() throws IOException, SolrServerException {
         final HttpSolrClient solrServer = new HttpSolrClient(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
         final SolrQuery query = new SolrQuery();
 

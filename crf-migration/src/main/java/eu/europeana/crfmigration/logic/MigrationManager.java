@@ -43,11 +43,11 @@ public class MigrationManager {
         this.batch = batchSize;
     }
 
-    public void migrate() {
-        starMigration();
+    public void migrate() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException, UnknownHostException {
+        startMigration();
     }
 
-    private void starMigration() {
+    private void startMigration() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException, UnknownHostException {
         Date maximalUpdatedTimestampInRecords = dateFilter;
 
         /** Repeat forever */
@@ -89,8 +89,8 @@ public class MigrationManager {
                 MigrationMetrics.Migrator.Batch.skippedBecauseOfErrorCounter.inc();
 
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
-                        "Finished migration batch with error and min date was", maximalUpdatedTimestampInRecords);
-
+                        "Finished migration batch with error and min date was", maximalUpdatedTimestampInRecords,e);
+                throw e;
             } finally {
                 LOG.info(
                         "[Console] Finished migration batch of " + numberOfRecordsRetrievedInBatch + " records with success and minimum date in batch was " + maximalUpdatedTimestampInRecords);
@@ -157,15 +157,7 @@ public class MigrationManager {
                                 edmObject.getReferenceOwner().getRecordId(),
                                 edmObject.getReferenceOwner().getExecutionId(),
                                 edmObject.getEdmObject(), edmObject.getEdmHasViews(), edmObject.getEdmIsShownBy(), edmObject.getEdmIsShownAt(), JobPriority.NORMAL.getPriority()));
-            } catch (UnknownHostException e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB,migratingBatchId,null,null),
-                        "Exception while converting record.",e);
-                MigrationMetrics.Migrator.Overall.invalidUrlCounter.inc();
-            } catch (MalformedURLException e) {
-                LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB,migratingBatchId,null,null),
-                        "Exception while converting record.",e);
-                MigrationMetrics.Migrator.Overall.invalidUrlCounter.inc();
-            } catch (ExecutionException e) {
+            }  catch (ExecutionException e) {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB, migratingBatchId, null, null),
                         "Exception while converting record.", e);
             }

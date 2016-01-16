@@ -54,7 +54,7 @@ public class MongoConfig {
 
 
     public Mongo connectToMongo() {
-       final Mongo mongo = new Mongo(mongoServerAddressList.get(0));
+       final Mongo mongo = new Mongo(mongoServerAddressList);
 
         if (StringUtils.isNotEmpty(username)) {
            if (!mongo.getDB("admin").authenticate(username, password.toCharArray())) {

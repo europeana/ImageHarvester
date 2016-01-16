@@ -56,7 +56,15 @@ public class PublisherDaemon implements Daemon {
 
     @Override
     public void start() throws Exception {
-        publisher.start();
+        try {
+            publisher.start();
+        } catch (Exception e){
+            LOG.info(LoggingComponent
+                            .appendAppFields(LoggingComponent.Migrator.PROCESSING, null, null, null),
+                    "Stopping publisher while processing batch because of exception.",e);
+            destroy();
+            System.exit(-1);
+        }
     }
 
     @Override

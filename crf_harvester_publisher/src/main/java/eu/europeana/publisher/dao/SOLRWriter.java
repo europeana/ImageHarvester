@@ -15,6 +15,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.BinaryResponseParser;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.client.solrj.impl.LBHttpSolrClient;
@@ -106,7 +107,7 @@ public class SOLRWriter {
     public String getSolrUrl() {return solrUrl;}
 
 
-    public boolean updateDocuments (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException {
+    public void updateDocuments (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException, SolrServerException {
         LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                 "Preparing to split SOLR update of {} docs in chunks of {}",newDocs.size(),solrBatchSize);
 
@@ -117,20 +118,17 @@ public class SOLRWriter {
             LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                     "Chunk SOLR update of size {}",newDocsChunk.size());
 
-            final boolean documentUpdateSuccess = updateDocumentsChunk(newDocsChunk, publishingBatchId);
+            updateDocumentsChunk(newDocsChunk, publishingBatchId);
 
-            // Stop immediately if a batch failed after it's number of retries
-            if (documentUpdateSuccess != true) return false;
         }
 
-        return true;
     }
         /**
          * Updates a list of documents with new fields/properties
          *
          * @param newDocs the list of documents and the new fields
          */
-    private boolean updateDocumentsChunk (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException{
+    private void updateDocumentsChunk (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException, SolrServerException {
         final Timer.Context context = PublisherMetrics.Publisher.Write.Solr.solrUpdateDocumentsDuration.time(connectionId);
         try
         {
@@ -138,7 +136,6 @@ public class SOLRWriter {
 
                 LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                          "Received for updating and empty/null list. Ignoring");
-                return true;
             }
 
             LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
@@ -192,6 +189,7 @@ public class SOLRWriter {
                                                                    publishingBatchId),
                                   "Problems adding document with europeana_id (recordId): {}", document.getField("europeana_id"), e);
                     }
+
                 }
             }
             PublisherMetrics.Publisher.Write.Solr.badSolrDocumentsCount.inc(connectionId, badDocuments);
@@ -216,7 +214,6 @@ public class SOLRWriter {
                     server.close();
                     PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToSolr.inc(numberOfDocumentsToUpdate);
                     PublisherMetrics.Publisher.Write.Solr.totalNumberOfDocumentsWrittenToOneConnection.inc(connectionId, numberOfDocumentsToUpdate);
-                    return true;
                 }
                 catch (Exception e) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
@@ -227,7 +224,7 @@ public class SOLRWriter {
                         LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                                   "Failed to update {} SOLR documents with commit retry policy. Reached maximum retry" + " count {}. Skipping updating all these documents.",
                                   newDocs.size(), MAX_RETRIES);
-                        return false;
+                        throw e;
                     }
                     else {
                         try {
@@ -238,12 +235,11 @@ public class SOLRWriter {
                                               "policy. Current retry count is " + retry + " . Sleeping " + secsToSleep + " seconds before trying again.");
                             TimeUnit.SECONDS.sleep(secsToSleep);
                         } catch (InterruptedException e1) {
-                            e1.printStackTrace();
+                            throw e;
                         }
                     }
                 }
             }
-            return false;
         }
         finally {
             context.close();
@@ -257,7 +253,7 @@ public class SOLRWriter {
      * @param documents the document that need to be checked
      * @return the map that indicates for each document id (map key) whether exists : true or false
      */
-    public List<HarvesterRecord> filterDocumentIds (final List<HarvesterRecord> documents,final String publishingBatchId) {
+    public List<HarvesterRecord> filterDocumentIds (final List<HarvesterRecord> documents,final String publishingBatchId) throws IOException, SolrServerException {
         final Timer.Context context = PublisherMetrics.Publisher.Read.Solr.solrCheckIdsDurationDuration.time(connectionId);
         try {
             if (null == documents || documents.isEmpty()) {
@@ -311,6 +307,7 @@ public class SOLRWriter {
                                   "The exception is",
                                   MAX_NUMBER_OF_IDS_IN_SOLR_QUERY, e
                                  );
+                        throw e;
                     }
                 }
             }

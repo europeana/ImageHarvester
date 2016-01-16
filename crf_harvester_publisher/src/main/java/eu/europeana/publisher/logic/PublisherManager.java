@@ -124,39 +124,39 @@ public class PublisherManager {
 
             final Timer.Context context = PublisherMetrics.Publisher.Batch.loopBatchDuration.time();
             try {
-                final boolean batchSuccess = batchProcessing();
+                batchProcessing();
 
-
-                if (batchSuccess == false) {
-                    LOG.info(LoggingComponent
-                                    .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
-                            "Stopping publisher as current batch ended prematurely with error. Last OK processed timestamp {}",currentTimestamp);
-                    return ;
-                }
                 shouldStopGracefully = shouldPublisherStopGraceFully();
 
                 LOG.info(LoggingComponent
                                 .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
-                        "ShouldStopGracefully is "+shouldStopGracefully);
+                        "ShouldStopGracefully is " + shouldStopGracefully);
 
 
                 if (shouldStopGracefully == true) {
                     LOG.info(LoggingComponent
                                     .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
-                            "Gracefully stopping publisher at end of batch as stop request received during batch processing. Last OK processed timestamp {}",currentTimestamp);
-                    return ;
+                            "Gracefully stopping publisher at end of batch as stop request received during batch processing. Last OK processed timestamp {}", currentTimestamp);
+                    return;
                 } else {
                     LOG.info(LoggingComponent
                                     .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
-                            "Continuing with next batch as shouldStopGracefully is "+shouldStopGracefully);
+                            "Continuing with next batch as shouldStopGracefully is " + shouldStopGracefully);
                 }
+
+            } catch (Exception e) {
+                LOG.info(LoggingComponent
+                                .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+                        "Stopping publisher as current batch ended prematurely with error. Last OK processed timestamp {}", currentTimestamp);
+
+                throw e;
             } finally {
                 context.close();
             }
         }
     }
 
-    private boolean batchProcessing() throws InterruptedException, IOException {
+    private void batchProcessing() throws InterruptedException, IOException, SolrServerException {
         final String publishingBatchId = "publishing-batch-" + DateTime.now().getMillis() + "-" + Math.random();
 
         DBCursor cursor = publisherEuropeanaDao.buildCursorForDocumentStatistics(config.getBatch(), currentTimestamp);
@@ -223,14 +223,7 @@ public class PublisherManager {
                         "Updating solr documents for config id {}",
                         writer.getConnectionId());
 
-                final boolean solrDocumentUpdateSucces = writer.getSolrWriter().updateDocuments(crfSolrDocument, publishingBatchId);
-                if (solrDocumentUpdateSucces == false) {
-                    LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, newPublishingBatchId, null, null),
-                            "There was a problem with writing this batch to solr for connection id {}. See log above.",
-                            writer.getConnectionId());
-                    return false;
-
-                }
+                writer.getSolrWriter().updateDocuments(crfSolrDocument, publishingBatchId);
             } else {
                 LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                         "There was a problem with writing this batch to solr for connection id {}. " +
@@ -251,21 +244,20 @@ public class PublisherManager {
         LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                 "Updating timestamp after batch finished to " + currentTimestamp);
 
-        return true;
     }
 
     private boolean shouldPublisherStopGraceFully() throws IOException {
         if (!Files.exists(Paths.get(config.getStopGracefullyFile()))) {
             LOG.info(LoggingComponent
                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, "", null, null),
-                    "No stop graceful file found at  "+config.getStopGracefullyFile()+".");
+                    "No stop graceful file found at  " + config.getStopGracefullyFile() + ".");
 
             return false;
         }
         final String fileContent = new String(Files.readAllBytes(Paths.get(config.getStopGracefullyFile())));
         LOG.info(LoggingComponent
                         .appendAppFields(LoggingComponent.Migrator.PROCESSING, "", null, null),
-                "Stop graceful file found at  "+config.getStopGracefullyFile()+" with content "+fileContent);
+                "Stop graceful file found at  " + config.getStopGracefullyFile() + " with content " + fileContent);
 
         return ("true".equalsIgnoreCase(fileContent.trim()));
     }
