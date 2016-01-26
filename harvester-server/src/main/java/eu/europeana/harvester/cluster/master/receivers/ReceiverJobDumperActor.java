@@ -120,7 +120,14 @@ public class ReceiverJobDumperActor extends UntypedActor {
                         subTaskStats
                 );
 
-        final LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatistics = new LastSourceDocumentProcessingStatistics(sourceDocumentProcessingStatistics);
+        LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatistics = new LastSourceDocumentProcessingStatistics(sourceDocumentProcessingStatistics);
+
+        /* We need to keep the previous last stats subtask states as a successful conditional download has them all se to never executed. See #CRF-509 */
+        if (lastSourceDocumentProcessingStatistics.getTaskType() == DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD &&
+                lastSourceDocumentProcessingStatistics.getState() == ProcessingState.SUCCESS) {
+            final LastSourceDocumentProcessingStatistics existingSourceDocumentProcessingStatistics = lastSourceDocumentProcessingStatisticsDao.read(lastSourceDocumentProcessingStatistics.getId());
+            if (existingSourceDocumentProcessingStatistics != null ) lastSourceDocumentProcessingStatistics = lastSourceDocumentProcessingStatistics.withProcessingJobSubTaskStats(existingSourceDocumentProcessingStatistics.getProcessingJobSubTaskStats());
+        }
 
         SourceDocumentReference sourceDocumentReference = sourceDocumentReferenceDao.read(msg.getReferenceId());
         if (sourceDocumentReference != null) {

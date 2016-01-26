@@ -360,4 +360,14 @@ public class LastSourceDocumentProcessingStatistics {
                 this.retrievalDurationInMilliSecs, this.checkingDurationInMilliSecs, this.sourceIp,
                 this.httpResponseHeaders, this.log, this.processingJobSubTaskStats);
     }
+
+    public LastSourceDocumentProcessingStatistics withProcessingJobSubTaskStats(final ProcessingJobSubTaskStats newProcessingJobSubTaskStats) {
+        return new LastSourceDocumentProcessingStatistics(this.id, this.createdAt, new Date(), this.active, this.taskType,
+                this.state, this.referenceOwner, this.urlSourceType, this.sourceDocumentReferenceId,
+                this.processingJobId, this.httpResponseCode, this.httpResponseContentType,
+                this.httpResponseContentSizeInBytes, this.socketConnectToDownloadStartDurationInMilliSecs,
+                this.retrievalDurationInMilliSecs, this.checkingDurationInMilliSecs, this.sourceIp,
+                this.httpResponseHeaders, this.log, newProcessingJobSubTaskStats);
+    }
+
 }

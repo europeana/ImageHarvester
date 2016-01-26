@@ -98,7 +98,7 @@ public class SOLRWriterTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EmptySolrUrl() {
-        new SOLRWriter(new DBTargetConfig(null, "\t\t\t\n\r",false, ""));
+        new SOLRWriter(new DBTargetConfig(null, "\t\t\t\n\r",false, "",null,null,10));
     }
 
     @Test
