@@ -3,13 +3,16 @@ package eu.europeana.crfmigration.dao;
 import com.mongodb.*;
 import eu.europeana.crfmigration.domain.EuropeanaEDMObject;
 import eu.europeana.crfmigration.domain.EuropeanaRecord;
+import eu.europeana.crfmigration.domain.GraphiteReporterConfig;
 import eu.europeana.crfmigration.domain.MigratorConfig;
+import eu.europeana.harvester.domain.MongoConfig;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import utils.MongoDBUtils;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.*;
@@ -31,8 +34,23 @@ public class MigratorEuropeanaDaoTest {
     private MigratorEuropeanaDao europeanaDao;
 
     @Before
-    public void setUp() throws UnknownHostException, ParseException {
-        migratorConfig = createMigratorConfig("config-files/migration.conf");
+    public void setUp() throws IOException, ParseException {
+        final List<ServerAddress> servers = new ArrayList<ServerAddress>();
+        servers.add(new ServerAddress("127.0.0.1",27017));
+        servers.add(new ServerAddress("127.0.0.1",27017));
+
+        migratorConfig = new MigratorConfig(
+                new MongoConfig(servers, "source_migration", "", ""),
+                new MongoConfig(servers, "dest_migration", "", ""),
+                new GraphiteReporterConfig("127.0.0.1", "test", 10000),
+                2,
+                new DateTime(
+                        2015,
+                        12,
+                        30,
+                        0,
+                        10));
+
         mongoDBUtils = new MongoDBUtils(migratorConfig);
         mongoDBUtils.loadMongoData(PATH_PREFIX + "data-files/aggregation.json", "Aggregation");
         mongoDBUtils.loadMongoData(PATH_PREFIX + "data-files/record.json", "record");
@@ -57,7 +75,7 @@ public class MigratorEuropeanaDaoTest {
     }
 
     @Test
-    public void test_RetrieveData_NoFiltering_BatchSizeAllDB() {
+    public void test_RetrieveData_NoFiltering_BatchSizeAllDB() throws IOException {
         final DBCollection mongo = mongoDBUtils.connectToSource().getCollection("record");
         final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(null, mongo.find().size(), migrationBatchId);
         final Map<String, EuropeanaRecord> records = europeanaDao.retrieveRecordsIdsFromCursor(cursor,migrationBatchId);
@@ -72,7 +90,7 @@ public class MigratorEuropeanaDaoTest {
     }
 
     @Test
-    public void test_RetrieveData_DateFiltering() {
+    public void test_RetrieveData_DateFiltering() throws IOException {
         final BasicDBObject query = new BasicDBObject("timestampUpdated", new BasicDBObject("$gt", dateFilter));
         final DBCollection mongo = mongoDBUtils.connectToSource().getCollection("record");
         final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(dateFilter, mongo.find(query).size(), migrationBatchId);
@@ -112,7 +130,7 @@ public class MigratorEuropeanaDaoTest {
     }
 
     @Test
-    public void test_RetrieveSourceDocumentReferences_ManyRecords() {
+    public void test_RetrieveSourceDocumentReferences_ManyRecords() throws IOException {
         final DBCursor cursor = europeanaDao.buildRecordsRetrievalCursorByFilter(null,1000,migrationBatchId);
         final Map<String, EuropeanaRecord> records= europeanaDao.retrieveRecordsIdsFromCursor(cursor,migrationBatchId);
         final List<EuropeanaEDMObject> edmObjects = europeanaDao.retrieveAggregationEDMInformation(records,migrationBatchId);

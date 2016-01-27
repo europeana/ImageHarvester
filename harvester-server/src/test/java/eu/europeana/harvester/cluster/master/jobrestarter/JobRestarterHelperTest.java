@@ -4,6 +4,14 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
+import de.flapdoodle.embed.mongo.MongodExecutable;
+import de.flapdoodle.embed.mongo.MongodProcess;
+import de.flapdoodle.embed.mongo.MongodStarter;
+import de.flapdoodle.embed.mongo.config.IMongodConfig;
+import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.process.runtime.Network;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
@@ -16,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.unitils.reflectionassert.ReflectionAssert;
 
+import java.io.IOException;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -37,19 +46,30 @@ public class JobRestarterHelperTest {
 
     private JobRestarterHelper helper;
 
+    private MongodProcess mongod = null;
+    private MongodExecutable mongodExecutable = null;
+    private int port = 12345;
+
+    public JobRestarterHelperTest() throws IOException {
+
+        MongodStarter starter = MongodStarter.getDefaultInstance();
+
+        IMongodConfig mongodConfig = new MongodConfigBuilder()
+                .version(Version.Main.PRODUCTION)
+                .net(new Net(port, Network.localhostIsIPv6()))
+                .build();
+
+        mongodExecutable = starter.prepare(mongodConfig);
+    }
+
 
     @Before
-    public void setUp() throws UnknownHostException {
-        MongoClient mongo = new MongoClient("localhost", 27017);
+    public void setUp() throws IOException {
+        mongod = mongodExecutable.start();
+
+        MongoClient mongo = new MongoClient("localhost", port);
         Morphia morphia = new Morphia();
         String dbName = "crf_europeana_jobRestarter";
-
-        final String username = "crf_europeana_jobRestarter";
-        final String password = "Nhck0zCfcu0M6kK";
-
-        if (!mongo.getDB("admin").authenticate(username, password.toCharArray())) {
-            fail ("Couldn't auth info db");
-        }
 
         datastore = morphia.createDatastore(mongo, dbName);
 
@@ -65,6 +85,7 @@ public class JobRestarterHelperTest {
         datastore.delete(datastore.createQuery(ProcessingJob.class));
         datastore.delete(datastore.createQuery(SourceDocumentReference.class));
         datastore.delete(datastore.createQuery(SourceDocumentReferenceProcessingProfile.class));
+        mongodExecutable.stop();
     }
 
     private ProcessingJobTuple createJob (ReferenceOwner owner, String url, URLSourceType sourceType, DocumentReferenceTaskType taskType, boolean isActive, DateTime dateTime) {

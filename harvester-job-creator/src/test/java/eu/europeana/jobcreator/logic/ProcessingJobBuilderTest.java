@@ -46,22 +46,18 @@ public class ProcessingJobBuilderTest {
         ProcessingJobBuilder.edmIsShownAtUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
     }
 
-    @Test(expected = MalformedURLException.class)
     public void test_EdmObj_InvalidUrl() throws MalformedURLException, UnknownHostException, ExecutionException {
         ProcessingJobBuilder.edmObjectUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
-    @Test(expected = MalformedURLException.class)
     public void test_EdmHasView_InvalidUrl() throws MalformedURLException, UnknownHostException, ExecutionException {
         ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(UUID.randomUUID().toString()), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
-    @Test(expected = MalformedURLException.class)
     public void test_EdmIsShownBy_InvalidUrl() throws MalformedURLException, UnknownHostException, ExecutionException {
         ProcessingJobBuilder.edmIsShownByUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
-    @Test(expected = MalformedURLException.class)
     public void test_EdmIsShownAt_InvalidUrl() throws MalformedURLException, UnknownHostException, ExecutionException {
         ProcessingJobBuilder.edmIsShownAtUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }

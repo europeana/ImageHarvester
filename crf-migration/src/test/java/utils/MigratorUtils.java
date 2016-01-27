@@ -30,6 +30,7 @@ import static org.junit.Assert.fail;
  */
 public class MigratorUtils {
     public static final String PATH_PREFIX = "src/test/resources/";
+            /*"/Users/paul/Documents/workspace/ImageHarvester/crf-migration/src/test/resources/";*/
     private static final SimpleDateFormat parserSDF=new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss");
 
     public static MongoConfig readMongoConfig (final Config config) throws UnknownHostException {

@@ -4,6 +4,14 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
+import de.flapdoodle.embed.mongo.MongodExecutable;
+import de.flapdoodle.embed.mongo.MongodProcess;
+import de.flapdoodle.embed.mongo.MongodStarter;
+import de.flapdoodle.embed.mongo.config.IMongodConfig;
+import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.process.runtime.Network;
 import eu.europeana.harvester.domain.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.unitils.reflectionassert.ReflectionAssert;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -25,22 +34,31 @@ public class SourceDocumentReferenceProcessingProfileDaoImplTest {
 
     private SourceDocumentReferenceProcessingProfileDaoImpl processingProfileDao;
 
+    private MongodProcess mongod = null;
+    private MongodExecutable mongodExecutable = null;
+    private int port = 12345;
+
+    public SourceDocumentReferenceProcessingProfileDaoImplTest() throws IOException {
+
+        MongodStarter starter = MongodStarter.getDefaultInstance();
+
+        IMongodConfig mongodConfig = new MongodConfigBuilder()
+                .version(Version.Main.PRODUCTION)
+                .net(new Net(port, Network.localhostIsIPv6()))
+                .build();
+
+        mongodExecutable = starter.prepare(mongodConfig);
+    }
+
     @Before
     public void setUp() throws Exception {
+        mongod = mongodExecutable.start();
+
         Datastore datastore = null;
         try {
-            MongoClient mongo = new MongoClient("localhost", 27017);
+            MongoClient mongo = new MongoClient("localhost", port);
             Morphia morphia = new Morphia();
             String dbName = "harvester_persistency";
-
-            String username  = "harvester_persistency";
-            String password = "Nhck0zCfcu0M6kK";
-
-            boolean auth = mongo.getDB("admin").authenticate(username, password.toCharArray());
-
-            if (!auth) {
-                fail("couldn't authenticate " + username + " against admin db");
-            }
 
             datastore = morphia.createDatastore(mongo, dbName);
         } catch (UnknownHostException e) {
@@ -52,26 +70,7 @@ public class SourceDocumentReferenceProcessingProfileDaoImplTest {
 
     @After
     public void tearDown() {
-        Datastore datastore = null;
-        try {
-            MongoClient mongo = new MongoClient("localhost", 27017);
-            Morphia morphia = new Morphia();
-            String dbName = "harvester_persistency";
-
-                      String username  = "harvester_persistency";
-                        String password = "Nhck0zCfcu0M6kK";
-
-                       boolean auth = mongo.getDB("admin").authenticate(username, password.toCharArray());
-
-                       if (!auth) {
-                            fail("couldn't authenticate " + username + " against admin db");
-                        }
-
-            datastore = morphia.createDatastore(mongo, dbName);
-        } catch (UnknownHostException e) {
-            LOG.error(e.getMessage());
-        }
-        datastore.delete(datastore.createQuery(SourceDocumentReferenceProcessingProfile.class));
+        mongodExecutable.stop();
     }
 
     @Test
