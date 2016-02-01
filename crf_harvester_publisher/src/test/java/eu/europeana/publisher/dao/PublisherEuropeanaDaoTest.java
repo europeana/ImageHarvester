@@ -17,8 +17,9 @@ import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.unitils.reflectionassert.ReflectionAssert;
 import utilities.ConfigUtils;
-import utilities.DButils;
+import utilities.MongoDatabase;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -26,15 +27,17 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.unitils.reflectionassert.ReflectionAssert;
-
-import static org.junit.Assert.*;
-import static utilities.DButils.loadMongoData;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by salexandru on 09.06.2015.
  */
 public class PublisherEuropeanaDaoTest {
+
+//    private static final String DATA_PATH_PREFIX = "/Users/paul/Documents/workspace/ImageHarvester/crf_harvester_publisher/src/test/resources/data-files/";
+//    private static final String CONFIG_PATH_PREFIX = "/Users/paul/Documents/workspace/ImageHarvester/crf_harvester_publisher/src/test/resources/config-files/";
+
     private static final String DATA_PATH_PREFIX = "./src/test/resources/data-files/";
     private static final String CONFIG_PATH_PREFIX = "./src/test/resources/config-files/";
 
@@ -43,6 +46,7 @@ public class PublisherEuropeanaDaoTest {
     private PublisherEuropeanaDao europeanaDao;
 
     private static final BasicDBObject orQuery = new BasicDBObject();
+    private MongoDatabase mongoDatabase = null;
 
     static {
         final BasicDBList orList = new BasicDBList();
@@ -56,17 +60,19 @@ public class PublisherEuropeanaDaoTest {
     @Before
     public void setUp() throws IOException {
         publisherConfig = ConfigUtils.createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
+        mongoDatabase = new MongoDatabase(publisherConfig);
+
         europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
 
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
     }
 
     @After
     public void tearDown() {
-        DButils.cleanMongoDatabase(publisherConfig);
+        mongoDatabase.cleanMongoDatabase();
     }
 
     @Test (expected = IllegalArgumentException.class)

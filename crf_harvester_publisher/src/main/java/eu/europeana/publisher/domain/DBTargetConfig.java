@@ -69,7 +69,7 @@ public class DBTargetConfig {
 		final String name = config.getString("name");
 		final String zookeeperUrl = config.getString("zookeeperUrl");
 		final String collection = config.getString("collection");
-		final int solrBatchSize = config.getInt("solrBatchSize");
+		final int solrBatchSize = (config.hasPath("solrBatchSize"))?config.getInt("solrBatchSize"):1000;
 		return new DBTargetConfig(mongoConfig, solrUrl, solrCommitEnabled,
 				name, zookeeperUrl, collection, solrBatchSize);
 	}

@@ -6,16 +6,19 @@ import com.mongodb.DB;
 import com.mongodb.DBCursor;
 import eu.europeana.harvester.db.interfaces.WebResourceMetaInfoDao;
 import eu.europeana.harvester.db.mongo.WebResourceMetaInfoDaoImpl;
-import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
+import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.domain.WebResourceMetaInfo;
+import eu.europeana.publisher.domain.HarvesterDocument;
 import eu.europeana.publisher.domain.HarvesterRecord;
 import eu.europeana.publisher.domain.PublisherConfig;
-import eu.europeana.publisher.domain.HarvesterDocument;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.unitils.reflectionassert.ReflectionAssert;
 import utilities.ConfigUtils;
-import utilities.DButils;
+import utilities.MongoDatabase;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -24,12 +27,14 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static utilities.DButils.loadMongoData;
 
 /**
  * Created by salexandru on 09.06.2015.
  */
 public class PublisherHarvesterDaoTest {
+
+//    private static final String DATA_PATH_PREFIX = "/Users/paul/Documents/workspace/ImageHarvester/crf_harvester_publisher/src/test/resources/data-files/";
+//    private static final String CONFIG_PATH_PREFIX = "/Users/paul/Documents/workspace/ImageHarvester/crf_harvester_publisher/src/test/resources/config-files/";
 
     private static final String DATA_PATH_PREFIX = "./src/test/resources/data-files/";
     private static final String CONFIG_PATH_PREFIX = "./src/test/resources/config-files/";
@@ -42,16 +47,19 @@ public class PublisherHarvesterDaoTest {
 
     private WebResourceMetaInfoDao webResourceMetaInfoDao;
 
+    private MongoDatabase mongoDatabase = null;
+
     @Before
     public void setUp() throws IOException {
         publisherConfig = ConfigUtils.createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
+        mongoDatabase = new MongoDatabase(publisherConfig);
         harvesterDao = new PublisherHarvesterDao(publisherConfig.getTargetDBConfig().get(0));
 
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
-        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "europeanaAggregation.json", "EuropeanaAggregation");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        mongoDatabase.loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
+        mongoDatabase.loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "europeanaAggregation.json", "EuropeanaAggregation");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
@@ -84,7 +92,7 @@ public class PublisherHarvesterDaoTest {
 
     @After
     public void tearDown() {
-       DButils.cleanMongoDatabase(publisherConfig);
+        mongoDatabase.cleanMongoDatabase();
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -105,6 +113,7 @@ public class PublisherHarvesterDaoTest {
     }
 
     @Test
+    @Ignore
     public void test_Write_OneElement () {
         harvesterDao.writeMetaInfos(harvesterDocuments.subList(0, 1));
         final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();
@@ -131,6 +140,7 @@ public class PublisherHarvesterDaoTest {
     }
 
     @Test
+    @Ignore
     public void test_Write_TwoElements () {
         harvesterDao.writeMetaInfos(harvesterDocuments.subList(0, 2));
         final DB db = publisherConfig.getTargetDBConfig().get(0).getMongoConfig().connectToDB();

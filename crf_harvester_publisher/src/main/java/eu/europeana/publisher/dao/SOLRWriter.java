@@ -34,7 +34,7 @@ import static java.util.Collections.singletonMap;
 /**
  * Writes additional fields/properties to SOLR
  */
-public class SOLRWriter {
+public class SOLRWriter  {
 
     /**
      * The maximum number of ID's that can be present in a SOLR search query.
@@ -62,7 +62,7 @@ public class SOLRWriter {
     private final int solrBatchSize;
     private final String collection;
     
-    public SOLRWriter (final DBTargetConfig solrConfig) {
+    public SOLRWriter(final DBTargetConfig solrConfig) {
         if (null == solrConfig || null == solrConfig.getSolrUrl() || solrConfig.getSolrUrl().trim().isEmpty()) {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR),
                     "Cannot initialise the SOLR persistence as the provided Sorl base url is null.Exiting.");
@@ -107,7 +107,7 @@ public class SOLRWriter {
     public String getSolrUrl() {return solrUrl;}
 
 
-    public void updateDocuments (List<CRFSolrDocument> newDocs,final String publishingBatchId) throws IOException, SolrServerException {
+    public void updateDocuments(List<CRFSolrDocument> newDocs, final String publishingBatchId) throws IOException, SolrServerException {
         LOG.warn(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                 "Preparing to split SOLR update of {} docs in chunks of {}",newDocs.size(),solrBatchSize);
 
@@ -253,7 +253,7 @@ public class SOLRWriter {
      * @param documents the document that need to be checked
      * @return the map that indicates for each document id (map key) whether exists : true or false
      */
-    public List<HarvesterRecord> filterDocumentIds (final List<HarvesterRecord> documents,final String publishingBatchId) throws IOException, SolrServerException {
+    public List<HarvesterRecord> filterDocumentIds(final List<HarvesterRecord> documents, final String publishingBatchId) throws IOException, SolrServerException {
         final Timer.Context context = PublisherMetrics.Publisher.Read.Solr.solrCheckIdsDurationDuration.time(connectionId);
         try {
             if (null == documents || documents.isEmpty()) {
@@ -329,7 +329,7 @@ public class SOLRWriter {
         }
     }
 
-    public String getConnectionId () {
+    public String getConnectionId() {
         return connectionId;
     }
 }

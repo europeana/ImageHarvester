@@ -13,22 +13,27 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import utilities.ConfigUtils;
-import utilities.DButils;
+import utilities.TestSolrServer;
+import utilities.MongoDatabase;
 
 import java.io.IOException;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static utilities.DButils.loadMongoData;
+
 
 /**
  * Created by salexandru on 09.06.2015.
  */
+
+@Ignore
 public class SOLRWriterTest {
     private static final String DATA_PATH_PREFIX = "./src/test/resources/data-files/";
     private static final String CONFIG_PATH_PREFIX = "./src/test/resources/config-files/";
+    private static final String SOLR_XML_PATH = "./src/test/resources/solr.xml";
 
     private PublisherConfig publisherConfig;
 
@@ -36,20 +41,24 @@ public class SOLRWriterTest {
     private SOLRWriter solrWriter;
     private List<HarvesterRecord> harvesterRecords;
     private List<HarvesterRecord> validRecords;
-
+    private MongoDatabase mongoDatabase = null;
+    private TestSolrServer testSolrServer = null;
 
     @Before
     public void setUp() throws IOException {
         publisherConfig = ConfigUtils
                                   .createPublisherConfig(CONFIG_PATH_PREFIX + "publisher.conf");
+        mongoDatabase = new MongoDatabase((publisherConfig));
+        testSolrServer = new TestSolrServer(publisherConfig.getTargetDBConfig().get(0),SOLR_XML_PATH);
+
         solrWriter = new SOLRWriter(publisherConfig.getTargetDBConfig().get(0));
 
-        DButils.loadSOLRData(DATA_PATH_PREFIX + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
-        loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
-        loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
+        testSolrServer.loadSOLRData(DATA_PATH_PREFIX + "solrData.json", publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "SourceDocumentProcessingStatistics");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "jobStatistics.json", "LastSourceDocumentProcessingStatistics");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "metaInfo.json", "SourceDocumentReferenceMetaInfo");
+        mongoDatabase.loadMongoData(publisherConfig.getSourceMongoConfig(), DATA_PATH_PREFIX + "sourceDocumentReference.json", "SourceDocumentReference");
+        mongoDatabase.loadMongoData(publisherConfig.getTargetDBConfig().get(0).getMongoConfig(), DATA_PATH_PREFIX + "aggregation.json", "Aggregation");
 
         final PublisherEuropeanaDao europeanaDao = new PublisherEuropeanaDao(publisherConfig.getSourceMongoConfig());
         final DBCursor cursor = europeanaDao.buildCursorForDocumentStatistics(100, null);
@@ -87,8 +96,9 @@ public class SOLRWriterTest {
 
     @After
     public void tearDown() {
-        DButils.cleanMongoDatabase(publisherConfig);
-        DButils.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        mongoDatabase.cleanMongoDatabase();
+        testSolrServer.cleanSolrDatabase(publisherConfig.getTargetDBConfig().get(0).getSolrUrl());
+        testSolrServer.shutDown();
     }
 
     @Test(expected = IllegalArgumentException.class)
