@@ -829,7 +829,7 @@ public class CommonTagExtractor {
      * @return the integer represantation of the mimetype
      */
     public static Integer getMimeTypeCode(final String type) {
-        if(mimeTypes.containsKey(type.toLowerCase())) {
+        if(type != null && mimeTypes.containsKey(type.toLowerCase())) {
             return mimeTypes.get(type.toLowerCase());
         }
 
@@ -838,15 +838,15 @@ public class CommonTagExtractor {
     }
 
     public static boolean isImageMimeType(String type) {
-        return (type.toLowerCase().startsWith("image"));
+        return (type != null && type.toLowerCase().startsWith("image"));
     }
 
     public static boolean isSoundMimeType(String type) {
-        return (type.toLowerCase().startsWith("sound") || type.toLowerCase().startsWith("audio"));
+        return (type != null &&  (type.toLowerCase().startsWith("sound") || type.toLowerCase().startsWith("audio")));
     }
 
     public static boolean isVideoMimeType(String type) {
-        return (type.toLowerCase().startsWith("video"));
+        return (type != null && type.toLowerCase().startsWith("video"));
     }
 
 }
