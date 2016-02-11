@@ -203,8 +203,6 @@ public class FakeTagsUtils {
                                             final Boolean imageColor, final Boolean imageGrayScale,
                                             final String imageAspectRatio, final String imageColorPalette) {
 
-        if (!CommonTagExtractor.isImageMimeType(mimeType)) throw new IllegalArgumentException("Cannot compute the image tag for a non-image mimetype "+mimeType);
-
         ImageOrientation imageOrientation = null;
         if (imageAspectRatio != null) {
             if (imageAspectRatio.equals("portrait")) {
