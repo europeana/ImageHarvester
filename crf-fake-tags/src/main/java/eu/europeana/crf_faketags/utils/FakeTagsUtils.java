@@ -43,12 +43,12 @@ public class FakeTagsUtils {
                             if (imageAspectRatios.size() != 0) {
                                 imageAspectRatio = imageAspectRatios.get(m);
                             }
-                            if (CommonTagExtractor.isImageMimeType(mimeType)) {
+//                            if (CommonTagExtractor.isImageMimeType(mimeType)) {
                                 final Integer filterTag =
                                         calculateTag(1, mimeType, imageSize, imageColor, imageGrayScale,
                                                 imageAspectRatio, null, null, null, null, null);
                                 filterTags.add(filterTag);
-                            }
+//                            }
 
                             m += 1;
                         } while (m < imageAspectRatios.size());
@@ -92,13 +92,12 @@ public class FakeTagsUtils {
                         soundDuration = soundDurations.get(k);
                     }
 
-                    if (CommonTagExtractor.isSoundMimeType(mimeType)) {
-
+//                    if (CommonTagExtractor.isSoundMimeType(mimeType)) {
                         final Integer filterTag =
                                 calculateTag(2, mimeType, null, null, null, null, null, soundHQ,
                                         soundDuration, null, null);
                         filterTags.add(filterTag);
-                    }
+//                    }
 
                     k += 1;
                 } while (k < soundDurations.size());
@@ -136,13 +135,12 @@ public class FakeTagsUtils {
                         videoDuration = videoDurations.get(k);
                     }
 
-                    if (CommonTagExtractor.isVideoMimeType(mimeType)) {
-
+//                    if (CommonTagExtractor.isVideoMimeType(mimeType)) {
                         final Integer filterTag =
                                 calculateTag(3, mimeType, null, null, null, null, null, null, null, videoHQ,
                                         videoDuration);
                         filterTags.add(filterTag);
-                    }
+//                    }
 
                     k += 1;
                 } while (k < videoDurations.size());
