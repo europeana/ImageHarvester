@@ -9,6 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>eu.europeana</groupId>
     <artifactId>harvester-job-creator</artifactId>
     <version>0.1-SNAPSHOT</version>
 

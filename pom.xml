@@ -20,7 +20,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-
     <modules>
         <module>crf-fake-tags</module>
         <module>crf-migration</module>
@@ -31,7 +30,6 @@
         <module>harvester-server</module>
         <module>media-storage-client</module>
         <module>uim-tester</module>
-
     </modules>
 
 
