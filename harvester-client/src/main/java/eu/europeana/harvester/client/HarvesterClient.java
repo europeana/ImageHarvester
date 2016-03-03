@@ -1,5 +1,7 @@
 package eu.europeana.harvester.client;
 
+import eu.europeana.harvester.client.pagedElements.*;
+import eu.europeana.harvester.client.pagedElements.Page;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
@@ -91,7 +93,9 @@ public interface HarvesterClient {
     /**
      * Not implemented yet.
      */
-    List<ProcessingJob> findJobsByCollectionAndState(String collectionId, List<ProcessingState> state) throws Exception;
+    PagedElements<ProcessingJob> findJobsByCollectionAndState(List<String> collectionId,
+                                                               List<ProcessingState> state,
+                                                               Page pg) throws Exception;
 
     SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url, String recordId);
 

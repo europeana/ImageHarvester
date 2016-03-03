@@ -174,6 +174,8 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
         datastore.update(query, updateOperations, false, writeConcern);
 
+
+
         return query.asList();
     }
 
