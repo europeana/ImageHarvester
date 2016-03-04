@@ -2,6 +2,7 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
+import com.google.code.morphia.converters.IntegerConverter;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import de.flapdoodle.embed.mongo.MongodExecutable;
@@ -14,6 +15,7 @@ import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.util.pagedElements.PagedElements;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
@@ -240,6 +242,93 @@ public class ProcessingJobDaoImplTest {
             assertFalse (job.getActive());
             assertFalse (processingJobDao.read(job.getId()).getActive());
         }
+    }
+
+    @Test
+    public void testFindJobsByCollectionIdAndState_CorrectElements() throws Exception {
+        final JobState[] jobStates = JobState.values();
+        int count = 0;
+        final Set<String> correctIds = new HashSet<>();
+        for (int i = 0; i < 500; ++i) {
+            final ReferenceOwner owner = new ReferenceOwner("1", "1", "1");
+            final ProcessingJob p =
+                    new ProcessingJob(
+                            Integer.toString(i),
+                            1,
+                            new Date(),
+                            owner,
+                            null,
+                            jobStates[i % jobStates.length],
+                            URLSourceType.HASVIEW,
+                            "",
+                            false,
+                            new ProcessingJobLimits(10L, 10L, 10L, 10, 10L)
+                    );
+
+            if (p.getState() == JobState.FINISHED || p.getState() == JobState.READY) {
+                ++count;
+                correctIds.add(Integer.toString(i));
+            }
+            processingJobDao.create(p, WriteConcern.NORMAL);
+        }
+
+        for (int i = 0; i < 1000; ++i) {
+            final ReferenceOwner owner = new ReferenceOwner(UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString());
+            final ProcessingJob p =
+                    new ProcessingJob(1, new Date(), owner, null, jobStates[i % jobStates.length], null, "", null);
+            processingJobDao.create(p, WriteConcern.NORMAL);
+        }
+
+        final Set<String> collectionIds = new HashSet<>();
+        collectionIds.add("1");
+        final Set<JobState> jobStateValues = new HashSet<>();
+        jobStateValues.add(JobState.FINISHED);
+        jobStateValues.add(JobState.READY);
+
+        System.out.println(correctIds.toString());
+
+        {
+            final Set<String> correctIds_ = new HashSet<>(correctIds);
+            final PagedElements<ProcessingJob> paged = processingJobDao.findJobsByCollectionIdAndState(collectionIds, jobStateValues, new Page(0, 20));
+
+            while (paged.hasNext()) {
+                final List<ProcessingJob> elements = paged.getNextPage();
+
+                if (0 != (count % 20) && elements.size() < 20) {
+                    assertFalse(paged.hasNext());
+                    assert (elements.size() == count % 20);
+                } else {
+                    assert (elements.size() == 20);
+                }
+                for (final ProcessingJob elem : elements) {
+                    System.out.println(elem.getId());
+                    assertTrue(correctIds_.contains(elem.getId()));
+                    correctIds_.remove(elem.getId());
+                }
+            }
+            assertFalse(paged.hasNext());
+        }
+        {
+            final Set<String> correctIds_ = new HashSet<>(correctIds);
+            final PagedElements<ProcessingJob> paged = processingJobDao.findJobsByCollectionIdAndState(collectionIds, jobStateValues, new Page(0, 20));
+
+            for (final List<ProcessingJob> elements: paged) {
+                if (0 != (count % 20) && elements.size() <  20) {
+                    assertFalse(paged.hasNext());
+                    assert (elements.size() == count % 20);
+                }
+                else {
+                    assert (elements.size() == 20);
+                }
+                for (final ProcessingJob elem: elements) {
+                    System.out.println(elem.getId()); System.out.flush();
+                    assertTrue (correctIds_.contains(elem.getId()));
+                    correctIds_.remove(elem.getId());
+                }
+            }
+            assertFalse(paged.hasNext());
+        }
+
     }
 
 }

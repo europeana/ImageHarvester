@@ -1,8 +1,8 @@
-package eu.europeana.harvester.client.pagedElements;
+package eu.europeana.harvester.util.pagedElements;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
+import eu.europeana.harvester.domain.Page;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
@@ -14,15 +14,26 @@ import java.util.List;
  * @since 03 Mar 2016
  */
 public abstract class PagedElements<T> implements Iterable<List<T>> {
-    private final DBCursor dbCurosr_;
+    private final DBCursor dbCursor_;
     private final int pageSize_;
 
     public PagedElements (DBCursor dbCursor, int pageSize) {
-        dbCurosr_ = dbCursor;
+        dbCursor_ = dbCursor;
         pageSize_ = pageSize;
     }
 
     public int getPageSize() {return pageSize_;}
+
+    public boolean hasNext() {return dbCursor_.hasNext();}
+
+    public List<T> getNextPage() {
+        final List<T> elements = new ArrayList<>(pageSize_);
+        for (int i = 0; i < pageSize_ && dbCursor_.hasNext(); ++i) {
+            elements.add(extractFromDBObject((BasicDBObject)dbCursor_.next()));
+        }
+
+        return elements;
+    }
 
     @Override
     public Iterator<List<T>> iterator() {
@@ -30,18 +41,11 @@ public abstract class PagedElements<T> implements Iterable<List<T>> {
 
             @Override
             public boolean hasNext() {
-                return dbCurosr_.hasNext();
+                return PagedElements.this.hasNext();
             }
 
             @Override
-            public List<T> next() {
-                final List<T> elements = new ArrayList<>(pageSize_);
-                for (int i = 0; i < pageSize_ && dbCurosr_.hasNext(); ++i) {
-                    elements.add(extractFromDBObject((BasicDBObject)dbCurosr_.next()));
-                }
-
-                return elements;
-            }
+            public List<T> next() {return getNextPage();}
 
             @Override
             public void remove() {

@@ -3,8 +3,7 @@ package eu.europeana.harvester.client;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Key;
 import com.google.common.collect.Lists;
-import eu.europeana.harvester.client.pagedElements.Page;
-import eu.europeana.harvester.client.pagedElements.PagedElements;
+import eu.europeana.harvester.util.pagedElements.PagedElements;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
@@ -215,11 +214,10 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public PagedElements<ProcessingJob> findJobsByCollectionAndState(List<String> collectionId,
-                                                                     List<ProcessingState> state,
-                                                                     Page pageConfig) throws Exception {
-       // processingJobDao.
-        return null;
+    public PagedElements<ProcessingJob> findJobsByCollectionAndState(final Set<String> collectionId,
+                                                                     final Set<JobState> states,
+                                                                     final Page pageConfig) throws Exception {
+        return processingJobDao.findJobsByCollectionIdAndState(collectionId, states, pageConfig);
     }
 
     @Override

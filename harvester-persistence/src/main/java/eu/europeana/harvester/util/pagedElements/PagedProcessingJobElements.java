@@ -1,10 +1,8 @@
-package eu.europeana.harvester.client;
+package eu.europeana.harvester.util.pagedElements;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
-import eu.europeana.harvester.client.pagedElements.PagedElements;
 import eu.europeana.harvester.domain.*;
 
 import java.util.ArrayList;
@@ -23,14 +21,15 @@ public class PagedProcessingJobElements extends PagedElements<ProcessingJob> {
 
     @Override
     protected ProcessingJob extractFromDBObject(BasicDBObject o) {
+        if (null == o) return null;
         return new ProcessingJob(
-                o.getString("id"),
+                o.getString("_id"),
                 o.getInt("priority"),
                 o.getDate("expectedStartDate"),
                 getReferenceOwner((BasicDBObject)o.get("referenceOwner")),
-                getListOfProcessingJobTaskDocumentReference((BasicDBList)o.get("")),
-                JobState.valueOf(o.getString("state")),
-                URLSourceType.valueOf(o.getString("urlSourceType")),
+                getListOfProcessingJobTaskDocumentReference((BasicDBList)o.get("tasks")),
+                null == o.getString("state") ? null : JobState.valueOf(o.getString("state")),
+                null == o.getString("urlSourceType") ? null : URLSourceType.valueOf(o.getString("urlSourceType")),
                 o.getString("ipAddress"),
                 o.getBoolean("active"),
                 getProcessingJobLimits((BasicDBObject)o.get("limits"))
@@ -39,6 +38,7 @@ public class PagedProcessingJobElements extends PagedElements<ProcessingJob> {
 
 
     private ProcessingJobLimits getProcessingJobLimits(BasicDBObject o) {
+        if (null == o) return null;
         return new ProcessingJobLimits(
                 o.getLong("retrievalTerminationThresholdTimeLimitInMillis"),
                 o.getLong("retrievalTerminationThresholdReadPerSecondInBytes"),
@@ -49,12 +49,15 @@ public class PagedProcessingJobElements extends PagedElements<ProcessingJob> {
     }
 
     private List<ProcessingJobTaskDocumentReference> getListOfProcessingJobTaskDocumentReference(BasicDBList l) {
+        if (null == l || l.isEmpty()) {
+            return new ArrayList<>();
+        }
         final List<ProcessingJobTaskDocumentReference> list = new ArrayList<>();
         for (Object obj: l) {
             final BasicDBObject dbObj = (BasicDBObject)obj;
 
             list.add(new ProcessingJobTaskDocumentReference(
-                    DocumentReferenceTaskType.valueOf(dbObj.getString("taskType")),
+                    null == dbObj.get("taskType") ? null : DocumentReferenceTaskType.valueOf(dbObj.getString("taskType")),
                     dbObj.getString("sourceDocumentReferenceId"),
                     getListOfProcessingJobSubTask((BasicDBList)dbObj.get("processingTasks"))
             ));
@@ -64,6 +67,9 @@ public class PagedProcessingJobElements extends PagedElements<ProcessingJob> {
     }
 
     private List<ProcessingJobSubTask> getListOfProcessingJobSubTask(BasicDBList processingTasks) {
+        if (null == processingTasks || processingTasks.isEmpty()) {
+            return new ArrayList<>();
+        }
         final List<ProcessingJobSubTask> subTaskList = new ArrayList<>();
 
         for (Object obj: processingTasks) {
@@ -79,10 +85,12 @@ public class PagedProcessingJobElements extends PagedElements<ProcessingJob> {
     }
 
     private GenericSubTaskConfiguration getGenericSubTaskConfiguration(BasicDBObject config) {
+        if (null == config) return null;
         return new GenericSubTaskConfiguration(getThumbnailConfig((BasicDBObject)config.get("thumbnailConfig")));
     }
 
     private ThumbnailConfig getThumbnailConfig(BasicDBObject thumbnailConfig) {
+        if (null == thumbnailConfig) return null;
         return new ThumbnailConfig(
                 thumbnailConfig.getInt("width"),
                 thumbnailConfig.getInt("height")
@@ -90,6 +98,7 @@ public class PagedProcessingJobElements extends PagedElements<ProcessingJob> {
     }
 
     private ReferenceOwner getReferenceOwner(BasicDBObject o) {
+        if (null == o) return null;
         return new ReferenceOwner(
                 o.getString("providerId"),
                 o.getString("collectionId"),

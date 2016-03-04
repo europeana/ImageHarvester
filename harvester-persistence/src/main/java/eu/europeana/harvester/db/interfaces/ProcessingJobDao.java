@@ -1,12 +1,15 @@
 package eu.europeana.harvester.db.interfaces;
 
+import com.mongodb.DBCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.util.pagedElements.PagedElements;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * DAO for CRUD with processing_job collection
@@ -18,7 +21,7 @@ public interface ProcessingJobDao {
      * @return returns the number of documents in the processing job
      *
      */
-    public Long getCount();
+    Long getCount();
 
     /**
      * Persists a ProcessingJob object
@@ -114,5 +117,10 @@ public interface ProcessingJobDao {
       */
      @Deprecated
      List<ProcessingJob> deactivateJobs (final ReferenceOwner owner, final WriteConcern writeConcern);
+
+
+     PagedElements<ProcessingJob> findJobsByCollectionIdAndState (final Set<String> collectionIds,
+                                                                  final Set<JobState> states,
+                                                                  final Page pageConfiguration);
 
 }

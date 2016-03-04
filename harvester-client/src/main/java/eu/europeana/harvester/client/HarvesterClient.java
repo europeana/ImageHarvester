@@ -1,7 +1,6 @@
 package eu.europeana.harvester.client;
 
-import eu.europeana.harvester.client.pagedElements.*;
-import eu.europeana.harvester.client.pagedElements.Page;
+import eu.europeana.harvester.util.pagedElements.*;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
@@ -10,9 +9,7 @@ import org.joda.time.Interval;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -93,9 +90,9 @@ public interface HarvesterClient {
     /**
      * Not implemented yet.
      */
-    PagedElements<ProcessingJob> findJobsByCollectionAndState(List<String> collectionId,
-                                                               List<ProcessingState> state,
-                                                               Page pg) throws Exception;
+    PagedElements<ProcessingJob> findJobsByCollectionAndState(final Set<String> collectionId,
+                                                              final Set<JobState> state,
+                                                              final Page pg) throws Exception;
 
     SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url, String recordId);
 
@@ -141,7 +138,7 @@ public interface HarvesterClient {
      * @param executionId The execution id.
      * @return
      */
-    public Interval getDateIntervalForProcessing(final String executionId);
+    Interval getDateIntervalForProcessing(final String executionId);
 
     /**
      * Computes the subtask state counts for the last processing stats.
@@ -172,7 +169,7 @@ public interface HarvesterClient {
      * @param processingStates The processing states for which to retrieve the stats. If empty or null will take all states.
      * @return
      */
-    public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates);
+    List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates);
 
 }
 

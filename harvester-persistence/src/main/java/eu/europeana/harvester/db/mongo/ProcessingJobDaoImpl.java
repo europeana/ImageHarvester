@@ -3,10 +3,12 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.google.code.morphia.query.UpdateOperations;
-import com.google.common.collect.Lists;
 import com.mongodb.*;
+import com.mongodb.Bytes;
 import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.util.pagedElements.PagedElements;
+import eu.europeana.harvester.util.pagedElements.PagedProcessingJobElements;
 
 import java.util.*;
 
@@ -177,6 +179,31 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
 
 
         return query.asList();
+    }
+
+    @Override
+    public PagedElements<ProcessingJob> findJobsByCollectionIdAndState(final Set<String> collectionIds,
+                                                                       final Set<JobState> states,
+                                                                       final Page pageConfiguration
+                                                                       ) {
+        final BasicDBObject collectionIdFilter = new BasicDBObject();
+        collectionIdFilter.put("referenceOwner.collectionId", new BasicDBObject("$in", collectionIds));
+
+        final BasicDBObject jobStatesFilter = new BasicDBObject();
+        final Set<String> statesAsString = new HashSet<>();
+        for (final JobState s: states) statesAsString.add(s.name());
+        jobStatesFilter.put("state", new BasicDBObject("$in", statesAsString));
+
+        final BasicDBObject query = new BasicDBObject();
+        query.put("$and", Arrays.asList(collectionIdFilter, jobStatesFilter));
+
+        final DBCursor cursor = datastore.getCollection(ProcessingJob.class)
+                                         .find(query)
+                                         .skip(pageConfiguration.getFrom())
+                                         .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+
+
+        return new PagedProcessingJobElements(cursor, pageConfiguration.getLimit());
     }
 
 
