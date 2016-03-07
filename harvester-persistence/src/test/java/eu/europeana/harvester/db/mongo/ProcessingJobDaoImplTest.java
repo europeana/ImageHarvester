@@ -2,7 +2,6 @@ package eu.europeana.harvester.db.mongo;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
-import com.google.code.morphia.converters.IntegerConverter;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import de.flapdoodle.embed.mongo.MongodExecutable;

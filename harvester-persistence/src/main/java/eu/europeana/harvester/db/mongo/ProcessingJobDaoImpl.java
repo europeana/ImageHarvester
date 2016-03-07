@@ -201,7 +201,7 @@ public class ProcessingJobDaoImpl implements ProcessingJobDao {
                                          .find(query)
                                          .skip(pageConfiguration.getFrom())
                                          .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
-
+                                         //.addOption(Bytes.QUERYOPTION_SLAVEOK);
 
         return new PagedProcessingJobElements(cursor, pageConfiguration.getLimit());
     }

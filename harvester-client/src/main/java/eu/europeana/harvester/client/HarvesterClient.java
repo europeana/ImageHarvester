@@ -87,9 +87,6 @@ public interface HarvesterClient {
      */
     HistoricalProcessingJob retrieveHistoricalProcessingJob(String jobId);
 
-    /**
-     * Not implemented yet.
-     */
     PagedElements<ProcessingJob> findJobsByCollectionAndState(final Set<String> collectionId,
                                                               final Set<JobState> state,
                                                               final Page pg) throws Exception;
