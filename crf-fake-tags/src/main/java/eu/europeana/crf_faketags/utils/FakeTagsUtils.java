@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FakeTagsUtils {
-
-
     static public List<Integer> imageFilterTags(final List<String> mimeTypes, final List<String> imageSizes,
                                                 final List<Boolean> imageColors, final List<Boolean> imageGrayScales, final List<String> imageAspectRatios) {
         final List<Integer> filterTags = new ArrayList<>();
@@ -150,6 +148,20 @@ public class FakeTagsUtils {
 
             i += 1;
         } while (i < mimeTypes.size());
+
+        return filterTags;
+    }
+
+    static public List<Integer> textFilterTags (final List<String> mimeTypes) {
+        final List<Integer> filterTags = new ArrayList<>();
+
+        if (null == mimeTypes || mimeTypes.isEmpty()) return filterTags;
+
+        for (final String mimeType: mimeTypes) {
+            final int mimeTypeCode = CommonTagExtractor.getMimeTypeCode(mimeType);
+
+            filterTags.add(MediaTypeEncoding.TEXT.getEncodedValue() |  (mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos()));
+        }
 
         return filterTags;
     }
