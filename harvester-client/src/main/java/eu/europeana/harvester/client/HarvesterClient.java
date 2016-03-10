@@ -87,8 +87,8 @@ public interface HarvesterClient {
      */
     HistoricalProcessingJob retrieveHistoricalProcessingJob(String jobId);
 
-    PagedElements<ProcessingJob> findJobsByCollectionAndState(final Set<String> collectionId,
-                                                              final Set<JobState> state,
+    PagedElements<ProcessingJob> findJobsByCollectionAndState(final List<String> collectionId,
+                                                              final List<JobState> state,
                                                               final Page pg) throws Exception;
 
     SourceDocumentReference retrieveSourceDocumentReferenceByUrl(String url, String recordId);
