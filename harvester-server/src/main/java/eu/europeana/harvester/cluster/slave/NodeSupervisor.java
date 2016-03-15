@@ -49,6 +49,11 @@ public class NodeSupervisor extends UntypedActor {
     private ActorRef nodeMaster;
 
     /**
+     * A reference to the watchdog actor. This actor restarts the slave system if there is no reasonable activity.
+     */
+    private ActorRef watchdog;
+
+    /**
      * This client is used to save the thumbnails in Mongo.
      */
     private final MediaStorageClient mediaStorageClient;
@@ -80,9 +85,10 @@ public class NodeSupervisor extends UntypedActor {
     public void preStart() throws Exception {
 
         nodeMaster = NodeMasterActor.createActor(context(), masterSender,getSelf(), nodeMasterConfig, mediaStorageClient);
-
+        watchdog = WatchdogActor.createActor(context().system(),slave);
 
         context().watch(nodeMaster);
+        context().watch(watchdog);
 
         final Cluster cluster = Cluster.get(getContext().system());
         cluster.subscribe(getSelf(), ClusterEvent.initialStateAsEvents(),
