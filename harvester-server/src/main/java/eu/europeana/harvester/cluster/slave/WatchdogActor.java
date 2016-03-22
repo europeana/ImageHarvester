@@ -18,7 +18,7 @@ public class WatchdogActor extends UntypedActor {
     private class CheckActivity {}
 
     public static ActorRef createActor(final ActorSystem system, final Slave slave) {
-        return system.actorOf(Props.create(WatchdogActor.class, slave, "nodeWatchdog"));
+        return system.actorOf(Props.create(WatchdogActor.class, slave));
     }
 
     public WatchdogActor(final Slave slave) {
