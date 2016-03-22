@@ -1,5 +1,6 @@
 package eu.europeana.harvester.cluster.domain.messages;
 
+import com.google.common.collect.Maps;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
@@ -157,4 +158,11 @@ public class RetrieveUrl implements Serializable {
     public RetrieveUrl withTaskType(final DocumentReferenceTaskType newTaskType) {
         return new RetrieveUrl(url, limits, newTaskType, jobId, referenceId, headers, documentReferenceTask, ipAddress, referenceOwner);
     }
+
+    public RetrieveUrl withContentLengthHeaderValue(final Long value) {
+        final Map<String,String> newHeaders = Maps.newHashMap(headers);
+        newHeaders.put("Content-Length",value+"");
+        return new RetrieveUrl(url, limits, taskType, jobId, referenceId, newHeaders, documentReferenceTask, ipAddress, referenceOwner);
+    }
+
 }
