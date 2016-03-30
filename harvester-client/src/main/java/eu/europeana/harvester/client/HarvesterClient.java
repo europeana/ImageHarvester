@@ -5,6 +5,7 @@ import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
+
 import org.joda.time.Interval;
 
 import java.net.MalformedURLException;
@@ -141,22 +142,78 @@ public interface HarvesterClient {
      * Computes the subtask state counts for the last processing stats.
      * For example this method would be used to get the counts for the states of the METADATA_EXTRACTION subtask.
      *
-     * @param executionId   The execution id of the processing jobs.
+     * @param collectionId   The collection id.
      * @param urlSourceType The url source type. If missing for all.
      * @param subtaskType   The sub task type for which to compute.
      * @return
      */
-    Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
+    @Deprecated
+    Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
 
     /**
+     * @author alena
+     * @param collectionId
+     * @param urlSourceType
+     * @param subTaskType
+     * @param subtaskState
+     * @return
+     */
+    public Long countSubtaskStatesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType, final SubTaskType subTaskType, final SubTaskState subtaskState);
+    
+//    /**
+//     * Computes the successful metadata extraction subtasks counts for a specific job type.
+//     * @author alena
+//     * @param collectionId
+//     * @param urlSourceType
+//     * @return
+//     */
+//    public Long countSuccessfulMetaExtractionByUrlSourceType(final String collectionId, final URLSourceType urlSourceType);
+//    
+//    /**
+//     * Computes all the metadata preview cache counts for a specific job type.
+//     * @author alena
+//     * @param collectionId
+//     * @param urlSourceType
+//     * @return
+//     */
+//    public Long countAllPreviewCacheByUrlSourceType(final String collectionId, final URLSourceType urlSourceType);
+//    
+//    /**
+//     * Computes the successful preview cache subtasks counts for a specific job type.
+//     * @author alena
+//     * @param collectionId
+//     * @param urlSourceType
+//     * @return
+//     */
+//    public Long countSuccessfulPreviewCacheByUrlSourceType(final String collectionId, final URLSourceType urlSourceType);
+    
+    /**
      * Computes the job state counts for a specific job type.
-     * @param executionId The execution id of the job.
+     * @param collectionId The collection id.
      * @param urlSourceType The url source type.
      * @param documentReferenceTaskType The task type.
      * @return
      */
-    Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType);
+    @Deprecated
+    Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType);
 
+    /**
+     * Computes all the taskType counts for a specific urlSourceType.
+     * @author alena
+     * @param collectionId
+     * @param urlSourceType
+     * @return count of job states
+     */
+    Long countAllTaskTypesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType);
+    
+    /**
+     * Computes the successful taskType counts for a specific urlSourceType.
+     * @author alena
+     * @param collectionId
+     * @param urlSourceType
+     * @return count job states
+     */
+    Long countSuccessfulTaskTypesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType);
 
     /**
      * Retrieves all the last job stats that match specific criteria.
@@ -167,6 +224,9 @@ public interface HarvesterClient {
      * @return
      */
     List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates);
+
+
+	Map<String, JobStatistics> findJobsByCollectionId(String collectionId);
 
 }
 

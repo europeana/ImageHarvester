@@ -1,25 +1,61 @@
 package eu.europeana.harvester.client;
 
-import com.google.code.morphia.Datastore;
-import com.google.code.morphia.Key;
-import com.google.common.collect.Lists;
-import eu.europeana.harvester.util.pagedElements.PagedElements;
-import eu.europeana.harvester.db.interfaces.*;
-import eu.europeana.harvester.db.mongo.*;
-import eu.europeana.harvester.domain.*;
-import eu.europeana.harvester.domain.report.SubTaskState;
-import eu.europeana.harvester.domain.report.SubTaskType;
-import eu.europeana.harvester.util.CachingUrlResolver;
-import eu.europeana.jobcreator.domain.ProcessingJobTuple;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joda.time.Interval;
 
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import com.google.code.morphia.Datastore;
+import com.google.code.morphia.Key;
+import com.google.common.collect.Lists;
+
+import eu.europeana.harvester.db.interfaces.HistoricalProcessingJobDao;
+import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisticsDao;
+import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
+import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
+import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceProcessingProfileDao;
+import eu.europeana.harvester.db.mongo.HistoricalProcessingJobDaoImpl;
+import eu.europeana.harvester.db.mongo.LastSourceDocumentProcessingStatisticsDaoImpl;
+import eu.europeana.harvester.db.mongo.MachineResourceReferenceDaoImpl;
+import eu.europeana.harvester.db.mongo.ProcessingJobDaoImpl;
+import eu.europeana.harvester.db.mongo.SourceDocumentProcessingStatisticsDaoImpl;
+import eu.europeana.harvester.db.mongo.SourceDocumentReferenceDaoImpl;
+import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
+import eu.europeana.harvester.db.mongo.SourceDocumentReferenceProcessingProfileDaoImpl;
+import eu.europeana.harvester.domain.DocumentReferenceTaskType;
+import eu.europeana.harvester.domain.HistoricalProcessingJob;
+import eu.europeana.harvester.domain.JobState;
+import eu.europeana.harvester.domain.JobStatistics;
+import eu.europeana.harvester.domain.LastSourceDocumentProcessingStatistics;
+import eu.europeana.harvester.domain.MachineResourceReference;
+import eu.europeana.harvester.domain.Page;
+import eu.europeana.harvester.domain.ProcessingJob;
+import eu.europeana.harvester.domain.ProcessingState;
+import eu.europeana.harvester.domain.ReferenceOwner;
+import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
+import eu.europeana.harvester.domain.SourceDocumentReference;
+import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import eu.europeana.harvester.domain.SourceDocumentReferenceProcessingProfile;
+import eu.europeana.harvester.domain.URLSourceType;
+import eu.europeana.harvester.domain.report.SubTaskState;
+import eu.europeana.harvester.domain.report.SubTaskType;
+import eu.europeana.harvester.util.CachingUrlResolver;
+import eu.europeana.harvester.util.pagedElements.PagedElements;
+import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 
 /**
  * The meeting point between the client and the application.
@@ -108,7 +144,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     @Override
     public Iterable<com.google.code.morphia.Key<SourceDocumentReference>> createOrModifySourceDocumentReference(Collection<SourceDocumentReference> newSourceDocumentReferences) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
         if (null == newSourceDocumentReferences || newSourceDocumentReferences.isEmpty()) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         //LOG.debug("Create or modify {} SourceDocumentReferences documents ",sourceDocumentReferences.size());
@@ -163,7 +199,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
             final Collection<ProcessingJob> processingJobs = new ArrayList<>();
             final Collection<SourceDocumentReference> sourceDocumentReferences = new ArrayList<>();
-            final Collection<SourceDocumentReferenceProcessingProfile> processingProfiles = new ArrayList<>();
+//            final Collection<SourceDocumentReferenceProcessingProfile> processingProfiles = new ArrayList<>();
 
             for (final ProcessingJobTuple jobTuple : oneBatch) {
                 processingJobs.add(jobTuple.getProcessingJob());
@@ -199,7 +235,6 @@ public class HarvesterClientImpl implements HarvesterClient {
 
             return newProcessingJob;
         }
-
         return processingJob;
     }
 
@@ -209,7 +244,6 @@ public class HarvesterClientImpl implements HarvesterClient {
         final ProcessingJob processingJob = processingJobDao.read(jobId);
         final ProcessingJob newProcessingJob = processingJob.withState(JobState.RESUME);
         processingJobDao.update(newProcessingJob, harvesterClientConfig.getWriteConcern());
-
         return newProcessingJob;
     }
 
@@ -270,8 +304,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
         for (final LastSourceDocumentProcessingStatistics lastSourceDocumentProcessingStatistics: lastSourceDocumentProcessingStatisticsList) {
             lastSourceDocumentProcessingStatisticsDao.createOrModify(lastSourceDocumentProcessingStatistics.withActive(true),
-                                                                     harvesterClientConfig.getWriteConcern()
-                                                                    );
+                                                                     harvesterClientConfig.getWriteConcern());
         }
 
         for (final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics : sourceDocumentProcessingStatisticsList) {
@@ -293,7 +326,7 @@ public class HarvesterClientImpl implements HarvesterClient {
     public List<ProcessingJob> deactivateJobs (final ReferenceOwner owner) {
         final List<ProcessingJob> processingJobs = processingJobDao.deactivateJobs(owner, harvesterClientConfig.getWriteConcern());
 
-        if (processingJobs.isEmpty()) return  processingJobs;
+        if (processingJobs.isEmpty()) return processingJobs;
 
         final List<String> sourceDocumentReferenceIds = new ArrayList<>(processingJobs.size());
 
@@ -304,7 +337,6 @@ public class HarvesterClientImpl implements HarvesterClient {
         sourceDocumentProcessingStatisticsDao.deactivateDocuments(sourceDocumentReferenceIds, harvesterClientConfig.getWriteConcern()).clear();
         lastSourceDocumentProcessingStatisticsDao.deactivateDocuments(sourceDocumentReferenceIds, harvesterClientConfig.getWriteConcern()).clear();
         sourceDocumentReferenceProcessingProfileDao.deactivateDocuments(owner, harvesterClientConfig.getWriteConcern()).clear();
-
         return processingJobs;
     }
 
@@ -319,15 +351,29 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String executionId,final URLSourceType urlSourceType,final SubTaskType subtaskType) {
-       return lastSourceDocumentProcessingStatisticsDao.countSubTaskStatesByUrlSourceType(executionId, urlSourceType, subtaskType);
+    public Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String collectionId,final URLSourceType urlSourceType,final SubTaskType subtaskType) {
+       return lastSourceDocumentProcessingStatisticsDao.countSubTaskStatesByUrlSourceType(collectionId, urlSourceType, subtaskType);
     }
+    
+	@Override
+	public Long countSubtaskStatesByUrlSourceType(String collectionId, URLSourceType urlSourceType, SubTaskType subTaskType, SubTaskState subTaskState) {
+		return lastSourceDocumentProcessingStatisticsDao.countSubTaskStatesByUrlSourceType(collectionId, urlSourceType, subTaskType, subTaskState);
+	}
 
     @Override
-    public Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType) {
-        return lastSourceDocumentProcessingStatisticsDao.countJobStatesByUrlSourceType(executionId, urlSourceType, documentReferenceTaskType);
-
+    public Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType) {
+        return lastSourceDocumentProcessingStatisticsDao.countJobStatesByUrlSourceType(collectionId, urlSourceType, documentReferenceTaskType);
     }
+    
+	@Override
+	public Long countAllTaskTypesByUrlSourceType(String collectionId, URLSourceType urlSourceType) {
+		return lastSourceDocumentProcessingStatisticsDao.countAllTaskTypesByUrlSourceType(collectionId, urlSourceType);
+	}
+
+	@Override
+	public Long countSuccessfulTaskTypesByUrlSourceType(String collectionId, URLSourceType urlSourceType) {
+		return lastSourceDocumentProcessingStatisticsDao.countSuccessfulTaskTypesByUrlSourceType(collectionId, urlSourceType);
+	}
 
     @Override
     public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId,final String executionId,final List<ProcessingState> processingStates) {
@@ -347,5 +393,9 @@ public class HarvesterClientImpl implements HarvesterClient {
     public SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId, final String processingJobId) {
         return this.sourceDocumentProcessingStatisticsDao.read(SourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId, processingJobId));
     }
-
+    
+    @Override
+    public Map<String,JobStatistics> findJobsByCollectionId(String collectionId){
+    	return this.processingJobDao.findJobsByCollectionId(collectionId);
+    }
 }
