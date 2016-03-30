@@ -248,10 +248,14 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
-    public PagedElements<ProcessingJob> findJobsByCollectionAndState(final Set<String> collectionId,
-                                                                     final Set<JobState> states,
+    public PagedElements<ProcessingJob> findJobsByCollectionAndState(final List<String> collectionIds,
+                                                                     final List<JobState> states,
                                                                      final Page pageConfig) throws Exception {
-        return processingJobDao.findJobsByCollectionIdAndState(collectionId, states, pageConfig);
+        return processingJobDao.findJobsByCollectionIdAndState(
+                new HashSet<>(collectionIds),
+                new HashSet<>(states),
+                pageConfig
+        );
     }
 
     @Override

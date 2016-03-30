@@ -1,5 +1,6 @@
 package eu.europeana.harvester.cluster.domain.messages;
 
+import com.google.common.collect.Maps;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.ProcessingJobLimits;
 import eu.europeana.harvester.domain.ProcessingJobTaskDocumentReference;
@@ -60,9 +61,9 @@ public class RetrieveUrl implements Serializable {
      */
     private final ReferenceOwner referenceOwner;
 
-    public RetrieveUrl(final String id, final String url,final DocumentReferenceTaskType taskType, final ProcessingJobLimits limits, final String jobId,
+    public RetrieveUrl(final String id, final String url, final DocumentReferenceTaskType taskType, final ProcessingJobLimits limits, final String jobId,
                        final String referenceId, final Map<String, String> headers,
-                       final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress,final ReferenceOwner referenceOwner) {
+                       final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress, final ReferenceOwner referenceOwner) {
         this.id = id;
         this.url = url;
         this.taskType = taskType;
@@ -75,9 +76,9 @@ public class RetrieveUrl implements Serializable {
         this.referenceOwner = referenceOwner;
     }
 
-    public RetrieveUrl(final String url, final ProcessingJobLimits limits,DocumentReferenceTaskType taskType, final String jobId,
+    public RetrieveUrl(final String url, final ProcessingJobLimits limits, DocumentReferenceTaskType taskType, final String jobId,
                        final String referenceId, final Map<String, String> headers,
-                       final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress,final ReferenceOwner referenceOwner) {
+                       final ProcessingJobTaskDocumentReference documentReferenceTask, String ipAddress, final ReferenceOwner referenceOwner) {
         this.id = UUID.randomUUID().toString();
         this.url = url;
         this.limits = limits;
@@ -97,6 +98,7 @@ public class RetrieveUrl implements Serializable {
     public ProcessingJobLimits getLimits() {
         return limits;
     }
+
     public String getJobId() {
         return jobId;
     }
@@ -152,4 +154,15 @@ public class RetrieveUrl implements Serializable {
     public ReferenceOwner getReferenceOwner() {
         return referenceOwner;
     }
+
+    public RetrieveUrl withTaskType(final DocumentReferenceTaskType newTaskType) {
+        return new RetrieveUrl(url, limits, newTaskType, jobId, referenceId, headers, documentReferenceTask, ipAddress, referenceOwner);
+    }
+
+    public RetrieveUrl withContentLengthHeaderValue(final Long value) {
+        final Map<String,String> newHeaders = Maps.newHashMap(headers);
+        newHeaders.put("Content-Length",value+"");
+        return new RetrieveUrl(url, limits, taskType, jobId, referenceId, newHeaders, documentReferenceTask, ipAddress, referenceOwner);
+    }
+
 }

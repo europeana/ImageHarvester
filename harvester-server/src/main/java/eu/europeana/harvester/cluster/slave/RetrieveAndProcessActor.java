@@ -173,7 +173,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
         getSelf().tell(PoisonPill.getInstance(), ActorRef.noSender());
     }
 
-    private void process(RetrieveUrl task) {
+    private void process(final RetrieveUrl task) {
 
         HttpRetrieveResponse response = null;
         DoneProcessing doneProcessing = null;
@@ -182,14 +182,15 @@ public class RetrieveAndProcessActor extends UntypedActor {
         final Timer.Context downloadTimerContext = SlaveMetrics.Worker.Slave.Retrieve.totalDuration.time();
 
         try {
-            response = executeRetrieval(task);
+            // TODO : Enable conditional download.
+            response = executeRetrieval((task.getTaskType() == DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) ? task.withTaskType(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD).withContentLengthHeaderValue(0l) : task);
             final ProcessingJobRetrieveSubTaskState responseState = convertRetrieveStateToProcessingJobRetrieveSubTaskState(response.getState());
 
             doneProcessing = new DoneProcessing(
                     task.getId(), task.getUrl(), task.getReferenceId(), task.getJobId(),
                     task.getTaskType(),
                     response,
-                    new ProcessingJobSubTaskStats().withRetrieveState(responseState,response.getException()),
+                    new ProcessingJobSubTaskStats().withRetrieveState(responseState, response.getException()),
                     null /* image meta info */,
                     null /* audio meta info */,
                     null /* video meta info */,
@@ -209,7 +210,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                     null /* text meta info */, e.getMessage());
 
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                    "Exception during retrieval. The http retrieve response could not be created for url {} and job {} . Probable cause : wrong configuration argument in the slave.", task.getUrl(),task.getJobId(),e);
+                    "Exception during retrieval. The http retrieve response could not be created for url {} and job {} . Probable cause : wrong configuration argument in the slave.", task.getUrl(), task.getJobId(), e);
         } finally {
             downloadTimerContext.stop();
         }
@@ -217,8 +218,6 @@ public class RetrieveAndProcessActor extends UntypedActor {
         // (Stop case 1) Stop when this is link checking
         if (task.getDocumentReferenceTask().getTaskType() == DocumentReferenceTaskType.CHECK_LINK) {
             // We can skip processing altogether as is this is link checking.
-//            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-//                    "Processing stage skipped because retrieval involved only link checking : " + response.getState());
             finishProcess(doneProcessing);
             return;
         }
@@ -227,7 +226,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
         if (doneProcessing.getStats().getRetrieveState() != ProcessingJobRetrieveSubTaskState.SUCCESS) {
             // We can skip processing altogether as the download failed.
 
-                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_PROCESSING, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
                     "Processing stage skipped because retrieval failed : " + doneProcessing.getStats().getRetrieveState());
             finishProcess(doneProcessing);
             return;
@@ -303,8 +302,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
                     response = httpRetrieveResponseFactory.create(ResponseType.NO_STORAGE, taskWithProcessingConfig.getDownloadPath());
                     response.setLoggingAppFields(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()));
                     slaveLinkChecker.downloadAndStoreInHttpRetrievResponse(response, task);
-                }
-                finally {
+                } finally {
                     downloadLinkCheckingTimerContext.stop();
                 }
                 break;

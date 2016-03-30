@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -244,6 +245,66 @@ public class RetrieveAndProcessActorTest {
 
         }};
     }
+
+    @Test
+    public void test_ConditionalDownload_Success_WhenUnconditionalIsForced() throws InterruptedException, NoSuchAlgorithmException, IOException {
+        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
+        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
+        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
+        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
+
+        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
+                colorExtractionSubTask,
+                metaInfoExtractionSubTask,
+                mediumThumbnailExtractionSubTask,
+                largeThumbnailExtractionSubTask
+        );
+
+        final Map<String,String> headers = Collections.singletonMap("Content-Length","1399538");
+        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
+                "referenceid-1", headers,
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
+
+            subject.tell(taskWithConfig, getRef());
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+            assertEquals(msg2.getImageMetaInfo().getWidth().intValue(),2500);
+            assertEquals(msg2.getImageMetaInfo().getHeight().intValue(),1737);
+            assertEquals(msg2.getImageMetaInfo().getMimeType(),"image/jpeg");
+
+            // TODO : Re-enable checking for the original
+            // final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
+            final MediaFile mediumStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"MEDIUM"),true);
+            final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
+
+            assertEquals (200, msg2.getHttpResponseCode().intValue());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
+
+            // TODO : Re-enable checking for the original
+            // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
+            assertNotNull(mediumStoredContent);
+            assertNotNull(largeStoredContent);
+
+        }};
+    }
+
 
     @Test
     public void test_ConditionalDownload_LinkFail() throws InterruptedException, NoSuchAlgorithmException, IOException {
