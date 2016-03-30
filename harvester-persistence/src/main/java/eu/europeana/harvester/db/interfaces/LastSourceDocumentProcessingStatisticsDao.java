@@ -4,9 +4,11 @@ import com.google.code.morphia.Key;
 import com.mongodb.DBCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
+
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
+
 import org.joda.time.Interval;
 
 import java.util.Collection;
@@ -117,31 +119,58 @@ public interface LastSourceDocumentProcessingStatisticsDao {
     /**
      * Counts the sub task state for finished jobs from a specific collection, execution id and source type.
      *
-     * @param executionId   The execution id.
+     * @param collectionId   The collection id.
      * @param urlSourceType The url source type. If missing all.
      * @param subtaskType
      * @return
      */
-    public Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
+    @Deprecated
+    public Map<SubTaskState,Long> countSubTaskStatesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType, final SubTaskType subtaskType);
 
+	/**
+	 * @author alena
+	 * @param collectionId
+	 * @param urlSourceType
+	 * @param subTaskType
+	 * @param subTaskState
+	 * @return
+	 */
+    public Long countSubTaskStatesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType, SubTaskType subTaskType, SubTaskState subTaskState);
 
     /**
      * Counts the sub task state for finished jobs from a specific collection, execution id and source type.
-     * @param executionId   The execution id.
+     * @param collectionId   The collection id.
      * @param urlSourceType The url source type. If missing all.
      * @param documentReferenceTaskType
      * @return
      */
-    public Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String executionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType);
+    @Deprecated
+    public Map<ProcessingState,Long> countJobStatesByUrlSourceType(final String collectionId, final URLSourceType urlSourceType, final DocumentReferenceTaskType documentReferenceTaskType);    
+    
+	/**
+	 * @author alena
+	 * @param collectionId
+	 * @param urlSourceType
+	 * @return
+	 */
+    public Long countAllTaskTypesByUrlSourceType(String collectionId, URLSourceType urlSourceType);
 
-        /**
-         * Builds a list for a query that filters by several criterias.
-         *
-         * @param collectionId     The owner collection id.
-         * @param executionId      The execution id. If missing all.
-         * @param processingStates The processing states that should be retrieved. If missing or null all states.
-         * @return
-         */
+	/**
+	 * @author alena
+	 * @param collectionId
+	 * @param urlSourceType
+	 * @return
+	 */
+    public Long countSuccessfulTaskTypesByUrlSourceType(String collectionId, URLSourceType urlSourceType);
+    
+    /**
+     * Builds a list for a query that filters by several criterias.
+     *
+     * @param collectionId     The owner collection id.
+     * @param executionId      The execution id. If missing all.
+     * @param processingStates The processing states that should be retrieved. If missing or null all states.
+     * @return
+     */
     public List<LastSourceDocumentProcessingStatistics> findLastSourceDocumentProcessingStatistics(final String collectionId, final String executionId, final List<ProcessingState> processingStates);
 
     /**

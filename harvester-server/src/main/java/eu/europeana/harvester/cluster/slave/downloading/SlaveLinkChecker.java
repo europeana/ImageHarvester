@@ -67,7 +67,7 @@ public class SlaveLinkChecker {
                 if (connectionSetupDurationInMillis > task.getLimits().getRetrievalTerminationThresholdReadPerSecondInBytes()) {
                     /* Initial connection setup time longer than threshold. */
                     httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured total download duration threshold" + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
+                    httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured total download duration threshold " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
                     return STATE.ABORT;
                 }
                     /* We don't care what kind of status code it has at this moment as we will decide what to

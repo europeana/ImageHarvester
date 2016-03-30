@@ -3,6 +3,7 @@ package eu.europeana.harvester.db.interfaces;
 import com.mongodb.DBCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
+
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.util.pagedElements.PagedElements;
 
@@ -122,5 +123,7 @@ public interface ProcessingJobDao {
      PagedElements<ProcessingJob> findJobsByCollectionIdAndState (final Set<String> collectionIds,
                                                                   final Set<JobState> states,
                                                                   final Page pageConfiguration);
+
+	Map<String, JobStatistics> findJobsByCollectionId(String collectionId);
 
 }
