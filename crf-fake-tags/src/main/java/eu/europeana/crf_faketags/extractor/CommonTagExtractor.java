@@ -3,6 +3,7 @@ package eu.europeana.crf_faketags.extractor;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -803,24 +804,12 @@ public class CommonTagExtractor {
      * @return the integer representation of the mediatype
      */
     public static Integer getMediaTypeCode(SourceDocumentReferenceMetaInfo metaInfo) {
-        if(metaInfo == null) {
-            return 0;
-        }
-
-        if(metaInfo.getImageMetaInfo() != null) {
-            return 1;
-        }
-        if(metaInfo.getAudioMetaInfo() != null) {
-            return 2;
-        }
-        if(metaInfo.getVideoMetaInfo() != null) {
-            return 3;
-        }
-        if(metaInfo.getTextMetaInfo() != null) {
-            return 4;
-        }
-
-        return 0;
+        if(metaInfo == null) return 0;
+        else if(metaInfo.getImageMetaInfo() != null) return 1;
+        else if(metaInfo.getAudioMetaInfo() != null) return 2;
+        else if(metaInfo.getVideoMetaInfo() != null) return 3;
+        else if(metaInfo.getTextMetaInfo() != null) return 4;
+        else return 0;
     }
 
     /**
@@ -829,24 +818,20 @@ public class CommonTagExtractor {
      * @return the integer represantation of the mimetype
      */
     public static Integer getMimeTypeCode(final String type) {
-        if(type != null && mimeTypes.containsKey(type.toLowerCase())) {
-            return mimeTypes.get(type.toLowerCase());
-        }
-
-        LOG.error("Not recognized mimetype: " + type);
-        return 0;
+        Integer retval = StringUtils.isNotBlank(type) ? mimeTypes.get(type.toLowerCase()) : 0;
+        return retval == null ? 0 : retval;
     }
 
     public static boolean isImageMimeType(String type) {
-        return (type != null && type.toLowerCase().startsWith("image"));
+        return (StringUtils.startsWithIgnoreCase(type, "image"));
     }
 
     public static boolean isSoundMimeType(String type) {
-        return (type != null &&  (type.toLowerCase().startsWith("sound") || type.toLowerCase().startsWith("audio")));
+        return (StringUtils.startsWithIgnoreCase(type, "sound") || StringUtils.startsWithIgnoreCase(type, "audio"));
     }
 
     public static boolean isVideoMimeType(String type) {
-        return (type != null && type.toLowerCase().startsWith("video"));
+        return (StringUtils.startsWithIgnoreCase(type, "video"));
     }
 
 }

@@ -162,106 +162,49 @@ public class ImageTagExtractor {
 
 
     public static Integer getSizeCode(final Integer width, final Integer height) {
-        if (width == null || height == null) {
-            return 0;
-        }
-
+        if (width == null || height == null) return 0;
         final Long size = (long) (width * height);
-        if (size < 524288) {
-            return 1;
-        }
-        if (size < 1048576) {
-            return 2;
-        }
-        if (size < 4194304) {
-            return 3;
-        }
-
-        return 4;
+        if (size < 524288) return 1;
+        else if (size < 1048576) return 2;
+        else if (size < 4194304) return 3;
+        else return 4;
     }
 
     public static Integer getSizeCode(final String imageSize) {
-        if (StringUtils.isBlank(imageSize)) {
-            return 0;
-        }
-
-        if (imageSize.equals("small")) {
-            return 1;
-        }
-        if (imageSize.equals("medium")) {
-            return 2;
-        }
-        if (imageSize.equals("large")) {
-            return 3;
-        }
-        if (imageSize.equals("extra_large")) {
-            return 4;
-        }
-
-        return 0;
+        if (StringUtils.isBlank(imageSize)) return 0;
+        else if (StringUtils.containsIgnoreCase(imageSize, "small")) return 1;
+        else if (StringUtils.containsIgnoreCase(imageSize, "medium")) return 2;
+        else if (StringUtils.containsIgnoreCase(imageSize, "large")) return 3;
+        else if (StringUtils.containsIgnoreCase(imageSize, "extra_large")) return 4;
+        else return 0;
     }
 
     public static Integer getColorSpaceCode(final String colorSpace) {
-        if (colorSpace == null) {
-            return 0;
-        }
-
-        if (colorSpace.equalsIgnoreCase("srgb")) {
-            return 1;
-        }
-        if (colorSpace.equalsIgnoreCase("Gray")) {
-            return 2;
-        }
-        if (colorSpace.equalsIgnoreCase("cmyk")) {
-            return 3;
-        }
-
-        LOG.error("Not recognized colorspace: " + colorSpace);
-        return 0;
+        if (StringUtils.isBlank(colorSpace)) return 0;
+        else if (StringUtils.containsIgnoreCase(colorSpace, "rgb")) return 1;
+        else if (StringUtils.containsIgnoreCase(colorSpace, "gray") || colorSpace.toLowerCase().contains("grey")) return 2;
+        else if (StringUtils.containsIgnoreCase(colorSpace, "cmyk")) return 3;
+        else return 0;
     }
 
     public static Integer getColorSpaceCode(final Boolean imageColor, final Boolean imageGrayScale) {
-        if (imageColor == null && imageGrayScale == null) {
-            return 0;
-        }
-
-        if (imageGrayScale != null && imageGrayScale) {
-            return 2;
-        }
-        if (imageColor != null && imageColor) {
-            return 1;
-        } else {
-            return 3;
-        }
+        if (imageColor == null && imageGrayScale == null) return 0;
+        else if (imageGrayScale != null && imageGrayScale) return 2;
+        else if (imageColor != null && imageColor) return 1;
+        else return 3;
     }
 
     public static Integer getAspectRatioCode(final ImageOrientation orientation) {
-        if (orientation == null) {
-            return 0;
-        }
-
-        if (orientation == ImageOrientation.LANDSCAPE) {
-            return 1;
-        }
-        if (orientation == ImageOrientation.PORTRAIT) {
-            return 2;
-        }
-
-        LOG.error("Not recognized orientation: " + orientation);
-        return 0;
+        if (orientation == null) return 0;
+        else if (orientation == ImageOrientation.LANDSCAPE) return 1;
+        else if (orientation == ImageOrientation.PORTRAIT) return 2;
+        else return 0;
     }
 
-    public static Integer getColorCode(final String color) {
-        if (color == null) {
-            return 0;
-        }
-
-        if (hexColors.containsKey(color)) {
-            return hexColors.get(color);
-        }
-
-        LOG.error("Not recognized color: " + color);
-        return 0;
+    public static Integer getColorCode(final String colour) {
+        if (StringUtils.isBlank(colour)) return 0;
+        else if (hexColors.containsKey(colour)) return hexColors.get(colour);
+        else return 0;
     }
 
     /**
