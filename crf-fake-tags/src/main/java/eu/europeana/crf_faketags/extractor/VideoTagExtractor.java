@@ -80,10 +80,6 @@ public class VideoTagExtractor {
                                           (duration << TagEncoding.VIDEO_DURATION.getBitPos());
 
                     filterTags.add(result);
-
-//                  System.out.println(result);
-//                  System.out.println(mediaTypeCode + " " + mimeType + " " + fileSize + " " + colorSpace + " " + aspectRatio + " " + color);
-//                  System.out.println(Integer.toBinaryString(result));
                 }
             }
         }
