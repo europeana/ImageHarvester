@@ -10,7 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>uim-tester</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.2-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>harvester-client</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -78,12 +78,12 @@
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>harvester-job-creator</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>media-storage-client</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe</groupId>
