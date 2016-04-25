@@ -32,31 +32,41 @@
         <module>uim-tester</module>
     </modules>
 
-
     <repositories>
         <repository>
-            <releases>
-                <enabled>false</enabled>
-                <updatePolicy>never</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </releases>
+            <id>europeana-ext-release-local</id>
+            <url>http://artifactory.eanadev.org/artifactory/ext-release-local</url>
             <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
+                <enabled>false</enabled>
             </snapshots>
-            <id>europeanaSnapshots</id>
-            <name>Europeana Snapshots</name>
-            <url>http://artifactory.eanadev.org/artifactory/ext-snapshot-local</url>
-            <layout>default</layout>
         </repository>
         <repository>
-	     <snapshots>
-		<enabled>false</enabled>
-	     </snapshots>
-            <id>artifactory.eanadev.org</id>
-            <name>artifactory.eanadev.org-releases</name>
+            <id>releases</id>
             <url>http://artifactory.eanadev.org/artifactory/libs-release-local</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>ext-releases</id>
+            <url>http://artifactory.eanadev.org/artifactory/ext-release-local</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>snapshots</id>
+            <url>http://artifactory.eanadev.org/artifactory/libs-snapshot-local</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>ext-snapshots</id>
+            <url>http://artifactory.eanadev.org/artifactory/ext-snapshot-local</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
         </repository>
     </repositories>
 
