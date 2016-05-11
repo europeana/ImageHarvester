@@ -90,7 +90,8 @@ public class FakeTagsUtils {
     static public List<Integer> colourPaletteFilterTags(List<String> colourPalette) {
         final List<Integer> filterTags = new ArrayList<>();
         fixList(colourPalette).forEach((colour) -> {
-            filterTags.add(ImageTagExtractor.getColorCode(colour) << TagEncoding.IMAGE_COLOUR.getBitPos());});
+            filterTags.add(MediaTypeEncoding.IMAGE.getEncodedValue() |
+                ImageTagExtractor.getColorCode(colour) << TagEncoding.IMAGE_COLOUR.getBitPos());});
         return filterTags;
     }
 
