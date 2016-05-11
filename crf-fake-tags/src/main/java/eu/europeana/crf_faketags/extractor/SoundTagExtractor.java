@@ -40,10 +40,10 @@ public class SoundTagExtractor {
 
     public static Integer getDurationCode(String duration) {
         if (StringUtils.isBlank(duration)) return 0;
-        else if(StringUtils.containsIgnoreCase(duration, "very_short")) return 1;
-        else if(StringUtils.containsIgnoreCase(duration, "short")) return 2;
-        else if(StringUtils.containsIgnoreCase(duration, "medium")) return 3;
-        else if(StringUtils.containsIgnoreCase(duration, "long")) return 4;
+        else if(StringUtils.equalsIgnoreCase(duration, "very_short")) return 1;
+        else if(StringUtils.equalsIgnoreCase(duration, "short")) return 2;
+        else if(StringUtils.equalsIgnoreCase(duration, "medium")) return 3;
+        else if(StringUtils.equalsIgnoreCase(duration, "long")) return 4;
         else return 0;
     }
 

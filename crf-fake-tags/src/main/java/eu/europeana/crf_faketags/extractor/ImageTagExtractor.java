@@ -172,10 +172,10 @@ public class ImageTagExtractor {
 
     public static Integer getSizeCode(final String imageSize) {
         if (StringUtils.isBlank(imageSize)) return 0;
-        else if (StringUtils.containsIgnoreCase(imageSize, "small")) return 1;
-        else if (StringUtils.containsIgnoreCase(imageSize, "medium")) return 2;
-        else if (StringUtils.containsIgnoreCase(imageSize, "large")) return 3;
-        else if (StringUtils.containsIgnoreCase(imageSize, "extra_large")) return 4;
+        else if (StringUtils.equalsIgnoreCase(imageSize, "small")) return 1;
+        else if (StringUtils.equalsIgnoreCase(imageSize, "medium")) return 2;
+        else if (StringUtils.equalsIgnoreCase(imageSize, "large")) return 3;
+        else if (StringUtils.equalsIgnoreCase(imageSize, "extra_large")) return 4;
         else return 0;
     }
 

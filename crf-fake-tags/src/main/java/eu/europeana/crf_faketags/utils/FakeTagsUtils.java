@@ -74,7 +74,7 @@ public class FakeTagsUtils {
             filterTags.add(MediaTypeEncoding.VIDEO.getEncodedValue() |
                 CommonTagExtractor.getMimeTypeCode(mimeTypeFacet.equals("null") ? null : mimeTypeFacet) << TagEncoding.MIME_TYPE.getBitPos() |
                 VideoTagExtractor.getQualityCode(hdFacet.equals("null") ? null : hdFacet) << TagEncoding.VIDEO_QUALITY.getBitPos() |
-                SoundTagExtractor.getDurationCode(durationFacet.equals("null") ? null : durationFacet) << TagEncoding.VIDEO_DURATION.getBitPos());})));
+                VideoTagExtractor.getDurationCode(durationFacet.equals("null") ? null : durationFacet) << TagEncoding.VIDEO_DURATION.getBitPos());})));
         return filterTags;
     }
 
