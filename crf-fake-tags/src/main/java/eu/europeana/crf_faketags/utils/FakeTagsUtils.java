@@ -81,7 +81,8 @@ public class FakeTagsUtils {
     static public List<Integer> otherFilterTags(List<String> otherMimeTypeFacets) {
         final List<Integer> filterTags = new ArrayList<>();
         fixList(otherMimeTypeFacets).forEach((mimeTypeFacet) -> {
-            filterTags.add(CommonTagExtractor.getMimeTypeCode(mimeTypeFacet) << TagEncoding.MIME_TYPE.getBitPos());});
+            filterTags.add(MediaTypeEncoding.TEXT.getEncodedValue() |
+            CommonTagExtractor.getMimeTypeCode(mimeTypeFacet) << TagEncoding.MIME_TYPE.getBitPos());});
         return filterTags;
     }
 
