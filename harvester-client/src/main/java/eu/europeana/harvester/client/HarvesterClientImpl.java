@@ -335,7 +335,8 @@ public class HarvesterClientImpl implements HarvesterClient {
 
         final List<String> sourceDocumentReferenceIds = new ArrayList<>(processingJobs.size());
 
-        for (final SourceDocumentReference documentReference: sourceDocumentReferenceDao.deactivateDocuments(owner, harvesterClientConfig.getWriteConcern())) {
+        List<SourceDocumentReference> deactivateDocuments = sourceDocumentReferenceDao.deactivateDocuments(owner, harvesterClientConfig.getWriteConcern());
+		for (final SourceDocumentReference documentReference: deactivateDocuments) {
            sourceDocumentReferenceIds.add(documentReference.getId());
         }
 
