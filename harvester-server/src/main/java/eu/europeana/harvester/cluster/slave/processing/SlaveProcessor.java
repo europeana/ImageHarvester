@@ -10,7 +10,7 @@ import eu.europeana.harvester.cluster.slave.processing.exceptiions.ThumbnailGene
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTuple;
-import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
+import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGeneratorFactory;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.ResponseType;
@@ -31,18 +31,15 @@ public class SlaveProcessor {
     private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final MediaMetaInfoExtractor metaInfoExtractor;
-    private final ThumbnailGenerator thumbnailGenerator;
     private final ColorExtractor colorExtractor;
     private final MediaStorageClient mediaStorageClient;
+    private final String colorMapPath;
 
-
-    public SlaveProcessor(MediaMetaInfoExtractor metaInfoExtractor, ThumbnailGenerator thumbnailGenerator, ColorExtractor colorExtractor,
-                          MediaStorageClient mediaStorageClient) {
+    public SlaveProcessor(MediaMetaInfoExtractor metaInfoExtractor, ColorExtractor colorExtractor, MediaStorageClient mediaStorageClient, String colorMapPath) {
         this.metaInfoExtractor = metaInfoExtractor;
-        this.thumbnailGenerator = thumbnailGenerator;
         this.colorExtractor = colorExtractor;
         this.mediaStorageClient = mediaStorageClient;
-
+        this.colorMapPath = colorMapPath;
     }
 
     public ProcessingResultTuple process(final ProcessingJobTaskDocumentReference task,
@@ -289,9 +286,13 @@ public class SlaveProcessor {
                 try {
                     final GenericSubTaskConfiguration config = thumbnailGenerationTask.getConfig();
 
-                    final MediaFile thumbnailMediaFile = thumbnailGenerator.createMediaFileWithThumbnail(config.getThumbnailConfig().getHeight(),
-                            config.getThumbnailConfig().getWidth(), referenceOwner.getExecutionId(), originalFileUrl,
-                            originalFileContent, originalFilePath);
+                    final MediaFile thumbnailMediaFile = ThumbnailGeneratorFactory.getThumbnailGenerator(MediaMetaDataUtils.classifyUrl(originalFilePath), colorMapPath)
+                            .createMediaFileWithThumbnail(config.getThumbnailConfig().getWidth(),
+                                    config.getThumbnailConfig().getHeight(),
+                                    referenceOwner.getExecutionId(),
+                                    originalFileUrl,
+                                    originalFileContent,
+                                    originalFilePath);
                     results.put(thumbnailGenerationTask, thumbnailMediaFile);
                 } catch (Exception e) {
                     throw new ThumbnailGenerationException(e);

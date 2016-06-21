@@ -7,9 +7,8 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
-import static org.junit.Assert.assertEquals;
-
 import static eu.europeana.harvester.TestUtils.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by salexandru on 29.05.2015.
@@ -29,9 +28,16 @@ public class MediaMetaDataUtilsTest {
     }
 
     @Test
-    public void test_ContentTypeDetection_TextPdf() {
-        assertEquals (ContentType.TEXT, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "text1.pdf"));
-        assertEquals (ContentType.TEXT, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "text2.pdf"));
+    public void test_ContentTypeDetection_TextPDF() {
+        assertEquals (ContentType.PDF, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "text1.pdf"));
+        assertEquals (ContentType.PDF, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "text2.pdf"));
+        assertEquals (ContentType.PDF, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "text3.pdf"));
+        assertEquals (ContentType.PDF, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "text4.pdf"));
+    }
+
+    @Test
+    public void test_ContentTypeDetection_TextPlain() {
+        assertEquals (ContentType.NON_PDF_TEXT, MediaMetaDataUtils.classifyUrl(PATH_PREFIX + "text1"));
     }
 
     @Test

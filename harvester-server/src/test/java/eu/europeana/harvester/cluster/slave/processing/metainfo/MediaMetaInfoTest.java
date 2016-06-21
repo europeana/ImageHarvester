@@ -11,10 +11,8 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-
 import static eu.europeana.harvester.TestUtils.*;
+import static org.junit.Assert.*;
 
 /**
  * Created by salexandru on 29.05.2015.
@@ -73,9 +71,9 @@ public class MediaMetaInfoTest {
         final AudioMetaInfo metaInfo = metaInfoTuple.getAudioMetaInfo();
 
         assertNotNull("Audio meta info must not be null!", metaInfo);
-        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
-        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
-        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
+        assertNull("image meta info should be null, when metaInfoTuple an audio", metaInfoTuple.getImageMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple an audio", metaInfoTuple.getVideoMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple an audio", metaInfoTuple.getTextMetaInfo());
 
         assertTrue(AUDIO_MIMETYPE.equalsIgnoreCase(metaInfo.getMimeType()));
         assertEquals((Long) 1388197L, metaInfo.getFileSize());
@@ -93,9 +91,9 @@ public class MediaMetaInfoTest {
         final AudioMetaInfo metaInfo = metaInfoTuple.getAudioMetaInfo();
 
         assertNotNull("Audio meta info must not be null!", metaInfo);
-        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
-        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
-        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
+        assertNull("image meta info should be null, when metaInfoTuple an audio", metaInfoTuple.getImageMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple an audio", metaInfoTuple.getVideoMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple an audio", metaInfoTuple.getTextMetaInfo());
         assertEquals((Long) 1234779L, metaInfo.getFileSize());
         assertEquals((Long) 176397L,  metaInfo.getDuration());
         assertEquals((Integer)56000, metaInfo.getBitRate());
@@ -112,9 +110,9 @@ public class MediaMetaInfoTest {
         final VideoMetaInfo metaInfo = metaInfoTuple.getVideoMetaInfo();
 
         assertNotNull("Video meta info must not be null!", metaInfo);
-        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
-        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
-        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
+        assertNull("image meta info should be null, when metaInfoTuple a video", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple a video", metaInfoTuple.getAudioMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple a video", metaInfoTuple.getTextMetaInfo());
         assertEquals((Long) 7662202L, metaInfo.getFileSize());
         assertEquals((Integer) 1150000, metaInfo.getBitRate());
         assertEquals((Integer) 288, metaInfo.getHeight());
@@ -132,9 +130,9 @@ public class MediaMetaInfoTest {
         final VideoMetaInfo metaInfo = metaInfoTuple.getVideoMetaInfo();
 
         assertNotNull("Video meta info must not be null!", metaInfo);
-        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
-        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
-        assertNull("text meta info should be null, when metaInfoTuple an image", metaInfoTuple.getTextMetaInfo());
+        assertNull("image meta info should be null, when metaInfoTuple a video", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple a video", metaInfoTuple.getAudioMetaInfo());
+        assertNull("text meta info should be null, when metaInfoTuple a video", metaInfoTuple.getTextMetaInfo());
         assertEquals((Long) 9151124L, metaInfo.getFileSize());
         assertEquals((Integer) 1152000, metaInfo.getBitRate());
         assertEquals((Integer) 288, metaInfo.getHeight());
@@ -147,32 +145,62 @@ public class MediaMetaInfoTest {
     }
 
     @Test
-    public void test_MetaDataExtraction_Text1() throws Exception {
+    public void test_MetaDataExtraction_PDF1() throws Exception {
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(getPath(PDF1));
+        final TextMetaInfo metaInfo = metaInfoTuple.getTextMetaInfo();
+
+        assertNotNull("Text meta info must not be null!", metaInfo);
+        assertNull("image meta info should be null, when metaInfoTuple a PDF", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple a PDF", metaInfoTuple.getAudioMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple a PDF", metaInfoTuple.getVideoMetaInfo());
+
+        assertEquals((Long)23114220L, metaInfo.getFileSize());
+        assertTrue(metaInfo.getIsSearchable());
+        assertEquals((Integer)(0), metaInfo.getResolution());
+    }
+
+    @Test
+    public void test_MetaDataExtraction_PDF2() throws Exception {
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(getPath(PDF2));
+        final TextMetaInfo metaInfo = metaInfoTuple.getTextMetaInfo();
+
+        assertNotNull("Text meta info must not be null!", metaInfo);
+        assertNull("image meta info should be null, when metaInfoTuple a PDF", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple a PDF", metaInfoTuple.getAudioMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple a PDF", metaInfoTuple.getVideoMetaInfo());
+
+        assertEquals((Long)90568624L, metaInfo.getFileSize());
+        assertTrue(metaInfo.getIsSearchable());
+        assertNull(metaInfo.getResolution());
+    }
+
+    @Test
+    public void test_MetaDataExtraction_PDF4() throws Exception {
+        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(getPath(PDF4));
+        final TextMetaInfo metaInfo = metaInfoTuple.getTextMetaInfo();
+
+        assertNotNull("Text meta info must not be null!", metaInfo);
+        assertNull("image meta info should be null, when metaInfoTuple a PDF", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple a PDF", metaInfoTuple.getAudioMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple a PDF", metaInfoTuple.getVideoMetaInfo());
+
+        assertEquals((Long)246247L, metaInfo.getFileSize());
+        assertTrue(metaInfo.getIsSearchable());
+        assertEquals((Integer)(-1), metaInfo.getResolution());
+    }
+
+    @Test
+    public void test_MetaDataExtraction_TextPlain() throws Exception {
         final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(getPath(Text1));
         final TextMetaInfo metaInfo = metaInfoTuple.getTextMetaInfo();
 
         assertNotNull("Text meta info must not be null!", metaInfo);
-        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
-        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
-        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
-        assertNotNull(metaInfo);
-        assertEquals((Long)7904453L, metaInfo.getFileSize());
+        assertNull("image meta info should be null, when metaInfoTuple a plain text", metaInfoTuple.getImageMetaInfo());
+        assertNull("audio meta info should be null, when metaInfoTuple a plain text", metaInfoTuple.getAudioMetaInfo());
+        assertNull("video meta info should be null, when metaInfoTuple a plain text", metaInfoTuple.getVideoMetaInfo());
+
+        assertEquals((Long)1933L, metaInfo.getFileSize());
         assertTrue(metaInfo.getIsSearchable());
-        assertEquals((Integer) (-1), metaInfo.getResolution());
+        assertNull(metaInfo.getResolution());
     }
-
-    @Test
-    public void test_MetaDataExtraction_Text2() throws Exception {
-        final MediaMetaInfoTuple metaInfoTuple = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(getPath(Text2));
-        final TextMetaInfo metaInfo = metaInfoTuple.getTextMetaInfo();
-
-        assertNotNull("Text meta info must not be null!", metaInfo);
-        assertNull("image meta info should be null, when metaInfoTuple an image", metaInfoTuple.getImageMetaInfo());
-        assertNull("audio meta info should be null, when metaInfoTuple an image", metaInfoTuple.getAudioMetaInfo());
-        assertNull("video meta info should be null, when metaInfoTuple an image", metaInfoTuple.getVideoMetaInfo());
-        assertEquals((Long)13566851L, metaInfo.getFileSize());
-        assertFalse(metaInfo.getIsSearchable());
-        assertEquals ( (Integer)(-1), metaInfo.getResolution());
-    }
-
 }

@@ -8,10 +8,8 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static eu.europeana.harvester.TestUtils.*;
+import static org.junit.Assert.*;
 
 /**
  * Created by salexandru on 29.05.2015.
@@ -67,7 +65,14 @@ public class ColorExtractorTest {
     }
 
     @Test
-    public void test_ColorPaletteExtraction_FailForText() throws Exception {
+    public void test_ColorPaletteExtraction_FailForPDF() throws Exception {
+        final ImageMetaInfo metaInfo = new ColorExtractor(PATH_COLORMAP).colorExtraction(getPath(PDF1));
+
+        assertNull(metaInfo);
+    }
+
+    @Test
+    public void test_ColorPaletteExtraction_FailForTextPlain() throws Exception {
         final ImageMetaInfo metaInfo = new ColorExtractor(PATH_COLORMAP).colorExtraction(getPath(Text1));
 
         assertNull(metaInfo);
