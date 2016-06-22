@@ -25,7 +25,6 @@ import eu.europeana.harvester.cluster.slave.RetrieveAndProcessActor;
 import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
-import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.db.interfaces.*;
@@ -34,7 +33,6 @@ import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.jobcreator.JobCreator;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
-import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
 import org.joda.time.Duration;
 import org.junit.After;
@@ -42,7 +40,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -78,7 +75,7 @@ public class MasterTests {
 
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
         MongoClient mongo = new MongoClient("178.63.58.51", 27017);
         Morphia morphia = new Morphia();
         String dbName = "test_crf_europeana_harvester_master";
@@ -105,12 +102,7 @@ public class MasterTests {
 
         FileUtils.forceMkdir(new File(PATH_DOWNLOADED));
         mediaStorageClient = new FileSystemMediaStorageClientImpl(PATH_DOWNLOADED);
-        slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP),
-                new ThumbnailGenerator(PATH_COLORMAP),
-                new ColorExtractor(PATH_COLORMAP),
-                mediaStorageClient
-        );
-
+        slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP), new ColorExtractor(PATH_COLORMAP), mediaStorageClient, PATH_COLORMAP);
     }
 
     @After
@@ -370,7 +362,5 @@ public class MasterTests {
 
         }};
         stopSystem(systemAndMasterActor.getKey());
-
-
     }
 }

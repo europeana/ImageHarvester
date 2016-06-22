@@ -21,7 +21,10 @@ public class MediaMetaInfoExtractor {
         VideoMetaInfo videoMetaInfo = null;
         TextMetaInfo textMetaInfo = null;
         switch (contentType) {
-            case TEXT:
+            case PDF:
+                textMetaInfo = MediaMetaDataUtils.extractTextMetaData(path);
+                break;
+            case NON_PDF_TEXT:
                 textMetaInfo = MediaMetaDataUtils.extractTextMetaData(path);
                 break;
             case IMAGE:

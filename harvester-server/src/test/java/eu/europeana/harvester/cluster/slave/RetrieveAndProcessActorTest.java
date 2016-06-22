@@ -10,7 +10,7 @@ import eu.europeana.harvester.cluster.domain.messages.RetrieveUrlWithProcessingC
 import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
-import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
+import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailImageGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.domain.*;
@@ -61,7 +61,7 @@ public class RetrieveAndProcessActorTest {
     static ActorSystem system ;
 
     @BeforeClass
-    public static void setup() throws IOException {
+    public static void setup() throws Exception {
         FileUtils.forceMkdir(new File(FILESYSTEM_PATH_PREFIX));
         FileUtils.forceMkdir(new File(PROCESSING_PATH_PREFIX));
         system = ActorSystem.create();
@@ -376,28 +376,29 @@ public class RetrieveAndProcessActorTest {
      * or use Within(), etc.
      */
         MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
-        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
         ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
         MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+        ThumbnailImageGenerator thumbnailImageGeneratorFail = mock(ThumbnailImageGenerator.class);
 
         doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
         doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
-        doThrow(new Exception("")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doReturn(PATH_COLORMAP).when(thumbnailImageGeneratorFail).getColorMapPath();
+        doThrow(new Exception("")).when(thumbnailImageGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
 
-     final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
-            mediaMetaInfoExtractorFail,
-             thumbnailGeneratorFail,
-             colorExtractorFail,
-             mediaStorageClientFail
-     )  ;
+        final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
+                mediaMetaInfoExtractorFail,
+                colorExtractorFail,
+                mediaStorageClientFail,
+                ""
+        )  ;
         new JavaTestKit(system) {{
 
             final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),
-                                                                         httpRetrieveResponseFactory,
-                                                                         slaveProcessorFail);
+                    httpRetrieveResponseFactory,
+                    slaveProcessorFail);
 
             subject.tell(taskWithConfig, getRef());
 
@@ -440,24 +441,25 @@ public class RetrieveAndProcessActorTest {
      * or use Within(), etc.
      */
         MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
-        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
         ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
         MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+        ThumbnailImageGenerator thumbnailImageGeneratorFail = mock(ThumbnailImageGenerator.class);
 
         doThrow(new Exception("ana are mere")).when(mediaMetaInfoExtractorFail).extract(anyString());
         doThrow(new IOException("")).when(colorExtractorFail).colorExtraction(anyString());
-        doThrow(new Exception("bere")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doReturn(PATH_COLORMAP).when(thumbnailImageGeneratorFail).getColorMapPath();
+        doThrow(new Exception("bere")).when(thumbnailImageGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
 
-        doThrow(new RuntimeException("exceptio")).when(mediaStorageClientFail).createOrModify(any(MediaFile.class));
+        doThrow(new RuntimeException("exception")).when(mediaStorageClientFail).createOrModify(any(MediaFile.class));
 
         final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
                 mediaMetaInfoExtractorFail,
-                thumbnailGeneratorFail,
                 colorExtractorFail,
-                mediaStorageClientFail
+                mediaStorageClientFail,
+                ""
         )  ;
         new JavaTestKit(system) {{
 
@@ -666,22 +668,23 @@ public class RetrieveAndProcessActorTest {
      * or use Within(), etc.
      */
         MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
-        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
         ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
         MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+        ThumbnailImageGenerator thumbnailImageGeneratorFail = mock(ThumbnailImageGenerator.class);
 
         doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
         doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
-        doThrow(new Exception("")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doReturn(PATH_COLORMAP).when(thumbnailImageGeneratorFail).getColorMapPath();
+        doThrow(new Exception("")).when(thumbnailImageGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
 
         final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
                 mediaMetaInfoExtractorFail,
-                thumbnailGeneratorFail,
                 colorExtractorFail,
-                mediaStorageClientFail
+                mediaStorageClientFail,
+                ""
         )  ;
         new JavaTestKit(system) {{
 
@@ -729,13 +732,14 @@ public class RetrieveAndProcessActorTest {
      * or use Within(), etc.
      */
         MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
-        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
         ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
         MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+        ThumbnailImageGenerator thumbnailImageGeneratorFail = mock(ThumbnailImageGenerator.class);
 
         doThrow(new Exception("ana are mere")).when(mediaMetaInfoExtractorFail).extract(anyString());
         doThrow(new IOException("")).when(colorExtractorFail).colorExtraction(anyString());
-        doThrow(new Exception("bere")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doReturn(PATH_COLORMAP).when(thumbnailImageGeneratorFail).getColorMapPath();
+        doThrow(new Exception("bere")).when(thumbnailImageGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
@@ -744,9 +748,9 @@ public class RetrieveAndProcessActorTest {
 
         final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
                 mediaMetaInfoExtractorFail,
-                thumbnailGeneratorFail,
                 colorExtractorFail,
-                mediaStorageClientFail
+                mediaStorageClientFail,
+                ""
         )  ;
         new JavaTestKit(system) {{
 
@@ -814,9 +818,4 @@ public class RetrieveAndProcessActorTest {
 
         }};
     }
-
 }
-
-
-
-
