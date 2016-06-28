@@ -10,8 +10,6 @@ import gr.ntua.image.mediachecker.VideoInfo;
 import org.im4java.core.IM4JavaException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MediaMetaDataUtils {
 
@@ -33,9 +31,12 @@ public class MediaMetaDataUtils {
             if (type.startsWith("video")) {
                 return ContentType.VIDEO;
             }
-            if ((type.startsWith("text") || type.equals("application/pdf") || type.equals("application/xml") ||
-                    type.equals("application/rtf") || type.equals("application/epub")) && !type.contains("html")) {
-                return ContentType.TEXT;
+            if (type.equals("application/pdf")) {
+                return ContentType.PDF;
+            }
+            if ((type.startsWith("text") || type.equals("application/xml") || type.equals("application/rtf") || type.equals("application/epub"))
+                    && !type.contains("html")) {
+                return ContentType.NON_PDF_TEXT;
             }
             return ContentType.UNKNOWN;
         } catch (IOException e) {
