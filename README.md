@@ -5,7 +5,7 @@ Distributed version of UIM Linkchecker/Thumbler
 
 ## Architecture & components overview
 
-The ImageHarvester has 4 components :
+The ImageHarvester has 4 components :.
 
 * core: the harvester client
 * core: the harvester server (distributed in a cluster)
