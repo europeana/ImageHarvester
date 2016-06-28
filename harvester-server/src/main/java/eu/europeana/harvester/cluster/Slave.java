@@ -7,6 +7,7 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
@@ -244,8 +245,7 @@ public class Slave {
     }
 
     public static void allRequirementsAreMetOrThrowException() throws Exception {
-        new ImageMagicValidator("ImageMagick 6.9.0").doNothingOrThrowException();
-        //LOG.info("ImageMagic version 6.9.0 installed in the system. External dependency OK. Continuing");
+        new ImageMagicValidator(Lists.newArrayList("ImageMagick 6.9.0","ImageMagick 7.0")).doNothingOrThrowException();
     }
 
     public static void main(String[] args) throws Exception {
