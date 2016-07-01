@@ -8,8 +8,6 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceProcessingProfileDao;
 import scala.concurrent.duration.Duration;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,11 +40,11 @@ public class JobRestarterActor extends UntypedActor {
 
     @Override
     public void postStop() {
-       if (null == cancellable) cancellable.cancel();
+        if (null == cancellable) cancellable.cancel();
     }
 
     @Override
-    public void onReceive (Object message) throws ExecutionException, IOException {
+    public void onReceive (Object message) throws Exception {
         if (message instanceof ReloadJobs) {
             helper.reloadJobs();
             cancellable = scheduleOnce();
@@ -54,15 +52,15 @@ public class JobRestarterActor extends UntypedActor {
     }
 
     private Cancellable scheduleOnce() {
-       return scheduleOnce(config.getNumberOfSecondsBetweenRepetition().getStandardSeconds());
+        return scheduleOnce(config.getNumberOfSecondsBetweenRepetition().getStandardSeconds());
     }
 
     private Cancellable scheduleOnce(long delayInSeconds) {
         return getContext().system().scheduler().scheduleOnce(Duration.create(delayInSeconds, TimeUnit.SECONDS),
-                                                              getSelf(),
-                                                              new ReloadJobs(),
-                                                              getContext().dispatcher(),
-                                                              getSelf()
-                                                             );
+                getSelf(),
+                new ReloadJobs(),
+                getContext().dispatcher(),
+                getSelf()
+        );
     }
 }

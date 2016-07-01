@@ -40,7 +40,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -112,7 +113,7 @@ public class MasterTests {
 
     }
 
-    private void createSomeJobs(final List<String> urls, final Integer priority) throws ExecutionException, TimeoutException, InterruptedException, IOException {
+    private void createSomeJobs(final List<String> urls, final Integer priority) throws ExecutionException, UnknownHostException, MalformedURLException, TimeoutException, InterruptedException {
         final String collectionId = "test_collection_1";
         final String providerId = "test_provider_1";
         final String recordId = "test_record_1";
@@ -135,22 +136,22 @@ public class MasterTests {
 
     }
 
-    private void createSingleConditionalDownloadJob(final String url, final Integer priority) throws ExecutionException, TimeoutException, InterruptedException, IOException {
+    private void createSingleConditionalDownloadJob(final String url, final Integer priority) throws ExecutionException, UnknownHostException, MalformedURLException, TimeoutException, InterruptedException {
         final String collectionId = "test_collection_1";
         final String providerId = "test_provider_1";
         final String recordId = "test_record_1";
         final String executionId = "test_execution_id_1";
 
         final List<ProcessingJobTuple> result = new ArrayList<ProcessingJobTuple>();
-            result.addAll(JobCreator.createJobs(collectionId,
-                    providerId,
-                    recordId,
-                    executionId,
-                    url,
-                    new ArrayList<String>(),
-                    null,
-                    null,
-                    priority));
+        result.addAll(JobCreator.createJobs(collectionId,
+                providerId,
+                recordId,
+                executionId,
+                url,
+                new ArrayList<String>(),
+                null,
+                null,
+                priority));
 
         harvesterClient.createOrModifyProcessingJobTuples(result);
 
@@ -211,7 +212,7 @@ public class MasterTests {
 
     @Test
     public void canLoadJobsWithNormalPriorityAndSendThemToTheSlaveAndPersistTheResult() throws
-            InterruptedException, ExecutionException, TimeoutException, IOException {
+            InterruptedException, ExecutionException, MalformedURLException, TimeoutException, UnknownHostException {
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
         createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());
@@ -269,7 +270,7 @@ public class MasterTests {
 
     @Test
     public void canLoadJobsWithNormalPriorityAndSendThemToTheSlave() throws
-            InterruptedException, ExecutionException, TimeoutException, IOException {
+            InterruptedException, ExecutionException, MalformedURLException, TimeoutException, UnknownHostException {
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
         createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());

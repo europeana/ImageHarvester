@@ -41,10 +41,9 @@ public class ProcessingJobBuilder {
      * @return
      * @throws MalformedURLException
      * @throws UnknownHostException
-     * @throws IOException
      */
     public static final List<ProcessingJobTuple> edmObjectUrlJobs(final String url, final ReferenceOwner owner, final Integer priority,
-                                                                  final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
+                                                                  final ProcessingJobCreationOptions options) throws ExecutionException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -84,10 +83,9 @@ public class ProcessingJobBuilder {
      * @return
      * @throws MalformedURLException
      * @throws UnknownHostException
-     * @throws IOException
      */
     public static final List<ProcessingJobTuple> edmHasViewUrlsJobs(final List<String> urls, final ReferenceOwner owner, final Integer priority,
-                                                                    final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
+                                                                    final ProcessingJobCreationOptions options) throws ExecutionException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -129,10 +127,9 @@ public class ProcessingJobBuilder {
      * @return
      * @throws MalformedURLException
      * @throws UnknownHostException
-     * @throws IOException
      */
     public static final List<ProcessingJobTuple> edmIsShownByUrlJobs(final String url, final ReferenceOwner owner, final Integer priority,
-                                                                     final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
+                                                                     final ProcessingJobCreationOptions options) throws ExecutionException {
         if (null == options) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -209,11 +206,10 @@ public class ProcessingJobBuilder {
      * @return
      * @throws MalformedURLException
      * @throws UnknownHostException
-     * @throws IOException
      */
     public static final List<ProcessingJobTuple> edmObjectUrlJobs(final String url, final ReferenceOwner owner, final Integer priority,
                                                                   final SourceDocumentReference sourceDocumentReference,
-                                                                  final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
+                                                                  final ProcessingJobCreationOptions options) throws ExecutionException {
         if (null == options || sourceDocumentReference == null) {
             throw new IllegalArgumentException("options/sourceDocumentReference must not be null");
         }
@@ -259,13 +255,12 @@ public class ProcessingJobBuilder {
      * @return
      * @throws MalformedURLException
      * @throws UnknownHostException
-     * @throws IOException
      */
     public static final List<ProcessingJobTuple> edmHasViewUrlsJobs(final List<String> urls,
                                                                     final ReferenceOwner owner,
                                                                     final Integer priority,
                                                                     final SourceDocumentReference sourceDocumentReference,
-                                                                    final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
+                                                                    final ProcessingJobCreationOptions options) throws ExecutionException {
         if (null == options || null == sourceDocumentReference) {
             throw new IllegalArgumentException("options must not be null");
         }
@@ -311,13 +306,12 @@ public class ProcessingJobBuilder {
      * @return
      * @throws MalformedURLException
      * @throws UnknownHostException
-     * @throws IOException
      */
     public static final List<ProcessingJobTuple> edmIsShownByUrlJobs(final String url,
                                                                      final ReferenceOwner owner,
                                                                      final Integer priority,
                                                                      final SourceDocumentReference sourceDocumentReference,
-                                                                     final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
+                                                                     final ProcessingJobCreationOptions options) throws ExecutionException {
         if (null == options || null == sourceDocumentReference) {
             throw new IllegalArgumentException("options/sourceDocumentReference must not be null");
         }
@@ -396,9 +390,8 @@ public class ProcessingJobBuilder {
      * Gets all the subtasks a processing job uses, depending on document type
      * @param url of the source reference to check mime type of the document
      * @return the list of specific subtasks
-     * @throws IOException
      */
-    private static final List<ProcessingJobSubTask> getSubTasks(final String url) throws IOException {
+    private static final List<ProcessingJobSubTask> getSubTasks(final String url) {
         final List<ProcessingJobSubTask> subTasks = new ArrayList();
 
         // exclude COLOR EXTRACTION for PDF files

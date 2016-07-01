@@ -26,43 +26,43 @@ public class ProcessingJobBuilderTest {
 
 
     @Test(expected = IllegalArgumentException.class)
-    public void test_EdmObj_NullOption() throws ExecutionException, IOException {
+    public void test_EdmObj_NullOption() throws ExecutionException {
         ProcessingJobBuilder.edmObjectUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void test_EdmHasView_NullOption() throws ExecutionException, IOException {
+    public void test_EdmHasView_NullOption() throws ExecutionException {
         ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(""), owner,JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void test_EdmIsShownBy_NullOption() throws ExecutionException, IOException {
+    public void test_EdmIsShownBy_NullOption() throws ExecutionException {
         ProcessingJobBuilder.edmIsShownByUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void test_EdmIsShownAt_NullOption() throws ExecutionException, IOException {
+    public void test_EdmIsShownAt_NullOption() throws ExecutionException {
         ProcessingJobBuilder.edmIsShownAtUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
     }
 
-    public void test_EdmObj_InvalidUrl() throws ExecutionException, IOException {
+    public void test_EdmObj_InvalidUrl() throws ExecutionException {
         ProcessingJobBuilder.edmObjectUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
-    public void test_EdmHasView_InvalidUrl() throws ExecutionException, IOException {
+    public void test_EdmHasView_InvalidUrl() throws ExecutionException {
         ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(UUID.randomUUID().toString()), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
-    public void test_EdmIsShownBy_InvalidUrl() throws ExecutionException, IOException {
+    public void test_EdmIsShownBy_InvalidUrl() throws ExecutionException {
         ProcessingJobBuilder.edmIsShownByUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
-    public void test_EdmIsShownAt_InvalidUrl() throws ExecutionException, IOException {
+    public void test_EdmIsShownAt_InvalidUrl() throws ExecutionException {
         ProcessingJobBuilder.edmIsShownAtUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
     }
 
     @Test
-    public void test_EdmObj_ValidUrl_DefaultOption() throws ExecutionException, IOException {
+    public void test_EdmObj_ValidUrl_DefaultOption() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                     falseOption);
 
@@ -76,7 +76,7 @@ public class ProcessingJobBuilderTest {
     }
 
     @Test
-    public void test_EdmObj_ValidUrl_ForceUnconditionalDownload() throws ExecutionException, IOException {
+    public void test_EdmObj_ValidUrl_ForceUnconditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                     trueOption);
 
@@ -89,7 +89,7 @@ public class ProcessingJobBuilderTest {
     }
 
     @Test
-    public void testEdmHasViewUrls_OneElement_DefaultOption() throws ExecutionException, IOException {
+    public void testEdmHasViewUrls_OneElement_DefaultOption() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
 
@@ -102,7 +102,7 @@ public class ProcessingJobBuilderTest {
 
 
     @Test
-    public void testEdmHasViewUrls_TwoElements_DefaultOption() throws ExecutionException, IOException {
+    public void testEdmHasViewUrls_TwoElements_DefaultOption() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
         urls.add("http://www.facebook.com");
@@ -117,7 +117,7 @@ public class ProcessingJobBuilderTest {
     }
 
     @Test
-    public void testEdmHasViewUrls_ManyElements() throws ExecutionException, IOException {
+    public void testEdmHasViewUrls_ManyElements() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
         urls.add("http://www.facebook.com");
@@ -134,7 +134,7 @@ public class ProcessingJobBuilderTest {
     }
 
     @Test
-    public void testEdmHasViewUrls_OneElement_ForceUnconditionalOption() throws ExecutionException, IOException {
+    public void testEdmHasViewUrls_OneElement_ForceUnconditionalOption() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
 
@@ -145,7 +145,7 @@ public class ProcessingJobBuilderTest {
     }
 
     @Test
-    public void testEdmHasViewUrls_ManyElements_ForceUnconditionalDownload() throws ExecutionException, IOException {
+    public void testEdmHasViewUrls_ManyElements_ForceUnconditionalDownload() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
         urls.add("http://www.google.com");
         urls.add("http://www.facebook.com");
@@ -162,7 +162,7 @@ public class ProcessingJobBuilderTest {
     }
 
     @Test
-    public void testEdmIsShownBy_ValidUrl_DefaultOption() throws ExecutionException, IOException {
+    public void testEdmIsShownBy_ValidUrl_DefaultOption() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                        falseOption);
         assertEquals(1, jobs.size());
@@ -171,7 +171,7 @@ public class ProcessingJobBuilderTest {
     }
 
     @Test
-    public void testEdmIsShownBy_ValidUrl_ForceUnconditionalDownload() throws ExecutionException, IOException {
+    public void testEdmIsShownBy_ValidUrl_ForceUnconditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                        trueOption);
         assertEquals(1, jobs.size());
@@ -181,7 +181,7 @@ public class ProcessingJobBuilderTest {
 
 
     @Test
-    public void testEdmIsShownAt_ValidUrl_DefaultOption() throws ExecutionException, IOException {
+    public void testEdmIsShownAt_ValidUrl_DefaultOption() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
                                                                                        falseOption);
         assertEquals(1, jobs.size());
@@ -189,7 +189,7 @@ public class ProcessingJobBuilderTest {
     }
 
     @Test
-    public void testEdmIsShownAt_ValidUrl_ForceUnconditionalDownload() throws ExecutionException, IOException {
+    public void testEdmIsShownAt_ValidUrl_ForceUnconditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(), trueOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CHECK_LINK, 0, 0, 0);

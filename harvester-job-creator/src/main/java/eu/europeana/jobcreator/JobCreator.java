@@ -9,7 +9,6 @@ import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ public class JobCreator {
                                                              final URLSourceType urlSourceType,
                                                              final int priority,
                                                              final DocumentReferenceTaskType taskType
-                                                            ) throws ExecutionException, IOException {
+                                                            ) throws ExecutionException {
 
         final String sourceDocumentRefUrl = reference.getUrl();
         final String edmObjectUrl = (URLSourceType.OBJECT == urlSourceType) ? sourceDocumentRefUrl : null;
@@ -76,7 +75,7 @@ public class JobCreator {
                                                             final String edmIsShownByUrl,
                                                             final String edmIsShownAtUrl,
                                                             final Integer priority
-                                                            ) throws ExecutionException, IOException {
+                                                            ) throws ExecutionException {
         return createJobs(collectionId, providerId, recordId, executionId, edmObjectUrl, edmHasViewUrls, edmIsShownByUrl, edmIsShownAtUrl, priority, new ProcessingJobCreationOptions(false));
     }
 
@@ -104,7 +103,7 @@ public class JobCreator {
                                                             final String edmIsShownByUrl,
                                                             final String edmIsShownAtUrl,
                                                             final Integer priority,
-                                                            final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
+                                                            final ProcessingJobCreationOptions options) throws ExecutionException {
 
         if (null == collectionId || null == providerId || null == recordId) {
             throw new IllegalArgumentException("Incomplete ownership information : collectionId = " + collectionId + ", providerId = " + providerId + " and recordId = " + recordId + ". Neither of them can be null. ");
@@ -164,7 +163,7 @@ public class JobCreator {
                                                             final String edmIsShownAtUrl,
                                                             final Integer priority,
                                                             final SourceDocumentReference sourceDocumentReference,
-                                                            final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
+                                                            final ProcessingJobCreationOptions options) throws ExecutionException {
 
         if (null == collectionId || null == providerId || null == recordId) {
             throw new IllegalArgumentException("Incomplete ownership information : collectionId = " + collectionId + ", providerId = " + providerId + " and recordId = " + recordId + ". Neither of them can be null. ");

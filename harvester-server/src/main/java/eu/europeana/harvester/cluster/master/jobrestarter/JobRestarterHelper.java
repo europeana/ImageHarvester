@@ -10,7 +10,6 @@ import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -35,17 +34,17 @@ public class JobRestarterHelper {
         this.processingJobDao = processingJobDao;
     }
 
-    public void reloadJobs() throws ExecutionException, IOException {
+    public void reloadJobs() throws MalformedURLException, UnknownHostException, ExecutionException {
         final List<ProcessingJobTuple> newProcessingJobTuples = new ArrayList<>();
 
         for (final SourceDocumentReferenceProcessingProfile profile: processingProfileDao.getJobToBeEvaluated()) {
             newProcessingJobTuples.addAll(JobCreator.createJobs(profile.getReferenceOwner(),
-                                                                sourceDocumentReferenceDao.read(profile.getSourceDocumentReferenceId()),
-                                                                profile.getUrlSourceType(),
-                                                                profile.getPriority(),
-                                                                profile.getTaskType()
-                                                               )
-                                         );
+                    sourceDocumentReferenceDao.read(profile.getSourceDocumentReferenceId()),
+                    profile.getUrlSourceType(),
+                    profile.getPriority(),
+                    profile.getTaskType()
+                    )
+            );
         }
 
         for (final ProcessingJobTuple jobTuple: newProcessingJobTuples) {
@@ -53,7 +52,7 @@ public class JobRestarterHelper {
             for (final SourceDocumentReferenceProcessingProfile profile: jobTuple.getSourceDocumentReferenceProcessingProfiles()) {
                 //should never happen
                 if (!processingProfileDao.update(profile, WriteConcern.ACKNOWLEDGED)) {
-                   LOG.error(profile.getId() + " " + profile.getSourceDocumentReferenceId() + " " + profile.getTaskType());
+                    LOG.error(profile.getId() + " " + profile.getSourceDocumentReferenceId() + " " + profile.getTaskType());
                 }
             }
         }

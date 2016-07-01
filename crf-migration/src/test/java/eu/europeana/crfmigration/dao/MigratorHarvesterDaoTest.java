@@ -61,15 +61,15 @@ public class MigratorHarvesterDaoTest {
                 new GraphiteReporterConfig("127.0.0.1", "test", 10000),
                 2,
                 new DateTime(
-        2015,
-        12,
-        30,
-        0,
-        10));
+                        2015,
+                        12,
+                        30,
+                        0,
+                        10));
 
         final MorphiaDataStore morphiaDataStore =  new MorphiaDataStore(migratorConfig.getTargetMongoConfig().getMongoServerAddressList(),
-                                                                          migratorConfig.getTargetMongoConfig().getDbName()
-                                                                         );
+                migratorConfig.getTargetMongoConfig().getDbName()
+        );
         dataStore = morphiaDataStore.getDatastore();
 
         harvesterDao = new MigratorHarvesterDao(migratorConfig.getTargetMongoConfig());
@@ -81,17 +81,19 @@ public class MigratorHarvesterDaoTest {
     }
 
     @Test
-    public void test_ProcessJobs_EmptyList() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException, UnknownHostException {
+    public void test_ProcessJobs_EmptyList() throws InterruptedException, MalformedURLException, TimeoutException,
+            ExecutionException, UnknownHostException {
         harvesterDao.saveProcessingJobTuples(Collections.EMPTY_LIST, migrationBatchId);
         assertEquals(0, dataStore.getCount(ProcessingJob.class));
     }
 
     @Test
-    public void test_ProcessJobs_OneElement() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    public void test_ProcessJobs_OneElement() throws MalformedURLException, UnknownHostException, InterruptedException,
+            ExecutionException, TimeoutException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com",
-                                                                             owner,
-                                                                             JobPriority.NORMAL.getPriority(),
-                                                                             falseOption);
+                owner,
+                JobPriority.NORMAL.getPriority(),
+                falseOption);
 
         assertEquals(1, jobs.size());
 

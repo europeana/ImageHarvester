@@ -10,7 +10,6 @@ import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -37,17 +36,17 @@ public class JobCreatorTest {
     private final static ProcessingJobCreationOptions trueOption = new ProcessingJobCreationOptions(true);
 
     @Test (expected = IllegalArgumentException.class)
-    public void test_AllArgumentNull() throws ExecutionException, IOException {
+    public void test_AllArgumentNull() throws ExecutionException {
         JobCreator.createJobs(null, null, null, null, null, null, null, null,JobPriority.NORMAL.getPriority());
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void test_NullOption() throws ExecutionException, IOException {
+    public void test_NullOption() throws ExecutionException {
         JobCreator.createJobs(collectionId, providerId, recordId, executionId, "", null, "", "", JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test
-    public void test_edmObjectTasks_WithoutOptions() throws ExecutionException, IOException {
+    public void test_edmObjectTasks_WithoutOptions() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     url, null, null, null,JobPriority.NORMAL.getPriority()
@@ -57,7 +56,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmObjectTasks_DefaultOptions() throws ExecutionException, IOException {
+    public void test_edmObjectTasks_DefaultOptions() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     url, null, null, null,JobPriority.NORMAL.getPriority(), falseOption
@@ -67,7 +66,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmObjectTasks_ForceUnconditionalDownload() throws ExecutionException, IOException {
+    public void test_edmObjectTasks_ForceUnconditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), trueOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     url, null, null, null,JobPriority.NORMAL.getPriority(), trueOption
@@ -77,7 +76,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmHasViewUrls_WithoutOptions() throws ExecutionException, IOException {
+    public void test_edmHasViewUrls_WithoutOptions() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     null, urls, null, null,JobPriority.NORMAL.getPriority()
@@ -87,7 +86,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmHasViewUrls_DefaultOptions() throws ExecutionException, IOException {
+    public void test_edmHasViewUrls_DefaultOptions() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     null, urls, null, null,JobPriority.NORMAL.getPriority(), falseOption
@@ -97,7 +96,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmHasViewUrls_ForceUnconditionalDownload() throws ExecutionException, IOException {
+    public void test_edmHasViewUrls_ForceUnconditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), trueOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     null, urls, null, null,JobPriority.NORMAL.getPriority(), trueOption
@@ -107,7 +106,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmIsShownByUrl_WithoutOptions() throws ExecutionException, IOException {
+    public void test_edmIsShownByUrl_WithoutOptions() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     null, null, url, null,JobPriority.NORMAL.getPriority()
@@ -117,7 +116,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmIsShownByUrl_DefaultOptions() throws ExecutionException, IOException {
+    public void test_edmIsShownByUrl_DefaultOptions() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     null, null, url, null,JobPriority.NORMAL.getPriority(), falseOption
@@ -127,7 +126,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmIsShownByUrl_ForceUnconditionalDownload() throws ExecutionException, IOException {
+    public void test_edmIsShownByUrl_ForceUnconditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), trueOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     null, null, url, null,JobPriority.NORMAL.getPriority(), trueOption
@@ -140,7 +139,7 @@ public class JobCreatorTest {
 
 
     @Test
-    public void test_edmIsShownAtUrl_WithoutOptions() throws ExecutionException, IOException {
+    public void test_edmIsShownAtUrl_WithoutOptions() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     null, null, null, url,JobPriority.NORMAL.getPriority()
@@ -150,7 +149,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmIsShownAtUrl_DefaultOptions() throws ExecutionException, IOException {
+    public void test_edmIsShownAtUrl_DefaultOptions() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     null, null, null, url,JobPriority.NORMAL.getPriority(), falseOption
@@ -160,7 +159,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmIsShownAtUrl_ForceUnconditionalDownload() throws ExecutionException, IOException {
+    public void test_edmIsShownAtUrl_ForceUnconditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), trueOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
                                                                     null, null, null, url,JobPriority.NORMAL.getPriority(), trueOption
@@ -170,7 +169,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_AllTasks() throws ExecutionException, IOException {
+    public void test_AllTasks() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = new ArrayList<>();
         expectedJobs.addAll(ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
         expectedJobs.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption));
@@ -184,7 +183,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_EdmObject_EdmHasViews() throws ExecutionException, IOException {
+    public void test_EdmObject_EdmHasViews() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = new ArrayList<>();
         expectedJobs.addAll(ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
         expectedJobs.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption));
@@ -196,7 +195,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_EdmIsShownBy_EdmIsShownAt() throws ExecutionException, IOException {
+    public void test_EdmIsShownBy_EdmIsShownAt() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = new ArrayList<>();
         expectedJobs.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
         expectedJobs.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
@@ -208,7 +207,7 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_EdmObject_EdmHasViews_EdmIsShownBy() throws ExecutionException, IOException {
+    public void test_EdmObject_EdmHasViews_EdmIsShownBy() throws ExecutionException {
         final List<ProcessingJobTuple> expectedJobs = new ArrayList<>();
         expectedJobs.addAll(ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption));
         expectedJobs.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption));
