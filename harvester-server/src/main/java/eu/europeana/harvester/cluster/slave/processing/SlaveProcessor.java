@@ -101,19 +101,21 @@ public class SlaveProcessor {
                 mediaMetaInfoTuple = mediaMetaInfoTuple.withImageMetaInfo(mediaMetaInfoTuple.getImageMetaInfo().withColorPalette(imageColorMetaInfo.getColorPalette()));
         }
 
-        // Thumbnail generation : This happens only for images where color extraction was successful.
-        if ((null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty() && (imageColorMetaInfo != null)) {
-            try {
-                generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent,
-                        referenceOwner, thumbnailGenerationProcessingTasks);
+        // Thumbnail generation : This happens JUST for images (ONLY where color extraction was successful) and PDF files.
+        if ((null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty()) {
+            if ((MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE) && (imageColorMetaInfo != null)) || MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.PDF)) {
+                try {
+                    generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent,
+                            referenceOwner, thumbnailGenerationProcessingTasks);
 
-                if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
-                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
-                } else {
-                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED, new Exception("thumbnailGenerationProcessingTasks is null OR empty OR imageColorMetaInfo is null"));
+                    if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
+                        stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
+                    } else {
+                        stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED, new Exception("thumbnailGenerationProcessingTasks is null OR empty OR imageColorMetaInfo is null"));
+                    }
+                } catch (Exception e) {
+                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR, e);
                 }
-            } catch (Exception e) {
-                stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR, e);
             }
         }
 
@@ -280,7 +282,6 @@ public class SlaveProcessor {
                                                                           final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks) throws ThumbnailGenerationException {
         final Map<ProcessingJobSubTask, MediaFile> results = new HashMap<ProcessingJobSubTask, MediaFile>();
         for (final ProcessingJobSubTask thumbnailGenerationTask : thumbnailGenerationProcessingTasks) {
-            if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
                 SlaveMetrics.Worker.Slave.Processing.thumbnailGenerationCounter.inc();
                 final Timer.Context thumbnailGenerationDurationContext = SlaveMetrics.Worker.Slave.Processing.thumbnailGenerationDuration.time();
                 try {
@@ -299,7 +300,6 @@ public class SlaveProcessor {
                 } finally {
                     thumbnailGenerationDurationContext.stop();
                 }
-            }
         }
         return results;
     }
