@@ -8,6 +8,8 @@ import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceProcessingProfileDao;
 import scala.concurrent.duration.Duration;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,7 +46,7 @@ public class JobRestarterActor extends UntypedActor {
     }
 
     @Override
-    public void onReceive (Object message) throws Exception {
+    public void onReceive (Object message) throws ExecutionException, IOException {
         if (message instanceof ReloadJobs) {
             helper.reloadJobs();
             cancellable = scheduleOnce();

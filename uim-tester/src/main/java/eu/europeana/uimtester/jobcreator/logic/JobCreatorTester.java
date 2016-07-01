@@ -10,8 +10,7 @@ import eu.europeana.uimtester.jobcreator.domain.UIMTestSample;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -35,13 +34,13 @@ public class JobCreatorTester {
         writer.write(processingJob);
     }
 
-    private Iterable<ProcessingJobTuple> createAndSendJobsFromSamples(final List<UIMTestSample> samples) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException {
+    private Iterable<ProcessingJobTuple> createAndSendJobsFromSamples(final List<UIMTestSample> samples) throws InterruptedException, IOException, TimeoutException, ExecutionException {
         final List<ProcessingJobTuple> jobTuples = generateJobs(samples);
         harvesterClient.createOrModifyProcessingJobTuples(jobTuples);
         return jobTuples;
     }
 
-    private List<ProcessingJobTuple> generateJobs(List<UIMTestSample> samples) throws UnknownHostException, MalformedURLException, ExecutionException {
+    private List<ProcessingJobTuple> generateJobs(List<UIMTestSample> samples) throws ExecutionException, IOException {
         final List<ProcessingJobTuple> generatedJobs = new ArrayList<>();
         for (final UIMTestSample testSample : samples) {
             generatedJobs.addAll(JobCreator.createJobs(

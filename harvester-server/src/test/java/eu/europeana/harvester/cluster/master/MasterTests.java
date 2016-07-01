@@ -40,8 +40,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,7 +50,6 @@ import java.util.concurrent.TimeoutException;
 import static eu.europeana.harvester.TestUtils.*;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Created by paul on 12/08/15.
@@ -76,16 +74,12 @@ public class MasterTests {
 
     @Before
     public void setUp() throws Exception {
-        MongoClient mongo = new MongoClient("178.63.58.51", 27017);
+        MongoClient mongo = new MongoClient("78.46.164.244", 27017);
         Morphia morphia = new Morphia();
         String dbName = "test_crf_europeana_harvester_master";
 
-        final String username = "test_crf_europeana_harvester_master";
-        final String password = "Nhck0zCfcu0M6kK";
-
-        if (!mongo.getDB("admin").authenticate(username, password.toCharArray())) {
-            fail("Couldn't auth info db");
-        }
+        final String username = "";
+        final String password = "";
 
         datastore = morphia.createDatastore(mongo, dbName);
 
@@ -118,7 +112,7 @@ public class MasterTests {
 
     }
 
-    private void createSomeJobs(final List<String> urls, final Integer priority) throws ExecutionException, UnknownHostException, MalformedURLException, TimeoutException, InterruptedException {
+    private void createSomeJobs(final List<String> urls, final Integer priority) throws ExecutionException, TimeoutException, InterruptedException, IOException {
         final String collectionId = "test_collection_1";
         final String providerId = "test_provider_1";
         final String recordId = "test_record_1";
@@ -141,7 +135,7 @@ public class MasterTests {
 
     }
 
-    private void createSingleConditionalDownloadJob(final String url, final Integer priority) throws ExecutionException, UnknownHostException, MalformedURLException, TimeoutException, InterruptedException {
+    private void createSingleConditionalDownloadJob(final String url, final Integer priority) throws ExecutionException, TimeoutException, InterruptedException, IOException {
         final String collectionId = "test_collection_1";
         final String providerId = "test_provider_1";
         final String recordId = "test_record_1";
@@ -217,7 +211,7 @@ public class MasterTests {
 
     @Test
     public void canLoadJobsWithNormalPriorityAndSendThemToTheSlaveAndPersistTheResult() throws
-            InterruptedException, ExecutionException, MalformedURLException, TimeoutException, UnknownHostException {
+            InterruptedException, ExecutionException, TimeoutException, IOException {
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
         createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());
@@ -258,7 +252,7 @@ public class MasterTests {
 
                 final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics1 = sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(doneProcessing1.getReferenceId(), doneProcessing1.getJobId());
                 assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseCode().longValue(), 200);
-                assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseHeaders().size(), 20);
+                assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseHeaders().size(), 23);
                 assertTrue(sourceDocumentProcessingStatistics1.getHttpResponseContentSizeInBytes() > 10000);
 
                 final SourceDocumentReference sourceDocumentReference = sourceDocumentReferenceDao.read(doneProcessing1.getReferenceId());
@@ -275,7 +269,7 @@ public class MasterTests {
 
     @Test
     public void canLoadJobsWithNormalPriorityAndSendThemToTheSlave() throws
-            InterruptedException, ExecutionException, MalformedURLException, TimeoutException, UnknownHostException {
+            InterruptedException, ExecutionException, TimeoutException, IOException {
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
         createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());
@@ -315,7 +309,7 @@ public class MasterTests {
 
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics1 = sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(doneProcessing1.getReferenceId(),doneProcessing1.getJobId());
             assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseCode().longValue(), 200);
-            assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseHeaders().size(), 20);
+            assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseHeaders().size(), 23);
             assertTrue(sourceDocumentProcessingStatistics1.getHttpResponseContentSizeInBytes() > 10000);
             final SourceDocumentReference sourceDocumentReference1 = sourceDocumentReferenceDao.read(doneProcessing1.getReferenceId());
             assertEquals(sourceDocumentReference1.getLastStatsId(), sourceDocumentProcessingStatistics1.getId());
@@ -355,8 +349,8 @@ public class MasterTests {
 
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics2 = sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(doneProcessing2.getReferenceId(),doneProcessing2.getJobId());
             assertEquals(sourceDocumentProcessingStatistics2.getHttpResponseCode().longValue(), 200);
-            assertEquals(sourceDocumentProcessingStatistics2.getHttpResponseHeaders().size(), 20);
-            assertTrue(sourceDocumentProcessingStatistics2.getHttpResponseContentSizeInBytes() == 0);
+            assertEquals(sourceDocumentProcessingStatistics2.getHttpResponseHeaders().size(), 23);
+            assertTrue(sourceDocumentProcessingStatistics2.getHttpResponseContentSizeInBytes() > 0);
 
             stopSystem(systemAndMasterActor.getKey());
 

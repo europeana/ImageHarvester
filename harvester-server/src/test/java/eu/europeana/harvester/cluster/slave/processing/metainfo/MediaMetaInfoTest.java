@@ -199,7 +199,7 @@ public class MediaMetaInfoTest {
         assertNull("audio meta info should be null, when metaInfoTuple a plain text", metaInfoTuple.getAudioMetaInfo());
         assertNull("video meta info should be null, when metaInfoTuple a plain text", metaInfoTuple.getVideoMetaInfo());
 
-        assertEquals((Long)1933L, metaInfo.getFileSize());
+        assertEquals((Long)4668L, metaInfo.getFileSize());
         assertTrue(metaInfo.getIsSearchable());
         assertNull(metaInfo.getResolution());
     }

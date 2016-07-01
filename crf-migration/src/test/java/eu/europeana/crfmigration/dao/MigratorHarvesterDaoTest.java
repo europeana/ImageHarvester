@@ -81,15 +81,13 @@ public class MigratorHarvesterDaoTest {
     }
 
     @Test
-    public void test_ProcessJobs_EmptyList() throws InterruptedException, MalformedURLException, TimeoutException,
-                                                    ExecutionException, UnknownHostException {
+    public void test_ProcessJobs_EmptyList() throws InterruptedException, MalformedURLException, TimeoutException, ExecutionException, UnknownHostException {
         harvesterDao.saveProcessingJobTuples(Collections.EMPTY_LIST, migrationBatchId);
         assertEquals(0, dataStore.getCount(ProcessingJob.class));
     }
 
     @Test
-    public void test_ProcessJobs_OneElement() throws MalformedURLException, UnknownHostException, InterruptedException,
-                                                     ExecutionException, TimeoutException {
+    public void test_ProcessJobs_OneElement() throws InterruptedException, ExecutionException, TimeoutException, IOException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com",
                                                                              owner,
                                                                              JobPriority.NORMAL.getPriority(),

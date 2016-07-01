@@ -10,6 +10,7 @@ import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class JobRestarterHelper {
         this.processingJobDao = processingJobDao;
     }
 
-    public void reloadJobs() throws MalformedURLException, UnknownHostException, ExecutionException {
+    public void reloadJobs() throws ExecutionException, IOException {
         final List<ProcessingJobTuple> newProcessingJobTuples = new ArrayList<>();
 
         for (final SourceDocumentReferenceProcessingProfile profile: processingProfileDao.getJobToBeEvaluated()) {

@@ -9,6 +9,7 @@ import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import eu.europeana.jobcreator.logic.ProcessingJobBuilder;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -29,13 +30,13 @@ public class JobCreator {
                                                              final URLSourceType urlSourceType,
                                                              final int priority,
                                                              final DocumentReferenceTaskType taskType
-                                                            ) throws ExecutionException {
+                                                            ) throws ExecutionException, IOException {
 
-        final String url = reference.getUrl();
-        final String edmObjectUrl = (URLSourceType.OBJECT == urlSourceType) ? url : null;
-        final List<String> edmHasViewUrl = (URLSourceType.HASVIEW == urlSourceType) ? Arrays.asList(url) : null;
-        final String edmIsShownByUrl = (URLSourceType.ISSHOWNBY == urlSourceType) ? url: null;
-        final String edmIshShownAtUrl = (URLSourceType.ISSHOWNAT == urlSourceType) ? url: null;
+        final String sourceDocumentRefUrl = reference.getUrl();
+        final String edmObjectUrl = (URLSourceType.OBJECT == urlSourceType) ? sourceDocumentRefUrl : null;
+        final List<String> edmHasViewUrl = (URLSourceType.HASVIEW == urlSourceType) ? Arrays.asList(sourceDocumentRefUrl) : null;
+        final String edmIsShownByUrl = (URLSourceType.ISSHOWNBY == urlSourceType) ? sourceDocumentRefUrl: null;
+        final String edmIshShownAtUrl = (URLSourceType.ISSHOWNAT == urlSourceType) ? sourceDocumentRefUrl: null;
         final ProcessingJobCreationOptions options = new ProcessingJobCreationOptions(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD == taskType);
 
         return createJobs(owner.getCollectionId(),
@@ -75,7 +76,7 @@ public class JobCreator {
                                                             final String edmIsShownByUrl,
                                                             final String edmIsShownAtUrl,
                                                             final Integer priority
-                                                            ) throws ExecutionException {
+                                                            ) throws ExecutionException, IOException {
         return createJobs(collectionId, providerId, recordId, executionId, edmObjectUrl, edmHasViewUrls, edmIsShownByUrl, edmIsShownAtUrl, priority, new ProcessingJobCreationOptions(false));
     }
 
@@ -103,7 +104,7 @@ public class JobCreator {
                                                             final String edmIsShownByUrl,
                                                             final String edmIsShownAtUrl,
                                                             final Integer priority,
-                                                            final ProcessingJobCreationOptions options) throws ExecutionException {
+                                                            final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
 
         if (null == collectionId || null == providerId || null == recordId) {
             throw new IllegalArgumentException("Incomplete ownership information : collectionId = " + collectionId + ", providerId = " + providerId + " and recordId = " + recordId + ". Neither of them can be null. ");
@@ -117,19 +118,19 @@ public class JobCreator {
         final ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId, executionId);
 
         if (null != edmObjectUrl) {
-            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner,priority, options));
+            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner, priority, options));
         }
 
         if (null != edmHasViewUrls && !edmHasViewUrls.isEmpty()) {
-            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner,priority, options));
+            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner, priority, options));
         }
 
         if (null != edmIsShownByUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner,priority, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner, priority, options));
         }
 
         if (null != edmIsShownAtUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner,priority, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner, priority, options));
 
         }
 
@@ -151,6 +152,7 @@ public class JobCreator {
      * @return
      * @throws UnknownHostException
      * @throws MalformedURLException
+     * @throws java.io.IOException
      */
     public final static List<ProcessingJobTuple> createJobs(final String collectionId,
                                                             final String providerId,
@@ -162,7 +164,7 @@ public class JobCreator {
                                                             final String edmIsShownAtUrl,
                                                             final Integer priority,
                                                             final SourceDocumentReference sourceDocumentReference,
-                                                            final ProcessingJobCreationOptions options) throws ExecutionException {
+                                                            final ProcessingJobCreationOptions options) throws ExecutionException, IOException {
 
         if (null == collectionId || null == providerId || null == recordId) {
             throw new IllegalArgumentException("Incomplete ownership information : collectionId = " + collectionId + ", providerId = " + providerId + " and recordId = " + recordId + ". Neither of them can be null. ");
@@ -176,19 +178,19 @@ public class JobCreator {
         final ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId, executionId);
 
         if (null != edmObjectUrl) {
-            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner,priority, sourceDocumentReference, options));
+            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner, priority, sourceDocumentReference, options));
         }
 
         if (null != edmHasViewUrls && !edmHasViewUrls.isEmpty()) {
-            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner,priority, sourceDocumentReference, options));
+            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner, priority, sourceDocumentReference, options));
         }
 
         if (null != edmIsShownByUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner,priority, sourceDocumentReference, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner, priority, sourceDocumentReference, options));
         }
 
         if (null != edmIsShownAtUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner,priority, sourceDocumentReference, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner, priority, sourceDocumentReference, options));
         }
 
         return results;
