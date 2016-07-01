@@ -6,7 +6,6 @@ import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,49 +26,49 @@ public class ProcessingJobBuilderTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EdmObj_NullOption() throws ExecutionException {
-        ProcessingJobBuilder.edmObjectUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
+        ProcessingJobBuilder.edmObjectUrlJobs("", owner, JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EdmHasView_NullOption() throws ExecutionException {
-        ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(""), owner,JobPriority.NORMAL.getPriority(), null);
+        ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(""), owner, JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EdmIsShownBy_NullOption() throws ExecutionException {
-        ProcessingJobBuilder.edmIsShownByUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
+        ProcessingJobBuilder.edmIsShownByUrlJobs("", owner, JobPriority.NORMAL.getPriority(), null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void test_EdmIsShownAt_NullOption() throws ExecutionException {
-        ProcessingJobBuilder.edmIsShownAtUrlJobs("", owner,JobPriority.NORMAL.getPriority(), null);
+        ProcessingJobBuilder.edmIsShownAtUrlJobs("", owner, JobPriority.NORMAL.getPriority(), null);
     }
 
     public void test_EdmObj_InvalidUrl() throws ExecutionException {
-        ProcessingJobBuilder.edmObjectUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
+        ProcessingJobBuilder.edmObjectUrlJobs(UUID.randomUUID().toString(), owner, JobPriority.NORMAL.getPriority(), falseOption);
     }
 
     public void test_EdmHasView_InvalidUrl() throws ExecutionException {
-        ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(UUID.randomUUID().toString()), owner,JobPriority.NORMAL.getPriority(), falseOption);
+        ProcessingJobBuilder.edmHasViewUrlsJobs(Arrays.asList(UUID.randomUUID().toString()), owner, JobPriority.NORMAL.getPriority(), falseOption);
     }
 
     public void test_EdmIsShownBy_InvalidUrl() throws ExecutionException {
-        ProcessingJobBuilder.edmIsShownByUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
+        ProcessingJobBuilder.edmIsShownByUrlJobs(UUID.randomUUID().toString(), owner, JobPriority.NORMAL.getPriority(), falseOption);
     }
 
     public void test_EdmIsShownAt_InvalidUrl() throws ExecutionException {
-        ProcessingJobBuilder.edmIsShownAtUrlJobs(UUID.randomUUID().toString(), owner,JobPriority.NORMAL.getPriority(), falseOption);
+        ProcessingJobBuilder.edmIsShownAtUrlJobs(UUID.randomUUID().toString(), owner, JobPriority.NORMAL.getPriority(), falseOption);
     }
 
     @Test
     public void test_EdmObj_ValidUrl_DefaultOption() throws ExecutionException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://dbooks.bodleian.ox.ac.uk/books/PDFs/590010416.pdf", owner, JobPriority.FASTLANE.getPriority(),
                                                                                     falseOption);
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
+        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 0, 2,
                       ProcessingJobSubTaskType.META_EXTRACTION,
                       ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
 
@@ -77,13 +76,13 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void test_EdmObj_ValidUrl_ForceUnconditionalDownload() throws ExecutionException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://dbooks.bodleian.ox.ac.uk/books/PDFs/590010416.pdf", owner, JobPriority.NORMAL.getPriority(),
                                                                                     trueOption);
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 2,
+        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 0, 2,
                       ProcessingJobSubTaskType.META_EXTRACTION,
                       ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
     }
@@ -91,9 +90,11 @@ public class ProcessingJobBuilderTest {
     @Test
     public void testEdmHasViewUrls_OneElement_DefaultOption() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
-        urls.add("http://www.google.com");
+        urls.addAll(Arrays.asList("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg",
+                "https://www.dropbox.com/s/nw9qqf7bk9r79ez/DK_Brendekilde_Udslidt_Brandts.tif?raw=1",
+                "http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg"));
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, JobPriority.NORMAL.getPriority(), falseOption);
         assertEquals(urls.size(), jobs.size());
 
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2, ProcessingJobSubTaskType.values());
@@ -104,11 +105,12 @@ public class ProcessingJobBuilderTest {
     @Test
     public void testEdmHasViewUrls_TwoElements_DefaultOption() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
-        urls.add("http://www.google.com");
-        urls.add("http://www.facebook.com");
+        urls.addAll(Arrays.asList("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg",
+                "https://www.dropbox.com/s/nw9qqf7bk9r79ez/DK_Brendekilde_Udslidt_Brandts.tif?raw=1",
+                "http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg"));
 
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, JobPriority.NORMAL.getPriority(), falseOption);
 
         assertEquals(urls.size(), jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
@@ -119,15 +121,11 @@ public class ProcessingJobBuilderTest {
     @Test
     public void testEdmHasViewUrls_ManyElements() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
-        urls.add("http://www.google.com");
-        urls.add("http://www.facebook.com");
-        urls.add("http://www.yahoo.com");
-        urls.add("http://www.wikipedia.org");
-        urls.add("http://de.wikipedia.org/wiki");
-        urls.add("http://www.w3schools.com/");
-        urls.add("http://www.skype.com");
+        urls.addAll(Arrays.asList("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg",
+                "https://www.dropbox.com/s/nw9qqf7bk9r79ez/DK_Brendekilde_Udslidt_Brandts.tif?raw=1",
+                "http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg"));
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, JobPriority.NORMAL.getPriority(), falseOption);
 
         assertEquals(urls.size(), jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2, ProcessingJobSubTaskType.values());
@@ -136,9 +134,11 @@ public class ProcessingJobBuilderTest {
     @Test
     public void testEdmHasViewUrls_OneElement_ForceUnconditionalOption() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
-        urls.add("http://www.google.com");
+        urls.addAll(Arrays.asList("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg",
+                "https://www.dropbox.com/s/nw9qqf7bk9r79ez/DK_Brendekilde_Udslidt_Brandts.tif?raw=1",
+                "http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg"));
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), trueOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, JobPriority.NORMAL.getPriority(), trueOption);
         assertEquals(urls.size(), jobs.size());
 
         validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,  1, 1, 2, ProcessingJobSubTaskType.values());
@@ -147,15 +147,11 @@ public class ProcessingJobBuilderTest {
     @Test
     public void testEdmHasViewUrls_ManyElements_ForceUnconditionalDownload() throws ExecutionException {
         final List<String> urls = new ArrayList<>();
-        urls.add("http://www.google.com");
-        urls.add("http://www.facebook.com");
-        urls.add("http://www.yahoo.com");
-        urls.add("http://www.wikipedia.org");
-        urls.add("http://de.wikipedia.org/wiki");
-        urls.add("http://www.w3schools.com/");
-        urls.add("http://www.skype.com");
+        urls.addAll(Arrays.asList("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg",
+                "https://www.dropbox.com/s/nw9qqf7bk9r79ez/DK_Brendekilde_Udslidt_Brandts.tif?raw=1",
+                "http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg"));
 
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), trueOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner, JobPriority.NORMAL.getPriority(), trueOption);
 
         assertEquals(urls.size(), jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 2, ProcessingJobSubTaskType.values());
@@ -163,7 +159,7 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void testEdmIsShownBy_ValidUrl_DefaultOption() throws ExecutionException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg", owner, JobPriority.NORMAL.getPriority(),
                                                                                        falseOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
@@ -172,7 +168,7 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void testEdmIsShownBy_ValidUrl_ForceUnconditionalDownload() throws ExecutionException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg", owner, JobPriority.NORMAL.getPriority(),
                                                                                        trueOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 2,
@@ -182,7 +178,7 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void testEdmIsShownAt_ValidUrl_DefaultOption() throws ExecutionException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(),
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://dbooks.bodleian.ox.ac.uk/books/PDFs/590010416.pdf", owner, JobPriority.NORMAL.getPriority(),
                                                                                        falseOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CHECK_LINK, 0, 0, 0);
@@ -190,7 +186,7 @@ public class ProcessingJobBuilderTest {
 
     @Test
     public void testEdmIsShownAt_ValidUrl_ForceUnconditionalDownload() throws ExecutionException {
-        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://www.google.com", owner,JobPriority.NORMAL.getPriority(), trueOption);
+        final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg", owner, JobPriority.NORMAL.getPriority(), trueOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CHECK_LINK, 0, 0, 0);
     }
