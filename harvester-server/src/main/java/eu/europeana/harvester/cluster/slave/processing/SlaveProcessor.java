@@ -78,7 +78,10 @@ public class SlaveProcessor {
         }
 
         // Color extraction : This happens only for images.
-        if ((null != colorExtractionProcessingTask)) {
+        if (!MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
+            stats = stats.withColorExtractionState(ProcessingJobSubTaskState.NEVER_EXECUTED);
+
+        } else if ((null != colorExtractionProcessingTask)) {
             try {
                 imageColorMetaInfo = extractColor(originalFilePath);
 
