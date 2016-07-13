@@ -19,6 +19,22 @@ public class CachingUrlResolverTests {
     public Timeout globalTimeout = new Timeout(1000); // 1 second max per method tested
 
     @Test
+    public void canResolveWhenHostnameUnknown() throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+
+        final String url1 = "c14005-o.l.core.cdn.streamfarm.net";
+        final CachingUrlResolver cache = new CachingUrlResolver();
+        assertEquals(cache.resolveIpOfUrlAndReturnLoopbackOnFail(url1),"127.0.0.1");
+    }
+
+    @Test
+    public void canResolveWhenUrlInvalid() throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
+
+        final String url1 = "@@@##$#@!SS@sadsa7d8217y21w1hws891wc14005-o.l.core.cdn.streamfarm.net";
+        final CachingUrlResolver cache = new CachingUrlResolver();
+        assertEquals(cache.resolveIpOfUrlAndReturnLoopbackOnFail(url1),"127.0.0.1");
+    }
+
+    @Test
     public void canResolve1MillionTimesTheSameIpInUnder1Second() throws InterruptedException, ExecutionException, TimeoutException, MalformedURLException {
 
         final String url1 = "http://stackoverflow.com/";

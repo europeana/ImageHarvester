@@ -38,7 +38,7 @@ public class CachingUrlResolver {
         return ip;
     }
 
-    public final String resolveIpOfUrlAndReturnLoopbackOnFail(String url) throws ExecutionException {
+    public final String resolveIpOfUrlAndReturnLoopbackOnFail(String url)  {
 
         String ipOfUrl = NO_IP;
         try {

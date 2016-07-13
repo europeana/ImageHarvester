@@ -1,7 +1,7 @@
-ImageHarvester
+Content Reuse Framework
 ==============
 
-Distributed version of UIM Linkchecker/Thumbler
+Framework for extracting, storing and indexing technical metadata of media files linked to in the metadata provided to Europeana. The framework also creates thumbnails. The ultimate purpose is to allow users of Europeana to filter on attributes of the media files (resolution, size, colour depth), etc.
 
 ## Architecture & components overview
 
@@ -19,7 +19,7 @@ The harvester client is the component used by external systems to send commands 
 It is just a thin wrapper that facilitates the interaction with the harvester server. 
 The client communicates with the server two ways : 
 
-* writting/reading to/from the shared MongoDB databse  
+* writing/reading to/from the shared MongoDB databse  
 * receiving events on the MQ
 
 ### The harvester server
