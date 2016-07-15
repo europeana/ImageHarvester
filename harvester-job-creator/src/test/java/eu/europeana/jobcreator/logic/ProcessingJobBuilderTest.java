@@ -63,28 +63,28 @@ public class ProcessingJobBuilderTest {
     @Test
     public void test_EdmObj_ValidUrl_DefaultOption() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://dbooks.bodleian.ox.ac.uk/books/PDFs/590010416.pdf", owner, JobPriority.FASTLANE.getPriority(),
-                                                                                    falseOption);
+                falseOption);
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 0, 2,
-                      ProcessingJobSubTaskType.META_EXTRACTION,
-                      ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
+                ProcessingJobSubTaskType.META_EXTRACTION,
+                ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
 
     }
 
     @Test
     public void test_EdmObj_ValidUrl_ForceUnconditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://dbooks.bodleian.ox.ac.uk/books/PDFs/590010416.pdf", owner, JobPriority.NORMAL.getPriority(),
-                                                                                    trueOption);
+                trueOption);
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
         validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 0, 2,
-                      ProcessingJobSubTaskType.META_EXTRACTION,
-                      ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
+                ProcessingJobSubTaskType.META_EXTRACTION,
+                ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
     }
 
     @Test
@@ -114,7 +114,7 @@ public class ProcessingJobBuilderTest {
 
         assertEquals(urls.size(), jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
-                      ProcessingJobSubTaskType.values());
+                ProcessingJobSubTaskType.values());
 
     }
 
@@ -160,26 +160,26 @@ public class ProcessingJobBuilderTest {
     @Test
     public void testEdmIsShownBy_ValidUrl_DefaultOption() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg", owner, JobPriority.NORMAL.getPriority(),
-                                                                                       falseOption);
+                falseOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 1, 2,
-                      ProcessingJobSubTaskType.values());
+                ProcessingJobSubTaskType.values());
     }
 
     @Test
     public void testEdmIsShownBy_ValidUrl_ForceUnconditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownByUrlJobs("http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg", owner, JobPriority.NORMAL.getPriority(),
-                                                                                       trueOption);
+                trueOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 1, 2,
-                      ProcessingJobSubTaskType.values());
+                ProcessingJobSubTaskType.values());
     }
 
 
     @Test
     public void testEdmIsShownAt_ValidUrl_DefaultOption() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmIsShownAtUrlJobs("http://dbooks.bodleian.ox.ac.uk/books/PDFs/590010416.pdf", owner, JobPriority.NORMAL.getPriority(),
-                                                                                       falseOption);
+                falseOption);
         assertEquals(1, jobs.size());
         validateTasks(jobs, DocumentReferenceTaskType.CHECK_LINK, 0, 0, 0);
     }
