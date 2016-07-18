@@ -6,6 +6,7 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import eu.europeana.harvester.cluster.master.limiter.domain.*;
 import eu.europeana.harvester.cluster.master.metrics.MasterMetrics;
+import eu.europeana.harvester.logging.LoggingComponent;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +41,8 @@ public class IPLimiterAccountantActor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.IP_LIMITER),
-//                "IP limiter pre starting.");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.IP_LIMITER),
+                "IP limiter pre starting.");
 
         getContext().system().scheduler().scheduleOnce(scala.concurrent.duration.Duration.create(IPLimiterConfig.getMaxSlotUsageLife().getStandardSeconds(),
                 TimeUnit.SECONDS), getSelf(), new IPLimitCleanExpiredSlots(), getContext().system().dispatcher(), getSelf());
@@ -84,8 +85,8 @@ public class IPLimiterAccountantActor extends UntypedActor {
 
     private final void cleanExpiredSlots() {
         final int reclaimedSlots = ipLimiterAccountant.reclaimOccupiedSlotsOlderThan(DateTime.now().minus(IPLimiterConfig.getMaxSlotUsageLife()));
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.IP_LIMITER),
-//                "IP limiter reclaimed {} slots. Next reclaiming will execute in {} seconds.", reclaimedSlots, IPLimiterConfig.getMaxSlotUsageLife().toStandardSeconds().getSeconds());
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.IP_LIMITER),
+                "IP limiter reclaimed {} slots. Next reclaiming will execute in {} seconds.", reclaimedSlots, IPLimiterConfig.getMaxSlotUsageLife().toStandardSeconds().getSeconds());
 
     }
 }

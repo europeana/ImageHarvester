@@ -28,14 +28,14 @@ public class JobLoaderMasterHelper  {
         for (MachineResourceReference machine : machines)
             ipDistribution.put(machine.getIp(), 0);
 
-//        LOG.info("IP distribution: ");
+        LOG.debug("IP distribution: ");
 //        for (Map.Entry<String, Integer> ip : ipDistribution.entrySet()) {
-//            LOG.info("{}: {}", ip.getKey(), ip.getValue());
+//            LOG.debug("{}: {}", ip.getKey(), ip.getValue());
 //            //machineResourceReferenceDao.createOrModify(new MachineResourceReference(ip.getKey()), WriteConcern.NORMAL);
 //        }
 
-//        LOG.info("Nr. of machines: {}", ipDistribution.size());
-//        LOG.info("End of IP distribution");
+        LOG.debug("Nr. of machines: {}", ipDistribution.size());
+        LOG.debug("End of IP distribution");
         return ipDistribution;
     }
 

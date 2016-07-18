@@ -67,7 +67,7 @@ public class WebResourceMetaInfoDaoImpl implements WebResourceMetaInfoDao {
             existingIds.add(nextOne.get("_id").toString());
         }
 
-        LOG.info("WebResourceMetaInfo {} to be created out of total of {}",existingIds.size(),webResourceMetaInfos.size());
+        LOG.debug("WebResourceMetaInfo {} to be created out of total of {}",existingIds.size(),webResourceMetaInfos.size());
 
         // Step 2 : update or create
         final BulkWriteOperation bulk = mongoDB.getCollection(datastore.getCollection(WebResourceMetaInfo.class).getName()).initializeOrderedBulkOperation();

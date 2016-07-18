@@ -148,7 +148,7 @@ public class HarvesterClientImpl implements HarvesterClient {
             return Collections.emptyList();
         }
 
-        //LOG.debug("Create or modify {} SourceDocumentReferences documents ",sourceDocumentReferences.size());
+        LOG.debug("Create or modify {} SourceDocumentReferences documents ", newSourceDocumentReferences.size());
         final List<MachineResourceReference> machineResourceReferences = new ArrayList<>();
 
         // Prepare all the machine references
@@ -225,7 +225,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJob stopJob(String jobId) {
-        //LOG.debug("Stopping job with id: {}", jobId);
+        LOG.debug("Stopping job with id: {}", jobId);
         final ProcessingJob processingJob = processingJobDao.read(jobId);
         final JobState currentState = processingJob.getState();
         if ((JobState.RUNNING).equals(currentState)
@@ -241,7 +241,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
     @Override
     public ProcessingJob startJob(String jobId) {
-        //LOG.debug("Starting job with id: {}", jobId);
+        LOG.debug("Starting job with id: {}", jobId);
         final ProcessingJob processingJob = processingJobDao.read(jobId);
         final ProcessingJob newProcessingJob = processingJob.withState(JobState.RESUME);
         processingJobDao.update(newProcessingJob, harvesterClientConfig.getWriteConcern());

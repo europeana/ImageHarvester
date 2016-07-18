@@ -13,7 +13,7 @@ public class MasterDaemon implements Daemon {
 
     @Override
     public void init(DaemonContext daemonContext) throws Exception {
-        //LOG.info("Initializing master");
+        LOG.debug("Initializing master");
 
         String[] args = daemonContext.getArguments();
         master = new Master(args);
@@ -22,20 +22,20 @@ public class MasterDaemon implements Daemon {
 
     @Override
     public void start() throws Exception {
-        //LOG.info("Starting master");
+        LOG.debug("Starting master");
 
         master.start();
     }
 
     @Override
     public void stop() throws Exception {
-        //LOG.info("Stopping master");
+        LOG.debug("Stopping master");
 
         master.getActorSystem().shutdown();
     }
 
     @Override
     public void destroy() {
-        //LOG.info("Destroying master");
+        LOG.debug("Destroying master");
     }
 }

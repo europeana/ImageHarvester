@@ -110,11 +110,11 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                //LOG.info("Using swift as media-storage ");
+                LOG.debug("Using swift as media-storage ");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else {
-                //LOG.info("Using dummy as media-storage ");
+                LOG.debug("Using dummy as media-storage ");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }
@@ -189,11 +189,11 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                //LOG.info("Using swift as media-storage ");
+                LOG.debug("Using swift as media-storage ");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else {
-                //LOG.info("Using dummy as media-storage ");
+                LOG.debug("Using dummy as media-storage ");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }
@@ -218,7 +218,7 @@ public class Slave {
 
 
     public void restart() {
-        //LOG.info("Shutting down the actor system.");
+        LOG.debug("Shutting down the actor system.");
         SlaveMetrics.Worker.Slave.restartCounter.inc();
         system.shutdown();
         system.awaitTermination();
@@ -229,7 +229,7 @@ public class Slave {
             LOG.error(e.getMessage());
         }
 
-        //LOG.info("trying to restart the actor system.");
+        LOG.debug("trying to restart the actor system.");
 
         try {
             this.reinit(this);

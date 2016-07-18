@@ -94,8 +94,8 @@ public class JobLoaderExecutorActor extends UntypedActor {
                                   final MachineResourceReferenceDao machineResourceReferenceDao,
                                   final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions,
                                   final Map<String, Integer> ipDistribution) {
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-//                "The loader executor is constructed");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                "The loader executor is constructed");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;

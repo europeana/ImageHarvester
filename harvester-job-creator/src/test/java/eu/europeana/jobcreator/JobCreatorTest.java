@@ -24,11 +24,14 @@ public class JobCreatorTest {
     private final static String recordId = "/2023831/kng_item_item_jsf_id_105436";
     private final static String executionId = "myUIMPlugin1";
 
-    private final static String url = "http://www.bildarchivaustria.at/Preview/13074587.jpg";
-    private final static List<String> urls = Arrays.asList("http://dbooks.bodleian.ox.ac.uk/books/PDFs/590010416.pdf",
-                                                            "http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg",
-                                                            "https://www.dropbox.com/s/nw9qqf7bk9r79ez/DK_Brendekilde_Udslidt_Brandts.tif?raw=1",
-                                                            "http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg");
+//    private final static String url = "http://www.bildarchivaustria.at/Preview/13074587.jpg";
+    private final static String url = "https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/text2.pdf";
+//    private final static List<String> urls = Arrays.asList("http://dbooks.bodleian.ox.ac.uk/books/PDFs/590010416.pdf",
+//                                                            "http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg",
+//                                                            "https://www.dropbox.com/s/nw9qqf7bk9r79ez/DK_Brendekilde_Udslidt_Brandts.tif?raw=1",
+//                                                            "http://memoriademadrid.es/fondos/OTROS/Imp_34473_mh_1991_1_227_a.jpg");
+
+    private final static List<String> urls = Arrays.asList("https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/text2.pdf");
 
     private final static ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId, executionId);
 

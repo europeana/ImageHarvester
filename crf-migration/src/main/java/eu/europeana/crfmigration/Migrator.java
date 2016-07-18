@@ -42,7 +42,7 @@ public class Migrator {
 
 
     public void start() throws IOException, ParseException, InterruptedException, ExecutionException, TimeoutException {
-        LOG.info("Migrator starting ");
+        LOG.debug("Migrator starting ");
 
         final GraphiteReporterConfig graphiteReporterConfig = new GraphiteReporterConfig(config.getGraphiteReporterConfig().getGraphiteServer(), config.getGraphiteReporterConfig().getGraphiteMasterId(), config.getGraphiteReporterConfig().getGraphitePort());
 
@@ -84,7 +84,7 @@ public class Migrator {
     }
 
     public void stop() {
-        LOG.info("Migrator stopped ");
+        LOG.debug("Migrator stopped ");
         System.exit(0);
     }
 

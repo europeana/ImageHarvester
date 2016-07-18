@@ -31,7 +31,7 @@ public class MigratorDaemon implements Daemon {
 
     @Override
     public void init(DaemonContext daemonContext) throws DaemonInitException, Exception {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                 "Initialising the migrator daemon");
 
         String[] args = daemonContext.getArguments();
@@ -46,7 +46,7 @@ public class MigratorDaemon implements Daemon {
         try {
             migrator.start();
         } catch (Exception e) {
-            LOG.info(LoggingComponent
+            LOG.debug(LoggingComponent
                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, null, null, null),
                     "Stopping migrator while processing batch because of exception.",e);
             destroy();

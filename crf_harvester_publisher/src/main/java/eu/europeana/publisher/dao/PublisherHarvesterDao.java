@@ -55,7 +55,7 @@ public class PublisherHarvesterDao {
 
             final Map<String, WebResourceMetaInfo> webResourceMetaInfos = new HashMap<>();
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                      "Getting metainfos."
                     );
 
@@ -105,17 +105,17 @@ public class PublisherHarvesterDao {
                 }
             }
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                      "Starting the updates."
                     );
 
             if (aggregationHasToUpdate) {
                 final Timer.Context writeEdmObjectContext = PublisherMetrics.Publisher.Write.Mongo.writeEdmObject.time(connectionId);
                 try {
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                              "Updating edmObject");
                     BulkWriteResult result = bulkWriteAggregation.execute(WriteConcern.ACKNOWLEDGED);
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
+                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
                                                               publishingBatchId), "Updated edmObject. Results: " + result.toString());
                 }
                 catch (Exception e) {
@@ -131,10 +131,10 @@ public class PublisherHarvesterDao {
             if (europeanaAggregationHasToUpdate) {
                 final Timer.Context writeEdmPreviewContext = PublisherMetrics.Publisher.Write.Mongo.writeEdmPreview.time(connectionId);
                 try {
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                              "Updating edmPreview");
                     BulkWriteResult result = bulkWriteEuropeanaAggregation.execute(WriteConcern.ACKNOWLEDGED);
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
+                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,
                                                               publishingBatchId), "Updated edmPreview. Results: " + result.toString());
                 }
                 catch (Exception e) {
@@ -147,14 +147,14 @@ public class PublisherHarvesterDao {
                 }
             }
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                      "Updating finished. Started writing meta info. #{} " + webResourceMetaInfos.size()
                     );
 
             final Timer.Context context_metainfo = PublisherMetrics.Publisher.Write.Mongo.mongoWriteMetaInfoDuration.time(connectionId);
             try {
                         webResourceMetaInfoDao.createOrModify(webResourceMetaInfos.values(), WriteConcern.ACKNOWLEDGED);
-                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+                        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                                  "Done updating meta {} info documents",webResourceMetaInfos.values().size()
                                 );
             }

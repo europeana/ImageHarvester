@@ -10,6 +10,7 @@ import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlo
 import eu.europeana.harvester.cluster.master.limiter.domain.ReturnConnectionSlotRequest;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
+import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -250,8 +251,8 @@ public class NodeMasterActor extends UntypedActor {
 
                 if(msg != null) {
                     RetrieveUrlWithProcessingConfig tst = (RetrieveUrlWithProcessingConfig) msg;
-//                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-//                            "Slave master starting new Worker Actor for url {} ",tst.getRetrieveUrl().getUrl());
+                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
+                            "Slave master starting new Worker Actor for url {} ",tst.getRetrieveUrl().getUrl());
 
                     ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
                             httpRetrieveResponseFactory, mediaStorageClient, nodeMasterConfig.getColorMapPath()

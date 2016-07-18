@@ -2,6 +2,7 @@ package eu.europeana.publisher.logic;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
@@ -62,12 +63,12 @@ public class PublisherManager {
         currentTimestamp = config.getStartTimestamp();
 
 //  Enable if you want statistics in logs
-//        Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.METRIC_REGISTRY)
-//                                              .outputTo(LOG)
-//                                              .convertRatesTo(TimeUnit.SECONDS)
-//                                              .convertDurationsTo(TimeUnit.MILLISECONDS).build();
-//
-//        reporter.start(20, TimeUnit.SECONDS);
+        Slf4jReporter reporter = Slf4jReporter.forRegistry(PublisherMetrics.METRIC_REGISTRY)
+                                              .outputTo(LOG)
+                                              .convertRatesTo(TimeUnit.SECONDS)
+                                              .convertDurationsTo(TimeUnit.MILLISECONDS).build();
+
+        reporter.start(20, TimeUnit.SECONDS);
 
         if (StringUtils.isEmpty(config.getGraphiteConfig().getServer())) {
             return;
@@ -87,7 +88,7 @@ public class PublisherManager {
 
 
     public void start() throws IOException, SolrServerException, InterruptedException {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                 "Starting publishing process. The minimal timestamp is {}", config.getStartTimestamp());
 
         final AtomicLong numberOfDocumentToProcess = new AtomicLong();
@@ -97,7 +98,7 @@ public class PublisherManager {
             @Override
             public void run() {
                 numberOfDocumentToProcess.set(publisherEuropeanaDao.countNumberOfDocumentUpdatedBefore(currentTimestamp));
-                LOG.info(LoggingComponent
+                LOG.debug(LoggingComponent
                                 .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                         "Number of Remaining documents to process is: " + numberOfDocumentToProcess.toString());
             }
@@ -128,24 +129,24 @@ public class PublisherManager {
 
                 shouldStopGracefully = shouldPublisherStopGraceFully();
 
-                LOG.info(LoggingComponent
+                LOG.debug(LoggingComponent
                                 .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                         "ShouldStopGracefully is " + shouldStopGracefully);
 
 
                 if (shouldStopGracefully == true) {
-                    LOG.info(LoggingComponent
+                    LOG.debug(LoggingComponent
                                     .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                             "Gracefully stopping publisher at end of batch as stop request received during batch processing. Last OK processed timestamp {}", currentTimestamp);
                     return;
                 } else {
-                    LOG.info(LoggingComponent
+                    LOG.debug(LoggingComponent
                                     .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                             "Continuing with next batch as shouldStopGracefully is " + shouldStopGracefully);
                 }
 
             } catch (Exception e) {
-                LOG.info(LoggingComponent
+                LOG.debug(LoggingComponent
                                 .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                         "Stopping publisher as current batch ended prematurely with error. Last OK processed timestamp {}", currentTimestamp);
 
@@ -166,7 +167,7 @@ public class PublisherManager {
         do {
             retrievedDocs = publisherEuropeanaDao.retrieveRecords(cursor, publishingBatchId);
 
-            LOG.info(LoggingComponent
+            LOG.debug(LoggingComponent
                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                     "Retrieved CRF records {}", (null == retrievedDocs ? 0 : retrievedDocs.size()));
 
@@ -181,23 +182,23 @@ public class PublisherManager {
         cursor.close();
 
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                 "Starting filtering and retrieved records and saving them to solr and mongo");
 
         PublisherMetrics.Publisher.Batch.totalNumberOfDocumentsProcessed.inc(retrievedDocs.size());
         for (final PublisherWriter writer : writers) {
             final String newPublishingBatchId = "publishing-batch-" + writer.getConnectionId() + "-" + DateTime.now().getMillis() + "-" + Math.random();
-            LOG.info(LoggingComponent
+            LOG.debug(LoggingComponent
                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                     "Starting filtering current pair of solr/mongo write config id {}", writer.getConnectionId());
 
             final List<HarvesterRecord> document = writer.getSolrWriter().filterDocumentIds(retrievedDocs, publishingBatchId);
-            LOG.info(LoggingComponent
+            LOG.debug(LoggingComponent
                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                     "Retrieved CRF records after SOLR filtering {} for config id {}", document.size(),
                     writer.getConnectionId());
 
-            LOG.info(LoggingComponent
+            LOG.debug(LoggingComponent
                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                     "Starting extracting tags for current pair of solr/mongo write config id {}",
                     writer.getConnectionId());
@@ -212,14 +213,14 @@ public class PublisherManager {
             }
 
             if (null != crfSolrDocument && !crfSolrDocument.isEmpty()) {
-                LOG.info(LoggingComponent
+                LOG.debug(LoggingComponent
                                 .appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null,
                                         null), "Started updating metainfos for config id {}",
                         writer.getConnectionId());
 
                 writer.getHarvesterDao().writeMetaInfos(document, publishingBatchId);
 
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
+                LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, newPublishingBatchId, null, null),
                         "Updating solr documents for config id {}",
                         writer.getConnectionId());
 
@@ -233,29 +234,29 @@ public class PublisherManager {
             }
         }
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                 "Done with a batch of writing and filtering for all solr/mongo pairs");
 
         currentTimestamp = updateTimestamp(currentTimestamp, retrievedDocs);
-        LOG.info(LoggingComponent
+        LOG.debug(LoggingComponent
                         .appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                 "Updating currentTime to: " + currentTimestamp);
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, publishingBatchId, null, null),
                 "Updating timestamp after batch finished to " + currentTimestamp);
 
     }
 
     private boolean shouldPublisherStopGraceFully() throws IOException {
         if (!Files.exists(Paths.get(config.getStopGracefullyFile()))) {
-            LOG.info(LoggingComponent
+            LOG.debug(LoggingComponent
                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, "", null, null),
                     "No stop graceful file found at  " + config.getStopGracefullyFile() + ".");
 
             return false;
         }
         final String fileContent = new String(Files.readAllBytes(Paths.get(config.getStopGracefullyFile())));
-        LOG.info(LoggingComponent
+        LOG.debug(LoggingComponent
                         .appendAppFields(LoggingComponent.Migrator.PROCESSING, "", null, null),
                 "Stop graceful file found at  " + config.getStopGracefullyFile() + " with content " + fileContent);
 
@@ -286,7 +287,7 @@ public class PublisherManager {
 
     public void stopGracefully() {
         this.shouldStopGracefully = true;
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, "", null, null),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING, "", null, null),
                 "Publisher received graceful stop request. Processing batch now. When current batch is finished the publisher will exit. Please wait.");
 
     }

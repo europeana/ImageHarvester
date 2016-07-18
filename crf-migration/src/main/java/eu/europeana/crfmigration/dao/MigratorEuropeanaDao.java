@@ -60,7 +60,7 @@ public class MigratorEuropeanaDao {
 
         if (null != moreRecentThan) {
             filterByTimestampQuery.put("timestampUpdated", new BasicDBObject("$gt", moreRecentThan));
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,migratingBatchId,null,null),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA,migratingBatchId,null,null),
                     "Query: " + filterByTimestampQuery);
         }
 

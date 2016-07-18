@@ -57,13 +57,13 @@ public class MigrationManager {
             final DBCursor recordCursor = migratorEuropeanaDao.buildRecordsRetrievalCursorByFilter(maximalUpdatedTimestampInRecords, batch, null);
             Map<String, EuropeanaRecord> recordsRetrievedInBatch = null;
             int numberOfRecordsRetrievedInBatch = 0;
-            LOG.info(
+            LOG.debug(
                     "[Console] Starting migration batch and minimum date in batch is "+ maximalUpdatedTimestampInRecords);
 
             try {
                 final Timer.Context processedRecordsDurationTimerContext = MigrationMetrics.Migrator.Batch.processedRecordsDuration.time();
                 try {
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                             "Started retrieving records batch with expected {} records.",batch);
 
                     recordsRetrievedInBatch = migratorEuropeanaDao.retrieveRecordsIdsFromCursor(recordCursor, migratingBatchId);
@@ -71,7 +71,7 @@ public class MigrationManager {
                     maximalUpdatedTimestampInRecords = EuropeanaRecord.maximalTimestampUpdated(recordsRetrievedInBatch.values());
                     if (recordsRetrievedInBatch.isEmpty()) hasMoreRecords = false;
 
-                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                             "Finished retrieving records batch of {} records.",numberOfRecordsRetrievedInBatch);
 
                 } finally {
@@ -80,7 +80,7 @@ public class MigrationManager {
                 migrateRecordsInSingleBatch(recordsRetrievedInBatch,migratingBatchId);
                 MigrationMetrics.Migrator.Overall.processedRecordsCount.inc(recordsRetrievedInBatch.size());
 
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+                LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                         "Finished migration batch of {} records with success and minimum date in batch was {}.",numberOfRecordsRetrievedInBatch, maximalUpdatedTimestampInRecords);
 
 
@@ -92,13 +92,13 @@ public class MigrationManager {
                         "Finished migration batch with error and min date was", maximalUpdatedTimestampInRecords,e);
                 throw e;
             } finally {
-                LOG.info(
+                LOG.debug(
                         "[Console] Finished migration batch of " + numberOfRecordsRetrievedInBatch + " records with success and minimum date in batch was " + maximalUpdatedTimestampInRecords);
                 recordCursor.close();
                 totalTimerContext.stop();
             }
         }
-        LOG.info(
+        LOG.debug(
                 "[Console] Finished migration process as there are no more records to migrate");
 
     }
@@ -117,7 +117,7 @@ public class MigrationManager {
         final Timer.Context processedEDMToJobTuplesConversion = MigrationMetrics.Migrator.Batch.processedEDMToJobTuplesConversionDuration.time();
 
         final List<ProcessingJobTuple> processingJobTuples = convertEDMObjectToJobs(edmObjectsOfRecords,migratingBatchId);
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
                 "Finished generating {} tuples from batch record.",processingJobTuples.size());
 
         processedEDMToJobTuplesConversion.stop();
@@ -128,12 +128,12 @@ public class MigrationManager {
 
         //save jobs
         try {
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
                     "Started saving {} tuples from batch record.",processingJobTuples.size());
 
             migratorHarvesterDao.saveProcessingJobTuples(processingJobTuples, migratingBatchId);
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING_CONVERT_RECORD_TO_JOB),
                     "Finished saving {} tuples from batch record.",processingJobTuples.size());
 
         }
