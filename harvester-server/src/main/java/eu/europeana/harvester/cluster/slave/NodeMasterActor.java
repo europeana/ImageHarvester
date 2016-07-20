@@ -230,6 +230,10 @@ public class NodeMasterActor extends UntypedActor {
         LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived");
 
         taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,null));
+
+        LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived - taskIDToRetrieveURL has size " +
+        taskIDToRetrieveURL.size());
+
         SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.inc();
         masterSender.tell(new ReserveConnectionSlotRequest(retrieveUrl.getRetrieveUrl().getIpAddress(),
                 retrieveUrl.getRetrieveUrl().getId()),getSelf());
@@ -253,6 +257,11 @@ public class NodeMasterActor extends UntypedActor {
         }
 
         taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,reserveConnectionSlotResponse));
+
+        LOG.debug("SLAVE - Node master actor - onReserveConnectionSlotResponseReceived - taskIDToRetrieveURL has size " +
+                taskIDToRetrieveURL.size());
+
+
         SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.dec();
         executeRetrieveURL(retrieveUrl);
     }
