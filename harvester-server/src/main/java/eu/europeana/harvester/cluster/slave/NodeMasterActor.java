@@ -357,7 +357,7 @@ public class NodeMasterActor extends UntypedActor {
     private void onChangeJobStateReceived(ChangeJobState message) {
         final ChangeJobState changeJobState = message;
 
-        LOG.debug("SLAVE - Node master actor - onchangejobstatereceived, message: " + message.toString());
+        LOG.debug("SLAVE - Node master actor - onchangejobstatereceived, message new state: " + message.getNewState().name());
 
 
         switch (changeJobState.getNewState()) {

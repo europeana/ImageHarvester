@@ -60,7 +60,9 @@ public class ReceiverJobDumperActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
 
+        LOG.debug("receiverjobdumperactor, onreceive");
         if (message instanceof DoneProcessing) {
+            LOG.debug("receiverjobdumperactor, message instance of doneprocessing, message url: " + ((DoneProcessing) message).getUrl());
             DoneProcessing doneProcessing = (DoneProcessing) message;
             markDone(doneProcessing);
 
@@ -78,6 +80,9 @@ public class ReceiverJobDumperActor extends UntypedActor {
      */
     private void markDone(DoneProcessing doneProcessing) {
         // (Step 1) Updating processing jobs
+
+        LOG.debug("receiverjobdumperactor, markdone");
+
         final ProcessingJob processingJob = processingJobDao.read(doneProcessing.getJobId());
         final ProcessingJob newProcessingJob = processingJob.withState(DoneProcessing.convertProcessingStateToJobState(doneProcessing.getProcessingState()));
         processingJobDao.createOrModify(newProcessingJob, WriteConcern.NORMAL);
@@ -87,6 +92,8 @@ public class ReceiverJobDumperActor extends UntypedActor {
 
         // (Step 3) Updating the stats jobs
         saveMetaInfo(doneProcessing);
+
+        LOG.debug("receiverjobdumperactor, doneProcessing.getProcessingState(): " + doneProcessing.getProcessingState().name());
     }
 
     /**

@@ -225,9 +225,9 @@ public class NodeSupervisor extends UntypedActor {
     private void onBagOfTasksReceived(BagOfTasks message) {
         final BagOfTasks bagOfTasks = message;
 
-        LOG.debug("SLAVE - Node supervisor onBagOfTasksReceived, bagoftasks: ");
+        LOG.debug("SLAVE - Node supervisor onBagOfTasksReceived, bagoftasks: " + bagOfTasks.toString());
         for (RetrieveUrl url : bagOfTasks.getTasks()) {
-            LOG.debug("retrieve url: " + url + "/n");
+            LOG.debug("retrieve url: " + url.getUrl() + "/n");
         }
 
         for (final RetrieveUrl request : bagOfTasks.getTasks()) {

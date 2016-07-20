@@ -124,8 +124,8 @@ public class JobLoaderExecutorHelper {
 //
 //                    i++;
 //                    if (i >= 500) {
-                        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-                                "{} priority -  Done with another 500 jobs out of {}", jobPriority.name(), all.size());
+                        //LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                            //    "{} priority -  Done with another 500 jobs out of {}", jobPriority.name(), all.size());
 //                        i = 0;
 //                    }
                     addJob(job, jobPriority.getPriority(), sourceDocumentReferenceIdToDoc, referenceIdTolastJobProcessingStatisticsMap, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
