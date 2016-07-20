@@ -111,7 +111,12 @@ public class JobLoaderMasterActor extends UntypedActor {
         this.ipExceptions = ipExceptions;
         this.haveLoader = false;
 
+        LOG.debug("Call check for abandoned jobs from constructor - job loader");
+
         JobLoaderMasterHelper.checkForAbandonedJobs(processingJobDao, clusterMasterConfig, LOG);
+
+        LOG.debug("Call ip distribution from constructor - job loader");
+
         ipDistribution = JobLoaderMasterHelper.getIPDistribution(machineResourceReferenceDao, LOG);
     }
 
@@ -143,11 +148,18 @@ public class JobLoaderMasterActor extends UntypedActor {
             return;
         }
         if (message instanceof Clean) {
+            LOG.debug("Message instance of clean");
 
             JobLoaderMasterHelper.checkForAbandonedJobs(processingJobDao, clusterMasterConfig, LOG);
+
+            LOG.debug("Call ip distribution from message instanceof clean");
+
             this.ipDistribution = JobLoaderMasterHelper.getIPDistribution(machineResourceReferenceDao, LOG);
 
             getSelf().tell(new LoadJobs(), getSelf());
+
+            LOG.debug("Called message clean");
+
             return;
         }
 

@@ -67,7 +67,7 @@ public class Slave {
 
         final File configFile = new File(configFilePath);
         if (!configFile.exists()) {
-            LOG.error("Config file not found!");
+            LOG.error("CLUSTER Slave Config file not found!");
             System.exit(-1);
         }
 
@@ -110,16 +110,16 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                LOG.debug("Using swift as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using swift as media-storage ");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else {
-                LOG.debug("Using dummy as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using dummy as media-storage ");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }
         } catch (Exception e) {
-            LOG.error("Error: connection failed to media-storage " + e.getMessage());
+            LOG.error("CLUSTER SLAVE Error: connection failed to media-storage " + e.getMessage());
             e.printStackTrace();
             System.exit(-1);
         }
@@ -189,16 +189,16 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                LOG.debug("Using swift as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using swift as media-storage ");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else {
-                LOG.debug("Using dummy as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using dummy as media-storage ");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }
         } catch (Exception e) {
-            LOG.error("Error: connection failed to media-storage " + e.getMessage());
+            LOG.error("CLUSTER SLAVE Error: connection failed to media-storage " + e.getMessage());
             e.printStackTrace();
             System.exit(-1);
         }
@@ -218,7 +218,7 @@ public class Slave {
 
 
     public void restart() {
-        LOG.debug("Shutting down the actor system.");
+        LOG.debug("CLUSTER SLAVE Shutting down the actor system, restart.");
         SlaveMetrics.Worker.Slave.restartCounter.inc();
         system.shutdown();
         system.awaitTermination();

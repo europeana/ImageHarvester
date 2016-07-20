@@ -84,6 +84,8 @@ public class NodeSupervisor extends UntypedActor {
     @Override
     public void preStart() throws Exception {
 
+        LOG.debug("SLAVE - Node supervisor pre start");
+
         nodeMaster = NodeMasterActor.createActor(context(), masterSender,getSelf(), nodeMasterConfig, mediaStorageClient);
         watchdog = WatchdogActor.createActor(context().system(),slave);
 
@@ -100,6 +102,9 @@ public class NodeSupervisor extends UntypedActor {
 
     @Override
     public void onReceive(Object message) throws Exception {
+
+        LOG.debug("SLAVE - Node supervisor on receive");
+
         if (message instanceof BagOfTasks) {
             final BagOfTasks m = (BagOfTasks)message;
             SlaveMetrics.Worker.Master.jobsReceivedCounter.inc(m.getTasks().size());
@@ -143,6 +148,9 @@ public class NodeSupervisor extends UntypedActor {
     }
 
     private void onMemberUpReceived(ClusterEvent.MemberUp message) {
+
+        LOG.debug("SLAVE - Node supervisor onMemberUpReceived memberups: " + memberups);
+
         ClusterEvent.MemberUp mUp = message;
 
         memberups++;
@@ -163,6 +171,8 @@ public class NodeSupervisor extends UntypedActor {
     private void onUnreachableMember(ClusterEvent.UnreachableMember message){
         // if it's the master, restart
 
+        LOG.debug("SLAVE - Node supervisor onUnreachableMember");
+
         if (message.member().getRoles().contains("clusterMaster")) {
             try {
                 Thread.sleep(300000);
@@ -182,6 +192,9 @@ public class NodeSupervisor extends UntypedActor {
 
     private void onSendHeartBeatReceived(Object message) {
         // for safety, send a job request
+
+        LOG.debug("SLAVE - Node supervisor onSendHeartBeatReceived, missedheartbeats: " + missedHeartbeats);
+
         nodeMaster.tell(new RequestTasks(), getSelf());
 
         if (missedHeartbeats >= 3) {
@@ -200,6 +213,9 @@ public class NodeSupervisor extends UntypedActor {
     }
 
     private void onTerminatedReceived(Terminated message) {
+
+        LOG.debug("SLAVE - Node supervisor onTerminatedReceived");
+
         final Terminated t = message;
         if (t.getActor() == nodeMaster) {
             restartNodeMaster();
@@ -208,6 +224,11 @@ public class NodeSupervisor extends UntypedActor {
 
     private void onBagOfTasksReceived(BagOfTasks message) {
         final BagOfTasks bagOfTasks = message;
+
+        LOG.debug("SLAVE - Node supervisor onBagOfTasksReceived, bagoftasks: ");
+        for (RetrieveUrl url : bagOfTasks.getTasks()) {
+            LOG.debug("retrieve url: " + url + "/n");
+        }
 
         for (final RetrieveUrl request : bagOfTasks.getTasks()) {
 
@@ -219,6 +240,8 @@ public class NodeSupervisor extends UntypedActor {
     }
 
     private void restartNodeMaster() {
+
+        LOG.debug("SLAVE - Node supervisor restartnodemaster");
 
         nodeMaster = NodeMasterActor.createActor(context(), masterSender, getSelf(),
                 nodeMasterConfig,

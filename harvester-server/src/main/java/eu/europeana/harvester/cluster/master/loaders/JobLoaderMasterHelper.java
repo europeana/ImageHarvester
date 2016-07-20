@@ -125,7 +125,9 @@ public class JobLoaderMasterHelper  {
     public static void checkForAbandonedJobs(ProcessingJobDao processingJobDao, ClusterMasterConfig clusterMasterConfig,
                                              Logger LOG ) {
 
+        LOG.debug("Entering checkForAbandonedJobs");
         processingJobDao.modifyStateOfJobs(JobState.RUNNING,JobState.READY);
+        LOG.debug("Done checkForAbandonedJobs");
 
     }
 
