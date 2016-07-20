@@ -4,6 +4,8 @@ import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlo
 import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlotResponse;
 import eu.europeana.harvester.cluster.master.limiter.domain.ReturnConnectionSlotRequest;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +15,7 @@ public class IpLimiterAccountant {
     private final Integer defaultLimitsPerIp;
     private final Map<String, Integer> specificLimitsPerIp = new HashMap<>();
     private final Map<String /* IP */, IpConnectionSlots> occupiedConnectionSlotsPerIp = new HashMap<>();
+    private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     public IpLimiterAccountant(Integer defaultLimitsPerIp, Map<String, Integer> newSpecificLimitsPerIp) {
         this.defaultLimitsPerIp = defaultLimitsPerIp;
@@ -50,6 +53,7 @@ public class IpLimiterAccountant {
     }
 
     public final void setSpecificLimitPerIp(final String ip,final Integer limit) {
+        LOG.debug("ip limiter accountant, ip & limit: " + ip + ", " + limit);
         occupiedConnectionSlotsPerIpFull(ip);
         specificLimitsPerIp.put(ip,limit);
         occupiedConnectionSlotsPerIp.get(ip).setMaxAvailableSlots(limit);
