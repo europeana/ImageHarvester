@@ -235,6 +235,9 @@ public class NodeMasterActor extends UntypedActor {
         taskIDToRetrieveURL.size());
 
         SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.inc();
+
+        LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived - jobsWaitingForSlotGrantCounter " +
+                SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.getCount());
         masterSender.tell(new ReserveConnectionSlotRequest(retrieveUrl.getRetrieveUrl().getIpAddress(),
                 retrieveUrl.getRetrieveUrl().getId()),getSelf());
     }
@@ -263,6 +266,10 @@ public class NodeMasterActor extends UntypedActor {
 
 
         SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.dec();
+
+        LOG.debug("SLAVE - Node master actor - onReserveConnectionSlotResponseReceived - jobsWaitingForSlotGrantCounter " +
+                SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.getCount());
+
         executeRetrieveURL(retrieveUrl);
     }
 
