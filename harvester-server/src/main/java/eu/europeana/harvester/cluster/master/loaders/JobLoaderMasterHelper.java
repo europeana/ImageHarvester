@@ -99,10 +99,10 @@ public class JobLoaderMasterHelper  {
     private static Map<String, String> getHeaders(final DocumentReferenceTaskType documentReferenceTaskType,
                                            final SourceDocumentReference newDoc,
                                            final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao ) {
-        Map<String, String> headers = null;
+        Map<String, String> headers = new HashMap<String, String>();
 
         if (documentReferenceTaskType == null) {
-            return null;
+            return headers;
         }
 
         if ((DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD).equals(documentReferenceTaskType)) {
@@ -112,7 +112,6 @@ public class JobLoaderMasterHelper  {
             try {
                 headers = sourceDocumentProcessingStatistics.getHttpResponseHeaders();
             } catch (Exception e) {
-                headers = new HashMap<>();
             }
         }
 
