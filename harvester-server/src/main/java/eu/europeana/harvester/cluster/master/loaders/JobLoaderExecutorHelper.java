@@ -272,7 +272,16 @@ public class JobLoaderExecutorHelper {
         }
 
         final String ipAddress = job.getIpAddress();
+
+        LOG.debug("generate task (JLEH) lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID():"  +
+                lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID()) +
+                        " lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders():" +
+                        lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders());
+
         final Map<String, String> headers = lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID()) ? lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders() : new HashMap<String, String>();
+
+        LOG.debug("generate task (JLEH) headers size: " + headers.size());
+
         final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), job.getLimits(), task.getTaskType(),
                 job.getId(), task.getSourceDocumentReferenceID(),
                 headers, task, ipAddress, sourceDocumentReference.getReferenceOwner());
