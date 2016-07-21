@@ -274,6 +274,9 @@ public class NodeMasterActor extends UntypedActor {
     }
 
     private void executeRetrieveURL(Object message) {
+        LOG.debug("NodeMasterActor executeretrieveurl actors size: " + actors.size() + " max slaves: " + maxSlaves + " jobsreadytobeprocessed size "
+                + jobsReadyToBeProcessed.size());
+
         jobsReadyToBeProcessed.add(message);
 
         if ( actors.size()<maxSlaves & jobsReadyToBeProcessed.size()>maxSlaves ) {
