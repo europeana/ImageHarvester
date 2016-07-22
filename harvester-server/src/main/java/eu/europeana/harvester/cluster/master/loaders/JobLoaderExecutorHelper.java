@@ -293,10 +293,10 @@ public class JobLoaderExecutorHelper {
 
         LOG.debug("generatetask job ip address: " + ipAddress);
 
-        LOG.debug("generate task (JLEH) lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID():"  +
-                lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID()) +
-                        " lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders():" +
-                        lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders());
+//        LOG.debug("generate task (JLEH) lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID():"  +
+//                lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID()) +
+//                        " lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders():" +
+//                        lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders());
 
         final Map<String, String> headers = lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID()) ? lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders() : new HashMap<String, String>();
 
