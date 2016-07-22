@@ -284,11 +284,14 @@ public class JobLoaderExecutorHelper {
         LOG.debug("generatetask sourcedoc ref: " + sourceDocumentReference);
 
         if (sourceDocumentReference == null) {
+            LOG.debug("generatetask sourcedoc ref is null!");
             return null;
+
         }
 
-
         final String ipAddress = job.getIpAddress();
+
+        LOG.debug("generatetask job ip address: " + ipAddress);
 
         LOG.debug("generate task (JLEH) lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID():"  +
                 lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID()) +
