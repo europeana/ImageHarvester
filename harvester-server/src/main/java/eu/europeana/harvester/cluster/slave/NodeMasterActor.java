@@ -279,14 +279,13 @@ public class NodeMasterActor extends UntypedActor {
 
         jobsReadyToBeProcessed.add(message);
 
-        if ( actors.size()<maxSlaves ) {
+        if ( actors.size()<maxSlaves & jobsReadyToBeProcessed.size()>maxSlaves ) {
 
             for ( int i=0;i<maxSlaves;i++){
                 Object msg = null;
 
                 if (!jobsReadyToBeProcessed.isEmpty())
                     msg = jobsReadyToBeProcessed.poll();
-
 
                 if(msg != null) {
                     RetrieveUrlWithProcessingConfig tst = (RetrieveUrlWithProcessingConfig) msg;
