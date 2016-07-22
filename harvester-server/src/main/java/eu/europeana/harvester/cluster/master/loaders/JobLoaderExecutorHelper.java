@@ -226,11 +226,14 @@ public class JobLoaderExecutorHelper {
         // (Step 1) Generate the tasks.
         final List<ProcessingJobTaskDocumentReference> tasks = job.getTasks();
 
-        LOG.debug("jobloaderexecutorhelper addjob job tasks size: " + tasks.size());
+        LOG.debug("jobloaderexecutorhelper addjob job tasks size: {} and task type " + tasks.size() + tasks.get(0).getTaskType().name());
 
         final List<RetrieveUrl> generatedTasks = new ArrayList<>();
         for (final ProcessingJobTaskDocumentReference task : tasks) {
             final RetrieveUrl retrieveUrl = generateTask(job, task, resources, lastJobProcessingStatistics, LOG);
+
+            LOG.debug("jobloaderexecutorhelper addjob retrieve url: " + retrieveUrl);
+
             if (retrieveUrl != null) {
                 generatedTasks.add(retrieveUrl);
             }
@@ -274,10 +277,16 @@ public class JobLoaderExecutorHelper {
                                             Logger LOG) {
         final String sourceDocId = task.getSourceDocumentReferenceID();
 
+        LOG.debug("generatetask sourcedoc id: " + sourceDocId);
+
         final SourceDocumentReference sourceDocumentReference = resources.get(sourceDocId);
+
+        LOG.debug("generatetask sourcedoc ref: " + sourceDocumentReference);
+
         if (sourceDocumentReference == null) {
             return null;
         }
+
 
         final String ipAddress = job.getIpAddress();
 
