@@ -50,7 +50,7 @@ public class RetrieveAndProcessActorTest {
     private static String PROCESSING_PATH_PREFIX = Paths.get("harvester-server/src/test/resources/processing").toAbsolutePath().toString() + "/";
     private static final String jpegImage1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/develop/harvester-server/src/test/resources/image1.jpeg";
     private static final String tiffImageGitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/develop/harvester-server/src/test/resources/image3.tif";
-    private static final String pdfTextGitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/develop/harvester-server/src/test/resources/text1.pdf";
+    private static final String pdfTextGitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/develop/harvester-server/src/test/resources/text2.pdf";
 
     private static final String PATH_PREFIX = Paths.get("src/test/resources/").toAbsolutePath().toString() + "/" ;
     private static final String PATH_COLORMAP = PATH_PREFIX + "colormap.png";

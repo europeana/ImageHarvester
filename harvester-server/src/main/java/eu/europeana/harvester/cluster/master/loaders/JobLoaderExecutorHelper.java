@@ -226,6 +226,8 @@ public class JobLoaderExecutorHelper {
         // (Step 1) Generate the tasks.
         final List<ProcessingJobTaskDocumentReference> tasks = job.getTasks();
 
+        LOG.debug("jobloaderexecutorhelper addjob job tasks size: " + tasks.size());
+
         final List<RetrieveUrl> generatedTasks = new ArrayList<>();
         for (final ProcessingJobTaskDocumentReference task : tasks) {
             final RetrieveUrl retrieveUrl = generateTask(job, task, resources, lastJobProcessingStatistics, LOG);
@@ -233,6 +235,8 @@ public class JobLoaderExecutorHelper {
                 generatedTasks.add(retrieveUrl);
             }
         }
+
+        LOG.debug("jobloaderexecutorhelper addjob job generated tasks size: " + generatedTasks.size());
 
 //        if (tasks.size() > 10)
             LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
@@ -243,12 +247,16 @@ public class JobLoaderExecutorHelper {
             taskIds.add(retrieveUrl.getId());
         }
 
+        LOG.debug("jobloaderexecutorhelper addjob job task ids size: " + taskIds.size());
+
         // (Step 2) Send the tasks to accountant
 
 
         for (final RetrieveUrl retrieveUrl : generatedTasks) {
             accountantActor.tell(new AddTask(job.getPriority(), retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender());
         }
+
+        LOG.debug("jobloaderexecutorhelper addjob job done");
 
 
     }
