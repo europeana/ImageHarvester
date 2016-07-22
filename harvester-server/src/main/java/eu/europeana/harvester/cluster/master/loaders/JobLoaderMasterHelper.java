@@ -11,13 +11,13 @@ import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.domain.*;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class JobLoaderMasterHelper  {
+
 
     public static Map<String, Integer> getIPDistribution( MachineResourceReferenceDao machineResourceReferenceDao, Logger LOG ) {
 
@@ -81,7 +81,7 @@ public class JobLoaderMasterHelper  {
 
         final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), job.getLimits(), task.getTaskType(),
                 job.getId(), task.getSourceDocumentReferenceID(),
-                getHeaders(task.getTaskType(), sourceDocumentReference, sourceDocumentProcessingStatisticsDao, LOG), task, ipAddress,sourceDocumentReference.getReferenceOwner());
+                getHeaders(task.getTaskType(), sourceDocumentReference, sourceDocumentProcessingStatisticsDao ), task, ipAddress,sourceDocumentReference.getReferenceOwner());
 
         accountantActor.tell(new AddTask(job.getPriority(), retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender());
 
@@ -94,17 +94,15 @@ public class JobLoaderMasterHelper  {
      *
      * @param documentReferenceTaskType task type
      * @param newDoc                    source document object
-     * @param LOG logger
      * @return list of headers
      */
     private static Map<String, String> getHeaders(final DocumentReferenceTaskType documentReferenceTaskType,
                                            final SourceDocumentReference newDoc,
-                                           final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao, final Logger LOG) {
-
-        Map<String, String> headers = new HashMap<String, String>();
+                                           final SourceDocumentProcessingStatisticsDao sourceDocumentProcessingStatisticsDao ) {
+        Map<String, String> headers = null;
 
         if (documentReferenceTaskType == null) {
-            return headers;
+            return null;
         }
 
         if ((DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD).equals(documentReferenceTaskType)) {
@@ -114,10 +112,9 @@ public class JobLoaderMasterHelper  {
             try {
                 headers = sourceDocumentProcessingStatistics.getHttpResponseHeaders();
             } catch (Exception e) {
+                headers = new HashMap<>();
             }
         }
-
-        LOG.debug("getHeaders (JLMH) headers size:" + headers.size());
 
         return headers;
     }
