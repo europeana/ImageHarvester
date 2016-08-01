@@ -110,11 +110,11 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                LOG.debug("CLUSTER SLAVE Using swift as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using swift as media-storage");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else {
-                LOG.debug("CLUSTER SLAVE Using dummy as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using dummy as media-storage");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }
@@ -189,11 +189,11 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                LOG.debug("CLUSTER SLAVE Using swift as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using swift as media-storage");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else {
-                LOG.debug("CLUSTER SLAVE Using dummy as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using dummy as media-storage");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }

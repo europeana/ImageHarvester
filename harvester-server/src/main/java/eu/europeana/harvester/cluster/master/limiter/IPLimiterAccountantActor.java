@@ -55,7 +55,7 @@ public class IPLimiterAccountantActor extends UntypedActor {
         LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.IP_LIMITER), "IP limiter on receive");
 
         if (message instanceof ReserveConnectionSlotRequest) {
-            LOG.debug("IO limiter instanceof ReserveConnectionSlotRequest, message task id:" + ((ReserveConnectionSlotRequest) message).getTaskID());
+            LOG.debug("IO limiter instanceof ReserveConnectionSlotRequest, message task id: {}", ((ReserveConnectionSlotRequest) message).getTaskID());
 
             final ReserveConnectionSlotRequest reserveConnectionSlotRequest = (ReserveConnectionSlotRequest) message;
             final ReserveConnectionSlotResponse response = ipLimiterAccountant.reserveConnectionSlotRequest(reserveConnectionSlotRequest);
@@ -66,7 +66,7 @@ public class IPLimiterAccountantActor extends UntypedActor {
             return;
         }
         if (message instanceof ReturnConnectionSlotRequest) {
-            LOG.debug("IO limiter instanceof ReturnConnectionSlotRequest, message slot id:" + ((ReturnConnectionSlotRequest) message).getSlotId());
+            LOG.debug("IO limiter instanceof ReturnConnectionSlotRequest, message slot id: {}", ((ReturnConnectionSlotRequest) message).getSlotId());
 
             final ReturnConnectionSlotRequest returnConnectionSlotRequest = (ReturnConnectionSlotRequest) message;
             ipLimiterAccountant.returnConnectionSlotRequest(returnConnectionSlotRequest);

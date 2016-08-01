@@ -173,7 +173,7 @@ class Master {
     }
 
     public void start() {
-        LOG.debug("CLUSTER - master, start, cluster master: " + clusterMaster.path().name());
+        LOG.debug("CLUSTER - master, start, cluster master: {}", clusterMaster.path().name());
 
         clusterMaster.tell(new LoadJobs(), ActorRef.noSender());
         clusterMaster.tell(new Monitor(), ActorRef.noSender());

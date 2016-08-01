@@ -53,7 +53,7 @@ public class IpLimiterAccountant {
     }
 
     public final void setSpecificLimitPerIp(final String ip,final Integer limit) {
-        LOG.debug("ip limiter accountant, ip & limit: " + ip + ", " + limit);
+        LOG.debug("ip limiter accountant, ip {}, limit {} ", ip, limit);
         occupiedConnectionSlotsPerIpFull(ip);
         specificLimitsPerIp.put(ip,limit);
         occupiedConnectionSlotsPerIp.get(ip).setMaxAvailableSlots(limit);

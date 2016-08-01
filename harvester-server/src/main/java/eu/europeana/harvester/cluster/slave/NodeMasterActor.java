@@ -151,8 +151,6 @@ public class NodeMasterActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
 
-        LOG.debug("SLAVE - Node master actor, message is " + message.toString());
-
         if(message instanceof RetrieveUrlWithProcessingConfig) {
             onRetrieveUrlWithProcessingConfigReceived((RetrieveUrlWithProcessingConfig)message);
             return;
@@ -219,7 +217,7 @@ public class NodeMasterActor extends UntypedActor {
                 self().tell(new RequestTasks(), ActorRef.noSender());
             }
 
-            LOG.debug("SLAVE - Node master actor - onTerminatedReceived, actors < max slaves, task id to retrieve is:  " + taskIDToRetrieveURL);
+            LOG.debug("SLAVE - Node master actor - onTerminatedReceived, actors < max slaves, task id to retrieve is: {}", taskIDToRetrieveURL);
 
         }
 
@@ -231,12 +229,12 @@ public class NodeMasterActor extends UntypedActor {
 
         taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,null));
 
-        LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived - taskIDToRetrieveURL has size " +
-        taskIDToRetrieveURL.size());
+        LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived - taskIDToRetrieveURL has size {}",
+                taskIDToRetrieveURL.size());
 
         SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.inc();
 
-        LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived - jobsWaitingForSlotGrantCounter " +
+        LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived - jobsWaitingForSlotGrantCounter {}",
                 SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.getCount());
         masterSender.tell(new ReserveConnectionSlotRequest(retrieveUrl.getRetrieveUrl().getIpAddress(),
                 retrieveUrl.getRetrieveUrl().getId()),getSelf());
@@ -261,21 +259,20 @@ public class NodeMasterActor extends UntypedActor {
 
         taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,reserveConnectionSlotResponse));
 
-        LOG.debug("SLAVE - Node master actor - onReserveConnectionSlotResponseReceived - taskIDToRetrieveURL has size " +
-                taskIDToRetrieveURL.size());
+        LOG.debug("SLAVE - Node master actor - onReserveConnectionSlotResponseReceived - taskIDToRetrieveURL has size {}", taskIDToRetrieveURL.size());
 
 
         SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.dec();
 
-        LOG.debug("SLAVE - Node master actor - onReserveConnectionSlotResponseReceived - jobsWaitingForSlotGrantCounter " +
+        LOG.debug("SLAVE - Node master actor - onReserveConnectionSlotResponseReceived - jobsWaitingForSlotGrantCounter {}",
                 SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.getCount());
 
         executeRetrieveURL(retrieveUrl);
     }
 
     private void executeRetrieveURL(Object message) {
-        LOG.debug("NodeMasterActor executeretrieveurl actors size: " + actors.size() + " max slaves: " + maxSlaves + " jobsreadytobeprocessed size "
-                + jobsReadyToBeProcessed.size());
+        LOG.debug("NodeMasterActor executeretrieveurl actors size: {}, max slaves: {}, jobs ready to be processed: {}", actors.size(), maxSlaves,
+                jobsReadyToBeProcessed.size());
 
         jobsReadyToBeProcessed.add(message);
 
@@ -341,7 +338,7 @@ public class NodeMasterActor extends UntypedActor {
     private void onDoneProcessingReceived(Object message) {
         final DoneProcessing doneProcessing = (DoneProcessing)message;
 
-        LOG.debug("SLAVE - Node master actor - ondoneprocessingreceived, message: " + doneProcessing.getProcessingState().name());
+        LOG.debug("SLAVE - Node master actor - ondoneprocessingreceived, message: {}", doneProcessing.getProcessingState().name());
 
         this.actors.remove(getSender());
 
@@ -375,7 +372,7 @@ public class NodeMasterActor extends UntypedActor {
     private void onChangeJobStateReceived(ChangeJobState message) {
         final ChangeJobState changeJobState = message;
 
-        LOG.debug("SLAVE - Node master actor - onchangejobstatereceived, message new state: " + message.getNewState().name());
+        LOG.debug("SLAVE - Node master actor - onchangejobstatereceived, message new state: {}", message.getNewState().name());
 
 
         switch (changeJobState.getNewState()) {

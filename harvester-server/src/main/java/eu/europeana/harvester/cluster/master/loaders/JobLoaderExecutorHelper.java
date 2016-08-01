@@ -226,20 +226,20 @@ public class JobLoaderExecutorHelper {
         // (Step 1) Generate the tasks.
         final List<ProcessingJobTaskDocumentReference> tasks = job.getTasks();
 
-        LOG.debug("jobloaderexecutorhelper addjob job tasks size: {} and task type " + tasks.size() + tasks.get(0).getTaskType().name());
+        LOG.debug("jobloaderexecutorhelper addjob job tasks size: {} and task type: {} ", tasks.size(), tasks.get(0).getTaskType().name());
 
         final List<RetrieveUrl> generatedTasks = new ArrayList<>();
         for (final ProcessingJobTaskDocumentReference task : tasks) {
             final RetrieveUrl retrieveUrl = generateTask(job, task, resources, lastJobProcessingStatistics, LOG);
 
-            LOG.debug("jobloaderexecutorhelper addjob retrieve url: " + retrieveUrl);
+            LOG.debug("jobloaderexecutorhelper addjob retrieve url: {} ", retrieveUrl);
 
             if (retrieveUrl != null) {
                 generatedTasks.add(retrieveUrl);
             }
         }
 
-        LOG.debug("jobloaderexecutorhelper addjob job generated tasks size: " + generatedTasks.size());
+        LOG.debug("jobloaderexecutorhelper addjob job generated tasks size: {}", generatedTasks.size());
 
 //        if (tasks.size() > 10)
             LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
@@ -250,7 +250,7 @@ public class JobLoaderExecutorHelper {
             taskIds.add(retrieveUrl.getId());
         }
 
-        LOG.debug("jobloaderexecutorhelper addjob job task ids size: " + taskIds.size());
+        LOG.debug("jobloaderexecutorhelper addjob job task ids size: {}", taskIds.size());
 
         // (Step 2) Send the tasks to accountant
 
@@ -277,11 +277,11 @@ public class JobLoaderExecutorHelper {
                                             Logger LOG) {
         final String sourceDocId = task.getSourceDocumentReferenceID();
 
-        LOG.debug("generatetask sourcedoc id: " + sourceDocId);
+        LOG.debug("generatetask sourcedoc id: {}", sourceDocId);
 
         final SourceDocumentReference sourceDocumentReference = resources.get(sourceDocId);
 
-        LOG.debug("generatetask sourcedoc ref: " + sourceDocumentReference);
+        LOG.debug("generatetask sourcedoc ref: {}", sourceDocumentReference);
 
         if (sourceDocumentReference == null) {
             LOG.debug("generatetask sourcedoc ref is null!");
@@ -291,16 +291,11 @@ public class JobLoaderExecutorHelper {
 
         final String ipAddress = job.getIpAddress();
 
-        LOG.debug("generatetask job ip address: " + ipAddress);
-
-//        LOG.debug("generate task (JLEH) lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID():"  +
-//                lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID()) +
-//                        " lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders():" +
-//                        lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders());
+        LOG.debug("generatetask job ip address: {}", ipAddress);
 
         final Map<String, String> headers = lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID()) ? lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders() : new HashMap<String, String>();
 
-        LOG.debug("generate task (JLEH) headers size: " + headers.size());
+        LOG.debug("generate task (JLEH) headers size: {}", headers.size());
 
         final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), job.getLimits(), task.getTaskType(),
                 job.getId(), task.getSourceDocumentReferenceID(),

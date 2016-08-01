@@ -60,7 +60,7 @@ public class MigratorConfig {
         final DateTime dateFilter;
         try {
             dateFilter = new DateTime(parserSDF.parse(config.getString("config.dateFilter")));
-            LOG.debug("Date filter set to "+dateFilter.toString());
+            LOG.debug("Date filter set to " + dateFilter.toString());
         } catch (ParseException e) {
             LOG.error("Date specified in config.dateFilter must conform to the standard pattern" + parserSDF.toPattern());
             throw e;

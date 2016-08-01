@@ -149,7 +149,7 @@ public class NodeSupervisor extends UntypedActor {
 
     private void onMemberUpReceived(ClusterEvent.MemberUp message) {
 
-        LOG.debug("SLAVE - Node supervisor onMemberUpReceived memberups: " + memberups);
+        LOG.debug("SLAVE - Node supervisor onMemberUpReceived memberups: {}", memberups);
 
         ClusterEvent.MemberUp mUp = message;
 
@@ -193,7 +193,7 @@ public class NodeSupervisor extends UntypedActor {
     private void onSendHeartBeatReceived(Object message) {
         // for safety, send a job request
 
-        LOG.debug("SLAVE - Node supervisor onSendHeartBeatReceived, missedheartbeats: " + missedHeartbeats);
+        LOG.debug("SLAVE - Node supervisor onSendHeartBeatReceived, missedheartbeats: {}", missedHeartbeats);
 
         nodeMaster.tell(new RequestTasks(), getSelf());
 
@@ -225,9 +225,9 @@ public class NodeSupervisor extends UntypedActor {
     private void onBagOfTasksReceived(BagOfTasks message) {
         final BagOfTasks bagOfTasks = message;
 
-        LOG.debug("SLAVE - Node supervisor onBagOfTasksReceived, bagoftasks: " + bagOfTasks.toString());
+        LOG.debug("SLAVE - Node supervisor onBagOfTasksReceived, bagoftasks size: {}", bagOfTasks.getTasks().size());
         for (RetrieveUrl url : bagOfTasks.getTasks()) {
-            LOG.debug("retrieve url: " + url.getUrl() + "/n");
+            LOG.debug("retrieve url: {} /n", url.getUrl());
         }
 
         for (final RetrieveUrl request : bagOfTasks.getTasks()) {

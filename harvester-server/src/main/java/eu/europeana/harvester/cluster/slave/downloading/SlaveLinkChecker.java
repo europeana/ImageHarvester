@@ -139,7 +139,7 @@ public class SlaveLinkChecker {
 
         try {
             Integer r = downloadListener.get(1, TimeUnit.DAYS /* This timeout should never be reached. There are other timeouts used internally that will expire much quicker. */);
-            LOG.debug(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"Download finished with status {}", r);
+            LOG.debug(append(LogMarker.EUROPEANA_PROCESSING_JOB_ID, task.getJobId()),"Download finished with status: {}", r);
 
         } catch (Exception e) {
             cleanup(httpRetrieveResponse, asyncHttpClient, e);

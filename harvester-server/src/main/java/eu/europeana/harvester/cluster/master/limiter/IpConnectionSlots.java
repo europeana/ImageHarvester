@@ -23,7 +23,7 @@ public class IpConnectionSlots {
     }
 
     public final ReserveConnectionSlotResponse requestConnectionSlotReservation(final String taskId) {
-        LOG.debug("reserve connec, ip connection slots: " + slots + ", max avail " + maxAvailableSlots, " ip " + ip);
+        LOG.debug("reserve connection slot rez, slots {}, max avail {}, ip {}.", slots, maxAvailableSlots, ip);
 
         ReserveConnectionSlotResponse response = null;
         if (slots.keySet().size() < maxAvailableSlots) {
@@ -32,8 +32,7 @@ public class IpConnectionSlots {
         } else {
             response = new ReserveConnectionSlotResponse(ip,taskId , false);
         }
-        LOG.debug("reserve connec response ip: " + response.getIp() + " granted: " + response.getGranted() + " slot id " + response.getSlotId()
-                + " task id " + response.getTaskID());
+        LOG.debug("reserve connection slot rez, ip {}, granted {}, slot id {}, task id {} ", response.getIp(), response.getGranted(), response.getSlotId(), response.getTaskID());
 
         return response;
     }

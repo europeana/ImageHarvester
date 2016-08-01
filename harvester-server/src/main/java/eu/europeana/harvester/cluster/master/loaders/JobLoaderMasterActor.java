@@ -137,7 +137,7 @@ public class JobLoaderMasterActor extends UntypedActor {
                     context().watch(loaderActor);
                     loaderActor.tell(message, ActorRef.noSender());
                     haveLoader = true;
-                    LOG.debug("Created loader actor "+loaderActor);
+                    LOG.debug("Created loader actor {}", loaderActor);
 
                 } catch (Exception e) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
@@ -165,7 +165,7 @@ public class JobLoaderMasterActor extends UntypedActor {
 
         if (message instanceof Terminated) {
             if (((Terminated) message).getActor()==loaderActor) {
-                LOG.debug("Got terminated for "+((Terminated) message).getActor()+", marking the loader as expired");
+                LOG.debug("Got terminated for {}, marking the loader as expired ", ((Terminated) message).getActor());
                 haveLoader = false;
             }
             haveLoader = false;
