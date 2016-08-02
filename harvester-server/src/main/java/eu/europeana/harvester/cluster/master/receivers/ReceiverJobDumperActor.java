@@ -93,7 +93,8 @@ public class ReceiverJobDumperActor extends UntypedActor {
         // (Step 3) Updating the stats jobs
         saveMetaInfo(doneProcessing);
 
-        LOG.debug("receiverjobdumperactor, doneProcessing.getProcessingState(): {}", doneProcessing.getProcessingState().name());
+        LOG.debug("receiverjobdumperactor, doneProcessing - processing state: {}, url: {}, log: {}", doneProcessing.getProcessingState().name(),
+                doneProcessing.getUrl(), doneProcessing.getLog());
     }
 
     /**

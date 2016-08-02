@@ -338,7 +338,8 @@ public class NodeMasterActor extends UntypedActor {
     private void onDoneProcessingReceived(Object message) {
         final DoneProcessing doneProcessing = (DoneProcessing)message;
 
-        LOG.debug("SLAVE - Node master actor - ondoneprocessingreceived, message: {}", doneProcessing.getProcessingState().name());
+        LOG.debug("SLAVE - Node master actor - ondoneprocessingreceived, processing state: {}, url: {}, log: {}", doneProcessing.getProcessingState().name(),
+               doneProcessing.getUrl(), doneProcessing.getLog());
 
         this.actors.remove(getSender());
 
