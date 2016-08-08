@@ -116,7 +116,7 @@ public class ProcessingJobDaoImplTest {
         final SourceDocumentReference sourceDocumentReference =
                 new SourceDocumentReference(new ReferenceOwner("1", "1", "1"),  "a.com", null, null, 0l, null, true);
         final ProcessingJobTaskDocumentReference processingJobTaskDocumentReference =
-                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                                                        sourceDocumentReference.getId(), null);
         final List<ProcessingJobTaskDocumentReference> tasks = new ArrayList<>();
         tasks.add(processingJobTaskDocumentReference);

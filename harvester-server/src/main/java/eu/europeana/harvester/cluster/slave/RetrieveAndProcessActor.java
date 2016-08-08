@@ -180,7 +180,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
 
         try {
             // TODO : Enable conditional download.
-            response = executeRetrieval((task.getTaskType() == DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) ? task.withTaskType(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD).withContentLengthHeaderValue(0l) : task);
+            response = executeRetrieval(task);
             final ProcessingJobRetrieveSubTaskState responseState = convertRetrieveStateToProcessingJobRetrieveSubTaskState(response.getState());
 
             doneProcessing = new DoneProcessing(

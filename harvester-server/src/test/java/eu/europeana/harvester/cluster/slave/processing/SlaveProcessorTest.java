@@ -93,7 +93,9 @@ public class SlaveProcessorTest {
         mediaStorageClient = new FileSystemMediaStorageClientImpl(PATH_DOWNLOADED);
         slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP), new ColorExtractor(PATH_COLORMAP), mediaStorageClient, PATH_COLORMAP);
 
-        taskDocumentReference = new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+//        taskDocumentReference = new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+//                "source-reference-1", subTasks);
+        taskDocumentReference = new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                 "source-reference-1", subTasks);
     }
 
@@ -105,6 +107,7 @@ public class SlaveProcessorTest {
         final RetrieveUrl task = new RetrieveUrl(
                 url,
                 new ProcessingJobLimits(),
+//                DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                 DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                 "jobid-1",
                 "referenceid-1", Collections.<String, String>emptyMap(),
@@ -293,8 +296,7 @@ public class SlaveProcessorTest {
         assertNull(results.getMediaMetaInfoTuple().getImageMetaInfo());
         assertTrue(new File(PATH_DOWNLOADED + PDF1).exists());
 
-        assertTrue(null == results.getGeneratedThumbnails() || ArrayUtils.isEmpty(results.getGeneratedThumbnails()
-                .toArray()));
+        assertNotNull(results.getGeneratedThumbnails());
 //        final TextMetaInfo metaInfo = new MediaMetaInfoExtractor(PATH_COLORMAP).extract(PATH_PREFIX + PDF1).getTextMetaInfo();
 //        assertTrue(EqualsBuilder.reflectionEquals(metaInfo, results.getMediaMetaInfoTuple().getTextMetaInfo()));
     }
@@ -492,7 +494,7 @@ public class SlaveProcessorTest {
                 new ReferenceOwner("", "", "", "")) ;
 
         assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getMetaExtractionState());
-        assertEquals(ProcessingJobSubTaskState.FAILED, tuple.getProcessingJobSubTaskStats().getColorExtractionState());
+        assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getColorExtractionState());
         assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getThumbnailGenerationState());
         assertEquals(ProcessingJobSubTaskState.NEVER_EXECUTED, tuple.getProcessingJobSubTaskStats().getThumbnailStorageState());
     }

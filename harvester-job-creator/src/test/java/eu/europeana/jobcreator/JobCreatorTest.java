@@ -69,10 +69,10 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmObjectTasks_ForceUnconditionalDownload() throws ExecutionException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), trueOption);
+    public void test_edmObjectTasks_ConditionalDownload() throws ExecutionException {
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmObjectUrlJobs(url, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    url, null, null, null,JobPriority.NORMAL.getPriority(), trueOption
+                                                                    url, null, null, null,JobPriority.NORMAL.getPriority(), falseOption
                                                                    );
 
         checkEquals(expectedJobs, jobs);
@@ -99,10 +99,10 @@ public class JobCreatorTest {
     }
 
     @Test
-    public void test_edmHasViewUrls_ForceUnconditionalDownload() throws ExecutionException {
-        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), trueOption);
+    public void test_edmHasViewUrls_ConditionalDownload() throws ExecutionException {
+        final List<ProcessingJobTuple> expectedJobs = ProcessingJobBuilder.edmHasViewUrlsJobs(urls, owner,JobPriority.NORMAL.getPriority(), falseOption);
         final List<ProcessingJobTuple> jobs = JobCreator.createJobs(collectionId, providerId, recordId, executionId,
-                                                                    null, urls, null, null,JobPriority.NORMAL.getPriority(), trueOption
+                                                                    null, urls, null, null,JobPriority.NORMAL.getPriority(), falseOption
                                                                    );
 
         checkEquals (expectedJobs, jobs);

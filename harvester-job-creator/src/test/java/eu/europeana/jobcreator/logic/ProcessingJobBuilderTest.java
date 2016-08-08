@@ -75,14 +75,14 @@ public class ProcessingJobBuilderTest {
     }
 
     @Test
-    public void test_EdmObj_ValidUrl_ForceUnconditionalDownload() throws ExecutionException {
+    public void test_EdmObj_ValidUrl_ConditionalDownload() throws ExecutionException {
         final List<ProcessingJobTuple> jobs = ProcessingJobBuilder.edmObjectUrlJobs("http://dbooks.bodleian.ox.ac.uk/books/PDFs/590010416.pdf", owner, JobPriority.NORMAL.getPriority(),
-                trueOption);
+                falseOption);
 
         assertEquals(1, jobs.size());
         assertEquals(1, jobs.get(0).getProcessingJob().getTasks().size());
 
-        validateTasks(jobs, DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD, 1, 0, 2,
+        validateTasks(jobs, DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD, 1, 0, 2,
                 ProcessingJobSubTaskType.META_EXTRACTION,
                 ProcessingJobSubTaskType.COLOR_EXTRACTION, ProcessingJobSubTaskType.GENERATE_THUMBNAIL);
     }

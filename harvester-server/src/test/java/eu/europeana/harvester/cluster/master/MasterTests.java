@@ -32,6 +32,7 @@ import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.jobcreator.JobCreator;
+import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
 import org.apache.commons.io.FileUtils;
 import org.joda.time.Duration;
@@ -136,7 +137,7 @@ public class MasterTests {
 
     }
 
-    private void createSingleConditionalDownloadJob(final String url, final Integer priority) throws ExecutionException, UnknownHostException, MalformedURLException, TimeoutException, InterruptedException {
+    private void createSingleDownloadJob(final String url, final Integer priority, final ProcessingJobCreationOptions options) throws ExecutionException, UnknownHostException, MalformedURLException, TimeoutException, InterruptedException {
         final String collectionId = "test_collection_1";
         final String providerId = "test_provider_1";
         final String recordId = "test_record_1";
@@ -151,7 +152,7 @@ public class MasterTests {
                 new ArrayList<String>(),
                 null,
                 null,
-                priority));
+                priority, options));
 
         harvesterClient.createOrModifyProcessingJobTuples(result);
 
@@ -211,11 +212,12 @@ public class MasterTests {
 
 
     @Test
-    public void canLoadJobsWithNormalPriorityAndSendThemToTheSlaveAndPersistTheResult() throws
+    public void canLoadJobsConditionalDownWithNormalPriorityAndSendThemToTheSlaveAndPersistTheResult() throws
             InterruptedException, ExecutionException, MalformedURLException, TimeoutException, UnknownHostException {
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
-        createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());
+        // use CONDITIONAL_DOWNLOAD
+        createSingleDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority(), new ProcessingJobCreationOptions(false));
 
         final Pair<ActorSystem, ActorRef> systemAndMasterActor = createAndStartMaster();
         final ActorRef clusterMaster = systemAndMasterActor.getValue();
@@ -269,11 +271,12 @@ public class MasterTests {
     }
 
     @Test
-    public void canLoadJobsWithNormalPriorityAndSendThemToTheSlave() throws
+    public void canLoadJobsUnconditionalDownWithNormalPriorityAndSendThemToTheSlave() throws
             InterruptedException, ExecutionException, MalformedURLException, TimeoutException, UnknownHostException {
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
-        createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());
+        // use UNCONDITIONAL_DOWNLOAD
+        createSingleDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority(), new ProcessingJobCreationOptions(true));
 
         final Pair<ActorSystem, ActorRef> systemAndMasterActor = createAndStartMaster();
         final ActorRef clusterMaster = systemAndMasterActor.getValue();
@@ -317,7 +320,7 @@ public class MasterTests {
 
             // JOB 2
             // (Step 5) Create another conditional download for the same url & trigger database job loading
-            createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());
+            createSingleDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority(), new ProcessingJobCreationOptions(true));
             clusterMaster.tell(new LoadJobs(), getRef());
             Thread.sleep(500);
 
