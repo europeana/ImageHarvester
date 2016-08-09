@@ -179,7 +179,6 @@ public class RetrieveAndProcessActor extends UntypedActor {
         final Timer.Context downloadTimerContext = SlaveMetrics.Worker.Slave.Retrieve.totalDuration.time();
 
         try {
-            // TODO : Enable conditional download.
             response = executeRetrieval(task);
             final ProcessingJobRetrieveSubTaskState responseState = convertRetrieveStateToProcessingJobRetrieveSubTaskState(response.getState());
 
