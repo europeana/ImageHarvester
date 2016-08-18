@@ -59,7 +59,7 @@ public class SlaveLinkChecker {
                 if (connectionSetupDurationInMillis > task.getLimits().getRetrievalConnectionTimeoutInMillis()) {
                     /* Initial connection setup time longer than threshold. */
                     httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
+                    httpRetrieveResponse.setLog("The link could not be verified, as the time to initiate the connection took too long (" + connectionSetupDurationInMillis + " ms longer than " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms)");
                     return STATE.ABORT;
                 }
 
@@ -67,7 +67,7 @@ public class SlaveLinkChecker {
                 if (connectionSetupDurationInMillis > task.getLimits().getRetrievalTerminationThresholdReadPerSecondInBytes()) {
                     /* Initial connection setup time longer than threshold. */
                     httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Link checking aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured total download duration threshold " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
+                    httpRetrieveResponse.setLog("The link could not be verified, as the time to initiate the connection took too long (" + connectionSetupDurationInMillis + " ms longer than " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms)");
                     return STATE.ABORT;
                 }
                     /* We don't care what kind of status code it has at this moment as we will decide what to
@@ -94,7 +94,7 @@ public class SlaveLinkChecker {
                 /** We terminate the connection in case of HTTP error only after we collect the response headers */
                 if (httpRetrieveResponse.getHttpResponseCode() >= 400) {
                     httpRetrieveResponse.setState(RetrievingState.ERROR);
-                    httpRetrieveResponse.setLog("HTTP >=400 code received. Connection aborted after response headers collected.");
+                    httpRetrieveResponse.setLog("A HTTP error received (code >= 400), the download did not initiate.");
                     return STATE.ABORT;
                 }
 
@@ -117,7 +117,7 @@ public class SlaveLinkChecker {
                 if (downloadDurationInMillis > task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis()) {
                     /* Download duration longer than threshold. */
                     httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Link checking aborted as it's duration " + downloadDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + " ms");
+                    httpRetrieveResponse.setLog("The link could not be verified, as the time it took to verify the link was too long (" + downloadDurationInMillis + " ms longer than " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms)");
                 }
 
                 // Check if it was aborted because of conditional download with with same headers.
