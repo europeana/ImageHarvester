@@ -12,8 +12,8 @@ import java.util.Map;
 
 public class LastSourceDocumentProcessingStatistics {
 
-    public static final String idOf(final String sourceDocumentReferenceId,final DocumentReferenceTaskType taskType,final URLSourceType urlSourceType) {
-        return new StringBuilder().append(sourceDocumentReferenceId).append("-").append(taskType.name()).append("-").append(urlSourceType.name()).toString();
+    public static final String idOf(final String sourceDocumentReferenceId, final URLSourceType urlSourceType) {
+        return new StringBuilder().append(sourceDocumentReferenceId).append("-").append(urlSourceType.name()).toString();
     }
 
     @Id
@@ -114,7 +114,7 @@ public class LastSourceDocumentProcessingStatistics {
     private final ProcessingJobSubTaskStats processingJobSubTaskStats;
 
     public LastSourceDocumentProcessingStatistics(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics) {
-        this.id = idOf(sourceDocumentProcessingStatistics.getSourceDocumentReferenceId(), sourceDocumentProcessingStatistics.getTaskType(), sourceDocumentProcessingStatistics.getUrlSourceType());
+        this.id = idOf(sourceDocumentProcessingStatistics.getSourceDocumentReferenceId(), sourceDocumentProcessingStatistics.getUrlSourceType());
         this.createdAt = sourceDocumentProcessingStatistics.getCreatedAt();
         this.updatedAt = sourceDocumentProcessingStatistics.getUpdatedAt();
         this.active = sourceDocumentProcessingStatistics.getActive();
@@ -176,7 +176,7 @@ public class LastSourceDocumentProcessingStatistics {
         this.active = active;
         this.taskType = taskType;
         this.urlSourceType = urlSourceType;
-        this.id = idOf(sourceDocumentReferenceId, taskType, urlSourceType);
+        this.id = idOf(sourceDocumentReferenceId, urlSourceType);
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.state = state;
