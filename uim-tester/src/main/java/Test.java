@@ -46,7 +46,7 @@ public class Test {
 
     private static List<LastSourceDocumentProcessingStatistics> getLastStats(final Datastore dataStore, final String sourceDocRefId) {
         Query<LastSourceDocumentProcessingStatistics> query = dataStore.createQuery(LastSourceDocumentProcessingStatistics.class);
-        query.field("sourceDocumentReferenceId").equals(sourceDocRefId);
+        query.field("_id").contains(sourceDocRefId);
 
         return query.asList();
     }
@@ -81,7 +81,7 @@ public class Test {
         DBCollection newStatisticsCollection = dataStore.getDB().getCollection("LastSourceDocumentProcessingStatisticsFiltered");
 
         int skipAmount = 0;
-        int limitAmount = 1000 * 1000;
+        int limitAmount = 100 * 100;
         boolean hasMore = true;
         int count = 0;
 
