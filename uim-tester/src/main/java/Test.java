@@ -1,8 +1,6 @@
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
-import com.google.code.morphia.query.Query;
 import com.mongodb.*;
-import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisticsDao;
 import eu.europeana.harvester.domain.DocumentReferenceTaskType;
 import eu.europeana.harvester.domain.LastSourceDocumentProcessingStatistics;
 import eu.europeana.harvester.domain.SourceDocumentReference;
@@ -19,7 +17,6 @@ import java.util.concurrent.TimeoutException;
 public class Test {
 
     static List<String> fixedList = new ArrayList<String>();
-    static int count = 0;
 
     static {
         for (DocumentReferenceTaskType taskType : DocumentReferenceTaskType.values()) {
@@ -44,19 +41,16 @@ public class Test {
         return combinationsList;
     }
 
-    private static List<LastSourceDocumentProcessingStatistics> getLastStats(final Datastore dataStore, final String sourceDocRefId) {
-        Query<LastSourceDocumentProcessingStatistics> query = dataStore.createQuery(LastSourceDocumentProcessingStatistics.class);
-        query.field("_id").contains(sourceDocRefId);
-
-        return query.asList();
+    private static List<LastSourceDocumentProcessingStatistics> getLastStats(final Datastore dataStore,final List<String> ids) {
+        return dataStore.get(LastSourceDocumentProcessingStatistics.class,ids).asList();
     }
 
     private static List<LastSourceDocumentProcessingStatistics> process(final Datastore dataStore,final String sourceDocumentReferenceId) {
+        final List<String> lastSourceDocumentProcessingStatisticsIds = getCombinations(sourceDocumentReferenceId);
 
-        final List<LastSourceDocumentProcessingStatistics> lastStats = getLastStats(dataStore, sourceDocumentReferenceId);
+        final List<LastSourceDocumentProcessingStatistics> lastStats = getLastStats(dataStore,lastSourceDocumentProcessingStatisticsIds);
 
         if (lastStats.size() > 1) {
-            count += lastStats.size();
 
             lastStats.sort(new Comparator<LastSourceDocumentProcessingStatistics>() {
                 @Override
@@ -81,20 +75,16 @@ public class Test {
         DBCollection newStatisticsCollection = dataStore.getDB().getCollection("LastSourceDocumentProcessingStatisticsFiltered");
 
         int skipAmount = 0;
-        int limitAmount = 100 * 100;
+        int limitAmount = 1000 * 10000;
         boolean hasMore = true;
-        int count = 0;
-
 
         while (hasMore) {
 
-            final List<String> sourceDocumentReferenceIds = getIdsFromSourceDocumentReference(dataStore,skipAmount,limitAmount);
-            for (final String id : sourceDocumentReferenceIds ) {
-                List<LastSourceDocumentProcessingStatistics> processedList = process(dataStore,id);
-
-                if (processedList != null && processedList.size() > 0) {
+            final List<String> sourceDocumentReferenceIds = getIdsFromSourceDocumentReference(dataStore, skipAmount, limitAmount);
+            for (final String id : sourceDocumentReferenceIds) {
+                List<LastSourceDocumentProcessingStatistics> processedList = process(dataStore, id);
+                if (processedList.size() > 0) {
                     LastSourceDocumentProcessingStatistics neededLastStat = processedList.get(0);
-                    count += processedList.size();
 
                     Map<String, Object> fieldsMap = new HashMap<String, Object>();
                     fieldsMap.put("_id", neededLastStat.getSourceDocumentReferenceId() + "-" + neededLastStat.getUrlSourceType());
@@ -159,20 +149,20 @@ public class Test {
                     DBObject newCollectionRecord = new BasicDBObject(fieldsMap);
                     newStatisticsCollection.insert(newCollectionRecord);
 
-
                 }
             }
 
-            skipAmount+=sourceDocumentReferenceIds.size();
-            System.out.println("+++++++++++++++++++++++++++++++++ skipAmount: " + skipAmount);
-            hasMore = (sourceDocumentReferenceIds.size() == limitAmount);
+                skipAmount += sourceDocumentReferenceIds.size();
+                System.out.println("+++++++++++++++++++++++++++++++++ skipAmount: " + skipAmount);
+                hasMore = (sourceDocumentReferenceIds.size() == limitAmount);
+
         }
 
-        System.out.println("Total records read : " + skipAmount);
-        System.out.println("New collection total count : " + newStatisticsCollection.count());
-        long stop = System.currentTimeMillis();
-        long total = stop-start;
-        System.out.println("Time: " + total + " milisec");
-        System.out.println("count: " + count);
-    }
+            System.out.println("Total records read : " + skipAmount);
+            System.out.println("New collection total count : " + newStatisticsCollection.count());
+            long stop = System.currentTimeMillis();
+            long total = stop - start;
+            System.out.println("Time: " + total + " milisec");
+        }
+
 }
