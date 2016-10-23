@@ -30,10 +30,6 @@
         </profile>
     </profiles>
 
-    <scm>
-        <connection>scm:git:git://github.com/europeana/ImageHarvester/tree/develop</connection>
-    </scm>
-
     <build>
         <plugins>
             <plugin>
@@ -61,7 +57,6 @@
                     </items>
                     <doCheck>false</doCheck>
                     <doUpdate>false</doUpdate>
-                    <revisionOnScmFailure>unknownbuild</revisionOnScmFailure>
                 </configuration>
             </plugin>
             <plugin>
