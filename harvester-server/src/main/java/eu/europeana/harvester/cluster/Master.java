@@ -186,6 +186,8 @@ class Master {
 
     public static void main(String[] args) throws MalformedURLException {
         final Master master = new Master(args);
+        LOG.debug("Now running on classpath: " + master.getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+
         master.init();
         master.start();
     }
