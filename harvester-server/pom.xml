@@ -30,6 +30,10 @@
         </profile>
     </profiles>
 
+    <scm>
+        <connection>scm:git:git://github.com/europeana/ImageHarvester/tree/develop</connection>
+    </scm>
+
     <build>
         <plugins>
             <plugin>
