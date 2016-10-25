@@ -155,7 +155,7 @@ public class Slave {
 
 
     public void reinit(Slave slave) throws Exception {
-        allRequirementsAreMetOrThrowException();
+        //allRequirementsAreMetOrThrowException();
 
 
         final ResponseType responseType;
