@@ -49,7 +49,7 @@ public class Slave {
     }
 
     public void init(Slave slave) throws Exception {
-        allRequirementsAreMetOrThrowException();
+        //allRequirementsAreMetOrThrowException();
 
 //        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
 //                .convertRatesTo(TimeUnit.SECONDS)
@@ -244,9 +244,9 @@ public class Slave {
         return system;
     }
 
-    public static void allRequirementsAreMetOrThrowException() throws Exception {
-        new ImageMagicValidator(Lists.newArrayList("ImageMagick 6.9.0","ImageMagick 7.0")).doNothingOrThrowException();
-    }
+//    public static void allRequirementsAreMetOrThrowException() throws Exception {
+//        new ImageMagicValidator(Lists.newArrayList("ImageMagick 6.9.0","ImageMagick 7.0")).doNothingOrThrowException();
+//    }
 
     public static void main(String[] args) throws Exception {
         final Slave slave = new Slave(args);
