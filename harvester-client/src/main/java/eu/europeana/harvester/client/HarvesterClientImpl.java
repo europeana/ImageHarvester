@@ -1,62 +1,25 @@
 package eu.europeana.harvester.client;
 
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.joda.time.Interval;
-
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Key;
 import com.google.common.collect.Lists;
-
-import eu.europeana.harvester.db.interfaces.HistoricalProcessingJobDao;
-import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.db.interfaces.MachineResourceReferenceDao;
-import eu.europeana.harvester.db.interfaces.ProcessingJobDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceMetaInfoDao;
-import eu.europeana.harvester.db.interfaces.SourceDocumentReferenceProcessingProfileDao;
-import eu.europeana.harvester.db.mongo.HistoricalProcessingJobDaoImpl;
-import eu.europeana.harvester.db.mongo.LastSourceDocumentProcessingStatisticsDaoImpl;
-import eu.europeana.harvester.db.mongo.MachineResourceReferenceDaoImpl;
-import eu.europeana.harvester.db.mongo.ProcessingJobDaoImpl;
-import eu.europeana.harvester.db.mongo.SourceDocumentProcessingStatisticsDaoImpl;
-import eu.europeana.harvester.db.mongo.SourceDocumentReferenceDaoImpl;
-import eu.europeana.harvester.db.mongo.SourceDocumentReferenceMetaInfoDaoImpl;
-import eu.europeana.harvester.db.mongo.SourceDocumentReferenceProcessingProfileDaoImpl;
-import eu.europeana.harvester.domain.DocumentReferenceTaskType;
-import eu.europeana.harvester.domain.HistoricalProcessingJob;
-import eu.europeana.harvester.domain.JobState;
-import eu.europeana.harvester.domain.JobStatistics;
-import eu.europeana.harvester.domain.LastSourceDocumentProcessingStatistics;
-import eu.europeana.harvester.domain.MachineResourceReference;
-import eu.europeana.harvester.domain.Page;
-import eu.europeana.harvester.domain.ProcessingJob;
-import eu.europeana.harvester.domain.ProcessingState;
-import eu.europeana.harvester.domain.ReferenceOwner;
-import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
-import eu.europeana.harvester.domain.SourceDocumentReference;
-import eu.europeana.harvester.domain.SourceDocumentReferenceMetaInfo;
-import eu.europeana.harvester.domain.SourceDocumentReferenceProcessingProfile;
-import eu.europeana.harvester.domain.URLSourceType;
+import eu.europeana.harvester.db.interfaces.*;
+import eu.europeana.harvester.db.mongo.*;
+import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.domain.report.SubTaskState;
 import eu.europeana.harvester.domain.report.SubTaskType;
 import eu.europeana.harvester.util.CachingUrlResolver;
 import eu.europeana.harvester.util.pagedElements.PagedElements;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.joda.time.Interval;
+
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * The meeting point between the client and the application.
@@ -335,6 +298,7 @@ public class HarvesterClientImpl implements HarvesterClient {
 
         final List<String> sourceDocumentReferenceIds = new ArrayList<>(processingJobs.size());
 
+        //TODO paginate these methods
         List<SourceDocumentReference> deactivateDocuments = sourceDocumentReferenceDao.deactivateDocuments(owner, harvesterClientConfig.getWriteConcern());
 		for (final SourceDocumentReference documentReference: deactivateDocuments) {
            sourceDocumentReferenceIds.add(documentReference.getId());

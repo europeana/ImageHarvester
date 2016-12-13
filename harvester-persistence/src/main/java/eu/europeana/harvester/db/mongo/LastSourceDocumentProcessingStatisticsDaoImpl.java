@@ -3,6 +3,7 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.google.code.morphia.query.UpdateOperations;
+import com.google.common.collect.Lists;
 import com.mongodb.*;
 
 import eu.europeana.harvester.db.interfaces.LastSourceDocumentProcessingStatisticsDao;
@@ -22,7 +23,7 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 	 * methods for working with your java objects.
 	 */
 	private final Datastore datastore;
-
+	private final static int THRESHOLD = 1000;
 	public LastSourceDocumentProcessingStatisticsDaoImpl(Datastore datastore) {
 		this.datastore = datastore;
 	}
@@ -132,15 +133,24 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 			return Collections.emptyList();
 		}
 
-		final Query<LastSourceDocumentProcessingStatistics> query = datastore.find(LastSourceDocumentProcessingStatistics.class);
-		query.field("sourceDocumentReferenceId").hasAnyOf(sourceDocumentReferenceIds);
+		List<LastSourceDocumentProcessingStatistics> docs = new ArrayList<>();
+		List<List<String>> split = split(sourceDocumentReferenceIds);
+		for(List<String> splitted:split) {
+			final Query<LastSourceDocumentProcessingStatistics> query = datastore.find(LastSourceDocumentProcessingStatistics.class);
+			query.field("sourceDocumentReferenceId").hasAnyOf(splitted);
 
-		final UpdateOperations<LastSourceDocumentProcessingStatistics> update = datastore
-				.createUpdateOperations(LastSourceDocumentProcessingStatistics.class);
+			final UpdateOperations<LastSourceDocumentProcessingStatistics> update = datastore
+					.createUpdateOperations(LastSourceDocumentProcessingStatistics.class);
 
-		update.set("active", false);
-		datastore.update(query, update, false, writeConcern);
-		return query.asList();
+			update.set("active", false);
+			datastore.update(query, update, false, writeConcern);
+			docs.addAll(query.asList());
+		}
+		return docs;
+	}
+
+	private List<List<String>> split(List<String> sourceDocumentReferenceIds) {
+		return Lists.partition(sourceDocumentReferenceIds,THRESHOLD);
 	}
 
 	@Override
@@ -317,9 +327,11 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 
 	@Override
 	public Interval getDateIntervalForProcessing(String executionId) {
+
 		final Query<LastSourceDocumentProcessingStatistics> query = datastore.find(LastSourceDocumentProcessingStatistics.class);
 		query.field("referenceOwner.executionId").equal(executionId);
 		query.limit(1);
+
 		query.order("createdAt");
 		LastSourceDocumentProcessingStatistics firstCreated = query.get();
 		
@@ -328,7 +340,10 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 		queryLast.limit(1);
 		queryLast.order("-updatedAt");
 		LastSourceDocumentProcessingStatistics lastUpdated = queryLast.get();
-		return new Interval(firstCreated.getCreatedAt().getTime(), lastUpdated.getUpdatedAt().getTime());
+		if(firstCreated.getCreatedAt()!=null && lastUpdated.getUpdatedAt() !=null) {
+			return new Interval(firstCreated.getCreatedAt().getTime(), lastUpdated.getUpdatedAt().getTime());
+		}
+		return new Interval(0,0);
 	}
 	
 	/**
@@ -342,4 +357,6 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 	private AggregationOutput aggregationOutput(final DBCollection dbCollection, final DBObject match, final DBObject group) {
 		return dbCollection.aggregate(new BasicDBObject("$match", match), new BasicDBObject("$group", group));
 	}
+
+
 }
