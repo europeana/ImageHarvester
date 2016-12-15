@@ -17,6 +17,8 @@ import eu.europeana.harvester.cluster.slave.SlaveMetrics;
 import eu.europeana.harvester.cluster.slave.validator.ImageMagicValidator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.dummy.DummyMediaStorageClientImpl;
+import eu.europeana.harvester.db.s3.S3Configuration;
+import eu.europeana.harvester.db.s3.S3MediaClientStorage;
 import eu.europeana.harvester.db.swift.SwiftConfiguration;
 import eu.europeana.harvester.db.swift.SwiftMediaStorageClientImpl;
 import eu.europeana.harvester.httpclient.response.ResponseType;
@@ -112,6 +114,8 @@ public class Slave {
                 //LOG.info("Using swift as media-storage ");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
+            } else if("S3".equalsIgnoreCase(mediaStorageClientType)){
+                mediaStorageClient = new S3MediaClientStorage(S3Configuration.valueOf(config.getConfig("media-storage")));
             } else {
                 //LOG.info("Using dummy as media-storage ");
                 mediaStorageClient = new DummyMediaStorageClientImpl();

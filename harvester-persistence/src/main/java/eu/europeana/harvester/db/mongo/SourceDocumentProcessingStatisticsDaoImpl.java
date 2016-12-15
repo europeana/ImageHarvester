@@ -3,12 +3,11 @@ package eu.europeana.harvester.db.mongo;
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.query.Query;
 import com.google.code.morphia.query.UpdateOperations;
+import com.google.common.collect.Lists;
 import com.mongodb.*;
 import eu.europeana.harvester.db.interfaces.SourceDocumentProcessingStatisticsDao;
-import eu.europeana.harvester.domain.MachineResourceReference;
 import eu.europeana.harvester.domain.ProcessingState;
 import eu.europeana.harvester.domain.SourceDocumentProcessingStatistics;
-import eu.europeana.harvester.domain.SourceDocumentReference;
 
 import java.util.*;
 
@@ -27,6 +26,8 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
         this.datastore = datastore;
     }
 
+    private final static int THRESHOLD = 1000;
+
     @Override
     public Long getCount() {
         return datastore.getCount(SourceDocumentProcessingStatistics.class);
@@ -34,7 +35,7 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
 
     @Override
     public boolean create(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern) {
-        if(read(sourceDocumentProcessingStatistics.getId()) == null) {
+        if (read(sourceDocumentProcessingStatistics.getId()) == null) {
             datastore.save(sourceDocumentProcessingStatistics);
             return true;
         } else {
@@ -49,7 +50,7 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
 
     @Override
     public List<SourceDocumentProcessingStatistics> read(List<String> ids) {
-        if(ids.size()==0)
+        if (ids.size() == 0)
             return new ArrayList<>(0);
         else {
             final Query<SourceDocumentProcessingStatistics> query = datastore.createQuery(SourceDocumentProcessingStatistics.class)
@@ -65,7 +66,7 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
 
     @Override
     public boolean update(SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics, WriteConcern writeConcern) {
-        if(read(sourceDocumentProcessingStatistics.getId()) != null) {
+        if (read(sourceDocumentProcessingStatistics.getId()) != null) {
             datastore.save(sourceDocumentProcessingStatistics, writeConcern);
 
             return true;
@@ -80,8 +81,8 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     }
 
     @Override
-    public Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrModify (Collection<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatistics,
-                                                                                                     WriteConcern writeConcern) {
+    public Iterable<com.google.code.morphia.Key<SourceDocumentProcessingStatistics>> createOrModify(Collection<SourceDocumentProcessingStatistics> sourceDocumentProcessingStatistics,
+                                                                                                    WriteConcern writeConcern) {
         if (null == sourceDocumentProcessingStatistics || sourceDocumentProcessingStatistics.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
@@ -101,13 +102,15 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     @Override
     public List<SourceDocumentProcessingStatistics> findByRecordID(String recordID) {
         final Query<SourceDocumentProcessingStatistics> query = datastore.find(SourceDocumentProcessingStatistics.class, "referenceOwner.recordId", recordID);
-        if(query == null) {return new ArrayList<>(0);}
+        if (query == null) {
+            return new ArrayList<>(0);
+        }
 
         return query.asList();
     }
 
     @Override
-    public Map<ProcessingState, Long> countNumberOfDocumentsWithState () {
+    public Map<ProcessingState, Long> countNumberOfDocumentsWithState() {
         final DBCollection collection = datastore.getCollection(SourceDocumentProcessingStatistics.class);
 
         final BasicDBList matchElements = new BasicDBList();
@@ -129,8 +132,8 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
 
         final Map<ProcessingState, Long> results = new HashMap<>(ProcessingState.values().length, 1);
 
-        for (final DBObject object: collection.aggregate(matchQuery, groupQuery).results()) {
-            long count = ((Number)object.get("count")).longValue();
+        for (final DBObject object : collection.aggregate(matchQuery, groupQuery).results()) {
+            long count = ((Number) object.get("count")).longValue();
 
             results.put(ProcessingState.valueOf((String) object.get("_id")), count);
         }
@@ -139,22 +142,28 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
     }
 
     @Override
-    public List<SourceDocumentProcessingStatistics> deactivateDocuments (List<String> sourceDocumentReferenceIds, WriteConcern writeConcern) {
+    public List<SourceDocumentProcessingStatistics> deactivateDocuments(List<String> sourceDocumentReferenceIds, WriteConcern writeConcern) {
         if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
+        List<SourceDocumentProcessingStatistics> docs = new ArrayList<>();
+        List<List<String>> split = split(sourceDocumentReferenceIds);
+        for (List<String> splitted : split) {
+            final Query<SourceDocumentProcessingStatistics> query = datastore.find(SourceDocumentProcessingStatistics.class);
 
-        final Query<SourceDocumentProcessingStatistics> query = datastore.find(SourceDocumentProcessingStatistics.class);
+            query.field("sourceDocumentReferenceId").hasAnyOf(splitted);
 
-        query.field("sourceDocumentReferenceId").hasAnyOf(sourceDocumentReferenceIds);
+            final UpdateOperations<SourceDocumentProcessingStatistics> update = datastore.createUpdateOperations(SourceDocumentProcessingStatistics.class);
 
-        final UpdateOperations<SourceDocumentProcessingStatistics> update = datastore.createUpdateOperations(SourceDocumentProcessingStatistics.class);
+            update.set("active", false);
 
-        update.set("active", false);
-
-        datastore.update(query, update, false, writeConcern);
-
-        return query.asList();
+            datastore.update(query, update, false, writeConcern);
+            docs.addAll(query.asList());
+        }
+        return docs;
     }
 
+    private List<List<String>> split(List<String> sourceDocumentReferenceIds) {
+        return Lists.partition(sourceDocumentReferenceIds, THRESHOLD);
+    }
 }
