@@ -158,7 +158,7 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
             update.set("active", false);
 
             datastore.update(query, update, false, writeConcern);
-            docs.addAll(query.asList());
+            //docs.addAll(query.asList());
         }
         return docs;
     }

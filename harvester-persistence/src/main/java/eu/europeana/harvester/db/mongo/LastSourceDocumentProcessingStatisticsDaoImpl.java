@@ -144,7 +144,7 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 
 			update.set("active", false);
 			datastore.update(query, update, false, writeConcern);
-			docs.addAll(query.asList());
+		//	docs.addAll(query.asList());
 		}
 		return docs;
 	}
