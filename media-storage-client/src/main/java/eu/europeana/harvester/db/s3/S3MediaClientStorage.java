@@ -8,6 +8,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.util.Md5Utils;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.MediaFile;
 import org.apache.commons.io.IOUtils;
@@ -51,8 +52,9 @@ public class S3MediaClientStorage implements MediaStorageClient {
         S3Object object = client.getObject(bucket,id);
         if(object!=null) {
             final byte[] content = withContent ? IOUtils.toByteArray(object.getObjectContent()) : new byte[0];
-            final String contentMd5 = object.getObjectMetadata().getContentMD5();
-            if (withContent && !contentMd5.equals(computeMd5(content))) {
+            final String contentMd5 = object.getObjectMetadata().getETag();
+            System.out.println(Md5Utils.md5AsBase64(content) +"  "+ contentMd5);
+            if (withContent && !contentMd5.equals(Md5Utils.md5AsBase64(content))) {
             /*
              *  something wrong has happened to the data;
              *  security breach ?
