@@ -163,6 +163,21 @@ public class SourceDocumentProcessingStatisticsDaoImpl implements SourceDocument
         return docs;
     }
 
+    @Override
+    public List<SourceDocumentProcessingStatistics> findByExecutionIdAndState(String executionId, List<ProcessingState> states){
+        final Query<SourceDocumentProcessingStatistics> query = datastore.find(SourceDocumentProcessingStatistics.class);
+            query.field("referenceOwner.executionId").equal(executionId);
+        // The state
+        if (states != null && !states.isEmpty()) {
+            final List<String> s = new ArrayList<>();
+            for (ProcessingState state : states) {
+                s.add(state.name());
+            }
+            query.field("state").hasAnyOf(s);
+        }
+        return query.asList();
+    }
+
     private List<List<String>> split(List<String> sourceDocumentReferenceIds) {
         return Lists.partition(sourceDocumentReferenceIds, THRESHOLD);
     }

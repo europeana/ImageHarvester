@@ -351,6 +351,10 @@ public class HarvesterClientImpl implements HarvesterClient {
     }
 
     @Override
+    public List<SourceDocumentProcessingStatistics> findSourceDocumentProcessingStatistics(String executionId, List<ProcessingState> states){
+        return sourceDocumentProcessingStatisticsDao.findByExecutionIdAndState(executionId,states);
+    }
+    @Override
     public void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId, final String processingJobId) {
         SourceDocumentProcessingStatistics s = this.sourceDocumentProcessingStatisticsDao.read(SourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId, processingJobId));
         if (s != null) {
