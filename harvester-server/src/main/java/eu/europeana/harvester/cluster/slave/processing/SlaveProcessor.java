@@ -257,6 +257,7 @@ public class SlaveProcessor {
         try {
             return metaInfoExtractor.extract(originalFilePath);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new MetaInfoExtractionException(e);
         } finally {
             metaInfoExtractionDurationContext.stop();

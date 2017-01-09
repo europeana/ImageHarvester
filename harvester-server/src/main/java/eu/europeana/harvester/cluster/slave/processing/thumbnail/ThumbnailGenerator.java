@@ -13,7 +13,6 @@ import org.joda.time.DateTime;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.InputStream;
 
 public class ThumbnailGenerator {
@@ -83,7 +82,7 @@ public class ThumbnailGenerator {
         if (expectedThumbnailType == null) throw new IllegalArgumentException("The expected thumbnail height "+expectedHeight+" or width "+expectedWidth+" do not match any of the hardcoded presets");
 
         return new MediaFile(currentProcessId, name, null, null, url,
-                new DateTime(System.currentTimeMillis()), newData, 1, MediaChecker.getMimeType(originalImagePath), null, expectedWidth)
+                new DateTime(System.currentTimeMillis()), newData, 1, MediaChecker.getMimeType(originalImagePath), null, newData.length)
                 .withId(MediaFile.generateIdFromUrlAndSizeType(originalImageUrl,expectedThumbnailType.name()));
 
     }
