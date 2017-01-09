@@ -82,7 +82,7 @@ public abstract class ThumbnailGenerator {
         if (expectedThumbnailType == null) throw new IllegalArgumentException("The expected thumbnail height "+expectedHeight+" or width "+expectedWidth+" do not match any of the hardcoded presets");
 
         return new MediaFile(currentProcessId, name, null, null, url,
-                new DateTime(System.currentTimeMillis()), newData, 1, MediaChecker.getMimeType(originalFilePath), null, expectedWidth)
+                new DateTime(System.currentTimeMillis()), newData, 1, MediaChecker.getMimeType(originalFilePath), null, newData.length)
                 .withId(MediaFile.generateIdFromUrlAndSizeType(originalFileUrl, expectedThumbnailType.name()));
     }
 
