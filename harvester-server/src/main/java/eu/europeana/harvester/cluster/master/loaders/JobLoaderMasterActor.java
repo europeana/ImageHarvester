@@ -95,8 +95,8 @@ public class JobLoaderMasterActor extends UntypedActor {
                                 final MachineResourceReferenceDao machineResourceReferenceDao,
                                 final DefaultLimits defaultLimits,
                                 final HashMap<String, Boolean> ipsWithJobs, final IPExceptions ipExceptions) {
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-//                "The loader master is constructed");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                "The loader master is constructed");
 
         this.receiverActor = receiverActor;
         this.clusterMasterConfig = clusterMasterConfig;
@@ -111,7 +111,12 @@ public class JobLoaderMasterActor extends UntypedActor {
         this.ipExceptions = ipExceptions;
         this.haveLoader = false;
 
+        LOG.debug("Call check for abandoned jobs from constructor - job loader");
+
         JobLoaderMasterHelper.checkForAbandonedJobs(processingJobDao, clusterMasterConfig, LOG);
+
+        LOG.debug("Call ip distribution from constructor - job loader");
+
         ipDistribution = JobLoaderMasterHelper.getIPDistribution(machineResourceReferenceDao, LOG);
     }
 
@@ -132,7 +137,7 @@ public class JobLoaderMasterActor extends UntypedActor {
                     context().watch(loaderActor);
                     loaderActor.tell(message, ActorRef.noSender());
                     haveLoader = true;
-                    //LOG.info("Created loader actor "+loaderActor);
+                    LOG.debug("Created loader actor {}", loaderActor);
 
                 } catch (Exception e) {
                     LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
@@ -143,17 +148,24 @@ public class JobLoaderMasterActor extends UntypedActor {
             return;
         }
         if (message instanceof Clean) {
+            LOG.debug("Message instance of clean");
 
             JobLoaderMasterHelper.checkForAbandonedJobs(processingJobDao, clusterMasterConfig, LOG);
+
+            LOG.debug("Call ip distribution from message instanceof clean");
+
             this.ipDistribution = JobLoaderMasterHelper.getIPDistribution(machineResourceReferenceDao, LOG);
 
             getSelf().tell(new LoadJobs(), getSelf());
+
+            LOG.debug("Called message clean");
+
             return;
         }
 
         if (message instanceof Terminated) {
             if (((Terminated) message).getActor()==loaderActor) {
-                //LOG.info("Got terminated for "+((Terminated) message).getActor()+", marking the loader as expired");
+                LOG.debug("Got terminated for {}, marking the loader as expired ", ((Terminated) message).getActor());
                 haveLoader = false;
             }
             haveLoader = false;

@@ -53,6 +53,7 @@ class Master {
 
     public void init() throws MalformedURLException {
 
+        LOG.debug("CLUSTER - master, init");
 
         String configFilePath;
 
@@ -64,7 +65,7 @@ class Master {
 
         File configFile = new File(configFilePath);
         if(!configFile.exists()) {
-            LOG.error("Config file not found!");
+            LOG.error("CLUSTER Config file not found!");
             System.exit(-1);
         }
 
@@ -172,6 +173,8 @@ class Master {
     }
 
     public void start() {
+        LOG.debug("CLUSTER - master, start, cluster master: {}", clusterMaster.path().name());
+
         clusterMaster.tell(new LoadJobs(), ActorRef.noSender());
         clusterMaster.tell(new Monitor(), ActorRef.noSender());
         clusterMaster.tell(new CheckForTaskTimeout(), ActorRef.noSender());
@@ -183,6 +186,8 @@ class Master {
 
     public static void main(String[] args) throws MalformedURLException {
         final Master master = new Master(args);
+        LOG.debug("Now running on classpath: " + master.getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+
         master.init();
         master.start();
     }

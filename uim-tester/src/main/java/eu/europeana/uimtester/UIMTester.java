@@ -89,6 +89,7 @@ public class UIMTester {
         final UIMTesterConfig uimTesterConfig = new UIMTesterConfig(uimTesterConfigFile);
 
         final Mongo mongo = new Mongo(uimTesterConfig.getServerAddressList());
+        Datastore dataStore;
 
         if (StringUtils.isNotEmpty(uimTesterConfig.getMongoDBUserName())) {
             final boolean auth =  mongo.getDB("admin").authenticate(uimTesterConfig.getMongoDBUserName(),
@@ -99,10 +100,11 @@ public class UIMTester {
                 System.out.println ("Cannot authenticate to mongo");
                 System.exit(-1);
             }
+            dataStore = new Morphia().createDatastore(mongo, uimTesterConfig.getMongoDBName(),uimTesterConfig.getMongoDBUserName(),uimTesterConfig.getMongoDBPassword().toCharArray());
+        } else {
+            dataStore = new Morphia().createDatastore(mongo, uimTesterConfig.getMongoDBName());
         }
-
-        final Datastore dataStore = new Morphia().createDatastore(mongo, uimTesterConfig.getMongoDBName(),uimTesterConfig.getMongoDBUserName(),uimTesterConfig.getMongoDBPassword().toCharArray());
-        final HarvesterClient harvesterClient =
+            final HarvesterClient harvesterClient =
                 new HarvesterClientImpl(dataStore,
                                         new HarvesterClientConfig(uimTesterConfig.getWriteConcern())
                                        );

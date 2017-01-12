@@ -62,10 +62,10 @@ public class JobLoaderExecutorHelper {
                                                  Logger LOG) {
         final int taskSize = getAllTasks(accountantActor, LOG);
 
-        //LOG.info("{} priority - Starting job loading, tasksize = {}", jobPriority.name(), taskSize);
+        LOG.debug("{} priority - Starting job loading, tasksize = {}", jobPriority.name(), taskSize);
 
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-//                "{} priority - Checking IPs in database", jobPriority.name());
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                "{} priority - Checking IPs in database", jobPriority.name());
 
         List<MachineResourceReference> ips = machineResourceReferenceDao.getAllMachineResourceReferences(new Page(0, 10000));
         for (MachineResourceReference machine : ips) {
@@ -93,8 +93,8 @@ public class JobLoaderExecutorHelper {
                 }
             }
 
-//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-//                    "{} priority - #IPs with tasks: ip temp size {}, ip all size : {}", jobPriority.name(), tempDistribution.size(), ipDistribution.size());
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                    "{} priority - #IPs with tasks: ip temp size {}, ip all size : {}", jobPriority.name(), tempDistribution.size(), ipDistribution.size());
 
             final Timer.Context loadJobTasksFromDBDuration = MasterMetrics.Master.loadJobTasksFromDBDuration.time();
             final Page page = new Page(0, clusterMasterConfig.getJobsPerIP());
@@ -105,8 +105,8 @@ public class JobLoaderExecutorHelper {
             // Update the IP with jobs distributed state
             for (ProcessingJob job : all) ipsWithJobs.put(job.getIpAddress(),true);
 
-//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-//                    "{} priority - Done with loading {} priority jobs. Creating tasks from them.", jobPriority.name(), all.size());
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                    "{} priority - Done with loading {} priority jobs. Creating tasks from them.", jobPriority.name(), all.size());
 
             final Timer.Context loadJobResourcesFromDBDuration = MasterMetrics.Master.loadJobResourcesFromDBDuration.time();
 
@@ -114,8 +114,8 @@ public class JobLoaderExecutorHelper {
             final Map<String, SourceDocumentProcessingStatistics> referenceIdTolastJobProcessingStatisticsMap = getSourceDocumentProcessingStatisticsMap(sourceDocumentProcessingStatisticsDao, sourceDocumentReferenceIdToDoc.values());
             loadJobResourcesFromDBDuration.stop();
 
-//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-//                    "{} priority -  Done with loading {} resources.", jobPriority.name(), sourceDocumentReferenceIdToDoc.size());
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                    "{} priority -  Done with loading {} resources.", jobPriority.name(), sourceDocumentReferenceIdToDoc.size());
 
             List<String> processingJobIdsThatAreRunningInHarvester = new ArrayList<>();
             int i = 0;
@@ -124,8 +124,8 @@ public class JobLoaderExecutorHelper {
 //
 //                    i++;
 //                    if (i >= 500) {
-//                        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-//                                "{} priority -  Done with another 500 jobs out of {}", jobPriority.name(), all.size());
+                        //LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                            //    "{} priority -  Done with another 500 jobs out of {}", jobPriority.name(), all.size());
 //                        i = 0;
 //                    }
                     addJob(job, jobPriority.getPriority(), sourceDocumentReferenceIdToDoc, referenceIdTolastJobProcessingStatisticsMap, clusterMasterConfig, processingJobDao, sourceDocumentProcessingStatisticsDao,
@@ -140,8 +140,8 @@ public class JobLoaderExecutorHelper {
 
             if (!processingJobIdsThatAreRunningInHarvester.isEmpty()) {
                 processingJobDao.modifyStateOfJobsWithIds(JobState.RUNNING, processingJobIdsThatAreRunningInHarvester);
-//                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-//                        "{} priority -   JobLoaderMasterActor, {} new jobs loaded & their state in DB is RUNNING.", jobPriority.name(), processingJobIdsThatAreRunningInHarvester.size());
+                LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                        "{} priority -   JobLoaderMasterActor, {} new jobs loaded & their state in DB is RUNNING.", jobPriority.name(), processingJobIdsThatAreRunningInHarvester.size());
             }
         }
     }
@@ -226,22 +226,31 @@ public class JobLoaderExecutorHelper {
         // (Step 1) Generate the tasks.
         final List<ProcessingJobTaskDocumentReference> tasks = job.getTasks();
 
+        LOG.debug("jobloaderexecutorhelper addjob job tasks size: {} and task type: {} ", tasks.size(), tasks.get(0).getTaskType().name());
+
         final List<RetrieveUrl> generatedTasks = new ArrayList<>();
         for (final ProcessingJobTaskDocumentReference task : tasks) {
             final RetrieveUrl retrieveUrl = generateTask(job, task, resources, lastJobProcessingStatistics, LOG);
+
+            LOG.debug("jobloaderexecutorhelper addjob retrieve url: {} ", retrieveUrl);
+
             if (retrieveUrl != null) {
                 generatedTasks.add(retrieveUrl);
             }
         }
 
+        LOG.debug("jobloaderexecutorhelper addjob job generated tasks size: {}", generatedTasks.size());
+
 //        if (tasks.size() > 10)
-//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
-//                    "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_LOADER),
+                    "Loaded {} tasks for jobID {} on IP {}", tasks.size(), job.getId(), job.getIpAddress());
 
         final List<String> taskIds = new ArrayList<>();
         for (final RetrieveUrl retrieveUrl : generatedTasks) {
             taskIds.add(retrieveUrl.getId());
         }
+
+        LOG.debug("jobloaderexecutorhelper addjob job task ids size: {}", taskIds.size());
 
         // (Step 2) Send the tasks to accountant
 
@@ -249,6 +258,8 @@ public class JobLoaderExecutorHelper {
         for (final RetrieveUrl retrieveUrl : generatedTasks) {
             accountantActor.tell(new AddTask(job.getPriority(), retrieveUrl.getId(), new Pair<>(retrieveUrl, TaskState.READY)), ActorRef.noSender());
         }
+
+        LOG.debug("jobloaderexecutorhelper addjob job done");
 
 
     }
@@ -266,13 +277,22 @@ public class JobLoaderExecutorHelper {
                                             Logger LOG) {
         final String sourceDocId = task.getSourceDocumentReferenceID();
 
+        LOG.debug("generatetask sourcedoc id: {}", sourceDocId);
+
         final SourceDocumentReference sourceDocumentReference = resources.get(sourceDocId);
+
+        LOG.debug("generatetask sourcedoc ref: {}", sourceDocumentReference);
+
         if (sourceDocumentReference == null) {
+            LOG.debug("generatetask sourcedoc ref is null!");
             return null;
+
         }
 
         final String ipAddress = job.getIpAddress();
+
         final Map<String, String> headers = lastJobProcessingStatistics.containsKey(task.getSourceDocumentReferenceID()) ? lastJobProcessingStatistics.get(task.getSourceDocumentReferenceID()).getHttpResponseHeaders() : new HashMap<String, String>();
+
         final RetrieveUrl retrieveUrl = new RetrieveUrl(sourceDocumentReference.getUrl(), job.getLimits(), task.getTaskType(),
                 job.getId(), task.getSourceDocumentReferenceID(),
                 headers, task, ipAddress, sourceDocumentReference.getReferenceOwner());

@@ -31,11 +31,11 @@ public class JobCreator {
                                                              final DocumentReferenceTaskType taskType
                                                             ) throws ExecutionException {
 
-        final String url = reference.getUrl();
-        final String edmObjectUrl = (URLSourceType.OBJECT == urlSourceType) ? url : null;
-        final List<String> edmHasViewUrl = (URLSourceType.HASVIEW == urlSourceType) ? Arrays.asList(url) : null;
-        final String edmIsShownByUrl = (URLSourceType.ISSHOWNBY == urlSourceType) ? url: null;
-        final String edmIshShownAtUrl = (URLSourceType.ISSHOWNAT == urlSourceType) ? url: null;
+        final String sourceDocumentRefUrl = reference.getUrl();
+        final String edmObjectUrl = (URLSourceType.OBJECT == urlSourceType) ? sourceDocumentRefUrl : null;
+        final List<String> edmHasViewUrl = (URLSourceType.HASVIEW == urlSourceType) ? Arrays.asList(sourceDocumentRefUrl) : null;
+        final String edmIsShownByUrl = (URLSourceType.ISSHOWNBY == urlSourceType) ? sourceDocumentRefUrl: null;
+        final String edmIshShownAtUrl = (URLSourceType.ISSHOWNAT == urlSourceType) ? sourceDocumentRefUrl: null;
         final ProcessingJobCreationOptions options = new ProcessingJobCreationOptions(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD == taskType);
 
         return createJobs(owner.getCollectionId(),
@@ -117,19 +117,19 @@ public class JobCreator {
         final ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId, executionId);
 
         if (null != edmObjectUrl) {
-            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner,priority, options));
+            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner, priority, options));
         }
 
         if (null != edmHasViewUrls && !edmHasViewUrls.isEmpty()) {
-            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner,priority, options));
+            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner, priority, options));
         }
 
         if (null != edmIsShownByUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner,priority, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner, priority, options));
         }
 
         if (null != edmIsShownAtUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner,priority, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner, priority, options));
 
         }
 
@@ -151,6 +151,7 @@ public class JobCreator {
      * @return
      * @throws UnknownHostException
      * @throws MalformedURLException
+     * @throws java.io.IOException
      */
     public final static List<ProcessingJobTuple> createJobs(final String collectionId,
                                                             final String providerId,
@@ -176,19 +177,19 @@ public class JobCreator {
         final ReferenceOwner owner = new ReferenceOwner(providerId, collectionId, recordId, executionId);
 
         if (null != edmObjectUrl) {
-            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner,priority, sourceDocumentReference, options));
+            results.addAll(ProcessingJobBuilder.edmObjectUrlJobs(edmObjectUrl, owner, priority, sourceDocumentReference, options));
         }
 
         if (null != edmHasViewUrls && !edmHasViewUrls.isEmpty()) {
-            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner,priority, sourceDocumentReference, options));
+            results.addAll(ProcessingJobBuilder.edmHasViewUrlsJobs(edmHasViewUrls, owner, priority, sourceDocumentReference, options));
         }
 
         if (null != edmIsShownByUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner,priority, sourceDocumentReference, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownByUrlJobs(edmIsShownByUrl, owner, priority, sourceDocumentReference, options));
         }
 
         if (null != edmIsShownAtUrl) {
-            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner,priority, sourceDocumentReference, options));
+            results.addAll(ProcessingJobBuilder.edmIsShownAtUrlJobs(edmIsShownAtUrl, owner, priority, sourceDocumentReference, options));
         }
 
         return results;

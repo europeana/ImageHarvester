@@ -117,4 +117,5 @@ public interface SourceDocumentProcessingStatisticsDao {
     @Deprecated
     List<SourceDocumentProcessingStatistics> deactivateDocuments(final List<String> sourceDocumentReferenceIds, final WriteConcern concern);
 
+    List<SourceDocumentProcessingStatistics> findByExecutionIdAndState(String executionId, List<ProcessingState> states);
 }

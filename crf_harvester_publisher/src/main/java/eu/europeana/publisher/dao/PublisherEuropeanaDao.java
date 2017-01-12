@@ -40,7 +40,7 @@ public class PublisherEuropeanaDao {
     }
 
     private Map<String, String> retrieveUrls (Collection<String> sourceDocumentReferenceIds, final String publishingBatchId) {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                  "Retrieving url information for #" + sourceDocumentReferenceIds.size());
         final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetUrlsDuration.time();
         try {
@@ -74,7 +74,7 @@ public class PublisherEuropeanaDao {
             throw new IllegalArgumentException();
         }
         final String collectionName = cursor.getCollection().getName();
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                  "Starting retrieving and processing of Statistics documents from collection: " + collectionName);
         //raw documents extracted from the db
         final Map<String, List<HarvesterDocument>> documents = new HashMap<>();
@@ -98,7 +98,7 @@ public class PublisherEuropeanaDao {
                     sourceDocumentRecordIds.add(harvesterDocument.getSourceDocumentReferenceId());
                 }
             }
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                      "Done retrieving");
         }
         finally {
@@ -139,7 +139,7 @@ public class PublisherEuropeanaDao {
             }
         }
 
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA, publishingBatchId),
                  "Done processing");
         return harvesterDocuments;
     }
@@ -256,7 +256,7 @@ public class PublisherEuropeanaDao {
         if (null == sourceDocumentReferenceIds || sourceDocumentReferenceIds.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA),
                  "Retrieving metainfo for #" + sourceDocumentReferenceIds.size());
         final Timer.Context context = PublisherMetrics.Publisher.Read.Mongo.mongoGetMetaInfoDuration.time();
         try {
@@ -267,7 +267,7 @@ public class PublisherEuropeanaDao {
         }
         finally {
             context.close();
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_EUROPEANA),
                      "Done retrieving");
         }
     }

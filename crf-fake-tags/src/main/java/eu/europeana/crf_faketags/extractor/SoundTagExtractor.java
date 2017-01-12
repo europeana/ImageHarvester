@@ -1,6 +1,8 @@
 package eu.europeana.crf_faketags.extractor;
 
 import eu.europeana.harvester.domain.AudioMetaInfo;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -28,50 +30,29 @@ public class SoundTagExtractor {
         return 0;
     }
 
-    public static Integer getQualityCode(final Boolean soundHQ) {
-        if(soundHQ == null) {
-            return 0;
-        }
-        return soundHQ ? 1 : 0;
+    public static Integer getQualityCode(Boolean soundHQ) {
+        return BooleanUtils.isTrue(soundHQ) ? 1 : 0 ;
+    }
+
+    public static Integer getQualityCode(String soundHQ) {
+        return StringUtils.containsIgnoreCase(soundHQ, "true") ? 1 : 0 ;
     }
 
     public static Integer getDurationCode(String duration) {
-        if(duration == null) {
-            return 0;
-        }
-
-        if("very_short".equals(duration)) {
-            return 1;
-        }
-        if("short".equals(duration)) {
-            return 2;
-        }
-        if("medium".equals(duration)) {
-            return 3;
-        }
-        if("long".equals(duration)) {
-            return 4;
-        }
-
-        return 0;
+        if (StringUtils.isBlank(duration)) return 0;
+        else if(StringUtils.equalsIgnoreCase(duration, "very_short")) return 1;
+        else if(StringUtils.equalsIgnoreCase(duration, "short")) return 2;
+        else if(StringUtils.equalsIgnoreCase(duration, "medium")) return 3;
+        else if(StringUtils.equalsIgnoreCase(duration, "long")) return 4;
+        else return 0;
     }
 
     private static Integer getDurationCode(Long duration) {
-        if (duration == null) {
-            return 0;
-        }
-        final Double temp = duration / 60000.0;
-        if (temp <= 0.5) {
-            return 1;
-        }
-        if (temp <= 3.0) {
-            return 2;
-        }
-        if (temp <= 6.0) {
-            return 3;
-        }
-
-        return 4;
+        if (duration == null)  return 0;
+        else if (duration <= 30000L) return 1;
+        else if (duration <= 180000L) return 2;
+        else if (duration <= 360000L) return 3;
+        else return 4;
     }
 
     /**

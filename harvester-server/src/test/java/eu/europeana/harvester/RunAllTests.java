@@ -1,10 +1,13 @@
 package eu.europeana.harvester;
 
 import eu.europeana.harvester.cluster.slave.RetrieveAndProcessActorTest;
-import eu.europeana.harvester.cluster.slave.downloading.*;
+import eu.europeana.harvester.cluster.slave.downloading.SlaveDownloaderTest;
+import eu.europeana.harvester.cluster.slave.downloading.SlaveLinkCheckerTest;
+import eu.europeana.harvester.cluster.slave.downloading.TimeWindowCounterTest;
 import eu.europeana.harvester.cluster.slave.processing.SlaveProcessorTest;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractorTest;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTest;
+import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGeneratorFactoryTest;
 import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGeneratorTest;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
@@ -18,7 +21,7 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({SlaveDownloaderTest.class, SlaveLinkCheckerTest.class, TimeWindowCounterTest.class,
-                     ColorExtractorTest.class, MediaMetaInfoTest.class, ThumbnailGeneratorTest.class,
+                     ColorExtractorTest.class, MediaMetaInfoTest.class, ThumbnailGeneratorFactoryTest.class, ThumbnailGeneratorTest.class,
                      SlaveProcessorTest.class, RetrieveAndProcessActorTest.class})
 public class RunAllTests {
     @Rule

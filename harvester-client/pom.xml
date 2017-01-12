@@ -7,11 +7,11 @@
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>harvester</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>harvester-client</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.2-SNAPSHOT</version>
 
     <packaging>jar</packaging>
 
@@ -86,13 +86,13 @@
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>harvester-persistence</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>harvester-job-creator</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>

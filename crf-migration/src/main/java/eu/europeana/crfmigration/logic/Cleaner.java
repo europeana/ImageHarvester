@@ -27,7 +27,7 @@ public class Cleaner {
                 LOG.error("Mongo auth error");
                 System.exit(-1);
             } else {
-                LOG.info("Successful authentication");
+                LOG.debug("Successful authentication");
             }
         }
 
@@ -40,13 +40,13 @@ public class Cleaner {
     public void clean() {
         final DBCollection machineResourceReference = db.getCollection("MachineResourceReference");
         machineResourceReference.drop();
-        LOG.info("Done with MachineResourceReference.");
+        LOG.debug("Done with MachineResourceReference.");
         final DBCollection sourceDocumentProcessingStatistics = db.getCollection("SourceDocumentProcessingStatistics");
         sourceDocumentProcessingStatistics.drop();
-        LOG.info("Done with SourceDocumentProcessingStatistics.");
+        LOG.debug("Done with SourceDocumentProcessingStatistics.");
         final DBCollection sourceDocumentReferenceMetaInfo = db.getCollection("SourceDocumentReferenceMetaInfo");
         sourceDocumentReferenceMetaInfo.drop();
-        LOG.info("Done with SourceDocumentReferenceMetaInfo.");
+        LOG.debug("Done with SourceDocumentReferenceMetaInfo.");
 
         final DBCollection processingJob = db.getCollection("ProcessingJob");
 
@@ -72,13 +72,13 @@ public class Cleaner {
                 i++;
                 if (i > 100000) {
                     i = 0;
-                    LOG.info("Done with another 100k processingJobs.");
+                    LOG.debug("Done with another 100k processingJobs.");
                 }
             } catch (Exception e) {
                 jobCursor = processingJob.find(query).sort(sortOrder);
                 jobCursor.skip(i - 1);
             }
         }
-        LOG.info("Done with another 100k ProcessingJob.");
+        LOG.debug("Done with another 100k ProcessingJob.");
     }
 }

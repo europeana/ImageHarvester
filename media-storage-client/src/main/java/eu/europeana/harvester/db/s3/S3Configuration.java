@@ -21,7 +21,7 @@ public class S3Configuration {
         if (!config.hasPath("secret_key")) {
             throw new IllegalArgumentException("The configuration is missing the secret_key property");
         }
-        secretKey = config.getString("sekret_key");
+        secretKey = config.getString("secret_key");
         if (!config.hasPath("region")) {
             throw new IllegalArgumentException("The configuration is missing the region property");
         }

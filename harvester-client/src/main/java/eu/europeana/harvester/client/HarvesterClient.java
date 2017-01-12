@@ -108,6 +108,8 @@ public interface HarvesterClient {
 
     void setActive(String recordID, Boolean active) throws MalformedURLException, UnknownHostException, InterruptedException, ExecutionException, TimeoutException;
 
+    List<SourceDocumentProcessingStatistics> findSourceDocumentProcessingStatistics(String executionId, List<ProcessingState> states);
+
     void updateSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId, final String processingJobId);
 
     SourceDocumentProcessingStatistics readSourceDocumentProcesssingStatistics(final String sourceDocumentReferenceId, final String processingJobId);

@@ -13,7 +13,6 @@ import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.exceptiions.LocaleException;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
-import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponse;
@@ -49,10 +48,8 @@ public class RetrieveAndProcessActor extends UntypedActor {
                 return ProcessingJobRetrieveSubTaskState.ERROR;
             case FINISHED_RATE_LIMIT:
                 return ProcessingJobRetrieveSubTaskState.FAILED;
-
             case FINISHED_TIME_LIMIT:
                 return ProcessingJobRetrieveSubTaskState.FAILED;
-
             case FINISHED_SIZE_LIMIT:
                 return ProcessingJobRetrieveSubTaskState.FAILED;
             default:
@@ -108,13 +105,13 @@ public class RetrieveAndProcessActor extends UntypedActor {
     public RetrieveAndProcessActor(final HttpRetrieveResponseFactory httpRetrieveResponseFactory,
                                    final String colorMapPath,
                                    final MediaStorageClient mediaStorageClient
-    ) {
+    ) throws Exception {
 
         this.httpRetrieveResponseFactory = httpRetrieveResponseFactory;
         this.slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(colorMapPath),
-                new ThumbnailGenerator(colorMapPath),
                 new ColorExtractor(colorMapPath),
-                mediaStorageClient
+                mediaStorageClient,
+                colorMapPath
         );
         this.slaveDownloader = new SlaveDownloader();
         this.slaveLinkChecker = new SlaveLinkChecker();
@@ -182,8 +179,7 @@ public class RetrieveAndProcessActor extends UntypedActor {
         final Timer.Context downloadTimerContext = SlaveMetrics.Worker.Slave.Retrieve.totalDuration.time();
 
         try {
-            // TODO : Enable conditional download.
-            response = executeRetrieval((task.getTaskType() == DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD) ? task.withTaskType(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD).withContentLengthHeaderValue(0l) : task);
+            response = executeRetrieval(task);
             final ProcessingJobRetrieveSubTaskState responseState = convertRetrieveStateToProcessingJobRetrieveSubTaskState(response.getState());
 
             doneProcessing = new DoneProcessing(

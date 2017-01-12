@@ -1,6 +1,6 @@
 #!/bin/bash
 ### BEGIN INIT INFO
-# Provides:          europeana-naster
+# Provides:          europeana-master
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Short-Description: Starts the daemon service
@@ -8,19 +8,18 @@
 #                    and should be placed in /etc/init.d
 ### END INIT INFO
 
-SCRIPT="java -Xmx2g -Djava.library.path=\"/home/norbert/harvester/extra-files/lib\" -Dlogback.configurationFile=\"/home/norbert/harvester/extra-files/logback_master.xml\" -cp ./harvester.jar eu.europeana.harvester.cluster.Master /home/norbert/harvester/extra-files/master.conf"
+SCRIPT="java -Xmx2g -cp /home/crfharvester/master/harvester.jar eu.europeana.harvester.cluster.Master /home/crfharvester/master/master.conf"
 RUNAS=root
 
-PIDFILE=/var/run/harvester-master.pid
-LOGFILE=/var/log/harvester-master.log
+PIDFILE=/var/run/europeana-master.pid
+LOGFILE=/var/log/europeana-master.log
 
 start() {
   if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
     echo 'Service already running' >&2
     return 1
   fi
-  echo 'Starting harvester-master...' >&2
-  cd /home/norbert/harvester
+  echo 'Starting europeana-master...' >&2
   local CMD="$SCRIPT > \"$LOGFILE\" & echo \$!"
   su -c "$CMD" $RUNAS > "$PIDFILE"
   echo 'Service started' >&2
@@ -28,23 +27,23 @@ start() {
 
 stop() {
   if [ ! -f "$PIDFILE" ] || ! kill -0 $(cat "$PIDFILE"); then
-    echo 'harvester-master not running' >&2
+    echo 'europeana-master not running' >&2
     return 1
   fi
-  echo 'Stopping harvester-master...' >&2
+  echo 'Stopping europeana-master...' >&2
   kill -15 $(cat "$PIDFILE") && rm -f "$PIDFILE"
   echo 'Service stopped' >&2
 }
 
 uninstall() {
-  echo -n "Are you really sure you want to uninstall harvester master? That cannot be undone. [yes|No] "
+  echo -n "Are you really sure you want to uninstall europeana master? That cannot be undone. [yes|No] "
   local SURE
   read SURE
   if [ "$SURE" = "yes" ]; then
     stop
     rm -f "$PIDFILE"
     echo "Notice: log file is not be removed: '$LOGFILE'" >&2
-    update-rc.d -f harvester-master remove
+    update-rc.d -f europeana-master remove
     rm -fv "$0"
   fi
 }

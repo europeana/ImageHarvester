@@ -23,7 +23,7 @@ public class PublisherDaemon implements Daemon {
 
     @Override
     public void init(DaemonContext daemonContext) throws DaemonInitException, Exception {
-        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PROCESSING),
                 "Initialising the publisher daemon");
 
         String[] args = daemonContext.getArguments();
@@ -59,7 +59,7 @@ public class PublisherDaemon implements Daemon {
         try {
             publisher.start();
         } catch (Exception e){
-            LOG.info(LoggingComponent
+            LOG.debug(LoggingComponent
                             .appendAppFields(LoggingComponent.Migrator.PROCESSING, null, null, null),
                     "Stopping publisher while processing batch because of exception.",e);
             destroy();

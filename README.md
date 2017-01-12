@@ -5,7 +5,7 @@ Framework for extracting, storing and indexing technical metadata of media files
 
 ## Architecture & components overview
 
-The ImageHarvester has 4 components :
+The ImageHarvester has 4 components :.
 
 * core: the harvester client
 * core: the harvester server (distributed in a cluster)

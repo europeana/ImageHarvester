@@ -7,6 +7,7 @@ import eu.europeana.harvester.cluster.domain.messages.DoneProcessing;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTuple;
 import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.domain.*;
+import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +45,8 @@ public class ReceiverJobDumperActor extends UntypedActor {
                                   final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                   final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao
     ) {
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-//                "ReceiverJobDumperActor constructor");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+                "ReceiverJobDumperActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.processingJobDao = processingJobDao;
@@ -59,7 +60,9 @@ public class ReceiverJobDumperActor extends UntypedActor {
     @Override
     public void onReceive(Object message) throws Exception {
 
+        LOG.debug("receiverjobdumperactor, onreceive");
         if (message instanceof DoneProcessing) {
+            LOG.debug("receiverjobdumperactor, message instance of doneprocessing, message url: {}", ((DoneProcessing) message).getUrl());
             DoneProcessing doneProcessing = (DoneProcessing) message;
             markDone(doneProcessing);
 
@@ -77,6 +80,9 @@ public class ReceiverJobDumperActor extends UntypedActor {
      */
     private void markDone(DoneProcessing doneProcessing) {
         // (Step 1) Updating processing jobs
+
+        LOG.debug("receiverjobdumperactor, markdone");
+
         final ProcessingJob processingJob = processingJobDao.read(doneProcessing.getJobId());
         final ProcessingJob newProcessingJob = processingJob.withState(DoneProcessing.convertProcessingStateToJobState(doneProcessing.getProcessingState()));
         processingJobDao.createOrModify(newProcessingJob, WriteConcern.NORMAL);
@@ -86,6 +92,9 @@ public class ReceiverJobDumperActor extends UntypedActor {
 
         // (Step 3) Updating the stats jobs
         saveMetaInfo(doneProcessing);
+
+        LOG.debug("receiverjobdumperactor, doneProcessing - processing state: {}, url: {}, log: {}", doneProcessing.getProcessingState().name(),
+                doneProcessing.getUrl(), doneProcessing.getLog());
     }
 
     /**

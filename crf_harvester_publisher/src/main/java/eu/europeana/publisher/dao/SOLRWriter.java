@@ -81,7 +81,7 @@ public class SOLRWriter  {
         int retry = 0;
         while (true) {
             try {
-                LOG.info(LoggingComponent
+                LOG.debug(LoggingComponent
                                  .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null,
                                                   null),
                          "Trying to connect to the solr server: " + solrUrl + ". Retry #" + retry);
@@ -92,7 +92,7 @@ public class SOLRWriter  {
                 solrClient.setDefaultCollection(collection);
                 solrClient.connect();
                 
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
+                LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR,
                                                            publishingBatchId, null, null),
                           "Connected successfully to solr: " + solrUrl + ". Retry #" + retry);
                 return solrClient;
@@ -138,7 +138,7 @@ public class SOLRWriter  {
                          "Received for updating and empty/null list. Ignoring");
             }
 
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                      "Number of Documents trying to update: " + newDocs.size()
                     );
 
@@ -168,7 +168,7 @@ public class SOLRWriter  {
             int badDocuments = 0;
             final SolrClient server = createServer(publishingBatchId);
             try {
-                LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
+                LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId),
                          "Trying to do a bulk update on solr"
                         );
 
@@ -196,7 +196,7 @@ public class SOLRWriter  {
 
             for (int retry = 0; retry <= MAX_RETRIES; ++retry) {
                 try {
-                    LOG.info(LoggingComponent
+                    LOG.debug(LoggingComponent
                                      .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId,
                                                       null, null),
                              "Trying to update {} SOLR documents with commit retry policy. Current retry count is {}",
@@ -204,7 +204,7 @@ public class SOLRWriter  {
                     if (solrCommitEnabled) {
                         server.commit();
                     } else {
-                        LOG.info(LoggingComponent
+                        LOG.debug(LoggingComponent
                                         .appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId,
                                                 null, null),
                                 "Skip committing {} SOLR documents as solrCommitEnabled == false. The SOLR server is responsible to commit by itself.",
@@ -268,7 +268,7 @@ public class SOLRWriter  {
             }
 
             // As the SOLR query has limitations it cannot handle queries that are too large => we need to break them in parts
-            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Migrator.PERSISTENCE_SOLR, publishingBatchId, null, null),
                      "Checking records: " + documents.size());
             for (int documentIdsStartChunkIndex = 0; documentIdsStartChunkIndex <= documentIds.size();
                  documentIdsStartChunkIndex += MAX_NUMBER_OF_IDS_IN_SOLR_QUERY) {

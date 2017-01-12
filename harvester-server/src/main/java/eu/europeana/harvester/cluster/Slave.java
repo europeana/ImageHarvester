@@ -7,6 +7,7 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
+import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
@@ -50,7 +51,7 @@ public class Slave {
     }
 
     public void init(Slave slave) throws Exception {
-        allRequirementsAreMetOrThrowException();
+        //allRequirementsAreMetOrThrowException();
 
 //        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
 //                .convertRatesTo(TimeUnit.SECONDS)
@@ -68,7 +69,7 @@ public class Slave {
 
         final File configFile = new File(configFilePath);
         if (!configFile.exists()) {
-            LOG.error("Config file not found!");
+            LOG.error("CLUSTER Slave Config file not found!");
             System.exit(-1);
         }
 
@@ -111,18 +112,18 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                //LOG.info("Using swift as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using swift as media-storage");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else if("S3".equalsIgnoreCase(mediaStorageClientType)){
                 mediaStorageClient = new S3MediaClientStorage(S3Configuration.valueOf(config.getConfig("media-storage")));
             } else {
-                //LOG.info("Using dummy as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using dummy as media-storage");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }
         } catch (Exception e) {
-            LOG.error("Error: connection failed to media-storage " + e.getMessage());
+            LOG.error("CLUSTER SLAVE Error: connection failed to media-storage " + e.getMessage());
             e.printStackTrace();
             System.exit(-1);
         }
@@ -158,7 +159,7 @@ public class Slave {
 
 
     public void reinit(Slave slave) throws Exception {
-        allRequirementsAreMetOrThrowException();
+        //allRequirementsAreMetOrThrowException();
 
 
         final ResponseType responseType;
@@ -192,16 +193,16 @@ public class Slave {
         try {
 
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
-                //LOG.info("Using swift as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using swift as media-storage");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
 
             } else {
-                //LOG.info("Using dummy as media-storage ");
+                LOG.debug("CLUSTER SLAVE Using dummy as media-storage");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
 
             }
         } catch (Exception e) {
-            LOG.error("Error: connection failed to media-storage " + e.getMessage());
+            LOG.error("CLUSTER SLAVE Error: connection failed to media-storage " + e.getMessage());
             e.printStackTrace();
             System.exit(-1);
         }
@@ -221,7 +222,7 @@ public class Slave {
 
 
     public void restart() {
-        //LOG.info("Shutting down the actor system.");
+        LOG.debug("CLUSTER SLAVE Shutting down the actor system, restart.");
         SlaveMetrics.Worker.Slave.restartCounter.inc();
         system.shutdown();
         system.awaitTermination();
@@ -232,7 +233,7 @@ public class Slave {
             LOG.error(e.getMessage());
         }
 
-        //LOG.info("trying to restart the actor system.");
+        LOG.debug("trying to restart the actor system.");
 
         try {
             this.reinit(this);
@@ -247,10 +248,9 @@ public class Slave {
         return system;
     }
 
-    public static void allRequirementsAreMetOrThrowException() throws Exception {
-        new ImageMagicValidator("ImageMagick 6.9.0").doNothingOrThrowException();
-        //LOG.info("ImageMagic version 6.9.0 installed in the system. External dependency OK. Continuing");
-    }
+//    public static void allRequirementsAreMetOrThrowException() throws Exception {
+//        new ImageMagicValidator(Lists.newArrayList("ImageMagick 6.9.0","ImageMagick 7.0")).doNothingOrThrowException();
+//    }
 
     public static void main(String[] args) throws Exception {
         final Slave slave = new Slave(args);

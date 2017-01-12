@@ -1,6 +1,8 @@
 package eu.europeana.crf_faketags.extractor;
 
 import eu.europeana.harvester.domain.VideoMetaInfo;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,52 +16,31 @@ public class VideoTagExtractor {
 
 
     public static Integer getQualityCode(Integer height) {
-        if (height == null || height < 576) {
-            return 0;
-        }
-
-        return 1;
+        if (height == null || height < 576) return 0;
+        else return 1;
     }
 
     public static Integer getQualityCode(Boolean videoQuality) {
-        if (videoQuality == null || !videoQuality) {
-            return 0;
-        }
+        return BooleanUtils.isTrue(videoQuality) ? 1 : 0 ;
+    }
 
-        return 1;
+    public static Integer getQualityCode(String videoQuality) {
+        return StringUtils.containsIgnoreCase(videoQuality, "true") ? 1 : 0 ;
     }
 
     public static Integer getDurationCode(Long duration) {
-        if (duration == null) {
-            return 0;
-        }
-        final Long temp = duration / 60000;
-        if (temp <= 4) {
-            return 1;
-        }
-        if (temp <= 20) {
-            return 2;
-        }
-
-        return 3;
+        if (duration == null) return 0;
+        else if (duration <= 240000) return 1;
+        else if (duration <= 800000) return 2;
+        else return 3;
     }
 
     public static Integer getDurationCode(String duration) {
-        if (duration == null || duration.equals("")) {
-            return 0;
-        }
-
-        if (duration.equals("short")) {
-            return 1;
-        }
-        if (duration.equals("medium")) {
-            return 2;
-        }
-        if (duration.equals("long")) {
-            return 3;
-        }
-
-        return 0;
+        if (StringUtils.isBlank(duration)) return 0;
+        else if(StringUtils.containsIgnoreCase(duration, "short")) return 1;
+        else if(StringUtils.containsIgnoreCase(duration, "medium")) return 2;
+        else if(StringUtils.containsIgnoreCase(duration, "long")) return 3;
+        else return 0;
     }
 
     /**
@@ -99,10 +80,6 @@ public class VideoTagExtractor {
                                           (duration << TagEncoding.VIDEO_DURATION.getBitPos());
 
                     filterTags.add(result);
-
-//                  System.out.println(result);
-//                  System.out.println(mediaTypeCode + " " + mimeType + " " + fileSize + " " + colorSpace + " " + aspectRatio + " " + color);
-//                  System.out.println(Integer.toBinaryString(result));
                 }
             }
         }

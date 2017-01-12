@@ -10,7 +10,7 @@ import eu.europeana.harvester.cluster.domain.messages.RetrieveUrlWithProcessingC
 import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
-import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
+import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailImageGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.domain.*;
@@ -48,7 +48,9 @@ public class RetrieveAndProcessActorTest {
     };
 
     private static String PROCESSING_PATH_PREFIX = Paths.get("harvester-server/src/test/resources/processing").toAbsolutePath().toString() + "/";
-    private static final String text1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/master/harvester-server/src/test/resources/image1.jpeg";
+    private static final String jpegImage1GitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/develop/harvester-server/src/test/resources/image1.jpeg";
+    private static final String tiffImageGitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/develop/harvester-server/src/test/resources/image3.tif";
+    private static final String pdfTextGitHubUrl = "https://raw.githubusercontent.com/europeana/ImageHarvester/develop/harvester-server/src/test/resources/text2.pdf";
 
     private static final String PATH_PREFIX = Paths.get("src/test/resources/").toAbsolutePath().toString() + "/" ;
     private static final String PATH_COLORMAP = PATH_PREFIX + "colormap.png";
@@ -61,7 +63,7 @@ public class RetrieveAndProcessActorTest {
     static ActorSystem system ;
 
     @BeforeClass
-    public static void setup() throws IOException {
+    public static void setup() throws Exception {
         FileUtils.forceMkdir(new File(FILESYSTEM_PATH_PREFIX));
         FileUtils.forceMkdir(new File(PROCESSING_PATH_PREFIX));
         system = ActorSystem.create();
@@ -91,7 +93,7 @@ public class RetrieveAndProcessActorTest {
                 largeThumbnailExtractionSubTask
         );
 
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+        final RetrieveUrl task = new RetrieveUrl(jpegImage1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
@@ -129,8 +131,8 @@ public class RetrieveAndProcessActorTest {
     }
 
     @Test
-    public void test_CheckLink_Success() throws InterruptedException {
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CHECK_LINK,"a",
+    public void test_Image_CheckLink_Success() throws InterruptedException {
+        final RetrieveUrl task = new RetrieveUrl(jpegImage1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CHECK_LINK,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
                         "source-reference-1", Collections.EMPTY_LIST), null,new ReferenceOwner("unknown","unknwon","unknown"));
@@ -189,7 +191,7 @@ public class RetrieveAndProcessActorTest {
     }
 
     @Test
-    public void test_ConditionalDownload_Success() throws InterruptedException, NoSuchAlgorithmException, IOException {
+    public void test_Image_ConditionalDownload_Success() throws InterruptedException, NoSuchAlgorithmException, IOException {
         final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
         final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
         final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
@@ -202,7 +204,7 @@ public class RetrieveAndProcessActorTest {
                 largeThumbnailExtractionSubTask
         );
 
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
+        final RetrieveUrl task = new RetrieveUrl(jpegImage1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
@@ -245,66 +247,6 @@ public class RetrieveAndProcessActorTest {
 
         }};
     }
-
-    @Test
-    public void test_ConditionalDownload_Success_WhenUnconditionalIsForced() throws InterruptedException, NoSuchAlgorithmException, IOException {
-        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
-        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
-        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
-        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
-
-        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
-                colorExtractionSubTask,
-                metaInfoExtractionSubTask,
-                mediumThumbnailExtractionSubTask,
-                largeThumbnailExtractionSubTask
-        );
-
-        final Map<String,String> headers = Collections.singletonMap("Content-Length","1399538");
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
-                "referenceid-1", headers,
-                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
-                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
-
-        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
-    /*
-     * Wrap the whole test procedure within a testkit
-     * initializer if you want to receive actor replies
-     * or use Within(), etc.
-     */
-        new JavaTestKit(system) {{
-
-            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
-
-            subject.tell(taskWithConfig, getRef());
-
-            while (!msgAvailable()) Thread.sleep(100);
-            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
-
-            assertEquals(msg2.getImageMetaInfo().getWidth().intValue(),2500);
-            assertEquals(msg2.getImageMetaInfo().getHeight().intValue(),1737);
-            assertEquals(msg2.getImageMetaInfo().getMimeType(),"image/jpeg");
-
-            // TODO : Re-enable checking for the original
-            // final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
-            final MediaFile mediumStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"MEDIUM"),true);
-            final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
-
-            assertEquals (200, msg2.getHttpResponseCode().intValue());
-            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getColorExtractionState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
-            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
-
-            // TODO : Re-enable checking for the original
-            // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
-            assertNotNull(mediumStoredContent);
-            assertNotNull(largeStoredContent);
-
-        }};
-    }
-
 
     @Test
     public void test_ConditionalDownload_LinkFail() throws InterruptedException, NoSuchAlgorithmException, IOException {
@@ -364,7 +306,7 @@ public class RetrieveAndProcessActorTest {
                 largeThumbnailExtractionSubTask
         );
 
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
+        final RetrieveUrl task = new RetrieveUrl(jpegImage1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
@@ -376,28 +318,29 @@ public class RetrieveAndProcessActorTest {
      * or use Within(), etc.
      */
         MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
-        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
         ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
         MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+        ThumbnailImageGenerator thumbnailImageGeneratorFail = mock(ThumbnailImageGenerator.class);
 
         doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
         doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
-        doThrow(new Exception("")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doReturn(PATH_COLORMAP).when(thumbnailImageGeneratorFail).getColorMapPath();
+        doThrow(new Exception("")).when(thumbnailImageGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
 
-     final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
-            mediaMetaInfoExtractorFail,
-             thumbnailGeneratorFail,
-             colorExtractorFail,
-             mediaStorageClientFail
-     )  ;
+        final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
+                mediaMetaInfoExtractorFail,
+                colorExtractorFail,
+                mediaStorageClientFail,
+                ""
+        )  ;
         new JavaTestKit(system) {{
 
             final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),
-                                                                         httpRetrieveResponseFactory,
-                                                                         slaveProcessorFail);
+                    httpRetrieveResponseFactory,
+                    slaveProcessorFail);
 
             subject.tell(taskWithConfig, getRef());
 
@@ -428,7 +371,7 @@ public class RetrieveAndProcessActorTest {
                 largeThumbnailExtractionSubTask
         );
 
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
+        final RetrieveUrl task = new RetrieveUrl(jpegImage1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
@@ -440,24 +383,25 @@ public class RetrieveAndProcessActorTest {
      * or use Within(), etc.
      */
         MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
-        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
         ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
         MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+        ThumbnailImageGenerator thumbnailImageGeneratorFail = mock(ThumbnailImageGenerator.class);
 
         doThrow(new Exception("ana are mere")).when(mediaMetaInfoExtractorFail).extract(anyString());
         doThrow(new IOException("")).when(colorExtractorFail).colorExtraction(anyString());
-        doThrow(new Exception("bere")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doReturn(PATH_COLORMAP).when(thumbnailImageGeneratorFail).getColorMapPath();
+        doThrow(new Exception("bere")).when(thumbnailImageGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
 
-        doThrow(new RuntimeException("exceptio")).when(mediaStorageClientFail).createOrModify(any(MediaFile.class));
+        doThrow(new RuntimeException("exception")).when(mediaStorageClientFail).createOrModify(any(MediaFile.class));
 
         final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
                 mediaMetaInfoExtractorFail,
-                thumbnailGeneratorFail,
                 colorExtractorFail,
-                mediaStorageClientFail
+                mediaStorageClientFail,
+                ""
         )  ;
         new JavaTestKit(system) {{
 
@@ -480,7 +424,7 @@ public class RetrieveAndProcessActorTest {
     }
 
     @Test
-    public void test_UnconditionalDownload_Success() throws InterruptedException, NoSuchAlgorithmException, IOException {
+    public void test_Image_UnconditionalDownload_Success() throws InterruptedException, NoSuchAlgorithmException, IOException {
         final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
         final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
         final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
@@ -493,7 +437,7 @@ public class RetrieveAndProcessActorTest {
                 largeThumbnailExtractionSubTask
         );
 
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+        final RetrieveUrl task = new RetrieveUrl(jpegImage1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
@@ -550,7 +494,7 @@ public class RetrieveAndProcessActorTest {
                 largeThumbnailExtractionSubTask
         );
 
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+        final RetrieveUrl task = new RetrieveUrl(jpegImage1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
@@ -654,7 +598,7 @@ public class RetrieveAndProcessActorTest {
                 largeThumbnailExtractionSubTask
         );
 
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+        final RetrieveUrl task = new RetrieveUrl(jpegImage1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
@@ -666,22 +610,23 @@ public class RetrieveAndProcessActorTest {
      * or use Within(), etc.
      */
         MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
-        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
         ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
         MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+        ThumbnailImageGenerator thumbnailImageGeneratorFail = mock(ThumbnailImageGenerator.class);
 
         doReturn(null).when(mediaMetaInfoExtractorFail).extract(anyString());
         doReturn(null).when(colorExtractorFail).colorExtraction(anyString());
-        doThrow(new Exception("")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doReturn(PATH_COLORMAP).when(thumbnailImageGeneratorFail).getColorMapPath();
+        doThrow(new Exception("")).when(thumbnailImageGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
 
         final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
                 mediaMetaInfoExtractorFail,
-                thumbnailGeneratorFail,
                 colorExtractorFail,
-                mediaStorageClientFail
+                mediaStorageClientFail,
+                ""
         )  ;
         new JavaTestKit(system) {{
 
@@ -717,7 +662,7 @@ public class RetrieveAndProcessActorTest {
                 largeThumbnailExtractionSubTask
         );
 
-        final RetrieveUrl task = new RetrieveUrl(text1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+        final RetrieveUrl task = new RetrieveUrl(jpegImage1GitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
                 "referenceid-1", Collections.<String, String>emptyMap(),
                 new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
                         "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
@@ -729,13 +674,14 @@ public class RetrieveAndProcessActorTest {
      * or use Within(), etc.
      */
         MediaMetaInfoExtractor mediaMetaInfoExtractorFail = mock(MediaMetaInfoExtractor.class);
-        ThumbnailGenerator thumbnailGeneratorFail = mock(ThumbnailGenerator.class);
         ColorExtractor colorExtractorFail = mock(ColorExtractor.class);
         MediaStorageClient mediaStorageClientFail = mock(FileSystemMediaStorageClientImpl.class);
+        ThumbnailImageGenerator thumbnailImageGeneratorFail = mock(ThumbnailImageGenerator.class);
 
         doThrow(new Exception("ana are mere")).when(mediaMetaInfoExtractorFail).extract(anyString());
         doThrow(new IOException("")).when(colorExtractorFail).colorExtraction(anyString());
-        doThrow(new Exception("bere")).when(thumbnailGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
+        doReturn(PATH_COLORMAP).when(thumbnailImageGeneratorFail).getColorMapPath();
+        doThrow(new Exception("bere")).when(thumbnailImageGeneratorFail).createMediaFileWithThumbnail(anyInt(), anyInt(), anyString(),
                 anyString(),
                 any(new byte[]{}.getClass()),
                 anyString());
@@ -744,9 +690,9 @@ public class RetrieveAndProcessActorTest {
 
         final SlaveProcessor slaveProcessorFail = new SlaveProcessor(
                 mediaMetaInfoExtractorFail,
-                thumbnailGeneratorFail,
                 colorExtractorFail,
-                mediaStorageClientFail
+                mediaStorageClientFail,
+                ""
         )  ;
         new JavaTestKit(system) {{
 
@@ -815,8 +761,295 @@ public class RetrieveAndProcessActorTest {
         }};
     }
 
+    @Test
+    public void test_PDF_Text_UnconditionalDownload_Success() throws InterruptedException, NoSuchAlgorithmException, IOException {
+        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
+        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
+        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
+        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
+
+        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
+                colorExtractionSubTask,
+                metaInfoExtractionSubTask,
+                mediumThumbnailExtractionSubTask,
+                largeThumbnailExtractionSubTask
+        );
+
+        final RetrieveUrl task = new RetrieveUrl(pdfTextGitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
+
+            subject.tell(taskWithConfig, getRef());
+
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+            assertEquals(msg2.getTextMetaInfo().getMimeType(),"application/pdf");
+
+            // TODO : Re-enable checking for the original
+            // final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
+            final MediaFile mediumStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"MEDIUM"),true);
+            final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
+
+            assertEquals (200, msg2.getHttpResponseCode().intValue());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
+
+            // TODO : Re-enable checking for the original
+            // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
+            assertNotNull(mediumStoredContent);
+            assertNotNull(largeStoredContent);
+
+        }};
+    }
+
+    @Test
+    public void test_PDF_Text_ConditionalDownload_Success() throws InterruptedException, NoSuchAlgorithmException, IOException {
+        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
+        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
+        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
+        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
+
+        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
+                colorExtractionSubTask,
+                metaInfoExtractionSubTask,
+                mediumThumbnailExtractionSubTask,
+                largeThumbnailExtractionSubTask
+        );
+
+        final RetrieveUrl task = new RetrieveUrl(pdfTextGitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
+
+            subject.tell(taskWithConfig, getRef());
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+            assertEquals(msg2.getTextMetaInfo().getMimeType(),"application/pdf");
+
+            // TODO : Re-enable checking for the original
+            // final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
+            final MediaFile mediumStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"MEDIUM"),true);
+            final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
+
+            assertEquals (200, msg2.getHttpResponseCode().intValue());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
+
+            // TODO : Re-enable checking for the original
+            // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
+            assertNotNull(mediumStoredContent);
+            assertNotNull(largeStoredContent);
+
+        }};
+    }
+
+    @Test
+    public void test_PDF_Text_CheckLink_Success() throws InterruptedException {
+        final RetrieveUrl task = new RetrieveUrl(pdfTextGitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CHECK_LINK,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
+                        "source-reference-1", Collections.EMPTY_LIST), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
+
+            subject.tell(taskWithConfig, getRef());
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+            assertEquals (200, msg2.getHttpResponseCode().intValue());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
+        }};
+    }
+
+    @Test
+    public void test_TIFF_Image_UnconditionalDownload_Success() throws InterruptedException, NoSuchAlgorithmException, IOException {
+        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
+        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
+        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
+        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
+
+        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
+                colorExtractionSubTask,
+                metaInfoExtractionSubTask,
+                mediumThumbnailExtractionSubTask,
+                largeThumbnailExtractionSubTask
+        );
+
+        final RetrieveUrl task = new RetrieveUrl(tiffImageGitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.UNCONDITIONAL_DOWNLOAD,
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
+
+            subject.tell(taskWithConfig, getRef());
+
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+            assertEquals(msg2.getImageMetaInfo().getColorPalette().length,6);
+            assertEquals(new Integer(3800), msg2.getImageMetaInfo().getHeight());
+            assertEquals("image/tiff", msg2.getImageMetaInfo().getMimeType());
+
+            // TODO : Re-enable checking for the original
+            // final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
+            final MediaFile mediumStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"MEDIUM"),true);
+            final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
+
+            assertEquals (200, msg2.getHttpResponseCode().intValue());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
+
+            // TODO : Re-enable checking for the original
+            // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
+            assertNotNull(mediumStoredContent);
+            assertNotNull(largeStoredContent);
+
+        }};
+    }
+
+    @Test
+    public void test_TIFF_Image_ConditionalDownload_Success() throws InterruptedException, NoSuchAlgorithmException, IOException {
+        final ProcessingJobSubTask colorExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.COLOR_EXTRACTION,null);
+        final ProcessingJobSubTask metaInfoExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,null);
+        final ProcessingJobSubTask mediumThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(200,200)));
+        final ProcessingJobSubTask largeThumbnailExtractionSubTask = new ProcessingJobSubTask(ProcessingJobSubTaskType.GENERATE_THUMBNAIL,new GenericSubTaskConfiguration(new ThumbnailConfig(400,400)));
+
+        final List<ProcessingJobSubTask> subTasks = Lists.newArrayList(
+                colorExtractionSubTask,
+                metaInfoExtractionSubTask,
+                mediumThumbnailExtractionSubTask,
+                largeThumbnailExtractionSubTask
+        );
+
+        final RetrieveUrl task = new RetrieveUrl(tiffImageGitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CONDITIONAL_DOWNLOAD,
+                        "source-reference-1", subTasks), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
+
+            subject.tell(taskWithConfig, getRef());
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+            assertEquals(msg2.getImageMetaInfo().getColorPalette().length,6);
+            assertEquals(new Integer(3800), msg2.getImageMetaInfo().getHeight());
+            assertEquals("image/tiff", msg2.getImageMetaInfo().getMimeType());
+
+            // TODO : Re-enable checking for the original
+            // final MediaFile originalStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"ORIGINAL"),true);
+            final MediaFile mediumStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"MEDIUM"),true);
+            final MediaFile largeStoredContent = client.retrieve(MediaFile.generateIdFromUrlAndSizeType(msg2.getUrl(),"LARGE"),true);
+
+            assertEquals (200, msg2.getHttpResponseCode().intValue());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.SUCCESS, msg2.getStats().getThumbnailStorageState());
+
+            // TODO : Re-enable checking for the original
+            // assertEquals("The original stored content is not equal with the original content", new Long(originalStoredContent.getContent().length), msg1.getHttpRetrieveResponse().getContentSizeInBytes());
+            assertNotNull(mediumStoredContent);
+            assertNotNull(largeStoredContent);
+
+        }};
+    }
+
+    @Test
+    public void test_TIFF_Image_CheckLink_Success() throws InterruptedException {
+        final RetrieveUrl task = new RetrieveUrl(tiffImageGitHubUrl, new ProcessingJobLimits(), DocumentReferenceTaskType.CHECK_LINK,"a",
+                "referenceid-1", Collections.<String, String>emptyMap(),
+                new ProcessingJobTaskDocumentReference(DocumentReferenceTaskType.CHECK_LINK,
+                        "source-reference-1", Collections.EMPTY_LIST), null,new ReferenceOwner("unknown","unknwon","unknown"));
+
+        final RetrieveUrlWithProcessingConfig taskWithConfig = new RetrieveUrlWithProcessingConfig(task,PROCESSING_PATH_PREFIX+task.getId());
+    /*
+     * Wrap the whole test procedure within a testkit
+     * initializer if you want to receive actor replies
+     * or use Within(), etc.
+     */
+        new JavaTestKit(system) {{
+
+            final ActorRef subject = RetrieveAndProcessActor.createActor(getSystem(),httpRetrieveResponseFactory,client,PATH_COLORMAP);
+
+            subject.tell(taskWithConfig, getRef());
+
+            while (!msgAvailable()) Thread.sleep(100);
+            DoneProcessing msg2 = expectMsgAnyClassOf(DoneProcessing.class);
+
+            assertEquals (200, msg2.getHttpResponseCode().intValue());
+            assertEquals (ProcessingJobRetrieveSubTaskState.SUCCESS, msg2.getStats().getRetrieveState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getColorExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getMetaExtractionState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailGenerationState());
+            assertEquals (ProcessingJobSubTaskState.NEVER_EXECUTED, msg2.getStats().getThumbnailStorageState());
+        }};
+    }
 }
-
-
-
-

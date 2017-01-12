@@ -11,6 +11,7 @@ import eu.europeana.harvester.db.interfaces.*;
 import eu.europeana.harvester.domain.ProcessingJobRetrieveSubTaskState;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import eu.europeana.harvester.domain.ProcessingJobSubTaskStats;
+import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -70,8 +71,8 @@ public class ReceiverMasterActor extends UntypedActor {
                                final SourceDocumentReferenceDao sourceDocumentReferenceDao,
                                final SourceDocumentReferenceMetaInfoDao sourceDocumentReferenceMetaInfoDao
                                ){
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-//                "ReceiverMasterActor constructor");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+                "ReceiverMasterActor constructor");
 
         this.clusterMasterConfig = clusterMasterConfig;
         this.accountantActor = accountantActor;
@@ -96,8 +97,8 @@ public class ReceiverMasterActor extends UntypedActor {
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
-//                "ReceiverMasterActor prestart");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.TASKS_RECEIVER),
+                "ReceiverMasterActor prestart");
 
         getContext().system().stop(receiverJobDumper);
     }

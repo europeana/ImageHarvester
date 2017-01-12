@@ -10,6 +10,7 @@ import eu.europeana.harvester.cluster.master.limiter.domain.ReserveConnectionSlo
 import eu.europeana.harvester.cluster.master.limiter.domain.ReturnConnectionSlotRequest;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
+import eu.europeana.harvester.logging.LoggingComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -92,6 +93,8 @@ public class NodeMasterActor extends UntypedActor {
         this.mediaStorageClient = mediaStorageClient;
         this.maxSlaves = nodeMasterConfig.getNrOfDownloaderSlaves();
 
+        LOG.debug("SLAVE - Node master actor constructor");
+
         // Register the global gauges
         SlaveMetrics.Worker.Master.activeWorkerSlavesCounter.registerHandler(new Gauge<Integer>() {
             @Override
@@ -115,6 +118,7 @@ public class NodeMasterActor extends UntypedActor {
         lastRequest = 0l;
         sentRequest = false;
 
+        LOG.debug("SLAVE - Node master actor, post restart");
 
         final int maxNrOfRetries = nodeMasterConfig.getNrOfRetries();
         final SupervisorStrategy strategy =
@@ -125,11 +129,17 @@ public class NodeMasterActor extends UntypedActor {
 
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
+
+        LOG.debug("SLAVE - Node master actor, pre restart");
+
         super.preRestart(reason, message);
     }
 
     @Override
     public void postRestart(Throwable reason) throws Exception {
+
+        LOG.debug("SLAVE - Node master actor, post restart");
+
         super.postRestart(reason);
 
         sentRequest = false;
@@ -185,6 +195,7 @@ public class NodeMasterActor extends UntypedActor {
         ActorRef which = t.getActor();
         this.actors.remove(which);
 
+        LOG.debug("SLAVE - Node master actor - onTerminatedReceived");
 
         if (actors.size()<maxSlaves){
             Object msg = null;
@@ -206,18 +217,33 @@ public class NodeMasterActor extends UntypedActor {
                 self().tell(new RequestTasks(), ActorRef.noSender());
             }
 
+            LOG.debug("SLAVE - Node master actor - onTerminatedReceived, actors < max slaves, task id to retrieve is: {}", taskIDToRetrieveURL);
+
         }
 
     }
 
     private void onRetrieveUrlWithProcessingConfigReceived ( RetrieveUrlWithProcessingConfig retrieveUrl ) {
+
+        LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived");
+
         taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,null));
+
+        LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived - taskIDToRetrieveURL has size {}",
+                taskIDToRetrieveURL.size());
+
         SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.inc();
+
+        LOG.debug("SLAVE - Node master actor - onRetrieveUrlWithProcessingConfigReceived - jobsWaitingForSlotGrantCounter {}",
+                SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.getCount());
         masterSender.tell(new ReserveConnectionSlotRequest(retrieveUrl.getRetrieveUrl().getIpAddress(),
                 retrieveUrl.getRetrieveUrl().getId()),getSelf());
     }
 
     private void onReserveConnectionSlotResponseReceived ( ReserveConnectionSlotResponse reserveConnectionSlotResponse) {
+
+        LOG.debug("SLAVE - Node master actor - onReserveConnectionSlotResponseReceived");
+
         if (!taskIDToRetrieveURL.containsKey(reserveConnectionSlotResponse.getTaskID()))
             return;
 
@@ -232,11 +258,22 @@ public class NodeMasterActor extends UntypedActor {
         }
 
         taskIDToRetrieveURL.put(retrieveUrl.getRetrieveUrl().getId(), new Pair(retrieveUrl,reserveConnectionSlotResponse));
+
+        LOG.debug("SLAVE - Node master actor - onReserveConnectionSlotResponseReceived - taskIDToRetrieveURL has size {}", taskIDToRetrieveURL.size());
+
+
         SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.dec();
+
+        LOG.debug("SLAVE - Node master actor - onReserveConnectionSlotResponseReceived - jobsWaitingForSlotGrantCounter {}",
+                SlaveMetrics.Worker.Master.jobsWaitingForSlotGrantCounter.getCount());
+
         executeRetrieveURL(retrieveUrl);
     }
 
     private void executeRetrieveURL(Object message) {
+        LOG.debug("NodeMasterActor executeretrieveurl actors size: {}, max slaves: {}, jobs ready to be processed: {}", actors.size(), maxSlaves,
+                jobsReadyToBeProcessed.size());
+
         jobsReadyToBeProcessed.add(message);
 
         if ( actors.size()<maxSlaves & jobsReadyToBeProcessed.size()>maxSlaves ) {
@@ -247,11 +284,10 @@ public class NodeMasterActor extends UntypedActor {
                 if (!jobsReadyToBeProcessed.isEmpty())
                     msg = jobsReadyToBeProcessed.poll();
 
-
                 if(msg != null) {
                     RetrieveUrlWithProcessingConfig tst = (RetrieveUrlWithProcessingConfig) msg;
-//                    LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
-//                            "Slave master starting new Worker Actor for url {} ",tst.getRetrieveUrl().getUrl());
+                    LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Slave.MASTER),
+                            "Slave master starting new Worker Actor for url {} ",tst.getRetrieveUrl().getUrl());
 
                     ActorRef newActor = RetrieveAndProcessActor.createActor(getContext().system(),
                             httpRetrieveResponseFactory, mediaStorageClient, nodeMasterConfig.getColorMapPath()
@@ -269,6 +305,9 @@ public class NodeMasterActor extends UntypedActor {
 
     private void onRequestTasksReceived() {
         //allways request tasks if the message is coming from the supervisor
+
+        LOG.debug("SLAVE - Node master actor - onRequestTasksReceived");
+
         if ( getSender().equals(nodeSupervisor)) {
             if ( masterSender!= null && jobsReadyToBeProcessed.size() < nodeMasterConfig.getTaskNrLimit() ) {
                 masterSender.tell(new RequestTasks(), nodeSupervisor);
@@ -299,6 +338,9 @@ public class NodeMasterActor extends UntypedActor {
     private void onDoneProcessingReceived(Object message) {
         final DoneProcessing doneProcessing = (DoneProcessing)message;
 
+        LOG.debug("SLAVE - Node master actor - ondoneprocessingreceived, processing state: {}, url: {}, log: {}", doneProcessing.getProcessingState().name(),
+               doneProcessing.getUrl(), doneProcessing.getLog());
+
         this.actors.remove(getSender());
 
         if(taskIDToRetrieveURL.containsKey(doneProcessing.getTaskID())) {
@@ -316,16 +358,22 @@ public class NodeMasterActor extends UntypedActor {
 
     private void onCleanReceived() {
 
+        LOG.debug("SLAVE - Node master actor - oncleanReceived");
 
         context().system().stop(getSelf());
     }
 
     private void onSendHeartBeatReceived() {
+
+        LOG.debug("SLAVE - Node master actor - onHeartBeatReceived");
+
         getSender().tell(new SlaveHeartbeat(), getSelf());
     }
 
     private void onChangeJobStateReceived(ChangeJobState message) {
         final ChangeJobState changeJobState = message;
+
+        LOG.debug("SLAVE - Node master actor - onchangejobstatereceived, message new state: {}", message.getNewState().name());
 
 
         switch (changeJobState.getNewState()) {

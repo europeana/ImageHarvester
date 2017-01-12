@@ -25,7 +25,6 @@ import eu.europeana.harvester.cluster.slave.RetrieveAndProcessActor;
 import eu.europeana.harvester.cluster.slave.processing.SlaveProcessor;
 import eu.europeana.harvester.cluster.slave.processing.color.ColorExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
-import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.filesystem.FileSystemMediaStorageClientImpl;
 import eu.europeana.harvester.db.interfaces.*;
@@ -33,8 +32,8 @@ import eu.europeana.harvester.db.mongo.*;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.HttpRetrieveResponseFactory;
 import eu.europeana.jobcreator.JobCreator;
+import eu.europeana.jobcreator.domain.ProcessingJobCreationOptions;
 import eu.europeana.jobcreator.domain.ProcessingJobTuple;
-import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
 import org.joda.time.Duration;
 import org.junit.After;
@@ -42,7 +41,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -54,7 +52,6 @@ import java.util.concurrent.TimeoutException;
 import static eu.europeana.harvester.TestUtils.*;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Created by paul on 12/08/15.
@@ -78,17 +75,13 @@ public class MasterTests {
 
 
     @Before
-    public void setUp() throws IOException {
-        MongoClient mongo = new MongoClient("178.63.58.51", 27017);
+    public void setUp() throws Exception {
+        MongoClient mongo = new MongoClient("78.46.164.244", 27017);
         Morphia morphia = new Morphia();
         String dbName = "test_crf_europeana_harvester_master";
 
-        final String username = "test_crf_europeana_harvester_master";
-        final String password = "Nhck0zCfcu0M6kK";
-
-        if (!mongo.getDB("admin").authenticate(username, password.toCharArray())) {
-            fail("Couldn't auth info db");
-        }
+        final String username = "";
+        final String password = "";
 
         datastore = morphia.createDatastore(mongo, dbName);
 
@@ -105,12 +98,7 @@ public class MasterTests {
 
         FileUtils.forceMkdir(new File(PATH_DOWNLOADED));
         mediaStorageClient = new FileSystemMediaStorageClientImpl(PATH_DOWNLOADED);
-        slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP),
-                new ThumbnailGenerator(PATH_COLORMAP),
-                new ColorExtractor(PATH_COLORMAP),
-                mediaStorageClient
-        );
-
+        slaveProcessor = new SlaveProcessor(new MediaMetaInfoExtractor(PATH_COLORMAP), new ColorExtractor(PATH_COLORMAP), mediaStorageClient, PATH_COLORMAP);
     }
 
     @After
@@ -149,22 +137,22 @@ public class MasterTests {
 
     }
 
-    private void createSingleConditionalDownloadJob(final String url, final Integer priority) throws ExecutionException, UnknownHostException, MalformedURLException, TimeoutException, InterruptedException {
+    private void createSingleDownloadJob(final String url, final Integer priority, final ProcessingJobCreationOptions options) throws ExecutionException, UnknownHostException, MalformedURLException, TimeoutException, InterruptedException {
         final String collectionId = "test_collection_1";
         final String providerId = "test_provider_1";
         final String recordId = "test_record_1";
         final String executionId = "test_execution_id_1";
 
         final List<ProcessingJobTuple> result = new ArrayList<ProcessingJobTuple>();
-            result.addAll(JobCreator.createJobs(collectionId,
-                    providerId,
-                    recordId,
-                    executionId,
-                    url,
-                    new ArrayList<String>(),
-                    null,
-                    null,
-                    priority));
+        result.addAll(JobCreator.createJobs(collectionId,
+                providerId,
+                recordId,
+                executionId,
+                url,
+                new ArrayList<String>(),
+                null,
+                null,
+                priority, options));
 
         harvesterClient.createOrModifyProcessingJobTuples(result);
 
@@ -224,11 +212,12 @@ public class MasterTests {
 
 
     @Test
-    public void canLoadJobsWithNormalPriorityAndSendThemToTheSlaveAndPersistTheResult() throws
+    public void canLoadJobsConditionalDownWithNormalPriorityAndSendThemToTheSlaveAndPersistTheResult() throws
             InterruptedException, ExecutionException, MalformedURLException, TimeoutException, UnknownHostException {
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
-        createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());
+        // use CONDITIONAL_DOWNLOAD
+        createSingleDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority(), new ProcessingJobCreationOptions(false));
 
         final Pair<ActorSystem, ActorRef> systemAndMasterActor = createAndStartMaster();
         final ActorRef clusterMaster = systemAndMasterActor.getValue();
@@ -266,7 +255,7 @@ public class MasterTests {
 
                 final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics1 = sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(doneProcessing1.getReferenceId(), doneProcessing1.getJobId());
                 assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseCode().longValue(), 200);
-                assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseHeaders().size(), 20);
+                assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseHeaders().size(), 23);
                 assertTrue(sourceDocumentProcessingStatistics1.getHttpResponseContentSizeInBytes() > 10000);
 
                 final SourceDocumentReference sourceDocumentReference = sourceDocumentReferenceDao.read(doneProcessing1.getReferenceId());
@@ -282,11 +271,12 @@ public class MasterTests {
     }
 
     @Test
-    public void canLoadJobsWithNormalPriorityAndSendThemToTheSlave() throws
+    public void canLoadJobsUnconditionalDownWithNormalPriorityAndSendThemToTheSlave() throws
             InterruptedException, ExecutionException, MalformedURLException, TimeoutException, UnknownHostException {
         final HttpRetrieveResponseFactory httpRetrieveResponseFactory = new HttpRetrieveResponseFactory();
 
-        createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());
+        // use UNCONDITIONAL_DOWNLOAD
+        createSingleDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority(), new ProcessingJobCreationOptions(true));
 
         final Pair<ActorSystem, ActorRef> systemAndMasterActor = createAndStartMaster();
         final ActorRef clusterMaster = systemAndMasterActor.getValue();
@@ -323,14 +313,14 @@ public class MasterTests {
 
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics1 = sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(doneProcessing1.getReferenceId(),doneProcessing1.getJobId());
             assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseCode().longValue(), 200);
-            assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseHeaders().size(), 20);
+            assertEquals(sourceDocumentProcessingStatistics1.getHttpResponseHeaders().size(), 23);
             assertTrue(sourceDocumentProcessingStatistics1.getHttpResponseContentSizeInBytes() > 10000);
             final SourceDocumentReference sourceDocumentReference1 = sourceDocumentReferenceDao.read(doneProcessing1.getReferenceId());
             assertEquals(sourceDocumentReference1.getLastStatsId(), sourceDocumentProcessingStatistics1.getId());
 
             // JOB 2
             // (Step 5) Create another conditional download for the same url & trigger database job loading
-            createSingleConditionalDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority());
+            createSingleDownloadJob(TestUtils.GitHubUrl_PREFIX + TestUtils.Image1, JobPriority.FASTLANE.getPriority(), new ProcessingJobCreationOptions(true));
             clusterMaster.tell(new LoadJobs(), getRef());
             Thread.sleep(500);
 
@@ -363,14 +353,12 @@ public class MasterTests {
 
             final SourceDocumentProcessingStatistics sourceDocumentProcessingStatistics2 = sourceDocumentProcessingStatisticsDao.findBySourceDocumentReferenceAndJobId(doneProcessing2.getReferenceId(),doneProcessing2.getJobId());
             assertEquals(sourceDocumentProcessingStatistics2.getHttpResponseCode().longValue(), 200);
-            assertEquals(sourceDocumentProcessingStatistics2.getHttpResponseHeaders().size(), 20);
-            assertTrue(sourceDocumentProcessingStatistics2.getHttpResponseContentSizeInBytes() == 0);
+            assertEquals(sourceDocumentProcessingStatistics2.getHttpResponseHeaders().size(), 23);
+            assertTrue(sourceDocumentProcessingStatistics2.getHttpResponseContentSizeInBytes() > 0);
 
             stopSystem(systemAndMasterActor.getKey());
 
         }};
         stopSystem(systemAndMasterActor.getKey());
-
-
     }
 }

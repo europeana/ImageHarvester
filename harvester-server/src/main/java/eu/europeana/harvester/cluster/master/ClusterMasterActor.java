@@ -176,8 +176,8 @@ public class ClusterMasterActor extends UntypedActor {
                                final DefaultLimits defaultLimits, final Integer cleanupInterval,
                                final Duration delayForCountingTheStateOfDocuments) {
 
-        //LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
-        //        "ClusterMasterActor constructor");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
+                "ClusterMasterActor constructor");
 
         this.ipExceptions = ipExceptions;
         this.clusterMasterConfig = clusterMasterConfig;
@@ -200,8 +200,8 @@ public class ClusterMasterActor extends UntypedActor {
 
     @Override
     public void preStart() throws Exception {
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
-//                "ClusterMasterActor prestart");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
+                "ClusterMasterActor prestart");
 
         monitoringActor = getContext().system().actorOf(Props.create(ClusterMasterMonitoringActor.class), "monitoring");
 
@@ -375,8 +375,8 @@ public class ClusterMasterActor extends UntypedActor {
     @Override
     public void preRestart(Throwable reason, Option<Object> message) throws Exception {
         super.preRestart(reason, message);
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
-//                "ClusterMasterActor prestart");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
+                "ClusterMasterActor prestart");
         //getContext().system().stop(jobSenderActor);
         getContext().system().stop(jobLoaderActor);
         getContext().system().stop(receiverActor);
@@ -389,8 +389,8 @@ public class ClusterMasterActor extends UntypedActor {
     @Override
     public void postRestart(Throwable reason) throws Exception {
         super.postRestart(reason);
-//        LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
-//                "ClusterMasterActor poststart");
+        LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
+                "ClusterMasterActor poststart");
 
         getSelf().tell(new LoadJobs(), ActorRef.noSender());
 
@@ -445,14 +445,14 @@ public class ClusterMasterActor extends UntypedActor {
         // cluster events
         if (message instanceof MemberUp) {
             final MemberUp mUp = (MemberUp) message;
-//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
-//                    "Member is Up: {}", mUp.member());
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
+                    "Member is Up: {}", mUp.member());
 
             return;
         }
         if (message instanceof UnreachableMember) {
             final UnreachableMember mUnreachable = (UnreachableMember) message;
-            LOG.info(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
+            LOG.debug(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
                     "Member detected as Unreachable: {}", mUnreachable.member());
 
             return;
@@ -460,16 +460,16 @@ public class ClusterMasterActor extends UntypedActor {
         if (message instanceof AssociatedEvent) {
             final AssociatedEvent associatedEvent = (AssociatedEvent) message;
 
-//            LOG.info(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
-//                    "Member associated: {}", associatedEvent.remoteAddress());
+            LOG.debug(LoggingComponent.appendAppFields( LoggingComponent.Master.CLUSTER_MASTER),
+                    "Member associated: {}", associatedEvent.remoteAddress());
 
             return;
         }
 
         if (message instanceof DisassociatedEvent) {
             final DisassociatedEvent disassociatedEvent = (DisassociatedEvent) message;
-//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
-//                    "Member disassociated: {}", disassociatedEvent.remoteAddress());
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
+                    "Member disassociated: {}", disassociatedEvent.remoteAddress());
 
             //recoverTasks(disassociatedEvent.remoteAddress());
             return;
@@ -477,8 +477,8 @@ public class ClusterMasterActor extends UntypedActor {
 
         if (message instanceof MemberRemoved) {
             final MemberRemoved mRemoved = (MemberRemoved) message;
-//            LOG.info(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
-//                    "Member is Removed: {}", mRemoved.member());
+            LOG.debug(LoggingComponent.appendAppFields(LoggingComponent.Master.CLUSTER_MASTER),
+                    "Member is Removed: {}", mRemoved.member());
 
 
             return;

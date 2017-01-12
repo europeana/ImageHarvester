@@ -123,12 +123,12 @@ public class AccountantActorHelper {
         final Pair<RetrieveUrl, TaskState> taskWithState = message.getTaskWithState();
         final JobPriority prio = JobPriority.fromPriority(message.getJobPriority());
 
-        if (prio == JobPriority.FASTLANE)
-            fastLane.addTask(taskWithState.getKey());
-        else
-            normalLane.addTask(taskWithState.getKey());
-
-        return;
+        if (prio != null) {
+            if (prio == JobPriority.FASTLANE)
+                fastLane.addTask(taskWithState.getKey());
+            else
+                normalLane.addTask(taskWithState.getKey());
+        }
     }
 
     public void doneTask(DoneProcessing message) {

@@ -8,19 +8,18 @@
 #                    and should be placed in /etc/init.d
 ### END INIT INFO
 
-SCRIPT="java -Xmx4g -Djava.library.path=\"/home/norbert/harvester/extra-files/lib\" -Dlog4j.debug=true -Dlogback.configurationFile=\"/home/norbert/harvester/extra-files/logback_slave.xml\" -cp /home/norbert/harvester/harvester.jar eu.europeana.harvester.cluster.Slave /home/norbert/harvester/extra-files/slave.conf"
+SCRIPT="java -Xmx2g -cp /home/crfharvester/slave/harvester.jar eu.europeana.harvester.cluster.Slave /home/crfharvester/slave/slave.conf"
 RUNAS=root
 
-PIDFILE=/var/run/harvester-slave.pid
-LOGFILE=/var/log/harvester-slave.log
+PIDFILE=/var/run/europeana-slave.pid
+LOGFILE=/var/log/europeana-slave.log
 
 start() {
   if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
     echo 'Service already running' >&2
     return 1
   fi
-  echo 'Starting harvester-slave...' >&2
-  cd /home/norbert/harvester 
+  echo 'Starting europeana-slave...' >&2
   local CMD="$SCRIPT > \"$LOGFILE\" & echo \$!"
   su -c "$CMD" $RUNAS > "$PIDFILE"
   echo 'Service started' >&2
@@ -28,23 +27,23 @@ start() {
 
 stop() {
   if [ ! -f "$PIDFILE" ] || ! kill -0 $(cat "$PIDFILE"); then
-    echo 'harvester-slave not running' >&2
+    echo 'europeana-slave not running' >&2
     return 1
   fi
-  echo 'Stopping harvester-slave...' >&2
+  echo 'Stopping europeana-slave...' >&2
   kill -15 $(cat "$PIDFILE") && rm -f "$PIDFILE"
   echo 'Service stopped' >&2
 }
 
 uninstall() {
-  echo -n "Are you really sure you want to uninstall harvester slave? That cannot be undone. [yes|No] "
+  echo -n "Are you really sure you want to uninstall europeana slave ? That cannot be undone. [yes|No] "
   local SURE
   read SURE
   if [ "$SURE" = "yes" ]; then
     stop
     rm -f "$PIDFILE"
     echo "Notice: log file is not be removed: '$LOGFILE'" >&2
-    update-rc.d -f crawler-master remove
+    update-rc.d -f europeana-slave remove
     rm -fv "$0"
   fi
 }

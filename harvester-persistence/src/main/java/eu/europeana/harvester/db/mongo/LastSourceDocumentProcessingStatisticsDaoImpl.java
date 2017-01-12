@@ -52,7 +52,7 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 	@Override
 	public LastSourceDocumentProcessingStatistics read(String sourceDocumentReferenceId,
 			DocumentReferenceTaskType taskType, URLSourceType urlSourceType) {
-		return read(LastSourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId, taskType, urlSourceType));
+		return read(LastSourceDocumentProcessingStatistics.idOf(sourceDocumentReferenceId, urlSourceType));
 	}
 
 	@Override
@@ -144,7 +144,7 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 
 			update.set("active", false);
 			datastore.update(query, update, false, writeConcern);
-			docs.addAll(query.asList());
+		//	docs.addAll(query.asList());
 		}
 		return docs;
 	}

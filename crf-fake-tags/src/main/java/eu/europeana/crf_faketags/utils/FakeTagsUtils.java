@@ -1,257 +1,118 @@
+/*
+* Copyright 2007-2016 The Europeana Foundation
+*
+* Licenced under the EUPL, Version 1.1 (the "Licence") and subsequent versions as approved
+* by the European Commission;
+* You may not use this work except in compliance with the Licence.
+*
+* You may obtain a copy of the Licence at:
+* http://joinup.ec.europa.eu/software/page/eupl
+*
+* Unless required by applicable law or agreed to in writing, software distributed under
+* the Licence is distributed on an "AS IS" basis, without warranties or conditions of
+* any kind, either express or implied.
+* See the Licence for the specific language governing permissions and limitations under
+* the Licence.
+*/
+
 package eu.europeana.crf_faketags.utils;
 
 import eu.europeana.crf_faketags.extractor.*;
 import eu.europeana.harvester.domain.ImageOrientation;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
+/**
+ * @author lúthien (maike.dulk@europeana.eu) rewrite of previous version by busymachines
+ */
 public class FakeTagsUtils {
 
 
-    static public List<Integer> imageFilterTags(final List<String> mimeTypes, final List<String> imageSizes,
-                                                final List<Boolean> imageColors, final List<Boolean> imageGrayScales, final List<String> imageAspectRatios) {
-        final List<Integer> filterTags = new ArrayList<>();
-        Integer i = 0, j, k, l, m;
-
-        do {
-            String mimeType = null;
-            if (mimeTypes.size() != 0) {
-                mimeType = mimeTypes.get(i);
-            }
-            j = 0;
-            do {
-                String imageSize = null;
-                if (imageSizes.size() != 0) {
-                    imageSize = imageSizes.get(j);
-                }
-                k = 0;
-                do {
-                    Boolean imageColor = null;
-                    if (imageColors.size() != 0) {
-                        imageColor = imageColors.get(k);
-                    }
-                    l = 0;
-                    do {
-                        Boolean imageGrayScale = null;
-                        if (imageGrayScales.size() != 0) {
-                            imageGrayScale = imageGrayScales.get(l);
-                        }
-                        m = 0;
-                        do {
-                            String imageAspectRatio = null;
-                            if (imageAspectRatios.size() != 0) {
-                                imageAspectRatio = imageAspectRatios.get(m);
-                            }
-//                            if (CommonTagExtractor.isImageMimeType(mimeType)) {
-                                final Integer filterTag =
-                                        calculateTag(1, mimeType, imageSize, imageColor, imageGrayScale,
-                                                imageAspectRatio, null, null, null, null, null);
-                                filterTags.add(filterTag);
-//                            }
-
-                            m += 1;
-                        } while (m < imageAspectRatios.size());
-
-                        l += 1;
-                    } while (l < imageGrayScales.size());
-
-                    k += 1;
-                } while (k < imageColors.size());
-
-                j += 1;
-            } while (j < imageSizes.size());
-
-            i += 1;
-        } while (i < mimeTypes.size());
-
+    // 1) the fixlist() method cleans up duplicates and replaces NULL Lists with a list containing only "null". This is
+    // to facilitate the default "0" values of the filter tags.
+    // 2) The nested forEach creates a cartesian combination of the input lists
+    // 3) The filtertag integers are assembled right away inside the loops, as it adds nothing to delegate that to
+    // multiple downstream methods. But it compacts the code by a factor 4 at least.
+    static public List<Integer> imageFilterTags(final List<String> imageMimeTypeFacets, final List<String> imageSizeFacets,
+                                                final List<String> imageColourSpaceFacets, final List<String> imageAspectRatioFacets,
+                                                final List<String> imageColourPaletteFacets) {
+        List<Integer> filterTags = new ArrayList<>();
+        fixList(imageMimeTypeFacets).forEach((mimeTypeFacet) ->
+        fixList(imageSizeFacets).forEach((sizeFacet) ->
+        fixList(imageColourSpaceFacets).forEach((colourSpaceFacet) ->
+        fixList(imageAspectRatioFacets).forEach((aspectRatioFacet) ->
+        fixList(imageColourPaletteFacets).forEach((colourPaletteFacet) -> {
+            filterTags.add(MediaTypeEncoding.IMAGE.getEncodedValue() |
+                CommonTagExtractor.getMimeTypeCode(mimeTypeFacet.equals("null") ? null : mimeTypeFacet) << TagEncoding.MIME_TYPE.getBitPos() |
+                ImageTagExtractor.getSizeCode(sizeFacet.equals("null") ? null : sizeFacet) << TagEncoding.IMAGE_SIZE.getBitPos() |
+                ImageTagExtractor.getColorSpaceCode(colourSpaceFacet.equals("null") ? null : colourSpaceFacet) << TagEncoding.IMAGE_COLOURSPACE.getBitPos() |
+                ImageTagExtractor.getAspectRatioCode(aspectRatioFacet.equals("null") ? null : getImageOrientation(aspectRatioFacet)) << TagEncoding.IMAGE_ASPECTRATIO.getBitPos() |
+                ImageTagExtractor.getColorCode(colourPaletteFacet.equals("null") ? null : colourPaletteFacet) << TagEncoding.IMAGE_COLOUR.getBitPos());})))));
         return filterTags;
     }
 
-    static public List<Integer> soundFilterTags(List<String> mimeTypes, List<Boolean> soundHQs,
-                                                List<String> soundDurations) {
+    static public List<Integer> soundFilterTags(List<String> soundMimeTypeFacets, List<String> soundHQFacets, List<String> soundDurationFacets) {
         final List<Integer> filterTags = new ArrayList<>();
-
-        Integer i = 0, j, k;
-
-        do {
-            String mimeType = null;
-            if (mimeTypes.size() != 0) {
-                mimeType = mimeTypes.get(i);
-            }
-            j = 0;
-            do {
-                Boolean soundHQ = null;
-                if (soundHQs.size() != 0) {
-                    soundHQ = soundHQs.get(j);
-                }
-                k = 0;
-                do {
-                    String soundDuration = null;
-                    if (soundDurations.size() != 0) {
-                        soundDuration = soundDurations.get(k);
-                    }
-
-//                    if (CommonTagExtractor.isSoundMimeType(mimeType)) {
-                        final Integer filterTag =
-                                calculateTag(2, mimeType, null, null, null, null, null, soundHQ,
-                                        soundDuration, null, null);
-                        filterTags.add(filterTag);
-//                    }
-
-                    k += 1;
-                } while (k < soundDurations.size());
-
-                j += 1;
-            } while (j < soundHQs.size());
-
-            i += 1;
-        } while (i < mimeTypes.size());
-
+        fixList(soundMimeTypeFacets).forEach((mimeTypeFacet) ->
+        fixList(soundHQFacets).forEach((hqFacet) ->
+        fixList(soundDurationFacets).forEach((durationFacet) -> {
+            filterTags.add(MediaTypeEncoding.AUDIO.getEncodedValue() |
+        CommonTagExtractor.getMimeTypeCode(mimeTypeFacet.equals("null") ? null : mimeTypeFacet) << TagEncoding.MIME_TYPE.getBitPos() |
+        SoundTagExtractor.getQualityCode(hqFacet.equals("null") ? null : hqFacet) << TagEncoding.SOUND_QUALITY.getBitPos() |
+        SoundTagExtractor.getDurationCode(durationFacet.equals("null") ? null : durationFacet) << TagEncoding.SOUND_DURATION.getBitPos());})));
         return filterTags;
     }
 
-    static public List<Integer> videoFilterTags(List<String> mimeTypes, List<Boolean> videoHQs,
-                                                List<String> videoDurations) {
+    static public List<Integer> videoFilterTags(List<String> videoMimeTypeFacets, List<String> videoHDFacets, List<String> videoDurationFacets) {
         final List<Integer> filterTags = new ArrayList<>();
-
-        Integer i = 0, j, k;
-
-        do {
-            String mimeType = null;
-            if (mimeTypes.size() != 0) {
-                mimeType = mimeTypes.get(i);
-            }
-            j = 0;
-            do {
-                Boolean videoHQ = null;
-                if (videoHQs.size() != 0) {
-                    videoHQ = videoHQs.get(j);
-                }
-                k = 0;
-                do {
-                    String videoDuration = null;
-                    if (videoDurations.size() != 0) {
-                        videoDuration = videoDurations.get(k);
-                    }
-
-//                    if (CommonTagExtractor.isVideoMimeType(mimeType)) {
-                        final Integer filterTag =
-                                calculateTag(3, mimeType, null, null, null, null, null, null, null, videoHQ,
-                                        videoDuration);
-                        filterTags.add(filterTag);
-//                    }
-
-                    k += 1;
-                } while (k < videoDurations.size());
-
-                j += 1;
-            } while (j < videoHQs.size());
-
-            i += 1;
-        } while (i < mimeTypes.size());
-
+        fixList(videoMimeTypeFacets).forEach((mimeTypeFacet) ->
+        fixList(videoHDFacets).forEach((hdFacet) ->
+        fixList(videoDurationFacets).forEach((durationFacet) ->{
+            filterTags.add(MediaTypeEncoding.VIDEO.getEncodedValue() |
+                CommonTagExtractor.getMimeTypeCode(mimeTypeFacet.equals("null") ? null : mimeTypeFacet) << TagEncoding.MIME_TYPE.getBitPos() |
+                VideoTagExtractor.getQualityCode(hdFacet.equals("null") ? null : hdFacet) << TagEncoding.VIDEO_QUALITY.getBitPos() |
+                VideoTagExtractor.getDurationCode(durationFacet.equals("null") ? null : durationFacet) << TagEncoding.VIDEO_DURATION.getBitPos());})));
         return filterTags;
     }
 
-
-    static public Integer calculateTag(Integer mediaType, String mimeType, String imageSize,
-                                       Boolean imageColor, Boolean imageGrayScale,
-                                       String imageAspectRatio, String imageColorPalette, Boolean soundHQ,
-                                       String soundDuration, Boolean videoHQ, String videoDuration) {
-        Integer tag = 0;
-
-        if (mimeType != null) {
-            mimeType = mimeType.toLowerCase();
-        }
-        if (imageSize != null) {
-            imageSize = imageSize.toLowerCase();
-        }
-        if (imageAspectRatio != null) {
-            imageAspectRatio = imageAspectRatio.toLowerCase();
-        }
-
-        if (imageColorPalette != null) {
-            imageColorPalette = imageColorPalette.toUpperCase();
-        }
-        if (soundDuration != null) {
-            soundDuration = soundDuration.toLowerCase();
-        }
-        if (videoDuration != null) {
-            videoDuration = videoDuration.toLowerCase();
-        }
-
-        switch (mediaType) {
-            case 1:
-                tag = calculateImageTag(mimeType, imageSize, imageColor, imageGrayScale,
-                        imageAspectRatio, imageColorPalette);
-                break;
-            case 2:
-                tag = calculateSoundTag(mimeType, soundHQ, soundDuration);
-                break;
-            case 3:
-                tag = calculateVideoTag(mimeType, videoHQ, videoDuration);
-                break;
-        }
-
-        return tag;
+    static public List<Integer> otherFilterTags(List<String> otherMimeTypeFacets) {
+        final List<Integer> filterTags = new ArrayList<>();
+        fixList(otherMimeTypeFacets).forEach((mimeTypeFacet) -> {
+            filterTags.add(MediaTypeEncoding.TEXT.getEncodedValue() |
+            CommonTagExtractor.getMimeTypeCode(mimeTypeFacet) << TagEncoding.MIME_TYPE.getBitPos());});
+        return filterTags;
     }
 
-    static public Integer calculateImageTag(final String mimeType, final String imageSize,
-                                            final Boolean imageColor, final Boolean imageGrayScale,
-                                            final String imageAspectRatio, final String imageColorPalette) {
-
-        ImageOrientation imageOrientation = null;
-        if (imageAspectRatio != null) {
-            if (imageAspectRatio.equals("portrait")) {
-                imageOrientation = ImageOrientation.PORTRAIT;
-            }
-            if (imageAspectRatio.equals("landscape")) {
-                imageOrientation = ImageOrientation.LANDSCAPE;
-            }
-        }
-
-        final Integer mediaTypeCode = MediaTypeEncoding.IMAGE.getEncodedValue();
-        final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(mimeType);
-        final Integer fileSizeCode = ImageTagExtractor.getSizeCode(imageSize);
-        final Integer colorSpaceCode = ImageTagExtractor.getColorSpaceCode(imageColor, imageGrayScale);
-        final Integer aspectRatioCode = ImageTagExtractor.getAspectRatioCode(imageOrientation);
-        final Integer colorCode = ImageTagExtractor.getColorCode(imageColorPalette);
-
-        final Integer tag = mediaTypeCode |
-                mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos() |
-                fileSizeCode << TagEncoding.IMAGE_SIZE.getBitPos() |
-                colorSpaceCode << TagEncoding.IMAGE_COLOURSPACE.getBitPos() |
-                aspectRatioCode << TagEncoding.IMAGE_ASPECTRATIO.getBitPos() |
-                colorCode << TagEncoding.IMAGE_COLOUR.getBitPos();
-
-        return tag;
+    // specifically for producing the colour palette filter tags associated with the colourPalette parameter
+    // i.e. as opposed to the colourPaletteFacets as occurring in the qf:refinements / facets
+    static public List<Integer> colourPaletteFilterTags(List<String> colourPalette) {
+        final List<Integer> filterTags = new ArrayList<>();
+        fixList(colourPalette).forEach((colour) -> {
+            filterTags.add(MediaTypeEncoding.IMAGE.getEncodedValue() |
+                ImageTagExtractor.getColorCode(colour) << TagEncoding.IMAGE_COLOUR.getBitPos());});
+        return filterTags;
     }
 
-    static public Integer calculateSoundTag(final String mimeType, final Boolean soundHQ,
-                                            final String duration) {
-        final Integer mediaTypeCode = MediaTypeEncoding.AUDIO.getEncodedValue();
-        final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(mimeType);
-        final Integer qualityCode = SoundTagExtractor.getQualityCode(soundHQ);
-        final Integer durationCode = SoundTagExtractor.getDurationCode(duration);
-
-        return mediaTypeCode |
-                mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos() |
-                qualityCode << TagEncoding.SOUND_QUALITY.getBitPos() |
-                durationCode << TagEncoding.SOUND_DURATION.getBitPos();
+    // 1) converts Lists of any type to List of String
+    // 2) replaces NULL Lists with List of String containing just "null" in order to create the default 'zero'
+    // positions for every possible qf parameter (if they were NULL they would be skipped in the foreach loops)
+    // 3) removes any duplicate values
+    private static List<String> fixList(List<?> fixMe){
+        ArrayList<String> retval = new ArrayList();
+        if (fixMe != null && fixMe.size() != 0) fixMe.forEach((value) -> { retval.add(value.toString());});
+        else retval.add("null");
+        return new ArrayList<>(new LinkedHashSet<>(retval));
     }
 
-    static public Integer calculateVideoTag(final String mimeType,
-                                            final Boolean videoQuality, final String duration) {
-        final Integer mediaTypeCode = MediaTypeEncoding.VIDEO.getEncodedValue();
-        final Integer mimeTypeCode = CommonTagExtractor.getMimeTypeCode(mimeType);
-        final Integer qualityCode = VideoTagExtractor.getQualityCode(videoQuality);
-        final Integer durationCode = VideoTagExtractor.getDurationCode(duration);
-
-        return mediaTypeCode |
-                mimeTypeCode << TagEncoding.MIME_TYPE.getBitPos() |
-                qualityCode << TagEncoding.VIDEO_QUALITY.getBitPos() |
-                durationCode << TagEncoding.VIDEO_DURATION.getBitPos();
+    // why only this property should have its own class representing exactly ONE bit of information?
+    // Add that to the mysteries of life ...
+    private static ImageOrientation getImageOrientation(String imageAspectRatio){
+        if (StringUtils.isBlank(imageAspectRatio)) return null;
+        else if (imageAspectRatio.contains("portrait")) return ImageOrientation.PORTRAIT;
+        else if (imageAspectRatio.contains("landscape")) return ImageOrientation.LANDSCAPE;
+        else return null;
     }
-
 }

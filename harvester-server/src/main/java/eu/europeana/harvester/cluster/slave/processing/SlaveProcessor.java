@@ -10,7 +10,7 @@ import eu.europeana.harvester.cluster.slave.processing.exceptiions.ThumbnailGene
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoExtractor;
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaInfoTuple;
-import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGenerator;
+import eu.europeana.harvester.cluster.slave.processing.thumbnail.ThumbnailGeneratorFactory;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.domain.*;
 import eu.europeana.harvester.httpclient.response.ResponseType;
@@ -31,18 +31,15 @@ public class SlaveProcessor {
     private final Logger LOG = LoggerFactory.getLogger(this.getClass().getName());
 
     private final MediaMetaInfoExtractor metaInfoExtractor;
-    private final ThumbnailGenerator thumbnailGenerator;
     private final ColorExtractor colorExtractor;
     private final MediaStorageClient mediaStorageClient;
+    private final String colorMapPath;
 
-
-    public SlaveProcessor(MediaMetaInfoExtractor metaInfoExtractor, ThumbnailGenerator thumbnailGenerator, ColorExtractor colorExtractor,
-                          MediaStorageClient mediaStorageClient) {
+    public SlaveProcessor(MediaMetaInfoExtractor metaInfoExtractor, ColorExtractor colorExtractor, MediaStorageClient mediaStorageClient, String colorMapPath) {
         this.metaInfoExtractor = metaInfoExtractor;
-        this.thumbnailGenerator = thumbnailGenerator;
         this.colorExtractor = colorExtractor;
         this.mediaStorageClient = mediaStorageClient;
-
+        this.colorMapPath = colorMapPath;
     }
 
     public ProcessingResultTuple process(final ProcessingJobTaskDocumentReference task,
@@ -81,7 +78,10 @@ public class SlaveProcessor {
         }
 
         // Color extraction : This happens only for images.
-        if ((null != colorExtractionProcessingTask)) {
+        if (!MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
+            stats = stats.withColorExtractionState(ProcessingJobSubTaskState.NEVER_EXECUTED);
+
+        } else if ((null != colorExtractionProcessingTask)) {
             try {
                 imageColorMetaInfo = extractColor(originalFilePath);
 
@@ -104,19 +104,21 @@ public class SlaveProcessor {
                 mediaMetaInfoTuple = mediaMetaInfoTuple.withImageMetaInfo(mediaMetaInfoTuple.getImageMetaInfo().withColorPalette(imageColorMetaInfo.getColorPalette()));
         }
 
-        // Thumbnail generation : This happens only for images where color extraction was successful.
-        if ((null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty() && (imageColorMetaInfo != null)) {
-            try {
-                generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent,
-                        referenceOwner, thumbnailGenerationProcessingTasks);
+        // Thumbnail generation : This happens JUST for images (ONLY where color extraction was successful) and PDF files.
+        if ((null != thumbnailGenerationProcessingTasks) && !thumbnailGenerationProcessingTasks.isEmpty()) {
+            if ((MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE) && (imageColorMetaInfo != null)) || MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.PDF)) {
+                try {
+                    generatedThumbnails = generateThumbnails(originalFilePath, originalFileUrl, originalFileContent,
+                            referenceOwner, thumbnailGenerationProcessingTasks);
 
-                if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
-                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
-                } else {
-                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED, new Exception("thumbnailGenerationProcessingTasks is null OR empty OR imageColorMetaInfo is null"));
+                    if (null != generatedThumbnails && generatedThumbnails.size() == thumbnailGenerationProcessingTasks.size()) {
+                        stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.SUCCESS);
+                    } else {
+                        stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.FAILED, new Exception("thumbnailGenerationProcessingTasks is null OR empty OR imageColorMetaInfo is null"));
+                    }
+                } catch (Exception e) {
+                    stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR, e);
                 }
-            } catch (Exception e) {
-                stats = stats.withThumbnailGenerationState(ProcessingJobSubTaskState.ERROR, e);
             }
         }
 
@@ -284,22 +286,24 @@ public class SlaveProcessor {
                                                                           final List<ProcessingJobSubTask> thumbnailGenerationProcessingTasks) throws ThumbnailGenerationException {
         final Map<ProcessingJobSubTask, MediaFile> results = new HashMap<ProcessingJobSubTask, MediaFile>();
         for (final ProcessingJobSubTask thumbnailGenerationTask : thumbnailGenerationProcessingTasks) {
-            if (MediaMetaDataUtils.classifyUrl(originalFilePath).equals(ContentType.IMAGE)) {
                 SlaveMetrics.Worker.Slave.Processing.thumbnailGenerationCounter.inc();
                 final Timer.Context thumbnailGenerationDurationContext = SlaveMetrics.Worker.Slave.Processing.thumbnailGenerationDuration.time();
                 try {
                     final GenericSubTaskConfiguration config = thumbnailGenerationTask.getConfig();
 
-                    final MediaFile thumbnailMediaFile = thumbnailGenerator.createMediaFileWithThumbnail(config.getThumbnailConfig().getHeight(),
-                            config.getThumbnailConfig().getWidth(), referenceOwner.getExecutionId(), originalFileUrl,
-                            originalFileContent, originalFilePath);
+                    final MediaFile thumbnailMediaFile = ThumbnailGeneratorFactory.getThumbnailGenerator(MediaMetaDataUtils.classifyUrl(originalFilePath), colorMapPath)
+                            .createMediaFileWithThumbnail(config.getThumbnailConfig().getWidth(),
+                                    config.getThumbnailConfig().getHeight(),
+                                    referenceOwner.getExecutionId(),
+                                    originalFileUrl,
+                                    originalFileContent,
+                                    originalFilePath);
                     results.put(thumbnailGenerationTask, thumbnailMediaFile);
                 } catch (Exception e) {
                     throw new ThumbnailGenerationException(e);
                 } finally {
                     thumbnailGenerationDurationContext.stop();
                 }
-            }
         }
         return results;
     }

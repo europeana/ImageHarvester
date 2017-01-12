@@ -32,9 +32,9 @@ public class SlaveDownloader {
 
         if (task.getUrl() == null || "".equalsIgnoreCase(task.getUrl())) {
             LOG.error(LoggingComponent.appendAppFields(LoggingComponent.Slave.SLAVE_RETRIEVAL, task.getJobId(), task.getUrl(), task.getReferenceOwner()),
-                    "Retrieval url failed because the downloader cannot retrieve null or 'empty string' url.");
+                    "Retrieval of the media failed, URL is empty or null.");
             httpRetrieveResponse.setState(RetrievingState.ERROR);
-            httpRetrieveResponse.setLog("Retrieval url failed because the downloader cannot retrieve null or 'empty string' url.");
+            httpRetrieveResponse.setLog("Retrieval of the media failed, URL is empty or null.");
             return httpRetrieveResponse;
         }
 
@@ -43,7 +43,7 @@ public class SlaveDownloader {
             new URL(task.getUrl());
         } catch (Exception e) {
             httpRetrieveResponse.setState(RetrievingState.ERROR);
-            httpRetrieveResponse.setLog(e.getMessage());
+            httpRetrieveResponse.setLog("An error has occurred:" + e.getMessage());
             httpRetrieveResponse.setException(e);
             return httpRetrieveResponse;
         }
@@ -75,7 +75,7 @@ public class SlaveDownloader {
                 if (connectionSetupDurationInMillis > task.getLimits().getRetrievalConnectionTimeoutInMillis()) {
                     /* Initial connection setup time longer than threshold. */
                     httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Download aborted as connection setup duration " + connectionSetupDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + " ms");
+                    httpRetrieveResponse.setLog("The download was aborted, as it took too long to initiate the connection (" + connectionSetupDurationInMillis + "ms, larger than " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + "ms)");
                     return STATE.ABORT;
                 }
 
@@ -106,7 +106,7 @@ public class SlaveDownloader {
                 /** We terminate the connection in case of HTTP error only after we collect the response headers */
                 if (httpRetrieveResponse.getHttpResponseCode() >= 400) {
                     httpRetrieveResponse.setState(RetrievingState.ERROR);
-                    httpRetrieveResponse.setLog("HTTP >=400 code received. Connection aborted after response headers collected.");
+                    httpRetrieveResponse.setLog("A HTTP error received (code >= 400), the download did not initiate.");
                     return STATE.ABORT;
                 }
 
@@ -119,7 +119,7 @@ public class SlaveDownloader {
                             existingContentLength.trim().equalsIgnoreCase(downloadContentLength.trim())) {
                         // Same content length response headers => abort
                         httpRetrieveResponse.setState(RetrievingState.COMPLETED);
-                        httpRetrieveResponse.setLog("Conditional download aborted as existing Content-Length == " + existingContentLength + " and download Content-Length == " + downloadContentLength);
+                        httpRetrieveResponse.setLog("Same file already downloaded before, skipping download (" + existingContentLength + "==" + downloadContentLength + ")");
                         return STATE.ABORT;
                     }
                 }
@@ -138,14 +138,15 @@ public class SlaveDownloader {
                 if (downloadDurationInMillis > task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis()) {
                     /* Download duration longer than threshold. */
                     httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Download aborted as it's duration " + downloadDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + " ms");
+                    httpRetrieveResponse.setLog("The download was aborted, as it took too long to download this file (" + downloadDurationInMillis + "ms longer than " + task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + "ms)");
                     return STATE.ABORT;
                 }
 
                 if ((timeWindowCounter.previousTimeWindowRate() != -1) && (timeWindowCounter.previousTimeWindowRate() < task.getLimits().getRetrievalTerminationThresholdReadPerSecondInBytes())) {
                         /* Abort early if download is throttled by the sender. */
                     httpRetrieveResponse.setState(RetrievingState.FINISHED_RATE_LIMIT);
-                    httpRetrieveResponse.setLog("Download aborted as it was throttled by the sender to " + timeWindowCounter.currentTimeWindowRate() + " bytes during the last " + timeWindowCounter.getTimeWindowSizeInSeconds() + ". This was greater than the minimum configured  " + task.getLimits().getRetrievalTerminationThresholdReadPerSecondInBytes() + "  bytes / sec");
+                    httpRetrieveResponse.setLog("The download was aborted, as the speed in which we could download this file was too low (" + timeWindowCounter.currentTimeWindowRate() + "bytes) for a period longer than " + task.getLimits().getRetrievalConnectionTimeoutInMillis() + "ms");
+
                     return STATE.ABORT;
                 }
 
@@ -192,7 +193,7 @@ public class SlaveDownloader {
                 if (downloadDurationInMillis > task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis()) {
                     /* Download duration longer than threshold. */
                     httpRetrieveResponse.setState(RetrievingState.FINISHED_TIME_LIMIT);
-                    httpRetrieveResponse.setLog("Download aborted as it's duration " + downloadDurationInMillis + " ms was greater than maximum configured  " + task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + " ms");
+                    httpRetrieveResponse.setLog("The download was aborted, as it took too long to download this file (" + downloadDurationInMillis + "ms longer than " + task.getLimits().getRetrievalTerminationThresholdTimeLimitInMillis() + " ms)");
                 }
 
                 // Check if it was aborted because of conditional download with with same headers.
