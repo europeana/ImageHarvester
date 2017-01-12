@@ -8,7 +8,6 @@
         <groupId>eu.europeana</groupId>
         <artifactId>harvester</artifactId>
         <version>0.2-SNAPSHOT</version>
-        <relativePath></relativePath>
     </parent>
 
     <artifactId>harvester-server</artifactId>
