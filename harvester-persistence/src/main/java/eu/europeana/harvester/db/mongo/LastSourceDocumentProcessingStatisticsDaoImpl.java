@@ -340,7 +340,7 @@ public class LastSourceDocumentProcessingStatisticsDaoImpl implements LastSource
 		queryLast.limit(1);
 		queryLast.order("-updatedAt");
 		LastSourceDocumentProcessingStatistics lastUpdated = queryLast.get();
-		if(firstCreated.getCreatedAt()!=null && lastUpdated.getUpdatedAt() !=null) {
+		if(firstCreated!=null && lastUpdated!=null &&firstCreated.getCreatedAt()!=null && lastUpdated.getUpdatedAt() !=null) {
 			return new Interval(firstCreated.getCreatedAt().getTime(), lastUpdated.getUpdatedAt().getTime());
 		}
 		return new Interval(0,0);

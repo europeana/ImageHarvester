@@ -2,7 +2,6 @@ package eu.europeana.harvester.cluster.slave.processing.color;
 
 import eu.europeana.harvester.cluster.slave.processing.metainfo.MediaMetaDataUtils;
 import eu.europeana.harvester.domain.ImageMetaInfo;
-import eu.europeana.harvester.domain.ProcessingJobSubTaskState;
 import gr.ntua.image.mediachecker.MediaChecker;
 
 import java.io.IOException;
@@ -31,6 +30,7 @@ public class ColorExtractor {
                     return new ImageMetaInfo(null, null, null, null, null, null, imageMetaInfo.getColorPalette(), null);
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 if (retry > 0) {
                     success = false;
                     Thread.sleep(1000);
