@@ -5,8 +5,8 @@
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>harvester</artifactId>
-        <version>0.2-SNAPSHOT</version>
-        <relativePath></relativePath>
+        <version>0.3-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <properties>
@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>media-storage-client</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>harvester-persistence</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <version>0.3-SNAPSHOT</version>
         </dependency>
         <!-- jclouds OpenStack dependencies -->
         <dependency>
