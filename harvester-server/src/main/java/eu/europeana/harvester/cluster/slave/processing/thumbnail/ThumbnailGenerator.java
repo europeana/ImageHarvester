@@ -98,7 +98,7 @@ public abstract class ThumbnailGenerator {
 
 
     /**
-     * Gets {@link colorMapPath} value
+     * Gets colorMapPath value
      */
     public String getColorMapPath() {
         return colorMapPath;
