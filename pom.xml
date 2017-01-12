@@ -7,10 +7,12 @@
     <groupId>eu.europeana</groupId>
     <artifactId>harvester</artifactId>
     <version>0.2-SNAPSHOT</version>
+
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>europeana-parent-pom</artifactId>
         <version>1.2</version>
+        <relativePath></relativePath>
     </parent>
     <!-- Jar/Pom TODO -->
     <packaging>pom</packaging>
