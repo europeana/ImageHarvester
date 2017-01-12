@@ -236,8 +236,8 @@
 
         <dependency>
             <groupId>gr.ntua.image</groupId>
-            <artifactId>MediaChecker</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <artifactId>MediaCheckerDaemon</artifactId>
+            <version>1.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.itextpdf</groupId>

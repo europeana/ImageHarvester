@@ -7,7 +7,11 @@
     <groupId>eu.europeana</groupId>
     <artifactId>harvester</artifactId>
     <version>0.1-SNAPSHOT</version>
-
+    <parent>
+        <groupId>eu.europeana</groupId>
+        <artifactId>europeana-parent-pom</artifactId>
+        <version>1.2</version>
+    </parent>
     <!-- Jar/Pom TODO -->
     <packaging>pom</packaging>
 
@@ -31,34 +35,6 @@
         <module>media-storage-client</module>
         <module>uim-tester</module>
     </modules>
-
-
-    <repositories>
-        <repository>
-            <releases>
-                <enabled>false</enabled>
-                <updatePolicy>never</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </snapshots>
-            <id>europeanaSnapshots</id>
-            <name>Europeana Snapshots</name>
-            <url>http://artifactory.eanadev.org/artifactory/ext-snapshot-local</url>
-            <layout>default</layout>
-        </repository>
-        <repository>
-	     <snapshots>
-		<enabled>false</enabled>
-	     </snapshots>
-            <id>artifactory.eanadev.org</id>
-            <name>artifactory.eanadev.org-releases</name>
-            <url>http://artifactory.eanadev.org/artifactory/libs-release-local</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
