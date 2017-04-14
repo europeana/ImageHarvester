@@ -23,19 +23,14 @@ public class ThumbnailTextGenerator extends ThumbnailGenerator {
 
         if (width != null && height != null) {
             // Scenario 1 : resize both width and height
-            op.addRawArgs("-thumbnail", width + "x" + height);
-        } else {
-            if (width != null && height == null) {
-                // Scenario 2 : resize width with height proportional
-                op.addRawArgs("-thumbnail", width + "x");
-            } else if (height != null && width == null) {
-                // Scenario 3 : resize height with width proportional
-                op.addRawArgs("-thumbnail", "x" + height);
-            } else {
-                // Scenario 4 : use original values for both width and height
-                op.addRawArgs("-thumbnail", "xx");
-            }
-        }
+            op.thumbnail(width, height);
+        } else if (width != null && height == null) {
+            // Scenario 2 : resize width with height proportional
+            op.thumbnail(width, null);
+        } else if (height != null && width == null) {
+            // Scenario 3 : resize height with width proportional
+            op.thumbnail(null, height);
+        } else {} // Scenario 4 : use original values for both width and height
 
         // Set white background
         op.background("white");
