@@ -96,6 +96,13 @@
             <version>1.11.64</version>
         </dependency>
 
+        <!-- for Bluemix compatibility -->
+        <dependency>
+            <groupId>com.softlayer.api</groupId>
+            <artifactId>softlayer-api-client</artifactId>
+            <version>0.2.5</version>
+        </dependency>
+
     </dependencies>
 
 </project>

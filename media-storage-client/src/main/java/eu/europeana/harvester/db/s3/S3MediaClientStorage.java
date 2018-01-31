@@ -4,7 +4,9 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
@@ -26,6 +28,7 @@ public class S3MediaClientStorage implements MediaStorageClient {
 
     private AmazonS3 client;
     private String bucket;
+    private boolean isBluemix = false;
 
     public S3MediaClientStorage(String clientKey, String secretKey, String region, String bucket){
         AWSCredentials credentials = new BasicAWSCredentials(clientKey,secretKey);
@@ -37,7 +40,30 @@ public class S3MediaClientStorage implements MediaStorageClient {
         AWSCredentials credentials = new BasicAWSCredentials(configuration.getClientKey(),configuration.getSecretKey());
         client = AmazonS3ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials)).withRegion(configuration.getRegion()).build();
         this.bucket = configuration.getBucket();
+    }
 
+
+
+    /**
+     * Create a new S3 client and specify an endpoint (bluemix). Calling this constructor sets the boolean isBlueMix
+     * to true; it is used to switch to the correct way of constructing the Object URI when using resource path
+     * addressing (used by Bluemix) instead of virtual host addressing (default usage with Amazon S3).
+     * Also note that the region parameter is superfluous, but I will maintain it for now in order to be able to
+     * overload the constructor (using 5 Strings, hence different from the other two)
+     * @param clientKey
+     * @param secretKey
+     * @param region
+     * @param bucketName
+     * @param endpoint
+     */
+    public S3MediaClientStorage(String clientKey, String secretKey, String region, String bucketName, String endpoint) {
+        System.setProperty("com.amazonaws.sdk.disableDNSBuckets", "True");
+        S3ClientOptions opts = new S3ClientOptions().withPathStyleAccess(true);
+        client = new AmazonS3Client(new BasicAWSCredentials(clientKey, secretKey));
+        client.setS3ClientOptions(opts);
+        client.setEndpoint(endpoint);
+        this.bucket = bucketName;
+        isBluemix = true;
     }
 
     @Override

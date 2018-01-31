@@ -27,7 +27,7 @@ public class S3Configuration {
         }
         region = config.getString("region");
         if (!config.hasPath("bucket")) {
-            throw new IllegalArgumentException("The configuration is missing the client_key property");
+            throw new IllegalArgumentException("The configuration is missing the bucket property");
         }
         bucket = config.getString("bucket");
     }
