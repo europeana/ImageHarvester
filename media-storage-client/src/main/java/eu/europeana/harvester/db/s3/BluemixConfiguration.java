@@ -5,14 +5,15 @@ import com.typesafe.config.Config;
 /**
  * Created by ymamakis on 12/9/16.
  */
-public class S3Configuration {
+public class BluemixConfiguration {
 
     private String region;
     private String bucket;
     private String clientKey;
     private String secretKey;
+    private String endpoint;
 
-    private S3Configuration(final Config config){
+    private BluemixConfiguration(final Config config){
         if (!config.hasPath("client_key")) throw new IllegalArgumentException("The configuration is missing the client_key property");
         clientKey = config.getString("client_key");
         if (!config.hasPath("secret_key")) throw new IllegalArgumentException("The configuration is missing the secret_key property");
@@ -21,9 +22,11 @@ public class S3Configuration {
         region = config.getString("region");
         if (!config.hasPath("bucket")) throw new IllegalArgumentException("The configuration is missing the bucket property");
         bucket = config.getString("bucket");
+        if (!config.hasPath("endpoint")) throw new IllegalArgumentException("The configuration is missing the endpoint property");
+        endpoint = config.getString("endpoint");
     }
-    public static S3Configuration valueOf(final Config config){
-        return  new S3Configuration(config);
+    public static BluemixConfiguration valueOf(final Config config){
+        return  new BluemixConfiguration(config);
     }
     public String getRegion(){
         return region;
@@ -39,5 +42,9 @@ public class S3Configuration {
 
     public String getSecretKey() {
         return secretKey;
+    }
+
+    public String getEndpoint() {
+        return endpoint;
     }
 }
