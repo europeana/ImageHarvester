@@ -18,6 +18,7 @@ import eu.europeana.harvester.cluster.slave.SlaveMetrics;
 import eu.europeana.harvester.cluster.slave.validator.ImageMagicValidator;
 import eu.europeana.harvester.db.MediaStorageClient;
 import eu.europeana.harvester.db.dummy.DummyMediaStorageClientImpl;
+import eu.europeana.harvester.db.s3.BluemixConfiguration;
 import eu.europeana.harvester.db.s3.S3Configuration;
 import eu.europeana.harvester.db.s3.S3MediaClientStorage;
 import eu.europeana.harvester.db.swift.SwiftConfiguration;
@@ -109,18 +110,18 @@ public class Slave {
         final String mediaStorageClientType = config.hasPath("media-storage-type") ? config.getString("media-storage-type") : "DUMMY";
 
         MediaStorageClient mediaStorageClient = null;
-        try {
 
+        try {
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
                 LOG.debug("CLUSTER SLAVE Using swift as media-storage");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
-
             } else if("S3".equalsIgnoreCase(mediaStorageClientType)){
                 mediaStorageClient = new S3MediaClientStorage(S3Configuration.valueOf(config.getConfig("media-storage")));
+            } else if("BLUEMIX".equalsIgnoreCase(mediaStorageClientType)){
+                mediaStorageClient = new S3MediaClientStorage(BluemixConfiguration.valueOf(config.getConfig("media-storage")));
             } else {
                 LOG.debug("CLUSTER SLAVE Using dummy as media-storage");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
-
             }
         } catch (Exception e) {
             LOG.error("CLUSTER SLAVE Error: connection failed to media-storage " + e.getMessage());
