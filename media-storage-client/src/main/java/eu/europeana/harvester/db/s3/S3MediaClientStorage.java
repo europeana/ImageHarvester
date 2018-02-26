@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.util.Md5Utils;
 import eu.europeana.harvester.db.MediaStorageClient;
@@ -17,6 +18,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -43,8 +45,6 @@ public class S3MediaClientStorage implements MediaStorageClient {
         this.bucket = configuration.getBucket();
     }
 
-
-
     /**
      * Create a new S3 client and specify an endpoint (bluemix). Calling this constructor sets the boolean isBlueMix
      * to true; in the Objectstorage project, it is used to switch to the correct way of constructing the Object URI
@@ -54,9 +54,12 @@ public class S3MediaClientStorage implements MediaStorageClient {
      */
     public S3MediaClientStorage(BluemixConfiguration configuration) {
         System.setProperty("com.amazonaws.sdk.disableDNSBuckets", "True");
-        S3ClientOptions opts = new S3ClientOptions().withPathStyleAccess(true);
         client = new AmazonS3Client(new BasicAWSCredentials(configuration.getClientKey(), configuration.getSecretKey()));
-        client.setS3ClientOptions(opts);
+        client.setS3ClientOptions(
+                S3ClientOptions.builder()
+                        .setPathStyleAccess(true)
+                        .disableChunkedEncoding()
+                        .build());
         client.setEndpoint(configuration.getEndpoint());
         this.bucket = configuration.getBucket();
         isBluemix = true;
@@ -64,7 +67,6 @@ public class S3MediaClientStorage implements MediaStorageClient {
 
     @Override
     public Boolean checkIfExists(String id) {
-
         return client.doesObjectExist(bucket,id);
     }
 
@@ -72,10 +74,11 @@ public class S3MediaClientStorage implements MediaStorageClient {
     public MediaFile retrieve(String id, Boolean withContent) throws IOException, NoSuchAlgorithmException {
 
         S3Object object = client.getObject(bucket,id);
-        if(object!=null) {
+        if(object != null) {
             final byte[] content = withContent ? IOUtils.toByteArray(object.getObjectContent()) : new byte[0];
-            final String contentMd5 = object.getObjectMetadata().getETag();
-            System.out.println(Md5Utils.md5AsBase64(content) +"  "+ contentMd5);
+            final String contentMd5 = isBluemix ? object.getObjectMetadata().getUserMetaDataOf("UserContentMD5")
+            : object.getObjectMetadata().getETag();
+
             if (withContent && !contentMd5.equals(Md5Utils.md5AsBase64(content))) {
             /*
              *  something wrong has happened to the data;
@@ -103,24 +106,26 @@ public class S3MediaClientStorage implements MediaStorageClient {
 
     @Override
     public void createOrModify(MediaFile mediaFile) {
-        client.deleteObject(bucket,mediaFile.getId());
-      //  S3Object object = new S3Object();
-       // object.setBucketName(bucket);
-       // object.setKey(mediaFile.getId());
+        client.deleteObject(bucket, mediaFile.getId());
+        createOrModifyNoDel(mediaFile);
+    }
+
+    public void createOrModifyNoDel(MediaFile mediaFile) {
         ByteArrayInputStream stream = new ByteArrayInputStream(mediaFile.getContent());
-       // object.setObjectContent(stream);
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentType(mediaFile.getContentType());
         metadata.setContentLength(mediaFile.getSize());
-        metadata.setContentMD5(mediaFile.getContentMd5());
-        client.putObject(new PutObjectRequest(bucket,mediaFile.getId(),stream, metadata));
-
+        if (isBluemix) {
+            metadata.getUserMetadata().put("UserContentMD5", mediaFile.getContentMd5());
+        } else {
+            metadata.setContentMD5(mediaFile.getContentMd5());
+        }
+        client.putObject(new PutObjectRequest(bucket, mediaFile.getId(), stream, metadata));
     }
-
 
     @Override
     public void delete(String id) throws IOException {
-        client.deleteObject(bucket,id);
+        client.deleteObject(bucket, id);
     }
 
     private String computeMd5(final byte[] content) {

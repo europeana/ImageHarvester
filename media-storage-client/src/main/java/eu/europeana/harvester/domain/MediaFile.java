@@ -16,20 +16,33 @@ import java.util.Map;
  */
 public class MediaFile {
 
-    public static final String generateIdFromUrlAndSizeType(final String url, final String sizeType) throws NoSuchAlgorithmException {
+    public static final String generateIdFromUrlAndSizeType(final String url, final String sizeType) throws
+                                                                                                     NoSuchAlgorithmException {
         return new StringBuilder().append(DigestUtils.md5Hex(url)).append("-").append(sizeType).toString();
     }
 
-    public static final MediaFile createMinimalMediaFileWithSizeType(String sizeType, String source, String name,
-                                                     String originalUrl, DateTime createdAt, byte[] content, String contentType,
-                                                     Integer size) throws NoSuchAlgorithmException {
+    public static final MediaFile createMinimalMediaFileWithSizeType(String sizeType,
+                                                                     String source,
+                                                                     String name,
+                                                                     String originalUrl,
+                                                                     DateTime createdAt,
+                                                                     byte[] content,
+                                                                     String contentType,
+                                                                     Integer size) throws NoSuchAlgorithmException {
         final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
 
-        return new MediaFile(
-                MediaFile.generateIdFromUrlAndSizeType(originalUrl, sizeType),
-                source, name, Collections.<String>emptyList(), new String(messageDigest.digest(content)),
-                originalUrl, createdAt, content, 0, contentType,
-                Collections.<String, String>emptyMap(), size);
+        return new MediaFile(MediaFile.generateIdFromUrlAndSizeType(originalUrl, sizeType),
+                             source,
+                             name,
+                             Collections.<String>emptyList(),
+                             new String(messageDigest.digest(content)),
+                             originalUrl,
+                             createdAt,
+                             content,
+                             0,
+                             contentType,
+                             Collections.<String, String>emptyMap(),
+                             size);
     }
 
     /**
@@ -97,9 +110,17 @@ public class MediaFile {
      */
     private final Integer size;
 
-    public MediaFile(String source, String name, List<String> aliases, String contentMd5,
-                     String originalUrl, DateTime createdAt, byte[] content, Integer versionNumber, String contentType,
-                     Map<String, String> metaData, Integer size) throws NoSuchAlgorithmException {
+    public MediaFile(String source,
+                     String name,
+                     List<String> aliases,
+                     String contentMd5,
+                     String originalUrl,
+                     DateTime createdAt,
+                     byte[] content,
+                     Integer versionNumber,
+                     String contentType,
+                     Map<String, String> metaData,
+                     Integer size) throws NoSuchAlgorithmException {
 
         this.id = MediaFile.generateIdFromUrlAndSizeType(originalUrl, "ORIGINAL");
         this.source = source;
@@ -116,9 +137,18 @@ public class MediaFile {
         this.size = size;
     }
 
-    public MediaFile(String id, String source, String name, List<String> aliases, String contentMd5,
-                     String originalUrl, DateTime createdAt, byte[] content, Integer versionNumber, String contentType,
-                     Map<String, String> metaData, Integer size) {
+    public MediaFile(String id,
+                     String source,
+                     String name,
+                     List<String> aliases,
+                     String contentMd5,
+                     String originalUrl,
+                     DateTime createdAt,
+                     byte[] content,
+                     Integer versionNumber,
+                     String contentType,
+                     Map<String, String> metaData,
+                     Integer size) {
         this.id = id;
         this.source = source;
         this.length = null == content ? 0L : (long) content.length;
@@ -188,20 +218,40 @@ public class MediaFile {
 
     public MediaFile withColorPalette(String[] colorPalette) {
         final Map<String, String> newMetaData = new HashMap<>();
-        int i = 0;
+        int                       i           = 0;
         for (String color : colorPalette) {
             newMetaData.put("color" + i, color);
             i++;
         }
         newMetaData.put("size", String.valueOf(this.size));
 
-        return new MediaFile(this.id, this.source, this.name, this.aliases, this.contentMd5, this.originalUrl,
-                this.createdAt, this.content, this.versionNumber, this.contentType, newMetaData, this.size);
+        return new MediaFile(this.id,
+                             this.source,
+                             this.name,
+                             this.aliases,
+                             this.contentMd5,
+                             this.originalUrl,
+                             this.createdAt,
+                             this.content,
+                             this.versionNumber,
+                             this.contentType,
+                             newMetaData,
+                             this.size);
     }
 
-    public MediaFile withId(final String id){
-        return new MediaFile(id, this.source, this.name, this.aliases, this.contentMd5, this.originalUrl,
-                this.createdAt, this.content, this.versionNumber, this.contentType, this.metaData, this.size);
+    public MediaFile withId(final String id) {
+        return new MediaFile(id,
+                             this.source,
+                             this.name,
+                             this.aliases,
+                             this.contentMd5,
+                             this.originalUrl,
+                             this.createdAt,
+                             this.content,
+                             this.versionNumber,
+                             this.contentType,
+                             this.metaData,
+                             this.size);
 
     }
 

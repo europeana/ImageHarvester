@@ -9,8 +9,12 @@ import eu.europeana.harvester.domain.ProcessingJobSubTaskType;
  */
 public class SlaveProcessorHack {
 
-    public static ProcessingJobSubTask artificialMetaInfoTask(final ProcessingJobSubTask existingMetaExtractionProcessingTask, final ProcessingJobSubTask existingColorExtractionProcessingTask) {
-        if (existingMetaExtractionProcessingTask == null && existingColorExtractionProcessingTask!= null) return new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,new GenericSubTaskConfiguration());
+    public static ProcessingJobSubTask artificialMetaInfoTask(final ProcessingJobSubTask existingMetaExtractionProcessingTask,
+                                                              final ProcessingJobSubTask existingColorExtractionProcessingTask) {
+        if (existingMetaExtractionProcessingTask == null && existingColorExtractionProcessingTask != null) {
+            return new ProcessingJobSubTask(ProcessingJobSubTaskType.META_EXTRACTION,
+                                            new GenericSubTaskConfiguration());
+        }
         return existingMetaExtractionProcessingTask;
     }
 }

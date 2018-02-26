@@ -7,11 +7,12 @@
     <parent>
         <groupId>eu.europeana</groupId>
         <artifactId>harvester</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <version>0.3-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>harvester-server</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
 
     <packaging>jar</packaging>
 
@@ -92,7 +93,6 @@
                 </configuration>
             </plugin>
         </plugins>
-
     </build>
 
     <dependencies>
@@ -104,24 +104,30 @@
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>harvester-persistence</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <version>0.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>harvester-client</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <version>0.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>harvester-job-creator</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <version>0.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>eu.europeana</groupId>
             <artifactId>media-storage-client</artifactId>
-            <version>0.2-SNAPSHOT</version>
+            <version>0.3-SNAPSHOT</version>
+          <!--<exclusions>-->
+            <!--<exclusion>-->
+              <!--<artifactId>jackson-databind</artifactId>-->
+              <!--<groupId>com.fasterxml.jackson.core</groupId>-->
+            <!--</exclusion>-->
+          <!--</exclusions>-->
         </dependency>
 
         <dependency>
@@ -177,11 +183,21 @@
             <optional>true</optional>
         </dependency>
 
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.6.6</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.fasterxml.jackson.core</groupId>-->
+            <!--<artifactId>jackson-databind</artifactId>-->
+            <!--<version>2.4.0</version>-->
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<artifactId>jackson-annotations</artifactId>-->
+                    <!--<groupId>com.fasterxml.jackson.core</groupId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                    <!--<artifactId>jackson-core</artifactId>-->
+                    <!--<groupId>com.fasterxml.jackson.core</groupId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>org.fusesource</groupId>
@@ -237,8 +253,8 @@
 
         <dependency>
             <groupId>gr.ntua.image</groupId>
-            <artifactId>MediaChecker</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <artifactId>MediaCheckerDaemon</artifactId>
+            <version>1.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.itextpdf</groupId>
@@ -260,6 +276,12 @@
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>4.3</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>jackson-databind</artifactId>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -291,13 +313,9 @@
             <version>1.50.2</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.9.2</version>
-        </dependency>
-        <!--
 
+
+        <!--
                 <dependency>
                     <groupId>eu.europeana.corelib</groupId>
                     <artifactId>corelib-utils</artifactId>
@@ -306,13 +324,12 @@
                 <dependency>
                     <groupId>eu.europeana</groupId>
                     <artifactId>servicebus-model</artifactId>
-                    <version>0.2-SNAPSHOT</version>
+                    <version>0.3-SNAPSHOT</version>
                 </dependency>
-
                 <dependency>
                     <groupId>eu.europeana</groupId>
                     <artifactId>servicebus-client</artifactId>
-                    <version>0.2-SNAPSHOT</version>
+                    <version>0.3-SNAPSHOT</version>
                 </dependency>
         -->
     </dependencies>

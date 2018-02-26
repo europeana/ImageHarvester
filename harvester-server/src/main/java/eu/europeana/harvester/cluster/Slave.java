@@ -34,39 +34,22 @@ import java.util.concurrent.TimeUnit;
 
 public class Slave {
 
-    public static final CachingUrlResolver URL_RESOLVER = new CachingUrlResolver();
-
-    private static final Logger LOG = LogManager.getLogger(Slave.class.getName());
-
-    private final String[] args;
-
-    private ActorSystem system;
-
-    private Config config;
-
-    private static final String containerName = "swiftUnitTesting";
-
+    public static final     CachingUrlResolver URL_RESOLVER = new CachingUrlResolver();
+    private static final    Logger LOG                      = LogManager.getLogger(Slave.class.getName());
+    private final           String[] args;
+    private                 ActorSystem system;
+    private                 Config config;
+    private static final    String containerName            = "swiftUnitTesting";
 
     public Slave(String[] args) {
         this.args = args;
     }
 
     public void init(Slave slave) throws Exception {
-        //allRequirementsAreMetOrThrowException();
-
-//        ConsoleReporter reporter = ConsoleReporter.forRegistry(metrics)
-//                .convertRatesTo(TimeUnit.SECONDS)
-//                .convertDurationsTo(TimeUnit.MILLISECONDS)
-//                .build();
-
 
         String configFilePath;
-
-        if (args.length == 0) {
-            configFilePath = "./extra-files/config-files/slave.conf";
-        } else {
-            configFilePath = args[0];
-        }
+        if (args.length == 0) configFilePath = "./extra-files/config-files/slave.conf";
+        else configFilePath = args[0];
 
         final File configFile = new File(configFilePath);
         if (!configFile.exists()) {
@@ -74,50 +57,44 @@ public class Slave {
             System.exit(-1);
         }
 
-        config = ConfigFactory.parseFileAnySyntax(configFile, ConfigParseOptions.defaults()
-                .setSyntax(ConfigSyntax.CONF));
-
-//        final ExecutorService bossPool = Executors.newCachedThreadPool();
-//        final ExecutorService workerPool = Executors.newCachedThreadPool();
-//
-//        final ChannelFactory channelFactory = new NioClientSocketChannelFactory(bossPool, workerPool);
-
+        config = ConfigFactory.parseFileAnySyntax(configFile, ConfigParseOptions.defaults().setSyntax(ConfigSyntax.CONF));
         final ResponseType responseType;
-
-        if ("diskStorage".equals(config.getString("slave.responseType"))) {
-            responseType = ResponseType.DISK_STORAGE;
-        } else {
-            responseType = ResponseType.MEMORY_STORAGE;
-        }
+        if ("diskStorage".equals(config.getString("slave.responseType"))) responseType = ResponseType.DISK_STORAGE;
+        else responseType = ResponseType.MEMORY_STORAGE;
 
         final String pathToSave = config.getString("slave.pathToSave");
-        final File dir = new File(pathToSave);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        final String source = config.getString("media-storage.source");
-        final String colorMapPath = config.getString("slave.colorMap");
+        final File   dir        = new File(pathToSave);
+        if (!dir.exists()) dir.mkdirs();
 
-        final Integer nrOfDownloaderSlaves = config.getInt("slave.nrOfDownloaderSlaves");
-        final Integer nrOfExtractorSlaves = config.getInt("slave.nrOfExtractorSlaves");
-        final Integer nrOfPingerSlaves = config.getInt("slave.nrOfPingerSlaves");
-        final Integer nrOfRetries = config.getInt("slave.nrOfRetries");
-        final Integer taskNrLimit = config.getInt("slave.taskNrLimit");
+        final String source                 = config.getString("media-storage.source");
+        final String colorMapPath           = config.getString("slave.colorMap");
+        final Integer nrOfDownloaderSlaves  = config.getInt("slave.nrOfDownloaderSlaves");
+        final Integer nrOfExtractorSlaves   = config.getInt("slave.nrOfExtractorSlaves");
+        final Integer nrOfPingerSlaves      = config.getInt("slave.nrOfPingerSlaves");
+        final Integer nrOfRetries           = config.getInt("slave.nrOfRetries");
+        final Integer taskNrLimit           = config.getInt("slave.taskNrLimit");
 
-        final NodeMasterConfig nodeMasterConfig = new NodeMasterConfig(nrOfDownloaderSlaves, nrOfExtractorSlaves,
-                nrOfPingerSlaves, nrOfRetries, taskNrLimit, pathToSave, responseType, source, colorMapPath);
+        final NodeMasterConfig nodeMasterConfig = new NodeMasterConfig(nrOfDownloaderSlaves,
+                                                                       nrOfExtractorSlaves,
+                                                                       nrOfPingerSlaves,
+                                                                       nrOfRetries,
+                                                                       taskNrLimit,
+                                                                       pathToSave,
+                                                                       responseType,
+                                                                       source,
+                                                                       colorMapPath);
 
-        final String mediaStorageClientType = config.hasPath("media-storage-type") ? config.getString("media-storage-type") : "DUMMY";
+        final String mediaStorageClientType = config.hasPath("media-storage-type") ?
+                                              config.getString("media-storage-type") : "DUMMY";
 
         MediaStorageClient mediaStorageClient = null;
-
         try {
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
                 LOG.debug("CLUSTER SLAVE Using swift as media-storage");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
-            } else if("S3".equalsIgnoreCase(mediaStorageClientType)){
+            } else if ("S3".equalsIgnoreCase(mediaStorageClientType)) {
                 mediaStorageClient = new S3MediaClientStorage(S3Configuration.valueOf(config.getConfig("media-storage")));
-            } else if("BLUEMIX".equalsIgnoreCase(mediaStorageClientType)){
+            } else if ("BLUEMIX".equalsIgnoreCase(mediaStorageClientType)) {
                 mediaStorageClient = new S3MediaClientStorage(BluemixConfiguration.valueOf(config.getConfig("media-storage")));
             } else {
                 LOG.debug("CLUSTER SLAVE Using dummy as media-storage");
@@ -130,65 +107,64 @@ public class Slave {
         }
 
         Slf4jReporter reporter = Slf4jReporter.forRegistry(SlaveMetrics.METRIC_REGISTRY)
-                .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .build();
+                                              .outputTo(org.slf4j.LoggerFactory.getLogger("metrics"))
+                                              .convertRatesTo(TimeUnit.SECONDS)
+                                              .convertDurationsTo(TimeUnit.MILLISECONDS)
+                                              .build();
 
         reporter.start(60, TimeUnit.SECONDS);
 
         Graphite graphite = new Graphite(new InetSocketAddress(config.getString("metrics.graphiteServer"),
-                config.getInt("metrics.graphitePort")));
+                                                               config.getInt("metrics.graphitePort")));
+
         GraphiteReporter reporter2 = GraphiteReporter.forRegistry(SlaveMetrics.METRIC_REGISTRY)
-                .prefixedWith(config.getString("metrics.slaveID"))
-                .convertRatesTo(TimeUnit.SECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .filter(MetricFilter.ALL)
-                .build(graphite);
+                                                     .prefixedWith(config.getString("metrics.slaveID"))
+                                                     .convertRatesTo(TimeUnit.SECONDS)
+                                                     .convertDurationsTo(TimeUnit.MILLISECONDS)
+                                                     .filter(MetricFilter.ALL)
+                                                     .build(graphite);
         reporter2.start(1, TimeUnit.MINUTES);
-
-
         system = ActorSystem.create("ClusterSystem", config);
-
         final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
-
-        NodeSupervisor.createActor(system, slave, masterSender,nodeMasterConfig,
-                mediaStorageClient, SlaveMetrics.METRIC_REGISTRY);
-
-        //system.actorOf(Props.create(MetricsListener.class), "metricsListener");
+        NodeSupervisor.createActor(system,
+                                   slave,
+                                   masterSender,
+                                   nodeMasterConfig,
+                                   mediaStorageClient,
+                                   SlaveMetrics.METRIC_REGISTRY);
     }
 
-
     public void reinit(Slave slave) throws Exception {
-        //allRequirementsAreMetOrThrowException();
-
-
         final ResponseType responseType;
 
-        if ("diskStorage".equals(config.getString("slave.responseType"))) {
-            responseType = ResponseType.DISK_STORAGE;
-        } else {
-            responseType = ResponseType.MEMORY_STORAGE;
-        }
+        if ("diskStorage".equals(config.getString("slave.responseType"))) responseType = ResponseType.DISK_STORAGE;
+        else responseType = ResponseType.MEMORY_STORAGE;
 
         final String pathToSave = config.getString("slave.pathToSave");
-        final File dir = new File(pathToSave);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        final String source = config.getString("media-storage.source");
-        final String colorMapPath = config.getString("slave.colorMap");
+        final File   dir        = new File(pathToSave);
 
-        final Integer nrOfDownloaderSlaves = config.getInt("slave.nrOfDownloaderSlaves");
-        final Integer nrOfExtractorSlaves = config.getInt("slave.nrOfExtractorSlaves");
-        final Integer nrOfPingerSlaves = config.getInt("slave.nrOfPingerSlaves");
-        final Integer nrOfRetries = config.getInt("slave.nrOfRetries");
-        final Integer taskNrLimit = config.getInt("slave.taskNrLimit");
+        if (!dir.exists()) dir.mkdirs();
 
-        final NodeMasterConfig nodeMasterConfig = new NodeMasterConfig(nrOfDownloaderSlaves, nrOfExtractorSlaves,
-                nrOfPingerSlaves, nrOfRetries, taskNrLimit, pathToSave, responseType, source, colorMapPath);
+        final String source                 = config.getString("media-storage.source");
+        final String colorMapPath           = config.getString("slave.colorMap");
+        final Integer nrOfDownloaderSlaves  = config.getInt("slave.nrOfDownloaderSlaves");
+        final Integer nrOfExtractorSlaves   = config.getInt("slave.nrOfExtractorSlaves");
+        final Integer nrOfPingerSlaves      = config.getInt("slave.nrOfPingerSlaves");
+        final Integer nrOfRetries           = config.getInt("slave.nrOfRetries");
+        final Integer taskNrLimit           = config.getInt("slave.taskNrLimit");
 
-        final String mediaStorageClientType = config.hasPath("media-storage-type") ? config.getString("media-storage-type") : "DUMMY";
+        final NodeMasterConfig nodeMasterConfig = new NodeMasterConfig(nrOfDownloaderSlaves,
+                                                                       nrOfExtractorSlaves,
+                                                                       nrOfPingerSlaves,
+                                                                       nrOfRetries,
+                                                                       taskNrLimit,
+                                                                       pathToSave,
+                                                                       responseType,
+                                                                       source,
+                                                                       colorMapPath);
+
+        final String mediaStorageClientType = config.hasPath("media-storage-type") ? config.getString(
+                "media-storage-type") : "DUMMY";
 
         MediaStorageClient mediaStorageClient = null;
         try {
@@ -196,37 +172,32 @@ public class Slave {
             if ("SWIFT".equalsIgnoreCase(mediaStorageClientType)) {
                 LOG.debug("CLUSTER SLAVE Using swift as media-storage");
                 mediaStorageClient = new SwiftMediaStorageClientImpl(SwiftConfiguration.valueOf(config.getConfig("media-storage")));
-
             } else {
                 LOG.debug("CLUSTER SLAVE Using dummy as media-storage");
                 mediaStorageClient = new DummyMediaStorageClientImpl();
-
             }
         } catch (Exception e) {
             LOG.error("CLUSTER SLAVE Error: connection failed to media-storage " + e.getMessage());
             e.printStackTrace();
             System.exit(-1);
         }
-
-
-
         system = ActorSystem.create("ClusterSystem", config);
-
         final ActorRef masterSender = system.actorOf(FromConfig.getInstance().props(), "masterSender");
-
-        NodeSupervisor.createActor(system, slave, masterSender,nodeMasterConfig,
-                mediaStorageClient, SlaveMetrics.METRIC_REGISTRY);
-
+        NodeSupervisor.createActor(system,
+                                   slave,
+                                   masterSender,
+                                   nodeMasterConfig,
+                                   mediaStorageClient,
+                                   SlaveMetrics.METRIC_REGISTRY);
 
     }
-
-
 
     public void restart() {
         LOG.debug("CLUSTER SLAVE Shutting down the actor system, restart.");
         SlaveMetrics.Worker.Slave.restartCounter.inc();
         system.shutdown();
         system.awaitTermination();
+
         //sleep 5 minutes
         try {
             Thread.sleep(300000l);
@@ -238,9 +209,8 @@ public class Slave {
 
         try {
             this.reinit(this);
-
-        } catch ( Exception e ){
-            LOG.error("Init threw exception",e);
+        } catch (Exception e) {
+            LOG.error("Init threw exception", e);
         }
 
     }
@@ -248,10 +218,6 @@ public class Slave {
     public ActorSystem getActorSystem() {
         return system;
     }
-
-//    public static void allRequirementsAreMetOrThrowException() throws Exception {
-//        new ImageMagicValidator(Lists.newArrayList("ImageMagick 6.9.0","ImageMagick 7.0")).doNothingOrThrowException();
-//    }
 
     public static void main(String[] args) throws Exception {
         final Slave slave = new Slave(args);
