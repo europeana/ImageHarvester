@@ -32,18 +32,13 @@ import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Properties;
 
 import static eu.europeana.harvester.TestUtils.Image1;
 import static eu.europeana.harvester.TestUtils.PATH_COLORMAP;
 import static eu.europeana.harvester.TestUtils.getPath;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 import eu.europeana.harvester.db.s3.S3MediaClientStorage;
 import static eu.europeana.harvester.TestUtils.*;
@@ -89,22 +84,6 @@ public class S3ObjectStorageClientTest {
             s3Client = new S3MediaClientStorage(S3Configuration.valueOf(config.getConfig("media-storage")));
         }
         initiateThumbNails();
-    }
-
-    private static Properties loadAndCheckLoginProperties() throws IOException {
-        Properties prop = new Properties();
-        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("objectstorage.properties")) {
-            if (in == null) {
-                throw new RuntimeException("Please provide objectstorage.properties file with login details");
-            }
-            prop.load(in);
-            // check if the properties contain login details for test and not production
-            String bucketName = prop.getProperty("s3.bucket");
-            if (bucketName != null && bucketName.contains("production")) {
-                throw new RuntimeException("Do not use production settings for unit tests!");
-            }
-        }
-        return prop;
     }
 
     @Test
@@ -163,6 +142,24 @@ public class S3ObjectStorageClientTest {
         nrItems++;
     }
 
+    @Test
+    public void testWithExistingThumbnail() throws IOException, NoSuchAlgorithmException {
+        System.out.println("Starting test uploading the same thumbnail twice");
+
+        // first time
+        s3Client.createOrModifyNoDel(mediumThumbnail);
+        MediaFile thumbnailRetrieved = s3Client.retrieve(mediumThumbnail.getId(), true);
+        assertEquals(thumbnailRetrieved.getContent().length, mediumThumbnail.getContent().length);
+        assertEquals(new String(thumbnailRetrieved.getContent()), new String(mediumThumbnail.getContent()));
+
+        s3Client.createOrModifyNoDel(mediumThumbnail);
+        MediaFile thumbnailRetrievedTwice = s3Client.retrieve(mediumThumbnail.getId(), true);
+        assertEquals(thumbnailRetrievedTwice.getContent().length, mediumThumbnail.getContent().length);
+        assertEquals(new String(thumbnailRetrievedTwice.getContent()), new String(mediumThumbnail.getContent()));
+
+        deleteTestObject(mediumThumbnail.getId());
+        System.out.println("... existing thumbnail test done");
+    }
 
     private static void initiateThumbNails() {
         try {

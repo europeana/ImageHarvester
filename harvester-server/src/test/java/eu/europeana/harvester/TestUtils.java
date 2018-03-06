@@ -30,6 +30,8 @@ public class TestUtils {
     public static final String Image2ThumbnailMedium = "image2_thumbnail_medium.jpeg";
     public static final String Image2ThumbnailLarge = "image2_thumbnail_large.jpeg";
 
+    public static final String Image4 = "image4.jpeg";
+
     public static final String PDF1 = "text1.pdf";
 
     public static final String PDF2 = "text2.pdf";
