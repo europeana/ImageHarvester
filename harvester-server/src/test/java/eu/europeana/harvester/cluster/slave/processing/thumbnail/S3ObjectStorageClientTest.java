@@ -56,7 +56,7 @@ public class S3ObjectStorageClientTest {
     private static final Logger LOG = LogManager.getLogger(S3ObjectStorageClientTest.class.getName());
     private static boolean isBluemix = true; // for now set to true
 
-    private static final int STRESS_TEST_SIZE = 100;
+    private static final int STRESS_TEST_SIZE = 5;
 
     private static S3MediaClientStorage s3Client;
 
