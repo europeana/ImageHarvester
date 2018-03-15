@@ -56,7 +56,7 @@ public class S3ObjectStorageClientTest {
     private static final Logger LOG = LogManager.getLogger(S3ObjectStorageClientTest.class.getName());
     private static boolean isBluemix = true; // for now set to true
 
-    private static final int STRESS_TEST_SIZE = 2;
+    private static int STRESS_TEST_SIZE = 100;
 
     private static S3MediaClientStorage s3Client;
 
@@ -104,6 +104,13 @@ public class S3ObjectStorageClientTest {
      */
     @Test (timeout=500000)
     public void testStressPutAndRetrieval() throws IOException, NoSuchAlgorithmException {
+        if (STRESS_TEST_SIZE < 5) {
+            System.out.println("Hey! Stress testing with size " + STRESS_TEST_SIZE + ", are we?");
+            System.out.println("What kind of a East Coast Sissy stress test is that? " +
+                               "REAL programmers start stress testing at 5 thumbnails minimum. So that's what it is now. " +
+                               "FIVE thumbnails, coming right up ....");
+            STRESS_TEST_SIZE = 5;
+        }
         System.out.println("Starting stress test with size " + STRESS_TEST_SIZE);
         for (int i = 0; i < STRESS_TEST_SIZE ; i++) {
             // alternate between medium and small thumbnails
