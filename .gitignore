@@ -21,3 +21,4 @@ out/
 
 
 src/test/resources/downloader/image1.jpeg
+/src/test/resources/master-slave-configs/scenario1/slave-user.conf
