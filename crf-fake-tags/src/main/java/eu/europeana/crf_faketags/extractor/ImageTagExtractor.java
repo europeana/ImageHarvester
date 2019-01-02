@@ -196,8 +196,8 @@ public class ImageTagExtractor {
 
     public static Integer getAspectRatioCode(final ImageOrientation orientation) {
         if (orientation == null) return 0;
-        else if (orientation == ImageOrientation.LANDSCAPE) return 1;
-        else if (orientation == ImageOrientation.PORTRAIT) return 2;
+        else if (orientation == ImageOrientation.PORTRAIT) return 1;
+        else if (orientation == ImageOrientation.LANDSCAPE) return 2;
         else return 0;
     }
 
