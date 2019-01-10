@@ -1,3 +1,7 @@
+**This project is not maintained anymore**
+
+---
+
 Content Reuse Framework
 ==============
 
